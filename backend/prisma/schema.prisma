@@ -65,7 +65,7 @@ model BusRound {
   extraPrice        Float    @default(0)
   pickupPoints      Json?
   createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  updatedAt         DateTime @default(now()) @updatedAt
 
   bookings     Booking[]
   seatBookings SeatBooking[]
