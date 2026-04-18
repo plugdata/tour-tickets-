@@ -18,6 +18,11 @@ app.get('/favicon.ico', (req, res) => res.status(204).end())
 const frontendPath = path.join(__dirname, '../../frontend')
 app.use('/frontend', express.static(frontendPath))
 app.get('/frontend', (req, res) => res.redirect('/frontend/pages/login.html'))
+
+// Serve uploaded files
+const uploadsPath = path.join(__dirname, '../../uploads')
+app.use('/uploads', express.static(uploadsPath))
+
 app.get('/', (req, res) => res.redirect('/frontend/pages/login.html'))
 
 // Swagger UI
@@ -39,5 +44,6 @@ app.use('/api/reports', require('./routes/report.routes'))
 app.use('/api/insurance', require('./routes/insurance.routes'))
 app.use('/api/seat-bookings', require('./routes/seatBooking.routes'))
 app.use('/api/booking-sessions', require('./routes/bookingSession.routes'))
+app.use('/api/uploads', require('./routes/upload.routes'))
 
 module.exports = app

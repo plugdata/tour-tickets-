@@ -28,7 +28,7 @@ router.get('/', authenticate, authorize('ADMIN', 'STUFF'), async (req, res) => {
 // ── Insurance Policy Content ────────────────────────────────────────────────
 
 // GET /insurance/policy-content
-router.get('/policy-content', authenticate, async (req, res) => {
+router.get('/policy-content', async (req, res) => {
   console.log('[INSURANCE_DEBUG] Fetching policy content');
   try {
     let content = await prisma.insurancePolicyContent.findFirst()
@@ -56,8 +56,8 @@ router.put('/policy-content', authenticate, authorize('ADMIN'), async (req, res)
 
 // ── Insurance Conditions (admin configurable) ──────────────────────────────
 
-// GET /insurance/conditions — active conditions (all authed users)
-router.get('/conditions', authenticate, async (req, res) => {
+// GET /insurance/conditions — active conditions (accessible to all)
+router.get('/conditions', async (req, res) => {
   console.log('[INSURANCE_DEBUG] Fetching conditions list');
   try {
     const all = req.query.all === '1'
@@ -119,8 +119,8 @@ router.get('/booking/:bookingId', authenticate, async (req, res) => {
   }
 })
 
-// GET by id
-router.get('/:id', authenticate, async (req, res) => {
+// GET by id (public for guest flow)
+router.get('/:id', async (req, res) => {
   try {
     const form = await prisma.insuranceForm.findUnique({
       where: { id: Number(req.params.id) },
@@ -133,8 +133,8 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 })
 
-// POST create/update insurance form — upsert by seatBookingId (1 form per seat)
-router.post('/', authenticate, async (req, res) => {
+// POST create/update insurance form — upsert by seatBookingId (public)
+router.post('/', async (req, res) => {
   try {
     const { bookingId, seatBookingId, ...rest } = req.body
     if (!bookingId) return res.status(400).json({ message: 'bookingId is required' })
@@ -152,8 +152,8 @@ router.post('/', authenticate, async (req, res) => {
   }
 })
 
-// PATCH submit draft → SUBMITTED
-router.patch('/:id/submit', authenticate, async (req, res) => {
+// PATCH submit draft → SUBMITTED (public)
+router.patch('/:id/submit', async (req, res) => {
   try {
     const form = await prisma.insuranceForm.update({
       where: { id: Number(req.params.id) },
@@ -165,8 +165,8 @@ router.patch('/:id/submit', authenticate, async (req, res) => {
   }
 })
 
-// PUT update form (customer edits draft)
-router.put('/:id', authenticate, async (req, res) => {
+// PUT update form (public edit guest draft)
+router.put('/:id', async (req, res) => {
   try {
     const form = await prisma.insuranceForm.update({
       where: { id: Number(req.params.id) },

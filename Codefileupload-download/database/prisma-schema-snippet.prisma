@@ -1,0 +1,13 @@
+// d:\backoffice_map_adminjs-main\Codefileupload-download\database\prisma-schema-snippet.prisma
+
+model Uploads {
+  id                Int               @id @default(autoincrement())
+  namefile          String
+  url               String?
+  fileType          String?           // 'image', 'pdf', 'document'
+  size              Int?
+  token             String            @unique @default(uuid())
+  createdAt         DateTime          @default(now())
+  uploadedBy        Int?
+   
+}

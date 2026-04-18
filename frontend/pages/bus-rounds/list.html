@@ -24,7 +24,7 @@
             <div class="card mb-3">
                 <div class="card-body py-2">
                     <div class="row g-2 align-items-center">
-                        <div class="col-md-3 position-relative">
+                        <div class="col-md-4 position-relative">
                             <div class="input-group">
                                 <span class="input-group-text bg-white"><i class="bi bi-map text-muted"></i></span>
                                 <input type="text" class="form-control border-start-0" id="filterTrip"
@@ -43,6 +43,15 @@
                             </div>
                         </div>
 
+                        <!-- ค้นหาจุดขึ้น/ลง -->
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-geo-alt text-muted"></i></span>
+                                <input type="text" class="form-control border-start-0" id="searchInput"
+                                    placeholder="จุดรับ / ปลายทาง..." oninput="renderRounds()">
+                            </div>
+                        </div>
+
                         <!-- ค้นหาเป็นช่วงเวลา -->
                         <div class="col-md-5">
                             <div class="input-group shadow-sm">
@@ -58,17 +67,6 @@
                             </div>
                         </div>
 
-                        <div class="col-md-4">
-                            <div class="input-group shadow-sm">
-                                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                                <input type="text" class="form-control border-start-0" id="searchInput"
-                                    placeholder="ค้นหาจุดเริ่ม / ปลายทาง..." oninput="renderRounds()">
-                            </div>
-                        </div>
-
-                        <div class="col-auto">
-                            <span class="badge bg-secondary" id="roundCount">0 รอบ</span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -82,7 +80,7 @@
 
 <!-- Create Round Modal -->
 <div class="modal fade" id="roundModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">เปิดรอบรถ</h5>
@@ -93,7 +91,7 @@
                     <input type="hidden" id="roundId">
                     <div class="mb-3">
                         <label class="form-label">ทริป <span class="text-danger">*</span></label>
-                        <select class="form-select" id="fTripId" required></select>
+                        <select class="form-select" id="fTripId" required onchange="updateNextBusNumber()"></select>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -105,20 +103,29 @@
                             <input type="number" class="form-control" id="fSeats" min="1" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">จุดเริ่มต้น <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="fStart" required>
-                        </div>
-                        <div class="col-md-6">
                             <label class="form-label">จุดสิ้นสุด <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="fEnd" required>
+                            <input type="text" class="form-control" id="fEnd" placeholder="เช่น ท่าเรือต้นไทร" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">วัน-เวลาออกเดินทาง <span class="text-danger">*</span></label>
-                            <input type="datetime-local" class="form-control" id="fDepart" required>
+                            <input type="text" class="form-control" id="fDepart" readonly placeholder="เลือกวันที่และเวลา..." required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">ระยะเวลา</label>
                             <input type="text" class="form-control" id="fDuration" placeholder="เช่น 2 วัน 1 คืน, 6 ชั่วโมง">
+                        </div>
+                        <div class="col-12">
+                            <hr class="my-1">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0 fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i>จุดรับ (Pickup Points) <span class="text-danger">*</span></label>
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="addPickupRow()">
+                                    <i class="bi bi-plus-lg me-1"></i>เพิ่มจุดรับ
+                                </button>
+                            </div>
+                            <div id="pickupList" class="p-2 border rounded bg-light" style="max-height: 200px; overflow-y: auto;">
+                                <!-- Dynamic Rows -->
+                            </div>
+                            <small class="text-muted mt-1 d-block">จุดแรกจะถูกใช้เป็นจุดเริ่มต้นหลัก</small>
                         </div>
                     </div>
                 </form>
@@ -139,7 +146,7 @@
 <script src="../../assets/js/app.js"></script>
 <script src="../../assets/js/features/thai-calendar.js"></script>
 <script>
-let roundModal, startPicker, endPicker;
+let roundModal, startPicker, endPicker, departPicker;
 let trips = [], allRounds = [];
 
 
@@ -168,6 +175,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     endPicker = await ThaiCalendar.init('#endDate', {
         onChange: () => renderRounds()
+    });
+    departPicker = await ThaiCalendar.init('#fDepart', {
+        enableTime: true
     });
 
     // ปิด dropdown เมื่อคลิกนอก
@@ -250,12 +260,11 @@ function renderRounds() {
         data = ThaiCalendar.filterByDateRange(data, 'departDate', startQ, endQ);
     }
     if (q) data = data.filter(r =>
-        (r.trip?.title || '').toLowerCase().includes(q) ||
         (r.startPoint || '').toLowerCase().includes(q) ||
-        (r.endPoint || '').toLowerCase().includes(q)
+        (r.endPoint || '').toLowerCase().includes(q) ||
+        (r.pickupPoints || []).some(p => p.name.toLowerCase().includes(q))
     );
 
-    document.getElementById('roundCount').textContent = `${data.length} รอบ`;
     const grid = document.getElementById('roundsGrid');
 
     if (!data.length) {
@@ -273,8 +282,13 @@ function renderRounds() {
                     <span class="badge ${r.isOpen ? 'bg-success' : 'bg-secondary'}">${r.isOpen ? 'เปิดจอง' : 'ปิดจอง'}</span>
                 </div>
                 <div class="card-body">
-                    <div class="mb-2 text-muted small"><i class="bi bi-geo-alt me-1"></i>${r.startPoint} → ${r.endPoint}</div>
+                    <div class="mb-2 text-primary small fw-bold">
+                        <i class="bi bi-geo-alt-fill me-1"></i>${r.startPoint} 
+                        ${r.pickupPoints?.length > 1 ? `<span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0 px-1 ms-1">+${r.pickupPoints.length - 1} จุด</span>` : ''}
+                    </div>
+                    <div class="mb-2 text-muted small"><i class="bi bi-arrow-right-short me-1"></i>ถึง: ${r.endPoint}</div>
                     <div class="mb-2 text-muted small"><i class="bi bi-calendar me-1"></i>${formatDateTime(r.departDate)}</div>
+                    ${r.extraPrice > 0 ? `<div class="mb-2 text-success small fw-semibold"><i class="bi bi-plus-circle me-1"></i>ราคาเริ่มต้นเพิ่ม: +${formatMoney(r.extraPrice)}</div>` : ''}
                     ${r.duration ? `<div class="mb-2 text-muted small"><i class="bi bi-clock me-1"></i>${r.duration}</div>` : ''}
                     <div class="mb-1 d-flex justify-content-between small">
                         <span>ที่นั่ง</span>
@@ -301,6 +315,10 @@ function renderRounds() {
                            class="btn btn-sm btn-outline-secondary" title="พิมพ์">
                             <i class="bi bi-printer"></i>
                         </a>
+                        <button class="btn btn-sm btn-outline-primary" 
+                            onclick="editRound(${JSON.stringify(r).replace(/"/g,'&quot;')})" title="แก้ไข">
+                            <i class="bi bi-pencil"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -308,29 +326,128 @@ function renderRounds() {
     }).join('');
 }
 
-// ===== Round CRUD =====
+// ===== Pickup Points Manager =====
+function createPickupRow(name = '', price = 0) {
+    return `
+        <div class="pickup-row d-flex gap-2 mb-2">
+            <input type="text" class="form-control form-control-sm p-name" placeholder="ชื่อจุดรับ" value="${name}" required>
+            <div class="input-group input-group-sm" style="width: 140px;">
+                <span class="input-group-text badge-success">+</span>
+                <input type="number" class="form-control p-price" placeholder="บวกเพิ่ม" value="${price}" min="0" step="1">
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger px-2" onclick="this.closest('.pickup-row').remove()">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+}
+
+function addPickupRow(name = '', price = 0) {
+    document.getElementById('pickupList').insertAdjacentHTML('beforeend', createPickupRow(name, price));
+}
+
 function openModal() {
     document.getElementById('roundForm').reset();
     document.getElementById('roundId').value = '';
-    document.getElementById('fBusNum').value = 1;
+    
+    // Auto Select Trip if filter is active
+    const tripQ = document.getElementById('filterTrip').value.toLowerCase().trim();
+    if (tripQ) {
+        const found = trips.find(t => t.title.toLowerCase().includes(tripQ));
+        if (found) document.getElementById('fTripId').value = found.id;
+    }
+
     document.getElementById('fDuration').value = '';
+    if (departPicker) departPicker.clear();
+    
+    document.getElementById('pickupList').innerHTML = '';
+    addPickupRow('ท่าเรือ', 0); // Default row
+    
+    updateNextBusNumber();
+    roundModal.show();
+}
+
+function updateNextBusNumber() {
+    const tripId = parseInt(document.getElementById('fTripId').value);
+    if (!tripId) return;
+
+    // Find max bus number for this trip in allRounds
+    const sameTripRounds = allRounds.filter(r => r.tripId === tripId);
+    if (sameTripRounds.length === 0) {
+        document.getElementById('fBusNum').value = 1;
+    } else {
+        const numbers = sameTripRounds.map(r => r.busNumber || 0);
+        const maxNum = Math.max(...numbers);
+        document.getElementById('fBusNum').value = maxNum + 1;
+    }
+}
+
+function editRound(r) {
+    document.getElementById('roundId').value = r.id;
+    document.getElementById('fTripId').value = r.tripId;
+    document.getElementById('fBusNum').value = r.busNumber;
+    document.getElementById('fSeats').value = r.totalSeats;
+    document.getElementById('fEnd').value = r.endPoint;
+    document.getElementById('fDuration').value = r.duration || '';
+    
+    if (departPicker) {
+        departPicker.setDate(new Date(r.departDate));
+    }
+
+    // Load Pickups
+    document.getElementById('pickupList').innerHTML = '';
+    const points = r.pickupPoints || [{ name: r.startPoint, price: r.extraPrice }];
+    points.forEach(p => addPickupRow(p.name, p.price));
+
     roundModal.show();
 }
 
 async function saveRound() {
+    const id = document.getElementById('roundId').value;
+    // Collect Pickup Points
+    const rows = document.querySelectorAll('.pickup-row');
+    const pickups = [];
+    rows.forEach(r => {
+        pickups.push({
+            name: r.querySelector('.p-name').value.trim(),
+            price: parseFloat(r.querySelector('.p-price').value || 0)
+        });
+    });
+
+    if (pickups.length === 0) return showToast('กรุณาเพิ่มจุดรับอย่างน้อย 1 จุด', 'warning');
+
+    let departDateVal = document.getElementById('fDepart').value;
+    if (departDateVal) {
+        // Handle BE to AD conversion if year is > 2500
+        const parts = departDateVal.match(/^(\d{4})-(.*)$/);
+        if (parts && parseInt(parts[1]) > 2500) {
+            departDateVal = (parseInt(parts[1]) - 543) + '-' + parts[2];
+        }
+        try {
+            departDateVal = new Date(departDateVal).toISOString();
+        } catch(e) { console.error('Date conversion failed', e); }
+    }
+
     const data = {
         tripId:     parseInt(document.getElementById('fTripId').value),
         busNumber:  parseInt(document.getElementById('fBusNum').value),
         totalSeats: parseInt(document.getElementById('fSeats').value),
-        startPoint: document.getElementById('fStart').value,
+        startPoint: pickups[0].name,
+        extraPrice: pickups[0].price,
         endPoint:   document.getElementById('fEnd').value,
-        departDate: document.getElementById('fDepart').value,
+        pickupPoints: pickups,
+        departDate: departDateVal,
         duration:   document.getElementById('fDuration').value || null
     };
+
+    if (!data.departDate) return showToast('กรุณาเลือกวัน-เวลาเดินทาง', 'warning');
+
     try {
-        await API.busRounds.create(data);
+        if (id) await API.busRounds.update(id, data);
+        else await API.busRounds.create(data);
+        
         roundModal.hide();
-        showToast('เปิดรอบรถสำเร็จ');
+        showToast(id ? 'แก้ไขรอบรถสำเร็จ' : 'เปิดรอบรถสำเร็จ');
         await loadRounds();
     } catch (e) { showToast(e.message, 'danger'); }
 }

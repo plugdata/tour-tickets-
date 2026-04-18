@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>อัปโหลดเอกสาร - Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../assets/css/style.css" rel="stylesheet">
+    <link href="../assets/css/admin.css" rel="stylesheet">
+    <style>
+        .drop-zone {
+            border: 2px dashed #3eb39d;
+            border-radius: 10px;
+            padding: 36px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            background: #f0faf8;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #2b9482;
+            background: #d6f2ec;
+        }
+        .drop-zone i { font-size: 2.5rem; color: #3eb39d; }
+        .file-preview-list { max-height: 220px; overflow-y: auto; }
+        .file-item {
+            display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+            border-radius: 8px; background: #f1f5f9; margin-bottom: 6px;
+        }
+        .file-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
+        .file-icon {
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            border-radius: 4px; font-size: 1.3rem;
+        }
+        .file-icon.pdf { background: #fee2e2; color: #dc2626; }
+        .file-icon.doc { background: #dbeafe; color: #1d4ed8; }
+        .file-icon.img { background: #dcfce7; color: #16a34a; }
+        .remove-btn { margin-left: auto; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.1rem; }
+        .remove-btn:hover { color: #ef4444; }
+        .badge-pdf { background: #fee2e2; color: #dc2626; }
+        .badge-image { background: #dcfce7; color: #16a34a; }
+        .badge-doc { background: #dbeafe; color: #1d4ed8; }
+        .img-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .map-select-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; }
+        .img-type-tabs .btn { border-radius: 20px; }
+        .progress-bar-slim { height: 6px; border-radius: 3px; }
+        .nav-tabs .nav-link { color: #3eb39d; }
+        .nav-tabs .nav-link.active { color: #2b9482; font-weight: 600; border-bottom-color: #3eb39d; }
+    </style>
+</head>
+
+<body>
+    <!-- Toast -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <div id="toastMsg" class="toast align-items-center text-white border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body" id="toastBody"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="d-flex">
+        <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+        <main class="main-content flex-fill">
+            <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+            <div class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="bi bi-cloud-arrow-up me-2"></i>อัปโหลดเอกสาร
+                    </h1>
+                    <p class="page-subtitle">จัดการไฟล์เอกสาร PDF รูปภาพ และรูปภาพสำหรับแผนที่</p>
+                </div>
+
+                <!-- Tabs -->
+                <ul class="nav nav-tabs mb-4" id="mainTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-docs">
+                            <i class="bi bi-file-earmark-text me-1"></i>อัปโหลดเอกสาร
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-mapimg">
+                            <i class="bi bi-image me-1"></i>รูปภาพแผนที่
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+
+                    <!-- TAB 1: เอกสาร -->
+                    <div class="tab-pane fade show active" id="tab-docs">
+
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-upload me-2" style="color:#3eb39d;"></i>อัปโหลดเอกสาร
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-3">รองรับ PDF, JPG, PNG, DOC, DOCX, XLS, XLSX — ขนาดรวมไม่เกิน 15MB, สูงสุด 50 ไฟล์</p>
+
+                                <div class="drop-zone" id="docDropZone">
+                                    <i class="bi bi-cloud-arrow-up d-block mb-2"></i>
+                                    <div class="fw-semibold">ลากไฟล์วางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
+                                    <small class="text-muted">PDF, JPG, PNG, DOC, XLSX</small>
+                                    <input type="file" id="docFileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" class="d-none">
+                                </div>
+
+                                <div id="docPreviewList" class="file-preview-list mt-3"></div>
+
+                                <div id="docProgress" class="mt-2" style="display:none;">
+                                    <div class="progress progress-bar-slim">
+                                        <div class="progress-bar" id="docProgressBar" style="width:0%; background:#3eb39d;"></div>
+                                    </div>
+                                    <small class="text-muted" id="docProgressText">กำลังอัปโหลด...</small>
+                                </div>
+
+                                <div class="d-flex gap-2 mt-3">
+                                    <button class="btn btn-primary" id="docUploadBtn" disabled style="background:#3eb39d; border-color:#3eb39d;">
+                                        <i class="bi bi-cloud-upload me-1"></i>อัปโหลด
+                                    </button>
+                                    <button class="btn btn-outline-secondary" id="docClearBtn">
+                                        <i class="bi bi-trash me-1"></i>ล้าง
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-table me-2" style="color:#3eb39d;"></i>รายการเอกสารทั้งหมด
+                                </h5>
+                                <div class="d-flex gap-2">
+                                    <select class="form-select form-select-sm" id="docFilterType" style="width:140px">
+                                        <option value="">ทุกประเภท</option>
+                                        <option value="pdf">PDF</option>
+                                        <option value="image">รูปภาพ</option>
+                                        <option value="document">เอกสาร</option>
+                                    </select>
+                                    <button class="btn btn-outline-secondary btn-sm" id="docRefreshBtn">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>ตัวอย่าง</th>
+                                                <th>ชื่อไฟล์</th>
+                                                <th>ประเภท</th>
+                                                <th>ขนาด</th>
+                                                <th>วันที่</th>
+                                                <th>เปิด</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="docTableBody">
+                                            <tr><td colspan="7" class="text-center text-muted py-4">กำลังโหลด...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white">
+                                <small class="text-muted" id="docTableCount"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: รูปภาพแผนที่ -->
+                    <div class="tab-pane fade" id="tab-mapimg">
+
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-geo-alt me-2 text-success"></i>อัปโหลดรูปภาพสำหรับแผนที่
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-3">รองรับ JPG, PNG — อัปโหลดรูปภาพก่อน-หลังและผูกกับ Map</p>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="drop-zone" id="mapDropZone">
+                                            <i class="bi bi-image d-block mb-2"></i>
+                                            <div class="fw-semibold">ลากรูปภาพวางที่นี่ หรือคลิกเพื่อเลือก</div>
+                                            <small class="text-muted">JPG, PNG เท่านั้น</small>
+                                            <input type="file" id="mapFileInput" multiple accept=".jpg,.jpeg,.png" class="d-none">
+                                        </div>
+                                        <div id="mapPreviewList" class="file-preview-list mt-2"></div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="map-select-card">
+                                            <label class="form-label fw-semibold"><i class="bi bi-map me-1"></i>เลือก Map (ไม่บังคับ)</label>
+                                            <select class="form-select mb-3" id="mapIdSelect">
+                                                <option value="">-- ไม่ผูกกับ Map --</option>
+                                            </select>
+
+                                            <label class="form-label fw-semibold">ประเภทรูปภาพ</label>
+                                            <div class="d-flex gap-2 img-type-tabs">
+                                                <input type="radio" class="btn-check" name="imageType" id="typeNone" value="" checked>
+                                                <label class="btn btn-outline-secondary btn-sm" for="typeNone">ทั่วไป</label>
+                                                <input type="radio" class="btn-check" name="imageType" id="typeBefore" value="before">
+                                                <label class="btn btn-outline-warning btn-sm" for="typeBefore">
+                                                    <i class="bi bi-clock-history me-1"></i>ก่อน
+                                                </label>
+                                                <input type="radio" class="btn-check" name="imageType" id="typeAfter" value="after">
+                                                <label class="btn btn-outline-success btn-sm" for="typeAfter">
+                                                    <i class="bi bi-check-circle me-1"></i>หลัง
+                                                </label>
+                                            </div>
+
+                                            <div class="mt-3" id="selectedMapInfo" style="display:none">
+                                                <small class="text-muted">Map ที่เลือก:</small>
+                                                <div id="selectedMapDetail" class="mt-1 p-2 bg-light rounded small"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="mapProgress" class="mt-2" style="display:none;">
+                                    <div class="progress progress-bar-slim">
+                                        <div class="progress-bar bg-success" id="mapProgressBar" style="width:0%"></div>
+                                    </div>
+                                    <small class="text-muted">กำลังอัปโหลด...</small>
+                                </div>
+
+                                <div class="d-flex gap-2 mt-3">
+                                    <button class="btn btn-success" id="mapUploadBtn" disabled>
+                                        <i class="bi bi-cloud-upload me-1"></i>อัปโหลดรูปภาพ
+                                    </button>
+                                    <button class="btn btn-outline-secondary" id="mapClearBtn">
+                                        <i class="bi bi-trash me-1"></i>ล้าง
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-table me-2 text-success"></i>รายการรูปภาพแผนที่
+                                </h5>
+                                <div class="d-flex gap-2">
+                                    <select class="form-select form-select-sm" id="mapImgFilterMap" style="width:200px">
+                                        <option value="">ทุก Map</option>
+                                    </select>
+                                    <button class="btn btn-outline-secondary btn-sm" id="mapImgRefreshBtn">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>รูปภาพ</th>
+                                                <th>ชื่อไฟล์</th>
+                                                <th>Map</th>
+                                                <th>ขนาด</th>
+                                                <th>วันที่</th>
+                                                <th>เปิด</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="mapImgTableBody">
+                                            <tr><td colspan="8" class="text-center text-muted py-4">กำลังโหลด...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white">
+                                <small class="text-muted" id="mapImgTableCount"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /tab-content -->
+            </div>
+        </main>
+    </div>
+
+    <div id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">กำลังโหลด...</span></div>
+            <div class="mt-2">กำลังโหลดข้อมูล...</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/apiClient.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/i18n.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <script>
+        if (!authManager.requireAuth()) {}
+
+        async function loadComponents() {
+            try {
+                await Promise.all([
+                    loadComponent('../components/navMenu.html', 'sidebar'),
+                    loadComponent('../components/header.html', 'main-header')
+                ]);
+                if (window.setBreadcrumb) {
+                    setBreadcrumb([
+                        { label: 'หน้าหลัก', href: '/frontend/pages/dashboard.html' },
+                        { label: 'เอกสาร' },
+                        { label: 'อัปโหลดเอกสาร' }
+                    ]);
+                }
+                // Mark active nav
+                const el = document.getElementById('nav-document-upload');
+                if (el) el.classList.add('active');
+            } catch (e) {
+                console.error('Error loading components:', e);
+            }
+        }
+
+        // ===================== UTILS =====================
+        function showToast(msg, type = 'success') {
+            const el = document.getElementById('toastMsg');
+            const body = document.getElementById('toastBody');
+            el.className = `toast align-items-center text-white border-0 bg-${type}`;
+            body.textContent = msg;
+            bootstrap.Toast.getOrCreateInstance(el, { delay: 3500 }).show();
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+        }
+
+        function formatDate(str) {
+            if (!str) return '-';
+            return new Date(str).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+        }
+
+        function fileTypeIcon(type, mimetype) {
+            if (type === 'pdf' || (mimetype && mimetype.includes('pdf'))) return '<div class="file-icon pdf"><i class="bi bi-file-earmark-pdf"></i></div>';
+            if (type === 'image' || (mimetype && mimetype.startsWith('image/'))) return '<div class="file-icon img"><i class="bi bi-file-earmark-image"></i></div>';
+            return '<div class="file-icon doc"><i class="bi bi-file-earmark-word"></i></div>';
+        }
+
+        function typeBadge(type) {
+            if (type === 'pdf') return '<span class="badge" style="background:#fee2e2;color:#dc2626;">PDF</span>';
+            if (type === 'image') return '<span class="badge" style="background:#dcfce7;color:#16a34a;">รูปภาพ</span>';
+            return '<span class="badge" style="background:#dbeafe;color:#1d4ed8;">เอกสาร</span>';
+        }
+
+        // ===================== DOC UPLOAD =====================
+        const docDropZone = document.getElementById('docDropZone');
+        const docFileInput = document.getElementById('docFileInput');
+        const docPreviewList = document.getElementById('docPreviewList');
+        const docUploadBtn = document.getElementById('docUploadBtn');
+        const docClearBtn = document.getElementById('docClearBtn');
+        let docFiles = [];
+
+        docDropZone.addEventListener('click', () => docFileInput.click());
+        docDropZone.addEventListener('dragover', e => { e.preventDefault(); docDropZone.classList.add('dragover'); });
+        docDropZone.addEventListener('dragleave', () => docDropZone.classList.remove('dragover'));
+        docDropZone.addEventListener('drop', e => { e.preventDefault(); docDropZone.classList.remove('dragover'); addDocFiles([...e.dataTransfer.files]); });
+        docFileInput.addEventListener('change', () => addDocFiles([...docFileInput.files]));
+
+        function addDocFiles(files) {
+            files.forEach(f => { if (!docFiles.find(x => x.name === f.name && x.size === f.size)) docFiles.push(f); });
+            renderDocPreview();
+        }
+
+        function renderDocPreview() {
+            docPreviewList.innerHTML = '';
+            docFiles.forEach((f, i) => {
+                const type = f.type.includes('pdf') ? 'pdf' : f.type.startsWith('image/') ? 'img' : 'doc';
+                let icon = fileTypeIcon(type, f.type);
+                if (type === 'img') icon = `<img src="${URL.createObjectURL(f)}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">`;
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `${icon}<div class="flex-grow-1 overflow-hidden"><div class="fw-semibold small text-truncate">${f.name}</div><small class="text-muted">${formatSize(f.size)}</small></div><button class="remove-btn" data-i="${i}"><i class="bi bi-x-circle"></i></button>`;
+                docPreviewList.appendChild(div);
+            });
+            docUploadBtn.disabled = docFiles.length === 0;
+            docPreviewList.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', () => { docFiles.splice(Number(btn.dataset.i), 1); renderDocPreview(); });
+            });
+        }
+
+        docClearBtn.addEventListener('click', () => { docFiles = []; docFileInput.value = ''; renderDocPreview(); });
+
+        docUploadBtn.addEventListener('click', async () => {
+            if (!docFiles.length) return;
+            docUploadBtn.disabled = true;
+            const progress = document.getElementById('docProgress');
+            const bar = document.getElementById('docProgressBar');
+            const progressText = document.getElementById('docProgressText');
+            progress.style.display = 'block'; bar.style.width = '30%';
+            progressText.textContent = `กำลังอัปโหลด ${docFiles.length} ไฟล์...`;
+            const fd = new FormData();
+            docFiles.forEach(f => fd.append('files', f));
+            try {
+                const res = await fetch('/api/documents/upload', { method: 'POST', body: fd });
+                const data = await res.json();
+                bar.style.width = '100%';
+                if (data.success) { showToast(data.message, 'success'); docFiles = []; docFileInput.value = ''; renderDocPreview(); loadDocTable(); }
+                else showToast(data.error || 'เกิดข้อผิดพลาด', 'danger');
+            } catch { showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'danger'); }
+            finally { setTimeout(() => { progress.style.display = 'none'; bar.style.width = '0%'; }, 1500); docUploadBtn.disabled = false; }
+        });
+
+        async function loadDocTable() {
+            const type = document.getElementById('docFilterType').value;
+            const url = `/api/documents/db${type ? '?type=' + type : ''}`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const tbody = document.getElementById('docTableBody');
+                const count = document.getElementById('docTableCount');
+                if (!data.success || !data.data.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">ยังไม่มีเอกสาร</td></tr>';
+                    count.textContent = ''; return;
+                }
+                count.textContent = `แสดง ${data.data.length} รายการ`;
+                tbody.innerHTML = data.data.map(r => `
+                    <tr>
+                        <td><span class="text-muted small">${r.id}</span></td>
+                        <td>${r.fileType === 'image' ? `<img src="${r.url}" class="img-thumb">` : fileTypeIcon(r.fileType)}</td>
+                        <td><div class="fw-semibold small text-truncate" style="max-width:200px" title="${r.namefile}">${r.namefile}</div></td>
+                        <td>${typeBadge(r.fileType)}</td>
+                        <td><small>${r.size ? formatSize(r.size) : '-'}</small></td>
+                        <td><small>${formatDate(r.createdAt)}</small></td>
+                        <td><a href="${r.url}" target="_blank" class="btn btn-outline-secondary btn-sm py-0"><i class="bi bi-box-arrow-up-right"></i></a></td>
+                    </tr>`).join('');
+            } catch { document.getElementById('docTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">เกิดข้อผิดพลาดในการโหลด</td></tr>'; }
+        }
+
+        document.getElementById('docFilterType').addEventListener('change', loadDocTable);
+        document.getElementById('docRefreshBtn').addEventListener('click', loadDocTable);
+
+        // ===================== MAP IMAGE UPLOAD =====================
+        const mapDropZone = document.getElementById('mapDropZone');
+        const mapFileInput = document.getElementById('mapFileInput');
+        const mapPreviewList = document.getElementById('mapPreviewList');
+        const mapUploadBtn = document.getElementById('mapUploadBtn');
+        const mapClearBtn = document.getElementById('mapClearBtn');
+        const mapIdSelect = document.getElementById('mapIdSelect');
+        let mapFiles = [], mapsData = [];
+
+        mapDropZone.addEventListener('click', () => mapFileInput.click());
+        mapDropZone.addEventListener('dragover', e => { e.preventDefault(); mapDropZone.classList.add('dragover'); });
+        mapDropZone.addEventListener('dragleave', () => mapDropZone.classList.remove('dragover'));
+        mapDropZone.addEventListener('drop', e => { e.preventDefault(); mapDropZone.classList.remove('dragover'); addMapFiles([...e.dataTransfer.files]); });
+        mapFileInput.addEventListener('change', () => addMapFiles([...mapFileInput.files]));
+
+        function addMapFiles(files) {
+            const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
+            const filtered = files.filter(f => allowed.includes(f.type));
+            if (filtered.length !== files.length) showToast('บางไฟล์ไม่รองรับ รับเฉพาะ JPG และ PNG', 'warning');
+            filtered.forEach(f => { if (!mapFiles.find(x => x.name === f.name && x.size === f.size)) mapFiles.push(f); });
+            renderMapPreview();
+        }
+
+        function renderMapPreview() {
+            mapPreviewList.innerHTML = '';
+            mapFiles.forEach((f, i) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `<img src="${URL.createObjectURL(f)}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:4px;"><div class="flex-grow-1 overflow-hidden"><div class="fw-semibold small text-truncate">${f.name}</div><small class="text-muted">${formatSize(f.size)}</small></div><button class="remove-btn" data-i="${i}"><i class="bi bi-x-circle"></i></button>`;
+                mapPreviewList.appendChild(div);
+            });
+            mapUploadBtn.disabled = mapFiles.length === 0;
+            mapPreviewList.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', () => { mapFiles.splice(Number(btn.dataset.i), 1); renderMapPreview(); });
+            });
+        }
+
+        mapClearBtn.addEventListener('click', () => { mapFiles = []; mapFileInput.value = ''; renderMapPreview(); });
+
+        async function loadMapsDropdown() {
+            try {
+                const res = await fetch('/api/map-images/maps');
+                const data = await res.json();
+                mapsData = data.data || [];
+                const opts = mapsData.map(m => `<option value="${m.id}">${m.name_local || m.house_no || 'Map #' + m.id} (ID:${m.id})</option>`).join('');
+                mapIdSelect.innerHTML = '<option value="">-- ไม่ผูกกับ Map --</option>' + opts;
+                const filterOpts = mapsData.map(m => `<option value="${m.id}">${m.name_local || m.house_no || 'Map #' + m.id}</option>`).join('');
+                document.getElementById('mapImgFilterMap').innerHTML = '<option value="">ทุก Map</option>' + filterOpts;
+            } catch (e) { console.error('Load maps error:', e); }
+        }
+
+        mapIdSelect.addEventListener('change', () => {
+            const id = mapIdSelect.value;
+            const info = document.getElementById('selectedMapInfo');
+            const detail = document.getElementById('selectedMapDetail');
+            if (!id) { info.style.display = 'none'; return; }
+            const m = mapsData.find(x => String(x.id) === id);
+            if (m) { info.style.display = 'block'; detail.innerHTML = `<b>${m.name_local || '-'}</b> | บ้านเลขที่: ${m.house_no || '-'} | ที่อยู่: ${m.address || '-'}`; }
+        });
+
+        mapUploadBtn.addEventListener('click', async () => {
+            if (!mapFiles.length) return;
+            mapUploadBtn.disabled = true;
+            const progress = document.getElementById('mapProgress');
+            const bar = document.getElementById('mapProgressBar');
+            progress.style.display = 'block'; bar.style.width = '30%';
+            const fd = new FormData();
+            mapFiles.forEach(f => fd.append('files', f));
+            const mapId = mapIdSelect.value;
+            if (mapId) fd.append('mapId', mapId);
+            const imageType = document.querySelector('input[name="imageType"]:checked').value;
+            if (imageType) fd.append('imageType', imageType);
+            try {
+                const res = await fetch('/api/map-images/upload', { method: 'POST', body: fd });
+                const data = await res.json();
+                bar.style.width = '100%';
+                if (data.success) { showToast(data.message, 'success'); mapFiles = []; mapFileInput.value = ''; renderMapPreview(); loadMapImgTable(); }
+                else showToast(data.error || 'เกิดข้อผิดพลาด', 'danger');
+            } catch { showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'danger'); }
+            finally { setTimeout(() => { progress.style.display = 'none'; bar.style.width = '0%'; }, 1500); mapUploadBtn.disabled = false; }
+        });
+
+        async function loadMapImgTable() {
+            const filterMap = document.getElementById('mapImgFilterMap').value;
+            const url = `/api/map-images${filterMap ? '?mapId=' + filterMap : ''}`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const tbody = document.getElementById('mapImgTableBody');
+                const count = document.getElementById('mapImgTableCount');
+                if (!data.success || !data.data.length) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">ยังไม่มีรูปภาพ</td></tr>';
+                    count.textContent = ''; return;
+                }
+                count.textContent = `แสดง ${data.data.length} รายการ`;
+                tbody.innerHTML = data.data.map(r => `
+                    <tr>
+                        <td><span class="text-muted small">${r.id}</span></td>
+                        <td>${r.url ? `<img src="${r.url}" class="img-thumb">` : '-'}</td>
+                        <td><div class="small text-truncate" style="max-width:160px" title="${r.namefile}">${r.namefile}</div></td>
+                        <td><small>${r.mapDirect ? `<span class="badge bg-success-subtle text-success">Map #${r.mapDirect.id} ${r.mapDirect.name_local || ''}</span>` : '<span class="text-muted">-</span>'}</small></td>
+                        <td><small>${r.size ? formatSize(r.size) : '-'}</small></td>
+                        <td><small>${formatDate(r.createdAt)}</small></td>
+                        <td><a href="${r.url}" target="_blank" class="btn btn-outline-secondary btn-sm py-0"><i class="bi bi-box-arrow-up-right"></i></a></td>
+                        <td><button class="btn btn-outline-danger btn-sm py-0" onclick="deleteMapImg(${r.id})"><i class="bi bi-trash"></i></button></td>
+                    </tr>`).join('');
+            } catch { document.getElementById('mapImgTableBody').innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">เกิดข้อผิดพลาดในการโหลด</td></tr>'; }
+        }
+
+        async function deleteMapImg(id) {
+            if (!confirm('ต้องการลบรูปภาพนี้?')) return;
+            try {
+                const res = await fetch(`/api/map-images/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) { showToast('ลบสำเร็จ', 'success'); loadMapImgTable(); }
+                else showToast(data.error || 'ลบไม่สำเร็จ', 'danger');
+            } catch { showToast('เกิดข้อผิดพลาด', 'danger'); }
+        }
+
+        document.getElementById('mapImgFilterMap').addEventListener('change', loadMapImgTable);
+        document.getElementById('mapImgRefreshBtn').addEventListener('click', loadMapImgTable);
+
+        // ===================== INIT =====================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadComponents();
+            loadDocTable();
+            loadMapsDropdown();
+            loadMapImgTable();
+        });
+    </script>
+</body>
+
+</html>

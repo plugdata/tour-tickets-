@@ -163,6 +163,17 @@ const API = {
             remove: (id)        => api.delete(`/insurance/conditions/${id}`),
         },
     },
+
+    // Uploads
+    uploads: {
+        upload: (file) => {
+            const fd = new FormData();
+            fd.append('file', file);
+            return api.postForm('/uploads', fd);
+        },
+        list: () => api.get('/uploads'),
+        remove: (url) => api.delete(`/uploads?url=${encodeURIComponent(url)}`),
+    },
 };
 
 if (typeof module !== 'undefined' && module.exports) {

@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ดาวน์โหลดเอกสาร - Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../assets/css/style.css" rel="stylesheet">
+    <link href="../assets/css/admin.css" rel="stylesheet">
+    <style>
+        /* Search bar */
+        .search-hero {
+            background: linear-gradient(135deg, #3eb39d 0%, #2b9482 100%);
+            border-radius: 14px;
+            padding: 28px 28px 20px;
+            margin-bottom: 24px;
+            color: #fff;
+        }
+        .search-hero .form-control,
+        .search-hero .form-select {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+        }
+        .search-hero .form-control:focus,
+        .search-hero .form-select:focus { box-shadow: 0 0 0 3px rgba(255,255,255,0.3); }
+
+        /* Tab pills */
+        .nav-pills .nav-link { color: #3eb39d; border-radius: 20px; padding: 6px 18px; }
+        .nav-pills .nav-link.active { background: #3eb39d; color: #fff; }
+
+        /* Document card grid */
+        .doc-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            background: #fff;
+            transition: box-shadow .2s, transform .15s;
+            cursor: default;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .doc-card:hover { box-shadow: 0 4px 18px rgba(62,179,157,.15); transform: translateY(-2px); }
+        .doc-card-icon {
+            width: 52px; height: 52px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem;
+            flex-shrink: 0;
+        }
+        .doc-card-icon.pdf  { background: #fee2e2; color: #dc2626; }
+        .doc-card-icon.img  { background: #dcfce7; color: #16a34a; }
+        .doc-card-icon.doc  { background: #dbeafe; color: #1d4ed8; }
+        .doc-card-body { flex: 1; }
+
+        /* Map image gallery */
+        .map-img-item {
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            background: #f1f5f9;
+            aspect-ratio: 4/3;
+        }
+        .map-img-item img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform .3s;
+        }
+        .map-img-item:hover img { transform: scale(1.05); }
+        .map-img-overlay {
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0);
+            display: flex; align-items: flex-end;
+            padding: 10px;
+            transition: background .2s;
+        }
+        .map-img-item:hover .map-img-overlay { background: rgba(0,0,0,0.35); }
+        .map-img-actions { opacity: 0; transition: opacity .2s; display: flex; gap: 6px; }
+        .map-img-item:hover .map-img-actions { opacity: 1; }
+        .map-img-badge {
+            position: absolute; top: 8px; left: 8px;
+            font-size: 0.7rem; border-radius: 20px; padding: 2px 8px;
+        }
+
+        /* Lightbox */
+        #lightboxBackdrop {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85); z-index: 9999;
+            align-items: center; justify-content: center;
+        }
+        #lightboxBackdrop.show { display: flex; }
+        #lightboxImg { max-width: 90vw; max-height: 85vh; border-radius: 8px; }
+
+        /* Stats bar */
+        .stat-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px; padding: 4px 14px;
+            font-size: 0.85rem;
+        }
+
+        /* Empty state */
+        .empty-state { padding: 48px 0; text-align: center; color: #94a3b8; }
+        .empty-state i { font-size: 3rem; margin-bottom: 12px; display: block; }
+
+        /* File type badge */
+        .badge-pdf   { background: #fee2e2; color: #dc2626; }
+        .badge-image { background: #dcfce7; color: #16a34a; }
+        .badge-doc   { background: #dbeafe; color: #1d4ed8; }
+
+        .img-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; }
+    </style>
+</head>
+
+<body>
+    <!-- Lightbox -->
+    <div id="lightboxBackdrop" onclick="closeLightbox()">
+        <div onclick="event.stopPropagation()" style="position:relative;">
+            <img id="lightboxImg" src="" alt="">
+            <button onclick="closeLightbox()"
+                class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 rounded-circle"
+                style="width:32px;height:32px;padding:0;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <a id="lightboxDownload" href="" download
+                class="btn btn-success btn-sm position-absolute bottom-0 end-0 m-2">
+                <i class="bi bi-download me-1"></i>ดาวน์โหลด
+            </a>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9998;">
+        <div id="toastMsg" class="toast align-items-center text-white border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body" id="toastBody"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="d-flex">
+        <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+        <main class="main-content flex-fill">
+            <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+            <div class="page-content">
+
+                <!-- Search Hero -->
+                <div class="search-hero">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-cloud-arrow-down fs-4"></i>
+                        <div>
+                            <h4 class="mb-0 fw-bold">ดาวน์โหลดเอกสาร</h4>
+                            <small class="opacity-75">ค้นหาและดาวน์โหลดเอกสาร PDF รูปภาพ และรูปภาพแผนที่</small>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="stat-pill"><i class="bi bi-file-earmark-text"></i> <span id="statDocs">-</span> เอกสาร</span>
+                        <span class="stat-pill"><i class="bi bi-image"></i> <span id="statMapImgs">-</span> รูปภาพแผนที่</span>
+                    </div>
+
+                    <!-- Search Row -->
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control border-0" id="globalSearch" placeholder="ค้นหาชื่อไฟล์...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="typeFilter">
+                                <option value="">ทุกประเภท</option>
+                                <option value="pdf">PDF</option>
+                                <option value="image">รูปภาพ</option>
+                                <option value="document">เอกสาร Word/Excel</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="sortFilter">
+                                <option value="newest">ใหม่สุดก่อน</option>
+                                <option value="oldest">เก่าสุดก่อน</option>
+                                <option value="name">ชื่อ A-Z</option>
+                                <option value="size">ขนาดใหญ่สุด</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-white w-100 fw-semibold" id="searchBtn"
+                                style="background:#fff;color:#2b9482;border:none;">
+                                <i class="bi bi-search me-1"></i>ค้นหา
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <ul class="nav nav-pills mb-4" id="downloadTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-tab="docs">
+                            <i class="bi bi-file-earmark-text me-1"></i>เอกสาร
+                            <span class="badge bg-white text-dark ms-1" id="tabCountDocs">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-tab="mapimgs">
+                            <i class="bi bi-images me-1"></i>รูปภาพแผนที่
+                            <span class="badge bg-white text-dark ms-1" id="tabCountMapImgs">0</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- View Toggle (docs tab) -->
+                <div id="viewToggleRow" class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="text-muted small" id="resultCount"></div>
+                    <div class="btn-group btn-group-sm" id="viewToggle">
+                        <button class="btn btn-outline-secondary active" data-view="grid" title="Grid">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" data-view="list" title="List">
+                            <i class="bi bi-list-ul"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Docs Panel -->
+                <div id="panel-docs">
+                    <!-- Grid View -->
+                    <div id="docs-grid" class="row g-3"></div>
+                    <!-- List View -->
+                    <div id="docs-list" style="display:none;">
+                        <div class="card">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width:52px;">ไฟล์</th>
+                                                <th>ชื่อไฟล์</th>
+                                                <th>ประเภท</th>
+                                                <th>ขนาด</th>
+                                                <th>วันที่</th>
+                                                <th style="width:100px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="docs-list-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Images Panel -->
+                <div id="panel-mapimgs" style="display:none;">
+                    <!-- Map Filter -->
+                    <div class="d-flex gap-2 mb-3">
+                        <select class="form-select form-select-sm" id="mapFilter" style="max-width:240px;">
+                            <option value="">ทุก Map</option>
+                        </select>
+                        <select class="form-select form-select-sm" id="imgTypeFilter" style="max-width:160px;">
+                            <option value="">ทุกประเภท</option>
+                            <option value="before">ก่อน</option>
+                            <option value="after">หลัง</option>
+                        </select>
+                    </div>
+                    <div id="mapimgs-gallery" class="row g-3"></div>
+                </div>
+
+                <!-- Docs Pagination -->
+                <div class="d-flex justify-content-center align-items-center gap-2 mt-4" id="paginationWrap"></div>
+
+                <!-- Gallery sentinel (infinite scroll trigger) -->
+                <div id="gallerySentinel" style="height:1px;"></div>
+                <div id="gallerySpinner" class="text-center py-3" style="display:none;">
+                    <div class="spinner-border spinner-border-sm" style="color:#3eb39d;"></div>
+                    <span class="ms-2 text-muted small">กำลังโหลดเพิ่มเติม...</span>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">กำลังโหลด...</span></div>
+            <div class="mt-2">กำลังโหลดข้อมูล...</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/apiClient.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/i18n.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <script>
+        if (!authManager.requireAuth()) {}
+
+        // ── Constants ─────────────────────────────────
+        const DOC_PAGE_SIZE   = 24;   // items per page (docs)
+        const GALLERY_BATCH   = 20;   // items per batch (map images infinite scroll)
+
+        // ── State ──────────────────────────────────────
+        let currentTab  = 'docs';
+        let currentView = 'grid';
+        let allDocs     = [];
+        let allMapImgs  = [];
+        let mapsData    = [];
+
+        // docs pagination
+        let filteredDocs = [];
+        let docPage      = 1;
+
+        // gallery infinite scroll
+        let filteredMapImgs  = [];
+        let galleryOffset    = 0;
+        let galleryLoading   = false;
+        let galleryObserver  = null;
+
+        // ── Components ────────────────────────────────
+        async function loadComponents() {
+            try {
+                await Promise.all([
+                    loadComponent('../components/navMenu.html', 'sidebar'),
+                    loadComponent('../components/header.html', 'main-header')
+                ]);
+                if (window.setBreadcrumb) {
+                    setBreadcrumb([
+                        { label: 'หน้าหลัก', href: '/frontend/pages/dashboard.html' },
+                        { label: 'เอกสาร' },
+                        { label: 'ดาวน์โหลดเอกสาร' }
+                    ]);
+                }
+                const el = document.getElementById('nav-document-download');
+                if (el) el.classList.add('active');
+            } catch (e) { console.error(e); }
+        }
+
+        // ── Utils ─────────────────────────────────────
+        function showToast(msg, type = 'success') {
+            const el = document.getElementById('toastMsg');
+            el.className = `toast align-items-center text-white border-0 bg-${type}`;
+            document.getElementById('toastBody').textContent = msg;
+            bootstrap.Toast.getOrCreateInstance(el, { delay: 3000 }).show();
+        }
+
+        function debounce(fn, ms) {
+            let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+        }
+
+        function formatSize(bytes) {
+            if (!bytes) return '-';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        function formatDate(str) {
+            if (!str) return '-';
+            return new Date(str).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' });
+        }
+
+        function getFileIconClass(type) {
+            if (type === 'pdf') return 'pdf';
+            if (type === 'image') return 'img';
+            return 'doc';
+        }
+        function getFileIcon(type) {
+            if (type === 'pdf') return 'bi-file-earmark-pdf';
+            if (type === 'image') return 'bi-file-earmark-image';
+            return 'bi-file-earmark-word';
+        }
+        function typeBadge(type) {
+            if (type === 'pdf') return '<span class="badge badge-pdf">PDF</span>';
+            if (type === 'image') return '<span class="badge badge-image">รูปภาพ</span>';
+            return '<span class="badge badge-doc">เอกสาร</span>';
+        }
+        function imgTypeBadge(t) {
+            if (t === 'before') return '<span class="badge bg-warning text-dark map-img-badge">ก่อน</span>';
+            if (t === 'after')  return '<span class="badge bg-success map-img-badge">หลัง</span>';
+            return '';
+        }
+
+        // ── Load Data ─────────────────────────────────
+        async function loadDocs() {
+            try {
+                const type = document.getElementById('typeFilter').value;
+                const url  = `/api/documents/db${type ? '?type=' + type : ''}`;
+                const res  = await fetch(url);
+                const data = await res.json();
+                allDocs = data.success ? (data.data || []) : [];
+            } catch { allDocs = []; }
+        }
+
+        async function loadMapImgs() {
+            try {
+                const mapId = document.getElementById('mapFilter').value;
+                const url   = `/api/map-images${mapId ? '?mapId=' + mapId : ''}`;
+                const res   = await fetch(url);
+                const data  = await res.json();
+                allMapImgs = data.success ? (data.data || []) : [];
+            } catch { allMapImgs = []; }
+        }
+
+        async function loadMaps() {
+            try {
+                const res  = await fetch('/api/map-images/maps');
+                const data = await res.json();
+                mapsData   = data.data || [];
+                const opts = mapsData.map(m => `<option value="${m.id}">${m.name_local || m.house_no || 'Map #' + m.id}</option>`).join('');
+                document.getElementById('mapFilter').innerHTML = '<option value="">ทุก Map</option>' + opts;
+            } catch {}
+        }
+
+        // ── Filter & Sort ─────────────────────────────
+        function applyFilters(arr) {
+            const q    = document.getElementById('globalSearch').value.toLowerCase().trim();
+            const sort = document.getElementById('sortFilter').value;
+            let result = arr.filter(r => !q || (r.namefile || '').toLowerCase().includes(q));
+            result.sort((a, b) => {
+                if (sort === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
+                if (sort === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
+                if (sort === 'name')   return (a.namefile || '').localeCompare(b.namefile || '');
+                if (sort === 'size')   return (b.size || 0) - (a.size || 0);
+                return 0;
+            });
+            return result;
+        }
+
+        function applyMapImgFilters(arr) {
+            const q       = document.getElementById('globalSearch').value.toLowerCase().trim();
+            const imgType = document.getElementById('imgTypeFilter').value;
+            return arr.filter(r =>
+                (!q || (r.namefile || '').toLowerCase().includes(q)) &&
+                (!imgType || r.imageType === imgType)
+            );
+        }
+
+        // ── Docs: Paginated Render ─────────────────────
+        function renderDocs(resetPage = true) {
+            filteredDocs = applyFilters(allDocs);
+            if (resetPage) docPage = 1;
+
+            const total = filteredDocs.length;
+            document.getElementById('resultCount').textContent = `พบ ${total} รายการ`;
+            document.getElementById('tabCountDocs').textContent = total;
+            document.getElementById('statDocs').textContent    = allDocs.length;
+
+            const start  = (docPage - 1) * DOC_PAGE_SIZE;
+            const page   = filteredDocs.slice(start, start + DOC_PAGE_SIZE);
+
+            if (currentView === 'grid') renderDocsGrid(page);
+            else renderDocsList(page);
+
+            renderDocPagination(total);
+        }
+
+        function renderDocPagination(total) {
+            const pages = Math.ceil(total / DOC_PAGE_SIZE);
+            const wrap  = document.getElementById('paginationWrap');
+
+            // hide when not in docs tab or only 1 page
+            wrap.style.display = (currentTab === 'docs' && pages > 1) ? '' : 'none';
+            if (pages <= 1) { wrap.innerHTML = ''; return; }
+
+            const maxBtns = 5;
+            let start = Math.max(1, docPage - Math.floor(maxBtns / 2));
+            let end   = Math.min(pages, start + maxBtns - 1);
+            if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+
+            let html = `
+                <nav><ul class="pagination pagination-sm mb-0">
+                    <li class="page-item ${docPage === 1 ? 'disabled' : ''}">
+                        <button class="page-link" onclick="goDocPage(${docPage - 1})">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                    </li>`;
+            if (start > 1) html += `<li class="page-item"><button class="page-link" onclick="goDocPage(1)">1</button></li>${start > 2 ? '<li class="page-item disabled"><span class="page-link">…</span></li>' : ''}`;
+            for (let p = start; p <= end; p++) {
+                html += `<li class="page-item ${p === docPage ? 'active' : ''}">
+                    <button class="page-link" onclick="goDocPage(${p})" ${p === docPage ? `style="background:#3eb39d;border-color:#3eb39d;"` : ''}>${p}</button>
+                </li>`;
+            }
+            if (end < pages) html += `${end < pages - 1 ? '<li class="page-item disabled"><span class="page-link">…</span></li>' : ''}<li class="page-item"><button class="page-link" onclick="goDocPage(${pages})">${pages}</button></li>`;
+            html += `<li class="page-item ${docPage === pages ? 'disabled' : ''}">
+                        <button class="page-link" onclick="goDocPage(${docPage + 1})">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </li>
+                </ul></nav>
+                <small class="text-muted">หน้า ${docPage} / ${pages} (${total} รายการ)</small>`;
+            wrap.innerHTML = html;
+        }
+
+        function goDocPage(p) {
+            const pages = Math.ceil(filteredDocs.length / DOC_PAGE_SIZE);
+            if (p < 1 || p > pages) return;
+            docPage = p;
+            renderDocs(false);
+            document.getElementById('panel-docs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderDocsGrid(docs) {
+            const grid = document.getElementById('docs-grid');
+            if (!docs.length) {
+                grid.innerHTML = `<div class="col-12"><div class="empty-state"><i class="bi bi-folder2-open"></i><p>ไม่พบเอกสาร</p></div></div>`;
+                return;
+            }
+            grid.innerHTML = docs.map(r => {
+                const iconClass = getFileIconClass(r.fileType);
+                const icon      = getFileIcon(r.fileType);
+                const isImg     = r.fileType === 'image';
+                const thumb     = isImg ? `<img src="${r.url}" loading="lazy" class="img-thumb mb-2" style="width:100%;height:80px;object-fit:cover;border-radius:8px;">` : '';
+                return `
+                <div class="col-sm-6 col-md-4 col-lg-3">
+                    <div class="doc-card">
+                        ${thumb}
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="doc-card-icon ${iconClass}"><i class="bi ${icon}"></i></div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <div class="fw-semibold small text-truncate" title="${r.namefile}">${r.namefile}</div>
+                                <small class="text-muted">${formatSize(r.size)}</small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-1 mt-auto pt-2 border-top">
+                            ${typeBadge(r.fileType)}
+                            <small class="text-muted ms-auto">${formatDate(r.createdAt)}</small>
+                        </div>
+                        <a href="${r.url}" download class="btn btn-sm w-100 mt-2 fw-semibold"
+                            style="background:#3eb39d;color:#fff;border:none;"
+                            onclick="showToast('กำลังดาวน์โหลด...','success')">
+                            <i class="bi bi-download me-1"></i>ดาวน์โหลด
+                        </a>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderDocsList(docs) {
+            const tbody = document.getElementById('docs-list-body');
+            if (!docs.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-5">ไม่พบเอกสาร</td></tr>';
+                return;
+            }
+            tbody.innerHTML = docs.map(r => {
+                const iconClass = getFileIconClass(r.fileType);
+                const icon      = getFileIcon(r.fileType);
+                return `
+                <tr>
+                    <td>${r.fileType === 'image'
+                        ? `<img src="${r.url}" loading="lazy" class="img-thumb" style="cursor:pointer;" onclick="openLightbox('${r.url}','${r.namefile}')">`
+                        : `<div class="doc-card-icon ${iconClass}" style="width:40px;height:40px;font-size:1.2rem;"><i class="bi ${icon}"></i></div>`}
+                    </td>
+                    <td><div class="fw-semibold small text-truncate" style="max-width:220px;" title="${r.namefile}">${r.namefile}</div></td>
+                    <td>${typeBadge(r.fileType)}</td>
+                    <td><small class="text-muted">${formatSize(r.size)}</small></td>
+                    <td><small class="text-muted">${formatDate(r.createdAt)}</small></td>
+                    <td>
+                        <a href="${r.url}" download class="btn btn-sm"
+                            style="background:#3eb39d;color:#fff;border:none;"
+                            onclick="showToast('กำลังดาวน์โหลด...','success')">
+                            <i class="bi bi-download me-1"></i>ดาวน์โหลด
+                        </a>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        // ── Gallery: Infinite Scroll ───────────────────
+        function setupGalleryObserver() {
+            if (galleryObserver) galleryObserver.disconnect();
+            galleryObserver = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting) appendGalleryBatch();
+            }, { rootMargin: '200px' });
+            galleryObserver.observe(document.getElementById('gallerySentinel'));
+        }
+
+        function renderMapImgs() {
+            filteredMapImgs = applyMapImgFilters(allMapImgs);
+            galleryOffset   = 0;
+            document.getElementById('tabCountMapImgs').textContent = filteredMapImgs.length;
+            document.getElementById('statMapImgs').textContent     = allMapImgs.length;
+
+            const gallery = document.getElementById('mapimgs-gallery');
+            gallery.innerHTML = '';
+
+            if (!filteredMapImgs.length) {
+                gallery.innerHTML = `<div class="col-12"><div class="empty-state"><i class="bi bi-images"></i><p>ไม่พบรูปภาพแผนที่</p></div></div>`;
+                document.getElementById('gallerySpinner').style.display = 'none';
+                return;
+            }
+            appendGalleryBatch();
+            setupGalleryObserver();
+        }
+
+        function appendGalleryBatch() {
+            if (galleryLoading) return;
+            const batch = filteredMapImgs.slice(galleryOffset, galleryOffset + GALLERY_BATCH);
+            if (!batch.length) {
+                document.getElementById('gallerySpinner').style.display = 'none';
+                if (galleryObserver) galleryObserver.disconnect();
+                return;
+            }
+
+            galleryLoading = true;
+            document.getElementById('gallerySpinner').style.display = 'block';
+
+            const gallery = document.getElementById('mapimgs-gallery');
+            const frag = document.createDocumentFragment();
+
+            batch.forEach(r => {
+                const mapLabel = r.mapDirect ? `Map #${r.mapDirect.id} ${r.mapDirect.name_local || ''}` : '';
+                const badge    = imgTypeBadge(r.imageType);
+                const col      = document.createElement('div');
+                col.className  = 'col-sm-6 col-md-4 col-lg-3';
+                col.innerHTML  = `
+                    <div class="map-img-item" style="cursor:pointer;">
+                        <img src="${r.url}" loading="lazy" alt="${r.namefile}"
+                            onclick="openLightbox('${r.url}','${r.namefile}')">
+                        ${badge}
+                        <div class="map-img-overlay">
+                            <div class="map-img-actions">
+                                <button class="btn btn-sm btn-light" onclick="openLightbox('${r.url}','${r.namefile}')">
+                                    <i class="bi bi-zoom-in"></i>
+                                </button>
+                                <a href="${r.url}" download="${r.namefile}" class="btn btn-sm btn-success"
+                                    onclick="showToast('กำลังดาวน์โหลด...','success')">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-1 px-1">
+                        <div class="small fw-semibold text-truncate" title="${r.namefile}">${r.namefile}</div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">${mapLabel || formatDate(r.createdAt)}</small>
+                            <small class="text-muted">${formatSize(r.size)}</small>
+                        </div>
+                    </div>`;
+                frag.appendChild(col);
+            });
+
+            // small delay so browser doesn't block paint
+            requestAnimationFrame(() => {
+                gallery.appendChild(frag);
+                galleryOffset  += batch.length;
+                galleryLoading  = false;
+                document.getElementById('gallerySpinner').style.display =
+                    galleryOffset < filteredMapImgs.length ? 'block' : 'none';
+                if (galleryOffset >= filteredMapImgs.length && galleryObserver) {
+                    galleryObserver.disconnect();
+                }
+            });
+        }
+
+        // ── Lightbox ──────────────────────────────────
+        function openLightbox(url, name) {
+            document.getElementById('lightboxImg').src = url;
+            document.getElementById('lightboxDownload').href     = url;
+            document.getElementById('lightboxDownload').download = name;
+            document.getElementById('lightboxBackdrop').classList.add('show');
+        }
+        function closeLightbox() {
+            document.getElementById('lightboxBackdrop').classList.remove('show');
+            document.getElementById('lightboxImg').src = '';
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+        // ── Tab Switch ────────────────────────────────
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTab = btn.dataset.tab;
+                document.getElementById('panel-docs').style.display      = currentTab === 'docs'    ? '' : 'none';
+                document.getElementById('panel-mapimgs').style.display   = currentTab === 'mapimgs' ? '' : 'none';
+                document.getElementById('viewToggleRow').style.display   = currentTab === 'docs'    ? '' : 'none';
+                document.getElementById('paginationWrap').style.display  = currentTab === 'docs'    ? '' : 'none';
+                document.getElementById('gallerySentinel').style.display = currentTab === 'mapimgs' ? '' : 'none';
+                if (currentTab === 'mapimgs') renderMapImgs();
+            });
+        });
+
+        // ── View Toggle ───────────────────────────────
+        document.querySelectorAll('[data-view]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+                document.getElementById('docs-grid').style.display = currentView === 'grid' ? '' : 'none';
+                document.getElementById('docs-list').style.display = currentView === 'list' ? '' : 'none';
+                renderDocs();
+            });
+        });
+
+        // ── Events ────────────────────────────────────
+        const debouncedSearch = debounce(() => {
+            if (currentTab === 'docs') renderDocs();
+            else renderMapImgs();
+        }, 300);
+
+        document.getElementById('searchBtn').addEventListener('click', refreshAll);
+        document.getElementById('globalSearch').addEventListener('input', debouncedSearch);
+        document.getElementById('globalSearch').addEventListener('keydown', e => { if (e.key === 'Enter') refreshAll(); });
+        document.getElementById('typeFilter').addEventListener('change', async () => { await loadDocs(); renderDocs(); });
+        document.getElementById('sortFilter').addEventListener('change', () => renderDocs());
+        document.getElementById('mapFilter').addEventListener('change', async () => { await loadMapImgs(); renderMapImgs(); });
+        document.getElementById('imgTypeFilter').addEventListener('change', () => renderMapImgs());
+
+        async function refreshAll() {
+            await Promise.all([loadDocs(), loadMapImgs()]);
+            renderDocs();
+            if (currentTab === 'mapimgs') renderMapImgs();
+        }
+
+        // ── Init ──────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadComponents();
+            await Promise.all([loadDocs(), loadMapImgs(), loadMaps()]);
+            renderDocs();
+            // gallery observer will be set up when tab is switched to mapimgs
+            // pre-render map imgs for tab count only (no DOM append yet)
+            filteredMapImgs = applyMapImgFilters(allMapImgs);
+            document.getElementById('tabCountMapImgs').textContent = filteredMapImgs.length;
+            document.getElementById('statMapImgs').textContent     = allMapImgs.length;
+        });
+    </script>
+</body>
+
+</html>

@@ -19,27 +19,31 @@ const { authenticate, authorize } = require('../middleware/auth')
  *       200: { description: List of bus rounds }
  */
 router.get('/', async (req, res) => {
-  const rounds = await prisma.busRound.findMany({
-    include: {
-      trip: true,
-      _count: {
-        select: {
-          seatBookings: {
-            where: {
-              bookingId: { not: null },
-              booking: { status: { not: 'CANCELLED' } }
+  try {
+    const rounds = await prisma.busRound.findMany({
+      include: {
+        trip: true,
+        _count: {
+          select: {
+            seatBookings: {
+              where: {
+                bookingId: { not: null },
+                booking: { status: { not: 'CANCELLED' } }
+              }
             }
           }
         }
       }
-    }
-  })
-  // Override cached bookedSeats with real-time count from SeatBooking
-  const result = rounds.map(({ _count, ...r }) => ({
-    ...r,
-    bookedSeats: _count.seatBookings
-  }))
-  res.json(result)
+    })
+    // Override cached bookedSeats with real-time count from SeatBooking
+    const result = rounds.map(({ _count, ...r }) => ({
+      ...r,
+      bookedSeats: _count.seatBookings
+    }))
+    res.json(result)
+  } catch (e) {
+    res.status(500).json({ message: e.message })
+  }
 })
 
 /**
@@ -57,27 +61,31 @@ router.get('/', async (req, res) => {
  *       200: { description: List }
  */
 router.get('/trip/:tripId', async (req, res) => {
-  const rounds = await prisma.busRound.findMany({
-    where: { tripId: Number(req.params.tripId) },
-    include: {
-      trip: true,
-      _count: {
-        select: {
-          seatBookings: {
-            where: {
-              bookingId: { not: null },
-              booking: { status: { not: 'CANCELLED' } }
+  try {
+    const rounds = await prisma.busRound.findMany({
+      where: { tripId: Number(req.params.tripId) },
+      include: {
+        trip: true,
+        _count: {
+          select: {
+            seatBookings: {
+              where: {
+                bookingId: { not: null },
+                booking: { status: { not: 'CANCELLED' } }
+              }
             }
           }
         }
       }
-    }
-  })
-  const result = rounds.map(({ _count, ...r }) => ({
-    ...r,
-    bookedSeats: _count.seatBookings
-  }))
-  res.json(result)
+    })
+    const result = rounds.map(({ _count, ...r }) => ({
+      ...r,
+      bookedSeats: _count.seatBookings
+    }))
+    res.json(result)
+  } catch (e) {
+    res.status(500).json({ message: e.message })
+  }
 })
 
 /**

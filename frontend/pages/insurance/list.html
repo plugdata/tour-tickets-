@@ -1,176 +1,187 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>กรมธรรม์ประกันภัย - Tour Backoffice</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link href="../../assets/css/admin.css" rel="stylesheet">
 </head>
+
 <body>
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
-<div class="d-flex">
-    <nav class="sidebar bg-white border-end" id="sidebar"></nav>
-    <main class="main-content flex-fill">
-        <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
-        <div class="page-content">
-            <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div>
-                    <h1 class="page-title"><i class="bi bi-shield-check me-2 text-primary"></i>กรมธรรม์ประกันภัย</h1>
-                    <p class="page-subtitle">รายการฟอร์มประกันภัยของลูกค้า</p>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="d-flex">
+        <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+        <main class="main-content flex-fill">
+            <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+            <div class="page-content">
+                <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h1 class="page-title"><i class="bi bi-shield-check me-2 text-primary"></i>กรมธรรม์ประกันภัย
+                        </h1>
+                        <p class="page-subtitle">รายการฟอร์มประกันภัยของลูกค้า</p>
+                    </div>
+                    <a href="form.html" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i>เพิ่มฟอร์มใหม่
+                    </a>
                 </div>
-                <a href="form.html" class="btn btn-primary">
-                    <i class="bi bi-plus-lg me-1"></i>เพิ่มฟอร์มใหม่
-                </a>
-            </div>
 
-            <!-- Filter Bar -->
-            <div class="card mb-4">
-                <div class="card-body py-2">
-                    <div class="d-flex flex-wrap gap-2 align-items-center">
-                        <span class="text-muted small">กรองสถานะ:</span>
-                        <button class="btn btn-sm btn-outline-secondary filter-btn active" data-status="">ทั้งหมด</button>
-                        <button class="btn btn-sm btn-outline-warning filter-btn" data-status="DRAFT">ร่าง</button>
-                        <button class="btn btn-sm btn-outline-info filter-btn" data-status="SUBMITTED">รอตรวจสอบ</button>
-                        <button class="btn btn-sm btn-outline-success filter-btn" data-status="APPROVED">อนุมัติแล้ว</button>
-                        <button class="btn btn-sm btn-outline-danger filter-btn" data-status="REJECTED">ปฏิเสธ</button>
-                        <div class="ms-auto">
-                            <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="ค้นหาชื่อ / เลขบัตร...">
+                <!-- Filter Bar -->
+                <div class="card mb-4">
+                    <div class="card-body py-2">
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <span class="text-muted small">กรองสถานะ:</span>
+                            <button class="btn btn-sm btn-outline-secondary filter-btn active"
+                                data-status="">ทั้งหมด</button>
+                            <button class="btn btn-sm btn-outline-warning filter-btn" data-status="DRAFT">ร่าง</button>
+                            <button class="btn btn-sm btn-outline-info filter-btn"
+                                data-status="SUBMITTED">รอตรวจสอบ</button>
+                            <button class="btn btn-sm btn-outline-success filter-btn"
+                                data-status="APPROVED">อนุมัติแล้ว</button>
+                            <button class="btn btn-sm btn-outline-danger filter-btn"
+                                data-status="REJECTED">ปฏิเสธ</button>
+                            <div class="ms-auto">
+                                <input type="text" class="form-control form-control-sm" id="searchInput"
+                                    placeholder="ค้นหาชื่อ / เลขบัตร...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card bg-secondary" style="padding:1rem">
+                            <div class="stat-value" id="cntAll">-</div>
+                            <div class="stat-label">ทั้งหมด</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card" style="background:#0dcaf0;padding:1rem">
+                            <div class="stat-value" id="cntSubmitted">-</div>
+                            <div class="stat-label">รอตรวจสอบ</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card bg-success" style="padding:1rem">
+                            <div class="stat-value" id="cntApproved">-</div>
+                            <div class="stat-label">อนุมัติแล้ว</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card bg-danger" style="padding:1rem">
+                            <div class="stat-value" id="cntRejected">-</div>
+                            <div class="stat-label">ปฏิเสธ</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div id="loadingState" class="text-center py-5">
+                            <div class="spinner-border text-primary"></div>
+                            <div class="mt-2 text-muted">กำลังโหลด...</div>
+                        </div>
+                        <div id="tableWrap" class="d-none">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>ชื่อ-นามสกุล</th>
+                                            <th>เลขบัตรประชาชน</th>
+                                            <th>หมู่เลือด</th>
+                                            <th>ผู้รับประโยชน์</th>
+                                            <th>สถานะ</th>
+                                            <th>เลขกรมธรรม์</th>
+                                            <th>วันที่ส่ง</th>
+                                            <th class="text-center">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableBody"></tbody>
+                                </table>
+                            </div>
+                            <div id="emptyState" class="text-center py-5 d-none">
+                                <i class="bi bi-inbox fs-1 text-muted"></i>
+                                <p class="text-muted mt-2">ไม่พบข้อมูล</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </main>
+    </div>
 
-            <!-- Stats Row -->
-            <div class="row g-3 mb-4">
-                <div class="col-6 col-md-3">
-                    <div class="stat-card bg-secondary" style="padding:1rem">
-                        <div class="stat-value" id="cntAll">-</div>
-                        <div class="stat-label">ทั้งหมด</div>
-                    </div>
+    <!-- Review Modal -->
+    <div class="modal fade" id="reviewModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-clipboard-check me-2"></i>ตรวจสอบกรมธรรม์</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="stat-card" style="background:#0dcaf0;padding:1rem">
-                        <div class="stat-value" id="cntSubmitted">-</div>
-                        <div class="stat-label">รอตรวจสอบ</div>
+                <div class="modal-body">
+                    <input type="hidden" id="reviewId">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">ผู้ยื่น</label>
+                        <p class="mb-0" id="reviewName">-</p>
                     </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="stat-card bg-success" style="padding:1rem">
-                        <div class="stat-value" id="cntApproved">-</div>
-                        <div class="stat-label">อนุมัติแล้ว</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="stat-card bg-danger" style="padding:1rem">
-                        <div class="stat-value" id="cntRejected">-</div>
-                        <div class="stat-label">ปฏิเสธ</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Table -->
-            <div class="card">
-                <div class="card-body p-0">
-                    <div id="loadingState" class="text-center py-5">
-                        <div class="spinner-border text-primary"></div>
-                        <div class="mt-2 text-muted">กำลังโหลด...</div>
-                    </div>
-                    <div id="tableWrap" class="d-none">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>#</th>
-                                        <th>ชื่อ-นามสกุล</th>
-                                        <th>เลขบัตรประชาชน</th>
-                                        <th>หมู่เลือด</th>
-                                        <th>ผู้รับประโยชน์</th>
-                                        <th>สถานะ</th>
-                                        <th>เลขกรมธรรม์</th>
-                                        <th>วันที่ส่ง</th>
-                                        <th class="text-center">จัดการ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tableBody"></tbody>
-                            </table>
-                        </div>
-                        <div id="emptyState" class="text-center py-5 d-none">
-                            <i class="bi bi-inbox fs-1 text-muted"></i>
-                            <p class="text-muted mt-2">ไม่พบข้อมูล</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">ผลการตรวจสอบ</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success flex-fill" id="btnApprove">
+                                <i class="bi bi-check-lg me-1"></i>อนุมัติ
+                            </button>
+                            <button class="btn btn-danger flex-fill" id="btnReject">
+                                <i class="bi bi-x-lg me-1"></i>ปฏิเสธ
+                            </button>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </main>
-</div>
-
-<!-- Review Modal -->
-<div class="modal fade" id="reviewModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-clipboard-check me-2"></i>ตรวจสอบกรมธรรม์</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="reviewId">
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">ผู้ยื่น</label>
-                    <p class="mb-0" id="reviewName">-</p>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">ผลการตรวจสอบ</label>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-success flex-fill" id="btnApprove">
-                            <i class="bi bi-check-lg me-1"></i>อนุมัติ
-                        </button>
-                        <button class="btn btn-danger flex-fill" id="btnReject">
-                            <i class="bi bi-x-lg me-1"></i>ปฏิเสธ
-                        </button>
+                    <div class="mb-3" id="policyNoWrap">
+                        <label class="form-label fw-semibold">เลขกรมธรรม์ <span
+                                class="text-muted small">(กรณีอนุมัติ)</span></label>
+                        <input type="text" class="form-control" id="issuedPolicyNo" placeholder="เช่น POL-2025-0001">
+                    </div>
+                    <div class="mb-3 d-none" id="rejectReasonWrap">
+                        <label class="form-label fw-semibold">เหตุผลที่ปฏิเสธ <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rejectReason" rows="3"
+                            placeholder="ระบุเหตุผล..."></textarea>
                     </div>
                 </div>
-                <div class="mb-3" id="policyNoWrap">
-                    <label class="form-label fw-semibold">เลขกรมธรรม์ <span class="text-muted small">(กรณีอนุมัติ)</span></label>
-                    <input type="text" class="form-control" id="issuedPolicyNo" placeholder="เช่น POL-2025-0001">
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button class="btn btn-primary" id="btnSaveReview">บันทึก</button>
                 </div>
-                <div class="mb-3 d-none" id="rejectReasonWrap">
-                    <label class="form-label fw-semibold">เหตุผลที่ปฏิเสธ <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="rejectReason" rows="3" placeholder="ระบุเหตุผล..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                <button class="btn btn-primary" id="btnSaveReview">บันทึก</button>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../assets/js/config.js"></script>
-<script src="../../assets/js/auth.js"></script>
-<script src="../../assets/js/apiClient.js"></script>
-<script src="../../assets/js/app.js"></script>
-<script>
-const STATUS_LABEL = { DRAFT:'ร่าง', SUBMITTED:'รอตรวจสอบ', APPROVED:'อนุมัติแล้ว', REJECTED:'ปฏิเสธ' }
-const STATUS_BADGE = { DRAFT:'bg-secondary', SUBMITTED:'bg-info text-dark', APPROVED:'bg-success', REJECTED:'bg-danger' }
-const RELATION_LABEL = { LEGAL_HEIR:'ทายาทตามกฎหมาย', SPOUSE:'คู่สมรส', FATHER:'บิดา', MOTHER:'มารดา', SIBLING:'พี่น้อง', OTHER:'อื่น ๆ' }
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/apiClient.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        const STATUS_LABEL = { DRAFT: 'ร่าง', SUBMITTED: 'รอตรวจสอบ', APPROVED: 'อนุมัติแล้ว', REJECTED: 'ปฏิเสธ' }
+        const STATUS_BADGE = { DRAFT: 'bg-secondary', SUBMITTED: 'bg-info text-dark', APPROVED: 'bg-success', REJECTED: 'bg-danger' }
+        const RELATION_LABEL = { LEGAL_HEIR: 'ทายาทตามกฎหมาย', SPOUSE: 'คู่สมรส', FATHER: 'บิดา', MOTHER: 'มารดา', SIBLING: 'พี่น้อง', OTHER: 'อื่น ๆ' }
 
-let allForms = []
-let currentStatus = ''
-let reviewAction = null
-const modal = new bootstrap.Modal(document.getElementById('reviewModal'))
+        let allForms = []
+        let currentStatus = ''
+        let reviewAction = null
+        const modal = new bootstrap.Modal(document.getElementById('reviewModal'))
 
-function renderTable(data) {
-    const tbody = document.getElementById('tableBody')
-    const empty = document.getElementById('emptyState')
-    if (!data.length) { tbody.innerHTML = ''; empty.classList.remove('d-none'); return }
-    empty.classList.add('d-none')
-    tbody.innerHTML = data.map((f, i) => `
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody')
+            const empty = document.getElementById('emptyState')
+            if (!data.length) { tbody.innerHTML = ''; empty.classList.remove('d-none'); return }
+            empty.classList.add('d-none')
+            tbody.innerHTML = data.map((f, i) => `
         <tr>
             <td class="text-muted small">${i + 1}</td>
             <td>
@@ -191,95 +202,96 @@ function renderTable(data) {
                     <a href="form.html?id=${f.id}" class="btn btn-sm btn-outline-primary" title="ดูรายละเอียด">
                         <i class="bi bi-eye"></i>
                     </a>
-                    ${f.status === 'SUBMITTED' ? `<button class="btn btn-sm btn-outline-success" onclick="openReview(${f.id},'${f.seatBooking?.namePrefix||''} ${f.seatBooking?.firstName||''} ${f.seatBooking?.lastName||''}')" title="ตรวจสอบ"><i class="bi bi-clipboard-check"></i></button>` : ''}
+                    ${f.status === 'SUBMITTED' ? `<button class="btn btn-sm btn-outline-success" onclick="openReview(${f.id},'${f.seatBooking?.namePrefix || ''} ${f.seatBooking?.firstName || ''} ${f.seatBooking?.lastName || ''}')" title="ตรวจสอบ"><i class="bi bi-clipboard-check"></i></button>` : ''}
                 </div>
             </td>
         </tr>
     `).join('')
-}
+        }
 
-function applyFilter() {
-    const q = document.getElementById('searchInput').value.toLowerCase()
-    let data = currentStatus ? allForms.filter(f => f.status === currentStatus) : allForms
-    if (q) data = data.filter(f =>
-        `${f.seatBooking?.firstName||''} ${f.seatBooking?.lastName||''}`.toLowerCase().includes(q) ||
-        (f.seatBooking?.nationalId || '').includes(q)
-    )
-    renderTable(data)
-}
+        function applyFilter() {
+            const q = document.getElementById('searchInput').value.toLowerCase()
+            let data = currentStatus ? allForms.filter(f => f.status === currentStatus) : allForms
+            if (q) data = data.filter(f =>
+                `${f.seatBooking?.firstName || ''} ${f.seatBooking?.lastName || ''}`.toLowerCase().includes(q) ||
+                (f.seatBooking?.nationalId || '').includes(q)
+            )
+            renderTable(data)
+        }
 
-function openReview(id, name) {
-    document.getElementById('reviewId').value = id
-    document.getElementById('reviewName').textContent = name
-    document.getElementById('issuedPolicyNo').value = ''
-    document.getElementById('rejectReason').value = ''
-    document.getElementById('rejectReasonWrap').classList.add('d-none')
-    document.getElementById('policyNoWrap').classList.remove('d-none')
-    reviewAction = null
-    modal.show()
-}
+        function openReview(id, name) {
+            document.getElementById('reviewId').value = id
+            document.getElementById('reviewName').textContent = name
+            document.getElementById('issuedPolicyNo').value = ''
+            document.getElementById('rejectReason').value = ''
+            document.getElementById('rejectReasonWrap').classList.add('d-none')
+            document.getElementById('policyNoWrap').classList.remove('d-none')
+            reviewAction = null
+            modal.show()
+        }
 
-document.getElementById('btnApprove').onclick = () => {
-    reviewAction = 'APPROVED'
-    document.getElementById('btnApprove').classList.replace('btn-outline-success','btn-success')
-    document.getElementById('btnReject').classList.replace('btn-danger','btn-outline-danger')
-    document.getElementById('policyNoWrap').classList.remove('d-none')
-    document.getElementById('rejectReasonWrap').classList.add('d-none')
-}
-document.getElementById('btnReject').onclick = () => {
-    reviewAction = 'REJECTED'
-    document.getElementById('btnReject').classList.replace('btn-outline-danger','btn-danger')
-    document.getElementById('btnApprove').classList.replace('btn-success','btn-outline-success')
-    document.getElementById('policyNoWrap').classList.add('d-none')
-    document.getElementById('rejectReasonWrap').classList.remove('d-none')
-}
+        document.getElementById('btnApprove').onclick = () => {
+            reviewAction = 'APPROVED'
+            document.getElementById('btnApprove').classList.replace('btn-outline-success', 'btn-success')
+            document.getElementById('btnReject').classList.replace('btn-danger', 'btn-outline-danger')
+            document.getElementById('policyNoWrap').classList.remove('d-none')
+            document.getElementById('rejectReasonWrap').classList.add('d-none')
+        }
+        document.getElementById('btnReject').onclick = () => {
+            reviewAction = 'REJECTED'
+            document.getElementById('btnReject').classList.replace('btn-outline-danger', 'btn-danger')
+            document.getElementById('btnApprove').classList.replace('btn-success', 'btn-outline-success')
+            document.getElementById('policyNoWrap').classList.add('d-none')
+            document.getElementById('rejectReasonWrap').classList.remove('d-none')
+        }
 
-document.getElementById('btnSaveReview').onclick = async () => {
-    if (!reviewAction) return showToast('กรุณาเลือกผลการตรวจสอบ', 'warning')
-    const id = Number(document.getElementById('reviewId').value)
-    const payload = { status: reviewAction }
-    if (reviewAction === 'APPROVED') payload.issuedPolicyNo = document.getElementById('issuedPolicyNo').value
-    if (reviewAction === 'REJECTED') {
-        payload.rejectReason = document.getElementById('rejectReason').value
-        if (!payload.rejectReason) return showToast('กรุณาระบุเหตุผล', 'warning')
-    }
-    try {
-        await API.insurance.review(id, payload)
-        modal.hide()
-        showToast('บันทึกผลสำเร็จ')
-        loadData()
-    } catch (e) { showToast(e.message, 'danger') }
-}
+        document.getElementById('btnSaveReview').onclick = async () => {
+            if (!reviewAction) return showToast('กรุณาเลือกผลการตรวจสอบ', 'warning')
+            const id = Number(document.getElementById('reviewId').value)
+            const payload = { status: reviewAction }
+            if (reviewAction === 'APPROVED') payload.issuedPolicyNo = document.getElementById('issuedPolicyNo').value
+            if (reviewAction === 'REJECTED') {
+                payload.rejectReason = document.getElementById('rejectReason').value
+                if (!payload.rejectReason) return showToast('กรุณาระบุเหตุผล', 'warning')
+            }
+            try {
+                await API.insurance.review(id, payload)
+                modal.hide()
+                showToast('บันทึกผลสำเร็จ')
+                loadData()
+            } catch (e) { showToast(e.message, 'danger') }
+        }
 
-async function loadData() {
-    try {
-        allForms = await API.insurance.list()
-        document.getElementById('cntAll').textContent = allForms.length
-        document.getElementById('cntSubmitted').textContent = allForms.filter(f=>f.status==='SUBMITTED').length
-        document.getElementById('cntApproved').textContent = allForms.filter(f=>f.status==='APPROVED').length
-        document.getElementById('cntRejected').textContent = allForms.filter(f=>f.status==='REJECTED').length
-        applyFilter()
-        document.getElementById('loadingState').classList.add('d-none')
-        document.getElementById('tableWrap').classList.remove('d-none')
-    } catch (e) {
-        document.getElementById('loadingState').innerHTML = `<i class="bi bi-exclamation-triangle text-danger fs-3"></i><p class="text-danger mt-2">${e.message}</p>`
-    }
-}
+        async function loadData() {
+            try {
+                allForms = await API.insurance.list()
+                document.getElementById('cntAll').textContent = allForms.length
+                document.getElementById('cntSubmitted').textContent = allForms.filter(f => f.status === 'SUBMITTED').length
+                document.getElementById('cntApproved').textContent = allForms.filter(f => f.status === 'APPROVED').length
+                document.getElementById('cntRejected').textContent = allForms.filter(f => f.status === 'REJECTED').length
+                applyFilter()
+                document.getElementById('loadingState').classList.add('d-none')
+                document.getElementById('tableWrap').classList.remove('d-none')
+            } catch (e) {
+                document.getElementById('loadingState').innerHTML = `<i class="bi bi-exclamation-triangle text-danger fs-3"></i><p class="text-danger mt-2">${e.message}</p>`
+            }
+        }
 
-document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.onclick = function() {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'))
-        this.classList.add('active')
-        currentStatus = this.dataset.status
-        applyFilter()
-    }
-})
-document.getElementById('searchInput').oninput = applyFilter
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.onclick = function () {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'))
+                this.classList.add('active')
+                currentStatus = this.dataset.status
+                applyFilter()
+            }
+        })
+        document.getElementById('searchInput').oninput = applyFilter
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await initPage()
-    loadData()
-})
-</script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initPage()
+            loadData()
+        })
+    </script>
 </body>
+
 </html>

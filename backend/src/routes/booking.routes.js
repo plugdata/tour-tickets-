@@ -103,7 +103,7 @@ router.post('/', authenticate, async (req, res) => {
       }
     }
 
-    const totalAmount = round.trip.price * seats + addonTotal
+    const totalAmount = (round.trip.price + (round.extraPrice || 0)) * seats + addonTotal
 
     const booking = await prisma.booking.create({
       data: {

@@ -15,29 +15,36 @@
     <main class="main-content flex-fill">
         <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
         <div class="page-content">
-            <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="page-header d-flex justify-content-between align-items-center">
                 <div><h1 class="page-title">ทริปท่องเที่ยว</h1><p class="page-subtitle">จัดการทริปและแพ็กเกจท่องเที่ยว</p></div>
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <!-- ค้นหาชื่อ -->
-                    <div class="input-group shadow-sm" style="width: 280px;">
-                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                        <input type="text" class="form-control border-start-0" id="searchTrip" placeholder="ค้นหาชื่อทริป..." onkeyup="if(event.key==='Enter') loadTrips()">
-                    </div>
+                <button class="btn btn-primary" onclick="openModal()"><i class="bi bi-plus-lg me-1"></i>เพิ่มทริป</button>
+            </div>
 
-                    <!-- ค้นหาเป็นช่วงเวลา -->
-                    <div class="input-group shadow-sm" style="width: 380px;">
-                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-calendar3 text-muted"></i></span>
-                        <input type="text" class="form-control border-end-0 text-dark bg-white" id="startDate"
-                            placeholder="เริ่มวันที่" readonly style="font-size: .85rem;">
-                        <span class="input-group-text bg-white border-start-0 border-end-0 text-muted px-1">ถึง</span>
-                        <input type="text" class="form-control border-start-0 text-dark bg-white" id="endDate"
-                            placeholder="ถึงวันที่" readonly style="font-size: .85rem;">
-                        <button class="btn btn-outline-secondary border-start-0" onclick="clearDateRange()" title="ล้าง">
-                            <i class="bi bi-x"></i>
-                        </button>
+            <!-- Filter Card -->
+            <div class="card mb-3 shadow-sm border-0">
+                <div class="card-body py-2">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control border-start-0" id="searchTrip" 
+                                    placeholder="ค้นหาชื่อทริป..." onkeyup="if(event.key==='Enter') loadTrips()">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-calendar3 text-muted"></i></span>
+                                <input type="text" class="form-control border-end-0 text-dark bg-white" id="startDate"
+                                    placeholder="เริ่มวันที่" readonly style="font-size: .85rem;">
+                                <span class="input-group-text bg-white border-start-0 border-end-0 text-muted px-1">ถึง</span>
+                                <input type="text" class="form-control border-start-0 text-dark bg-white" id="endDate"
+                                    placeholder="ถึงวันที่" readonly style="font-size: .85rem;">
+                                <button class="btn btn-outline-secondary border-start-0" onclick="clearDateRange()" title="ล้าง">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-
-                    <button class="btn btn-primary" onclick="openModal()"><i class="bi bi-plus-lg me-1"></i>เพิ่มทริป</button>
                 </div>
             </div>
 
@@ -84,8 +91,8 @@
                             <input type="number" class="form-control" id="fPrice" min="0" step="0.01" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">URL รูปภาพ</label>
-                            <input type="text" class="form-control" id="fImage">
+                            <label class="form-label">รูปภาพทริป</label>
+                            <div id="imageUploadContainer"></div>
                         </div>
                         <div class="col-12">
                             <div class="form-check form-switch">
@@ -109,6 +116,7 @@
 <script src="../../assets/js/auth.js"></script>
 <script src="../../assets/js/apiClient.js"></script>
 <script src="../../assets/js/features/thai-calendar.js"></script>
+<script src="../../assets/js/features/file-upload.js"></script>
 <script src="../../assets/js/app.js"></script>
 <script>
 let modal, allTrips = [];
@@ -119,6 +127,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Init Thai Calendar
     await ThaiCalendar.init('#startDate', { onChange: loadTrips });
     await ThaiCalendar.init('#endDate', { onChange: loadTrips });
+
+    // Init Upload Component
+    FileUpload.init('#imageUploadContainer', { 
+        targetInputId: 'fImage', 
+        multiple: true 
+    });
 
     loadTrips();
 });
@@ -155,6 +169,7 @@ async function loadTrips() {
                 <td>${i+1}</td>
                 <td>
                     <strong>${t.title}</strong>
+                    ${t.imageUrl ? `<br><small class="text-primary"><i class="bi bi-image me-1"></i>${t.imageUrl.split(',').filter(x=>x).length} รูป</small>` : ''}
                     ${t.description ? `<br><small class="text-muted">${t.description.substring(0,60)}...</small>` : ''}
                 </td>
                 <td>${formatMoney(t.price)}</td>
@@ -174,6 +189,7 @@ function openModal(title='เพิ่มทริป') {
     document.getElementById('tripForm').reset();
     document.getElementById('tripId').value = '';
     document.getElementById('fActive').checked = true;
+    FileUpload.setExisting('');
     modal.show();
 }
 
@@ -183,27 +199,47 @@ function editTrip(t) {
     document.getElementById('fTitle').value = t.title;
     document.getElementById('fDesc').value = t.description || '';
     document.getElementById('fPrice').value = t.price;
-    document.getElementById('fImage').value = t.imageUrl || '';
+    FileUpload.setExisting(t.imageUrl);
     document.getElementById('fActive').checked = t.isActive;
     modal.show();
 }
 
 async function saveTrip() {
     const id = document.getElementById('tripId').value;
-    const data = {
-        title: document.getElementById('fTitle').value,
-        description: document.getElementById('fDesc').value,
-        price: parseFloat(document.getElementById('fPrice').value),
-        imageUrl: document.getElementById('fImage').value,
-        isActive: document.getElementById('fActive').checked
-    };
+    const btnSave = document.querySelector('.modal-footer .btn-primary');
+    const originalText = btnSave.innerHTML;
+
     try {
+        btnSave.disabled = true;
+        btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> กำลังบันทึก...';
+
+        // 1. Upload pending images first
+        const newUrls = await FileUpload.uploadAllPending();
+        
+        // 2. Combine with existing URLs
+        const existingUrls = document.getElementById('fImage').value.split(',').filter(x => x);
+        const finalUrls = [...existingUrls, ...newUrls].join(',');
+
+        const data = {
+            title: document.getElementById('fTitle').value,
+            description: document.getElementById('fDesc').value,
+            price: parseFloat(document.getElementById('fPrice').value),
+            imageUrl: finalUrls,
+            isActive: document.getElementById('fActive').checked
+        };
+
         if (id) await API.trips.update(id, data);
         else await API.trips.create(data);
+        
         modal.hide();
         showToast('บันทึกสำเร็จ');
         loadTrips();
-    } catch (e) { showToast(e.message, 'danger'); }
+    } catch (e) { 
+        showToast(e.message, 'danger'); 
+    } finally {
+        btnSave.disabled = false;
+        btnSave.innerHTML = originalText;
+    }
 }
 
 async function deleteTrip(id) {
