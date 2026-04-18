@@ -148,7 +148,7 @@ function renderPayments() {
             (f.phone || '').includes(q)
         );
         return inForm ||
-            (p.user?.name || '').toLowerCase().includes(q) ||
+            (p.booking?.user?.name || '').toLowerCase().includes(q) ||
             (p.booking?.busRound?.trip?.title || '').toLowerCase().includes(q);
     });
 
@@ -210,24 +210,29 @@ function renderPayments() {
 }
 
 function buildCustomerCell(p, forms) {
-    if (forms.length === 0) {
-        // fallback: ใช้ user data
-        const name = p.user?.name || '-';
+    // พยายามหาชื่อที่สมบูรณ์ที่สุดจาก Insurance Forms ก่อน
+    let f = forms.find(x => x.firstName || x.lastName);
+    
+    // ถ้าไม่มีชื่อใน Forms เลย หรือไม่มี Forms เลย ให้ใช้ User Data
+    if (!f) {
+        const name = p.booking?.user?.name || '-';
         const color = avatarColor(name);
-        const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+        const initials = name.split(' ').filter(x => x).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
         return `<div class="d-flex align-items-center gap-2">
             <div class="avatar-circle text-white" style="background:${color}">${initials}</div>
             <div>
                 <div class="fw-semibold">${name}</div>
-                <div class="text-muted small">${p.user?.phone || ''}</div>
+                <div class="text-muted small">${p.booking?.user?.phone || ''}</div>
             </div>
         </div>`;
     }
 
-    // ใช้ insurance form data (เหมือน customers/list.html)
-    const f = forms[0];
-    const color = avatarColor(f.firstName);
-    const initials = ((f.firstName[0] || '') + (f.lastName[0] || '')).toUpperCase();
+    // ถ้ามี Insurance Form และมีชื่อ
+    const color = avatarColor(f.firstName || f.lastName || '?');
+    const firstChar = (f.firstName && f.firstName.length > 0) ? f.firstName[0] : '';
+    const lastChar  = (f.lastName && f.lastName.length > 0) ? f.lastName[0] : '';
+    const initials  = (firstChar + lastChar).toUpperCase() || '?';
+
     const bloodBadge = f.bloodType
         ? `<span class="badge blood-badge text-white ms-1" style="background:${BLOOD_COLOR[f.bloodType]||'#aaa'}">${f.bloodType}</span>`
         : '';
@@ -236,7 +241,7 @@ function buildCustomerCell(p, forms) {
     return `<div class="d-flex align-items-center gap-2">
         <div class="avatar-circle text-white" style="background:${color}">${initials}</div>
         <div>
-            <div class="fw-semibold">${f.namePrefix} ${f.firstName} ${f.lastName}${bloodBadge}${moreCount}</div>
+            <div class="fw-semibold">${f.namePrefix || ''} ${f.firstName || '-'} ${f.lastName || ''}${bloodBadge}${moreCount}</div>
             <div class="text-muted small"><code style="font-size:.72rem">${f.nationalId || '-'}</code> · ${f.phone || '-'}</div>
         </div>
     </div>`;

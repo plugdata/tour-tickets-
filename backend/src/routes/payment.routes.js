@@ -22,7 +22,12 @@ const { authenticate, authorize } = require('../middleware/auth')
 router.get('/', authenticate, authorize('ADMIN', 'STUFF'), async (req, res) => {
   const payments = await prisma.payment.findMany({
     include: {
-      booking: { include: { busRound: { include: { trip: true } } } },
+      booking: { 
+        include: { 
+          user: { select: { id: true, name: true, phone: true } },
+          busRound: { include: { trip: true } } 
+        } 
+      },
       user: { select: { id: true, name: true, phone: true } }
     }
   })
