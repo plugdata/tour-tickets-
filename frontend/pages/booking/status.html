@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตรวจสอบสถานะการจอง</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family:'Sarabun',sans-serif; background:#f0f4f8; min-height:100vh; }
+        .brand-bar { background:#fff; border-bottom:3px solid #0d6efd; padding:.75rem 1.5rem; display:flex; align-items:center; gap:.75rem; }
+        .search-box { max-width:480px; margin:2rem auto; }
+        .results-wrap { max-width:680px; margin:0 auto 4rem; }
+        .booking-card { background:#fff; border-radius:.75rem; border:1px solid #dee2e6; margin-bottom:1.25rem; overflow:hidden; }
+        .booking-card-header { padding:1rem 1.25rem; border-bottom:1px solid #f0f0f0; }
+        .booking-card-body { padding:1.25rem; }
+        /* Pipeline tracker */
+        .pipeline { display:flex; align-items:flex-start; gap:0; position:relative; }
+        .pipe-step { flex:1; text-align:center; position:relative; }
+        .pipe-step::before {
+            content:''; position:absolute; top:16px; left:50%; right:-50%;
+            height:3px; background:#dee2e6; z-index:0;
+        }
+        .pipe-step:last-child::before { display:none; }
+        .pipe-icon {
+            width:34px; height:34px; border-radius:50%; border:3px solid #dee2e6;
+            background:#fff; display:flex; align-items:center; justify-content:center;
+            margin:0 auto 6px; position:relative; z-index:1; font-size:.9rem;
+        }
+        .pipe-step.done .pipe-icon    { background:#198754; border-color:#198754; color:#fff; }
+        .pipe-step.active .pipe-icon  { background:#0d6efd; border-color:#0d6efd; color:#fff; }
+        .pipe-step.pending .pipe-icon { background:#fff; border-color:#adb5bd; color:#adb5bd; }
+        .pipe-step.done::before    { background:#198754; }
+        .pipe-step.active::before  { background:linear-gradient(to right,#198754,#dee2e6); }
+        .pipe-label { font-size:.72rem; color:#6c757d; font-weight:500; line-height:1.2; }
+        .pipe-step.done .pipe-label   { color:#198754; font-weight:600; }
+        .pipe-step.active .pipe-label { color:#0d6efd; font-weight:700; }
+        .seat-chip { display:inline-flex; align-items:center; gap:.35rem; background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:.25rem .5rem; font-size:.78rem; font-weight:600; }
+        @media print { .no-print { display:none !important; } body { background:#fff; } }
+    </style>
+</head>
+<body>
+
+<!-- Brand bar -->
+<div class="brand-bar no-print">
+    <i class="bi bi-bus-front text-primary fs-4"></i>
+    <span style="font-size:1.1rem;font-weight:700;color:#0d6efd">ตรวจสอบสถานะการจอง</span>
+    <a href="/frontend/pages/trips/list.html" class="ms-auto btn btn-sm btn-outline-secondary">
+        <i class="bi bi-grid me-1"></i>ดูทริปทั้งหมด
+    </a>
+</div>
+
+<!-- Search -->
+<div class="search-box px-3 no-print">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="fw-bold mb-1"><i class="bi bi-search me-2 text-primary"></i>ค้นหาด้วยเบอร์โทรศัพท์</h5>
+            <p class="text-muted small mb-3">กรอกเบอร์โทรที่ใช้ตอนจอง เพื่อดูสถานะการจองของคุณ</p>
+            <div class="d-flex gap-2">
+                <input type="tel" class="form-control" id="phoneInput"
+                    placeholder="08x-xxx-xxxx" maxlength="10" inputmode="tel"
+                    onkeydown="if(event.key==='Enter')doSearch()">
+                <button class="btn btn-primary px-4" onclick="doSearch()" id="btnSearch">
+                    <i class="bi bi-search me-1"></i>ค้นหา
+                </button>
+            </div>
+            <div id="searchHint" class="form-text mt-1">
+                <i class="bi bi-info-circle me-1"></i>เบอร์โทรที่ใช้ในขั้นตอน "ข้อมูลผู้จอง"
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results -->
+<div class="results-wrap px-3" id="results"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script>
+// ── Pre-fill phone from URL / localStorage ────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(location.search);
+    const phone = params.get('phone');
+    if (phone) {
+        document.getElementById('phoneInput').value = phone;
+        doSearch();
+    }
+});
+
+// ── Search ────────────────────────────────────────────────────────────────────
+async function doSearch() {
+    const phone = document.getElementById('phoneInput').value.trim().replace(/[-\s]/g,'');
+    if (!phone || phone.length < 9) {
+        showHint('กรุณากรอกเบอร์โทรให้ถูกต้อง (9-10 หลัก)', 'text-danger');
+        return;
+    }
+
+    const btn = document.getElementById('btnSearch');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังค้นหา...';
+    document.getElementById('results').innerHTML = '';
+    showHint('');
+
+    try {
+        // Search sessions by phone
+        const sessions = await fetchJSON(`/booking-sessions/by-phone?phone=${encodeURIComponent(phone)}`);
+
+        // Also try to load busRounds for enriching trip info
+        let rounds = [];
+        try { rounds = await fetchJSON('/bus-rounds'); } catch {}
+
+        renderResults(sessions, rounds, phone);
+    } catch (e) {
+        document.getElementById('results').innerHTML =
+            `<div class="alert alert-danger mt-3"><i class="bi bi-exclamation-triangle me-2"></i>${e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่'}</div>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-search me-1"></i>ค้นหา';
+    }
+}
+
+function showHint(msg, cls = 'text-muted') {
+    const el = document.getElementById('searchHint');
+    el.className = `form-text mt-1 ${cls}`;
+    el.innerHTML = msg || '<i class="bi bi-info-circle me-1"></i>เบอร์โทรที่ใช้ในขั้นตอน "ข้อมูลผู้จอง"';
+}
+
+// ── Render results ─────────────────────────────────────────────────────────────
+function renderResults(sessions, rounds, phone) {
+    const el = document.getElementById('results');
+
+    if (!sessions.length) {
+        el.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-inbox text-muted" style="font-size:3rem"></i>
+                <p class="text-muted mt-3">ไม่พบการจองสำหรับเบอร์ <strong>${phone}</strong></p>
+                <p class="text-muted small">ตรวจสอบเบอร์โทรอีกครั้ง หรือ <a href="/frontend/pages/trips/list.html">จองใหม่</a></p>
+            </div>`;
+        return;
+    }
+
+    el.innerHTML = `
+        <div class="d-flex align-items-center justify-content-between my-3">
+            <div class="fw-semibold">พบ ${sessions.length} รายการจอง</div>
+            <button class="btn btn-sm btn-outline-secondary no-print" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i>พิมพ์
+            </button>
+        </div>` +
+        sessions.map(s => renderBookingCard(s, rounds)).join('');
+}
+
+function renderBookingCard(session, rounds) {
+    const cd = session.customerData || {};
+    const seats = session.selectedSeats || [];
+    const round = rounds.find(r => r.id == session.busRoundId);
+    const trip = round?.trip;
+
+    // ── Determine pipeline step ───────────────────────────────────────────────
+    // Steps: 1=เลือกที่นั่ง, 2=ข้อมูล, 3=ประกัน, 4=ชำระ, 5=ยืนยันแล้ว
+    const currentStep = session.step || 1;
+    const pipeline = [
+        { label:'เลือกที่นั่ง',  icon:'bi-geo-alt',         step:1 },
+        { label:'ข้อมูล',         icon:'bi-person-fill',     step:2 },
+        { label:'ประกัน',         icon:'bi-shield-check',    step:3 },
+        { label:'ชำระเงิน',       icon:'bi-credit-card',     step:4 },
+        { label:'ยืนยันแล้ว',     icon:'bi-check-circle-fill',step:5 },
+    ];
+
+    const pipeHtml = pipeline.map(p => {
+        let cls = 'pending';
+        if (p.step < currentStep)  cls = 'done';
+        if (p.step === currentStep) cls = 'active';
+        return `
+            <div class="pipe-step ${cls}">
+                <div class="pipe-icon"><i class="bi ${p.icon}"></i></div>
+                <div class="pipe-label">${p.label}</div>
+            </div>`;
+    }).join('');
+
+    // ── Step label & color ────────────────────────────────────────────────────
+    const STEP_LABEL = { 1:'รอเลือกที่นั่ง', 2:'กรอกข้อมูล', 3:'บันทึกประกัน', 4:'รอชำระเงิน', 5:'ยืนยันแล้ว' };
+    const STEP_COLOR = { 1:'secondary', 2:'warning', 3:'info', 4:'primary', 5:'success' };
+    const stepLabel = STEP_LABEL[currentStep] || `ขั้นตอน ${currentStep}`;
+    const stepColor = STEP_COLOR[currentStep] || 'secondary';
+
+    // ── Format depart date ───────────────────────────────────────────────────
+    let departStr = '-';
+    if (round?.departDate) {
+        const d = new Date(round.departDate);
+        departStr = d.toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' })
+                  + ' · ' + d.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' }) + ' น.';
+    }
+
+    // ── Seat list ─────────────────────────────────────────────────────────────
+    const seatChips = seats.map(s => {
+        const isMale = s.gender === 'MALE';
+        const style = isMale ? 'background:#cfe2ff;color:#084298' : 'background:#f8d7f0;color:#892b5d';
+        const name = [s.namePrefix, s.firstName, s.lastName].filter(Boolean).join(' ')
+                   || s.passengerName || `ที่นั่ง ${s.seatNumber}`;
+        return `<span class="seat-chip me-1 mb-1" style="${style}">
+            ${isMale?'♂':'♀'} ${s.seatNumber} · ${name}
+        </span>`;
+    }).join('');
+
+    // ── Resume link ───────────────────────────────────────────────────────────
+    const resumePages = [
+        null,
+        `/frontend/pages/booking/seats.html?roundId=${session.busRoundId}`,
+        `/frontend/pages/booking/form.html?token=${session.token}`,
+        `/frontend/pages/booking/insurance.html?token=${session.token}`,
+        `/frontend/pages/booking/ticket.html?token=${session.token}`,
+        `/frontend/pages/booking/ticket.html?token=${session.token}`,
+    ];
+    const resumeUrl = resumePages[currentStep] || resumePages[4];
+    const isComplete = currentStep >= 4;
+
+    return `
+    <div class="booking-card">
+        <div class="booking-card-header">
+            <div class="d-flex align-items-start gap-2 flex-wrap">
+                <div class="flex-grow-1">
+                    <div class="fw-bold">${trip?.title || `รอบรถ #${session.busRoundId || '-'}`}</div>
+                    ${round ? `<div class="text-muted small">${round.startPoint} → ${round.endPoint} · รถคันที่ ${round.busNumber}</div>` : ''}
+                    <div class="text-muted small"><i class="bi bi-calendar3 me-1"></i>${departStr}</div>
+                </div>
+                <span class="badge bg-${stepColor} px-2 py-1" style="font-size:.75rem">${stepLabel}</span>
+            </div>
+        </div>
+        <div class="booking-card-body">
+
+            <!-- Pipeline -->
+            <div class="pipeline mb-4">
+                ${pipeHtml}
+            </div>
+
+            <!-- Seats -->
+            ${seats.length ? `
+            <div class="mb-3">
+                <div class="small fw-semibold text-muted mb-2"><i class="bi bi-people me-1"></i>ผู้โดยสาร (${seats.length} ท่าน)</div>
+                <div class="d-flex flex-wrap">${seatChips}</div>
+            </div>` : ''}
+
+            <!-- Contact -->
+            <div class="row g-2 small mb-3">
+                <div class="col-sm-6">
+                    <div class="text-muted">ผู้จอง</div>
+                    <div class="fw-semibold">${cd.mainName || '-'}</div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="text-muted">เบอร์โทร</div>
+                    <div>${cd.mainPhone || '-'}</div>
+                </div>
+                ${cd.mainLine ? `<div class="col-sm-3"><div class="text-muted">LINE</div><div>${cd.mainLine}</div></div>` : ''}
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex gap-2 flex-wrap no-print">
+                ${!isComplete ? `
+                <a href="${resumeUrl}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-arrow-right-circle me-1"></i>ดำเนินการต่อ
+                </a>` : `
+                <a href="${resumePages[4]}" class="btn btn-success btn-sm">
+                    <i class="bi bi-ticket-perforated me-1"></i>ดูตั๋ว
+                </a>`}
+                <a href="${resumePages[4]}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-eye me-1"></i>ดูสรุปการจอง
+                </a>
+                <button class="btn btn-outline-secondary btn-sm" onclick="copyLink('${encodeURIComponent(resumePages[4])}')">
+                    <i class="bi bi-copy me-1"></i>คัดลอกลิงก์
+                </button>
+            </div>
+
+            <div class="text-muted mt-2" style="font-size:.72rem">
+                <i class="bi bi-clock me-1"></i>
+                Session token: <code style="font-size:.7rem">${session.token?.substring(0,16)}...</code>
+                &nbsp;·&nbsp; หมดอายุ: ${session.expiresAt ? new Date(session.expiresAt).toLocaleDateString('th-TH') : '-'}
+            </div>
+        </div>
+    </div>`;
+}
+
+function copyLink(encodedUrl) {
+    const url = decodeURIComponent(encodedUrl);
+    const full = window.location.origin + url;
+    navigator.clipboard.writeText(full).then(() => showToast('คัดลอกลิงก์แล้ว')).catch(() => showToast('ไม่สามารถคัดลอกได้','danger'));
+}
+
+async function fetchJSON(path) {
+    const r = await fetch(API_BASE_URL + path);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+}
+
+function showToast(msg, type='success') {
+    let c = document.getElementById('toastC');
+    if (!c) { c=document.createElement('div'); c.id='toastC'; c.className='position-fixed bottom-0 end-0 p-3'; c.style.zIndex=9999; document.body.appendChild(c); }
+    const id='t'+Date.now();
+    c.insertAdjacentHTML('beforeend',`
+        <div id="${id}" class="toast align-items-center text-bg-${type} border-0 show">
+            <div class="d-flex"><div class="toast-body">${msg}</div>
+            <button class="btn-close btn-close-white me-2 m-auto" onclick="document.getElementById('${id}').remove()"></button>
+            </div></div>`);
+    setTimeout(()=>document.getElementById(id)?.remove(),3500);
+}
+</script>
+</body>
+</html>

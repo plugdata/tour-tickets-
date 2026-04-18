@@ -1,0 +1,32 @@
+design backoffice  tikck
+
+#อธิบายระบบ 
+This system is used for managing and booking tour vehicles and handling rental equipment on tour vehicles.
+
+# generate forms 
+ - จัดการระบบ  usermane password  role
+-  ระบบจัดการ ทริป ท่องเที่ยว
+-  ระบบการจัดการ  ข้อความหน้าเว็ปไชต์  การโพตข้อความ  การแปะลิงค์ภาพถ่ายวีดีโอ  (ผูกกับหัวข้อทริปท่องเที่ยว) บริการ อื่นๆ
+ - ระบบจัดการ บล็อคภาพความประทับใจของผลงาน  บล็อคคำถามที่พบบ่อย อื่นๆ    บล็อคเกี่ยวกับ เว็ปไชต์ของเรา 
+ - ระบบจัดการ ticket  การจองตั๋วการ ออกตั๋ว  เช่น การออกตั๋วรถ เปิดจองที่นั้งรถเป็น รอบรถ จุด start จุดสิ้นสุด 
+-  ระบบเพิ่มการขายจากทริป เช่น  อุปกรณ์เช่า บริการทัวร์เที่ยวพิเศษส่วนตัวอื่น
+- ระบบ การเงิน  เช่น ลูกค้าโอนเงิน พร้อมสลิป  admin สามารถเช็คสถานะ และกดยืนยัน  ,  check  จำนวนเงินว่า เป็น เงินมัดจำเลือก โอนเต็ม   
+- ระบบ print ของ stuff  สามารถเข้าไปดูได้ว่า customer ชื่ออะไร เบอร์โทรติดต่อ  การแจ้งว่าลูกค้าได้บันทึกว่าแพ้อาหารอะไรหรือไม่  มีอุปกรณ์ เช่าเสริมหรือไม่ จ่ายเงินจำนวนเท่าไหร่
+- ระบบ สรุป moniter   เช็ตว่าจำนวนทริป มีกี่คน จำนวนเงินเท่าไหร่ ยอดสรุป จำนวนคน +เช่าอุปกรณ์เสริม   ,  บันทึกค่าใช้จ่าย เช่น น้ำมัน อื่นๆ ในการสรุป เป็น รอบ  ทริป , เดือน , ปี  print 
+
+#feature ที่อยากได้
+- การจัดการระบบ เปิดตั๋วรถ เช่น รถ 1 คัน ที่หนึ่งเต็ม แจ้ง backoffice เปิดรถคันที่ 2
+- จัดการ ออก link หรือ qr code ในตั๋วรถ โดยเก็บข้อมูล cookie  customer ใช้งาน 
+- การสร้างระบบเช่าอุปกรณ์ ต่างๆ ในการขาย
+-การชำระเงิน การเช็คสลิป  
+
+#general 
+ role     detail manage  admin stuff  customer  detail  manage   ->  all-page system   ,   admin read new edit all   * group some  , stuff   read  page only  , customer  not  id pass backoff  yes frontend 
+guard    notify Preventing visibility: For example, if the admin has full management control, this protection system can manage to hide important elements from the admin's view, such as page, table, column, and field information.
+
+ภาษา  ไทย และอังกฤษ
+ref
+database  @ csv db-name 
+https://www.gugatravels.com/?fbclid=IwZnRzaAQvA-5leHRuA2FlbQIxMQBzcnRjBmFwcF9pZAo2NjI4NTY4Mzc5AAEeb-D9FHK62670v5mq_3ei__hYpNKS6L9xCCvB5f0k5lwQR9rcYGRZBSSotHE_aem_KXBuhLMg-Xk5yf_vX_K8gw
+
+

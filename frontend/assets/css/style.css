@@ -1,0 +1,138 @@
+:root {
+  --primary: #3eb39d;
+  --primary-hover: #35a08a;
+  --sidebar-width: 260px;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f8f9fa;
+}
+.sidebar {
+  width: var(--sidebar-width);
+  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  overflow-y: auto;
+}
+.main-content {
+  margin-left: var(--sidebar-width);
+}
+.nav-link {
+  color: #212529;
+  transition: background-color 0.15s;
+  border-radius: 0.5rem;
+}
+.nav-link:hover {
+  color: #212529;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+.nav-link.active {
+  color: #3eb39d !important;
+  background-color: rgba(62, 179, 157, 0.1) !important;
+  font-weight: 600;
+}
+.nav-link.active i {
+  color: #3eb39d !important;
+}
+.card {
+  border-radius: 0.75rem;
+  border: none;
+}
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+.btn-outline-primary {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+.btn-outline-primary:hover {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+.text-primary {
+  color: var(--primary) !important;
+}
+.bg-primary {
+  background-color: var(--primary) !important;
+}
+.chart-container {
+  position: relative;
+  height: 300px;
+}
+@media (max-width: 991px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+  }
+  .sidebar.show {
+    transform: translateX(0);
+  }
+  .main-content {
+    margin-left: 0;
+  }
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+  }
+  .sidebar-overlay.show {
+    display: block;
+  }
+}
+
+/* Products Table Specifics */
+.table th {
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+.stock-low {
+  color: #dc3545;
+}
+.stock-medium {
+  color: #ffc107;
+}
+.stock-high {
+  color: #28a745;
+}
+
+/* Row hover highlight (row-click-to-edit feature ยังไม่เปิดใช้งาน) */
+tr.table-row-clickable {
+  transition: background-color 0.1s;
+}
+tr.table-row-clickable:hover td {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Sort icons */
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.sortable .sort-icon {
+  opacity: 0.4;
+  font-size: 0.75rem;
+}
+.sortable.sorted-asc .sort-icon,
+.sortable.sorted-desc .sort-icon {
+  opacity: 1;
+  color: var(--primary);
+}

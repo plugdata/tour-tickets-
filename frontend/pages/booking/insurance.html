@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บันทึกประกันภัย - จองรถตู้</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family:'Sarabun',sans-serif; background:#f8f9fa; }
+        .step-bar { display:flex; }
+        .step-item { flex:1; text-align:center; padding:.5rem .25rem; font-size:.75rem; color:#6c757d; border-bottom:3px solid #dee2e6; }
+        .step-item.active { color:#0d6efd; border-color:#0d6efd; font-weight:600; }
+        .step-item.done   { color:#198754; border-color:#198754; }
+        .ins-card { border-left:4px solid #6f42c1; }
+        .policy-scroll { max-height:160px; overflow-y:auto; background:#f8f9fa; border:1px solid #dee2e6; border-radius:.375rem; padding:.75rem; font-size:.82rem; line-height:1.8; }
+        .consent-item { background:#f8f9fa; border:1px solid #dee2e6; border-radius:.5rem; padding:.875rem; }
+        .consent-item.checked { background:#f0fff4; border-color:#198754; }
+        .consent-item.error   { background:#fff5f5; border-color:#dc3545; }
+        .coverage-badge { background:linear-gradient(135deg,#6f42c1,#0d6efd); color:#fff; border-radius:.5rem; padding:.5rem 1rem; display:inline-flex; align-items:center; gap:.5rem; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<nav class="navbar navbar-light bg-white border-bottom px-3 py-2 sticky-top shadow-sm">
+    <div class="d-flex align-items-center gap-2 w-100">
+        <button class="btn btn-sm btn-outline-secondary" onclick="goBack()">
+            <i class="bi bi-arrow-left"></i>
+        </button>
+        <div class="flex-grow-1">
+            <div class="fw-semibold">บันทึกข้อมูลประกันภัย</div>
+            <div class="text-muted" style="font-size:.78rem" id="hdrSub"></div>
+        </div>
+        <div class="coverage-badge small">
+            <i class="bi bi-shield-fill-check"></i>
+            <div><div style="font-size:.7rem;opacity:.8">คุ้มครอง</div><div class="fw-bold">1,000,000 บาท</div></div>
+        </div>
+    </div>
+</nav>
+
+<!-- 4-Step bar -->
+<div class="step-bar bg-white border-bottom mb-3">
+    <div class="step-item done"><i class="bi bi-check2 me-1"></i>เลือกที่นั่ง</div>
+    <div class="step-item done"><i class="bi bi-check2 me-1"></i>ข้อมูล</div>
+    <div class="step-item active"><i class="bi bi-shield-check me-1"></i>ประกัน</div>
+    <div class="step-item"><i class="bi bi-credit-card me-1"></i>ชำระเงิน</div>
+</div>
+
+<div class="container-fluid px-3 pb-5" style="max-width:720px;margin:0 auto">
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <div class="mt-2 text-muted">กำลังโหลด...</div>
+    </div>
+
+    <div id="mainContent" class="d-none">
+
+        <div class="alert alert-info border-0 py-2 mb-3" style="font-size:.83rem">
+            <i class="bi bi-info-circle me-1"></i>
+            กรุณากรอกข้อมูลผู้รับประโยชน์และบุคคลฉุกเฉินสำหรับผู้โดยสารแต่ละท่าน เพื่อออกกรมธรรม์ประกันภัย
+        </div>
+
+        <!-- Policy content -->
+        <div class="card mb-3">
+            <div class="card-header fw-semibold py-2" style="cursor:pointer" onclick="togglePolicy()">
+                <i class="bi bi-file-text me-1 text-primary"></i>ข้อมูลกรมธรรม์ประกันภัย
+                <i class="bi bi-chevron-down ms-auto float-end" id="policyChevron"></i>
+            </div>
+            <div id="policyBox" class="card-body p-0 d-none">
+                <div class="policy-scroll m-3" id="policyContentBox">
+                    <div class="text-muted text-center py-2 small"><span class="spinner-border spinner-border-sm me-1"></span>โหลด...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Per-passenger insurance forms -->
+        <div id="insuranceForms"></div>
+
+        <!-- Shared consents -->
+        <div class="card mb-3">
+            <div class="card-header fw-semibold py-2">
+                <i class="bi bi-check-all me-1 text-success"></i>การยินยอมและเงื่อนไข (ใช้ร่วมกันทุกท่าน)
+            </div>
+            <div class="card-body">
+                <div id="conditionsList" class="d-flex flex-column gap-2 mb-3">
+                    <div class="text-muted small text-center py-2"><span class="spinner-border spinner-border-sm me-1"></span>โหลด...</div>
+                </div>
+                <div>
+                    <label class="form-label small">เงื่อนไขพิเศษ / ข้อตกลงเพิ่มเติม <span class="text-muted">(ไม่บังคับ)</span></label>
+                    <textarea class="form-control" id="customConditions" rows="2"
+                        placeholder="ระบุเงื่อนไขพิเศษหรือโรคประจำตัวที่ต้องการแจ้ง (ถ้ามี)"
+                        style="resize:vertical"></textarea>
+                </div>
+                <div class="alert alert-warning mt-3 mb-0 py-2" style="font-size:.8rem">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    การส่งฟอร์มนี้ถือว่าผู้โดยสารทุกท่านยืนยันว่าข้อมูลเป็นความจริง และยินยอมให้ใช้ข้อมูลเพื่อออกกรมธรรม์ประกันภัย
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Bottom action -->
+<div class="position-fixed bottom-0 start-0 end-0 bg-white border-top p-3 shadow-lg" style="z-index:100">
+    <div style="max-width:720px;margin:0 auto">
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" onclick="goBack()">
+                <i class="bi bi-arrow-left"></i>
+            </button>
+            <button class="btn btn-success flex-grow-1" onclick="goNext()" id="btnNext">
+                <i class="bi bi-credit-card me-1"></i>ถัดไป: ชำระเงิน
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script>
+const SESSION_KEY = 'bk_session_token';
+let sessionToken = null;
+let sessionData  = null;
+let roundData    = null;
+let conditions   = [];
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+    sessionToken = new URLSearchParams(location.search).get('token')
+                || localStorage.getItem(SESSION_KEY);
+    if (!sessionToken) { showError('ไม่พบ session'); return; }
+
+    try {
+        [sessionData] = await Promise.all([fetchJSON('/booking-sessions/' + sessionToken)]);
+        if (!sessionData) { showError('Session หมดอายุ'); return; }
+
+        const all = await fetchJSON('/bus-rounds');
+        roundData = all.find(r => r.id == sessionData.busRoundId);
+
+        document.getElementById('hdrSub').textContent =
+            roundData ? `${roundData.trip?.title} · ${roundData.startPoint} → ${roundData.endPoint}` : '';
+
+        // Load policy content + conditions
+        try {
+            const [policy, conds] = await Promise.all([
+                fetchJSON('/insurance/policy-content'),
+                fetchJSON('/insurance/conditions')
+            ]);
+            conditions = conds || [];
+
+            const box = document.getElementById('policyContentBox');
+            if (policy?.contentType === 'image' && policy.imageUrl) {
+                box.innerHTML = `<img src="${policy.imageUrl}" class="img-fluid rounded" alt="กรมธรรม์">`;
+            } else if (policy?.textContent) {
+                box.innerHTML = policy.textContent;
+            } else {
+                box.innerHTML = '<p class="text-muted small mb-0">ไม่มีข้อมูลกรมธรรม์</p>';
+            }
+        } catch { conditions = []; }
+
+        renderConditions();
+        renderInsuranceForms();
+
+        document.getElementById('loadingState').classList.add('d-none');
+        document.getElementById('mainContent').classList.remove('d-none');
+    } catch (e) {
+        showError(e.message);
+    }
+});
+
+// ── Toggle policy box ─────────────────────────────────────────────────────────
+function togglePolicy() {
+    const box = document.getElementById('policyBox');
+    const chev = document.getElementById('policyChevron');
+    const open = box.classList.toggle('d-none');
+    chev.className = open ? 'bi bi-chevron-down ms-auto float-end' : 'bi bi-chevron-up ms-auto float-end';
+}
+
+// ── Render per-passenger insurance forms ─────────────────────────────────────
+function renderInsuranceForms() {
+    const seats = sessionData.selectedSeats || [];
+    const container = document.getElementById('insuranceForms');
+    container.innerHTML = seats.map((s, i) => {
+        const isMale = s.gender === 'MALE';
+        const badgeCls = isMale ? 'bg-primary' : 'bg-danger';
+        const genderIcon = isMale ? '♂' : '♀';
+        const displayName = [s.namePrefix, s.firstName, s.lastName].filter(Boolean).join(' ')
+                          || s.passengerName || `ผู้โดยสาร ${i+1}`;
+        const sn = s.seatNumber;
+        return `
+        <div class="card mb-3 ins-card">
+            <div class="card-header d-flex align-items-center gap-2 py-2">
+                <span class="badge ${badgeCls}">${genderIcon} ที่นั่ง ${sn}</span>
+                <span class="fw-semibold">${displayName}</span>
+                ${s.bloodType ? `<span class="badge bg-light text-dark border ms-auto">หมู่เลือด ${s.bloodType}</span>` : ''}
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <!-- Emergency contact -->
+                    <div class="col-12"><div class="small fw-semibold text-muted mb-1"><i class="bi bi-telephone-fill me-1 text-danger"></i>บุคคลติดต่อกรณีฉุกเฉิน</div></div>
+                    <div class="col-md-7">
+                        <label class="form-label small">ชื่อ-นามสกุล <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm ins-emergency-name"
+                            data-seat="${sn}" required placeholder="เช่น นาง สมหญิง ใจดี"
+                            value="${s.emergencyName || ''}">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small">เบอร์โทร <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control form-control-sm ins-emergency-phone"
+                            data-seat="${sn}" required placeholder="08x-xxx-xxxx" inputmode="tel"
+                            value="${s.emergencyPhone || ''}">
+                    </div>
+                    <!-- Beneficiary -->
+                    <div class="col-12 mt-1"><div class="small fw-semibold text-muted mb-1"><i class="bi bi-person-heart me-1 text-purple"></i>ผู้รับประโยชน์</div></div>
+                    <div class="col-md-7">
+                        <label class="form-label small">ชื่อ-นามสกุลผู้รับประโยชน์ <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm ins-beneficiary-name"
+                            data-seat="${sn}" required placeholder="คำนำหน้า + ชื่อ + นามสกุล"
+                            value="${s.beneficiaryName || ''}">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small">ความสัมพันธ์ <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm ins-beneficiary-rel" data-seat="${sn}" required onchange="toggleOtherRel(this,${sn})">
+                            <option value="">เลือก</option>
+                            <option value="LEGAL_HEIR" ${s.beneficiaryRelation==='LEGAL_HEIR'?'selected':''}>ทายาทตามกฎหมาย</option>
+                            <option value="SPOUSE"     ${s.beneficiaryRelation==='SPOUSE'?'selected':''}>คู่สมรส</option>
+                            <option value="FATHER"     ${s.beneficiaryRelation==='FATHER'?'selected':''}>บิดา</option>
+                            <option value="MOTHER"     ${s.beneficiaryRelation==='MOTHER'?'selected':''}>มารดา</option>
+                            <option value="CHILD"      ${s.beneficiaryRelation==='CHILD'?'selected':''}>บุตร</option>
+                            <option value="SIBLING"    ${s.beneficiaryRelation==='SIBLING'?'selected':''}>พี่น้อง</option>
+                            <option value="OTHER"      ${s.beneficiaryRelation==='OTHER'?'selected':''}>อื่นๆ</option>
+                        </select>
+                    </div>
+                    <div class="col-12 d-none" id="otherRel_${sn}">
+                        <input type="text" class="form-control form-control-sm ins-beneficiary-other"
+                            data-seat="${sn}" placeholder="ระบุความสัมพันธ์..."
+                            value="${s.beneficiaryRelationOther || ''}">
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function toggleOtherRel(sel, sn) {
+    document.getElementById(`otherRel_${sn}`).classList.toggle('d-none', sel.value !== 'OTHER');
+}
+
+// ── Render shared conditions ─────────────────────────────────────────────────
+function renderConditions() {
+    const wrap = document.getElementById('conditionsList');
+    if (!conditions.length) { wrap.innerHTML = '<p class="text-muted small">ไม่มีเงื่อนไขที่กำหนด</p>'; return; }
+    wrap.innerHTML = conditions.map(c => `
+        <div class="consent-item" id="cb_${c.id}">
+            <div class="form-check mb-0">
+                <input class="form-check-input consent-check" type="checkbox"
+                    id="cond_${c.id}" data-id="${c.id}" data-required="${c.isRequired}"
+                    ${c.isRequired ? 'required' : ''} onchange="onConsentChange(this)">
+                <label class="form-check-label" for="cond_${c.id}" style="cursor:pointer">
+                    <i class="bi ${c.iconClass || 'bi-check-circle-fill text-success'} me-1"></i>
+                    <span class="fw-semibold">${c.title}</span>
+                    ${c.description ? `<div class="text-muted small mt-1">${c.description}</div>` : ''}
+                    ${!c.isRequired ? '<span class="badge bg-light text-muted border ms-1" style="font-size:.65rem">ไม่บังคับ</span>' : ''}
+                </label>
+            </div>
+        </div>`).join('');
+}
+function onConsentChange(cb) {
+    const box = document.getElementById(`cb_${cb.dataset.id}`);
+    box.classList.toggle('checked', cb.checked);
+    box.classList.remove('error');
+}
+
+// ── Collect insurance data ────────────────────────────────────────────────────
+function collectInsuranceData() {
+    const seats = sessionData.selectedSeats || [];
+    return seats.map(s => {
+        const g = cls => document.querySelector(`.${cls}[data-seat="${s.seatNumber}"]`)?.value?.trim() || '';
+        return {
+            seatNumber:             s.seatNumber,
+            emergencyName:          g('ins-emergency-name'),
+            emergencyPhone:         g('ins-emergency-phone'),
+            beneficiaryName:        g('ins-beneficiary-name'),
+            beneficiaryRelation:    g('ins-beneficiary-rel'),
+            beneficiaryRelationOther: g('ins-beneficiary-other') || null,
+        };
+    });
+}
+
+function collectConsents() {
+    return {
+        consentPolicyRead:    !!document.querySelector('#cond_1')?.checked,
+        consentTermsAccepted: !!document.querySelector('#cond_2')?.checked,
+        consent4WD:           !!document.querySelector('#cond_3')?.checked,
+        consentDomesticOnly:  !!document.querySelector('#cond_4')?.checked,
+        consentedConditionIds: Array.from(document.querySelectorAll('.consent-check:checked')).map(cb => Number(cb.dataset.id)),
+        customConditions: document.getElementById('customConditions').value.trim() || null,
+    };
+}
+
+// ── Validate ─────────────────────────────────────────────────────────────────
+function validate() {
+    const ins = collectInsuranceData();
+    for (const f of ins) {
+        if (!f.emergencyName)    return `กรุณากรอกชื่อผู้ติดต่อฉุกเฉิน ที่นั่ง ${f.seatNumber}`;
+        if (!f.emergencyPhone)   return `กรุณากรอกเบอร์ฉุกเฉิน ที่นั่ง ${f.seatNumber}`;
+        if (!f.beneficiaryName)  return `กรุณากรอกชื่อผู้รับประโยชน์ ที่นั่ง ${f.seatNumber}`;
+        if (!f.beneficiaryRelation) return `กรุณาเลือกความสัมพันธ์ผู้รับประโยชน์ ที่นั่ง ${f.seatNumber}`;
+    }
+    let consentOk = true;
+    document.querySelectorAll('.consent-check[data-required="true"]').forEach(cb => {
+        if (!cb.checked) {
+            const box = document.getElementById(`cb_${cb.dataset.id}`);
+            box.classList.add('error'); box.classList.remove('checked');
+            consentOk = false;
+        }
+    });
+    if (!consentOk) return 'กรุณายืนยันเงื่อนไขที่บังคับทั้งหมด';
+    return null;
+}
+
+// ── Navigate ─────────────────────────────────────────────────────────────────
+async function goNext() {
+    const err = validate();
+    if (err) { showToast(err, 'warning'); return; }
+
+    const btn = document.getElementById('btnNext');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก...';
+
+    try {
+        const insData  = collectInsuranceData();
+        const consents = collectConsents();
+
+        // Merge insurance fields back into selectedSeats
+        const mergedSeats = (sessionData.selectedSeats || []).map(s => {
+            const ins = insData.find(i => i.seatNumber === s.seatNumber) || {};
+            return { ...s, ...ins, ...consents };
+        });
+
+        // Update session step 3 + merged seat data
+        await postJSON('/booking-sessions', {
+            token: sessionToken,
+            step: 3,
+            selectedSeats: mergedSeats,
+        });
+
+        window.location.href = `/frontend/pages/booking/ticket.html?token=${sessionToken}`;
+    } catch (e) {
+        showToast(e.message || 'เกิดข้อผิดพลาด', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-credit-card me-1"></i>ถัดไป: ชำระเงิน';
+    }
+}
+
+function goBack() {
+    window.location.href = `/frontend/pages/booking/form.html?token=${sessionToken}`;
+}
+
+// ── API helpers ────────────────────────────────────────────────────────────────
+async function fetchJSON(path) {
+    const hdrs = {};
+    const tk = localStorage.getItem('token');
+    if (tk) hdrs['Authorization'] = 'Bearer ' + tk;
+    const r = await fetch(API_BASE_URL + path, { headers: hdrs });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+}
+async function postJSON(path, body) {
+    const r = await fetch(API_BASE_URL + path, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || `HTTP ${r.status}`);
+    return d;
+}
+
+function showError(msg) {
+    document.getElementById('loadingState').innerHTML =
+        `<div class="py-5 text-center">
+            <i class="bi bi-exclamation-triangle text-danger fs-2"></i>
+            <p class="text-danger mt-2">${msg}</p>
+            <a href="/frontend/pages/trips/list.html" class="btn btn-outline-primary">กลับหน้าทริป</a>
+        </div>`;
+}
+function showToast(msg, type='warning') {
+    let c = document.getElementById('toastC');
+    if (!c) { c=document.createElement('div'); c.id='toastC'; c.className='position-fixed bottom-0 end-0 p-3'; c.style.zIndex=9999; document.body.appendChild(c); }
+    const id='t'+Date.now();
+    c.insertAdjacentHTML('beforeend',`
+        <div id="${id}" class="toast align-items-center text-bg-${type} border-0 show">
+            <div class="d-flex"><div class="toast-body">${msg}</div>
+            <button class="btn-close btn-close-white me-2 m-auto" onclick="document.getElementById('${id}').remove()"></button>
+            </div></div>`);
+    setTimeout(()=>document.getElementById(id)?.remove(),4000);
+}
+</script>
+</body>
+</html>

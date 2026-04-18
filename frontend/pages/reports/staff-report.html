@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายงานผู้โดยสาร (Staff) - Tour Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="../../assets/css/admin.css" rel="stylesheet">
+    <style>
+        /* ===== Screen styles ===== */
+        .rpt-table {
+            font-size: .82rem;
+            white-space: nowrap;
+        }
+
+        .rpt-table thead th {
+            background: #2c3e50;
+            color: #fff;
+            font-weight: 600;
+            padding: .4rem .6rem;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            border-color: #445;
+            white-space: nowrap;
+        }
+
+        .rpt-table td {
+            padding: .35rem .55rem;
+            vertical-align: middle;
+            border-color: #dee2e6;
+        }
+
+        .rpt-table tbody tr:hover td {
+            background: #f0f9f5;
+        }
+
+        .seat-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: .25rem;
+            background: #e9ecef;
+            font-weight: 700;
+            font-size: .75rem;
+            border: 1px solid #dee2e6;
+        }
+
+        /* round search */
+        #roundDropdown .round-item:hover {
+            background: #f0f9f5;
+        }
+
+        #roundDropdown .round-item.active {
+            background: #e0f5ec;
+        }
+
+        /* ===== Print-only header ===== */
+        #printHeader {
+            display: none;
+        }
+
+        /* ===== PRINT ===== */
+        @page {
+            size: A4 landscape;
+            margin: 30mm 30mm 30mm 30mm;
+        }
+
+        @media print {
+
+            .no-print,
+            .sidebar,
+            .sidebar-overlay,
+            #sidebar,
+            #main-header,
+            .page-header,
+            #roundBanner,
+            .card.mb-3 {
+                display: none !important;
+            }
+
+            html,
+            body {
+                background: #fff !important;
+                font-size: 9pt;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            body {
+                padding: 5mm !important;
+                margin: 0 !important;
+            }
+
+            .d-flex {
+                display: block !important;
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+                min-width: 0 !important;
+                overflow: visible !important;
+            }
+
+            .page-content {
+                padding: 0 !important;
+                overflow: visible !important;
+            }
+
+            #printHeader {
+                display: block !important;
+                margin-bottom: 6mm;
+                border-bottom: 2px solid #333;
+                padding-bottom: 4mm;
+            }
+
+            /* Screen summary hidden on print, print summary shown */
+            #rptSummary {
+                display: none !important;
+            }
+
+            #rptSummaryPrint {
+                display: block !important;
+                margin-bottom: 8mm;
+                width: 100% !important;
+            }
+
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+            }
+
+            .card-body {
+                padding: 0 !important;
+            }
+
+            div[style*="overflow-x:auto"] {
+                overflow: visible !important;
+                max-height: none !important;
+                width: 100% !important;
+            }
+
+            .rpt-table {
+                font-size: 7pt !important;
+                width: 100% !important;
+                border-collapse: collapse !important;
+                page-break-inside: auto;
+            }
+
+            .rpt-table thead th {
+                background: #2c3e50 !important;
+                color: #fff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                font-size: 6.5pt !important;
+                padding: 1.5mm 2mm !important;
+                position: static !important;
+            }
+
+            .rpt-table td {
+                padding: 1.5mm 2mm !important;
+                font-size: 7pt !important;
+            }
+
+            .rpt-table tr {
+                page-break-inside: avoid;
+            }
+
+            .seat-badge {
+                width: 14px !important;
+                height: 14px !important;
+                font-size: 6pt !important;
+            }
+
+            /* signature block */
+            #signBlock {
+                display: flex !important;
+                justify-content: space-around;
+                margin-top: 15mm;
+                padding-top: 5mm;
+                border-top: 1px dashed #ccc;
+                font-size: 9pt;
+            }
+
+            #signBlock .sign-item {
+                text-align: center;
+                min-width: 70mm;
+            }
+
+            #signBlock .sign-line {
+                border-bottom: 1px solid #000;
+                margin: 10mm 4mm 3mm 4mm;
+            }
+        }
+
+        /* signature block hidden on screen */
+        #signBlock {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="d-flex">
+        <nav class="sidebar bg-white border-end no-print" id="sidebar"></nav>
+        <main class="main-content flex-fill" style="min-width:0;overflow-x:hidden;">
+            <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+            <div class="page-content" style="overflow-x:hidden;">
+
+
+                <!-- ══ Filter Bar ════════════════════════════════════ -->
+                <div class="card mb-3 no-print shadow-sm border-0 bg-white">
+                    <div class="card-body py-2 px-3">
+                        <div class="row g-2 align-items-end">
+
+                            <!-- 1 ─ ชื่อทริป (typeahead) -->
+                            <div class="col-md-4 position-relative">
+                                <div class="small fw-semibold mb-1 text-muted"><i class="bi bi-map me-1"></i>ชื่อทริป
+                                </div>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white text-muted border-end-0">
+                                        <i class="bi bi-search" style="font-size:.75rem;"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0" id="srchTrip"
+                                        placeholder="พิมพ์ชื่อทริป..." autocomplete="off" oninput="filterTripList()"
+                                        onfocus="filterTripList()" onkeydown="handleTripKey(event)">
+                                </div>
+                                <!-- Trip autocomplete dropdown -->
+                                <div id="tripDropdown"
+                                    class="position-absolute bg-white border rounded shadow-sm d-none" style="z-index:1050;max-height:260px;overflow-y:auto;
+                                top:calc(100% + 2px);left:0;right:0;"></div>
+                            </div>
+
+                            <!-- 2 ─ รถ + เส้นทาง (select) -->
+                            <div class="col-md-3">
+                                <div class="small fw-semibold mb-1 text-muted"><i class="bi bi-bus-front me-1"></i>รถ +
+                                    เส้นทาง</div>
+                                <select class="form-select form-select-sm" id="selBus" onchange="onSelBusChange()"
+                                    disabled>
+                                    <option value="">— เลือกรถ —</option>
+                                </select>
+                            </div>
+
+                            <!-- 3 ─ วันที่ / เดือน ปี (select) -->
+                            <div class="col-md-2">
+                                <div class="small fw-semibold mb-1 text-muted"><i
+                                        class="bi bi-calendar3 me-1"></i>วันที่ / เดือน ปี</div>
+                                <select class="form-select form-select-sm" id="selDate" onchange="onSelDateChange()"
+                                    disabled>
+                                    <option value="">— เลือกวันที่ —</option>
+                                </select>
+                            </div>
+
+                            <!-- print + clear buttons -->
+                            <div class="col-auto pb-1 d-flex gap-2 align-items-center ms-auto">
+                                <button class="btn btn-sm btn-outline-danger px-3" id="btnClearSelection"
+                                    style="display:none;" onclick="clearRoundSelection()">
+                                    <i class="bi bi-x-circle me-1"></i>ล้างข้อมูล
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="doPrint()">
+                                    <i class="bi bi-printer me-1"></i>พิมพ์
+                                </button>
+                            </div>
+
+                        </div>
+                        <input type="hidden" id="filterRound">
+                    </div>
+                </div>
+
+                <!-- Round Banner (screen) -->
+                <div id="roundBanner" class="d-none mb-3">
+                    <div class="card border-0 bg-dark text-white">
+                        <div class="card-body py-2 px-3">
+                            <div class="d-flex flex-wrap gap-3 align-items-center">
+                                <span id="bannerTrip" class="fw-bold fs-6"></span>
+                                <span class="badge bg-light text-dark" id="bannerBus"></span>
+                                <span class="text-white-50 small" id="bannerDate"></span>
+                                <span class="text-white-50 small"><i class="bi bi-arrow-right me-1"></i><span
+                                        id="bannerRoute"></span></span>
+                                <span class="badge bg-success ms-auto" id="bannerResp"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== Print-only header ===== -->
+                <div id="printHeader">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+                        <div>
+                            <div style="font-size:16pt;font-weight:700;color:#000;margin-bottom:2mm;" id="ph-title">
+                                ใบรายชื่อผู้โดยสาร</div>
+                            <div style="font-size:11pt;font-weight:700;" id="ph-trip">-</div>
+                            <div style="font-size:9pt;color:#333;margin-top:1mm;" id="ph-detail">-</div>
+                        </div>
+                        <div style="text-align:right;font-size:9pt;color:#000;line-height:1.5;">
+                            <div>วันที่พิมพ์: <span id="ph-printdate" style="font-weight:500;"></span></div>
+                            <div id="ph-resp" style="font-weight:500;"></div>
+                            <div id="ph-pax" style="font-size:10pt;font-weight:700;color:#000;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary (screen) -->
+                <div id="rptSummary" class="d-none mb-3 no-print">
+                    <div class="d-flex flex-wrap gap-4 align-items-center px-1 py-2 border-top border-bottom bg-white">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-people-fill text-primary" style="font-size:1.1rem;"></i>
+                            <span class="text-muted small">ผู้โดยสาร:</span>
+                            <span class="fw-bold fs-5 text-dark" id="sumPax">0</span> <span
+                                class="text-muted small">คน</span>
+                        </div>
+                        <div class="vr d-none d-md-block" style="height:24px;"></div>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-collection-fill text-success" style="font-size:1.1rem;"></i>
+                            <span class="text-muted small">กลุ่ม / การจอง:</span>
+                            <span class="fw-bold fs-5 text-dark" id="sumGroups">0</span> <span
+                                class="text-muted small">กลุ่ม</span>
+                        </div>
+                        <div class="vr d-none d-md-block" style="height:24px;"></div>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-bag-fill text-info" style="font-size:1.1rem;"></i>
+                            <span class="text-muted small">ของเช่า:</span>
+                            <span class="fw-bold fs-5 text-dark" id="sumAddon">0</span> <span
+                                class="text-muted small">รายการ</span>
+                        </div>
+                        <div class="vr d-none d-md-block" style="height:24px;"></div>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size:1.1rem;"></i>
+                            <span class="text-muted small">แพ้อาหาร:</span>
+                            <span class="fw-bold fs-5 text-dark" id="sumAllergy">0</span> <span
+                                class="text-muted small">คน</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Print-only summary -->
+                <div id="rptSummaryPrint" style="display:none;" class="mb-3">
+                    <table style="width:100%;border-collapse:collapse;border:1px solid #ccc;font-size:8pt;">
+                        <tr>
+                            <td style="border:1px solid #ccc;padding:3mm 5mm;text-align:center;">
+                                <div style="font-size:14pt;font-weight:700;" id="sumPaxPrint">0</div>
+                                <div style="color:#555;margin-top:1mm;">ผู้โดยสาร (คน)</div>
+                            </td>
+                            <td style="border:1px solid #ccc;padding:3mm 5mm;text-align:center;">
+                                <div style="font-size:14pt;font-weight:700;" id="sumGroupsPrint">0</div>
+                                <div style="color:#555;margin-top:1mm;">กลุ่ม / การจอง</div>
+                            </td>
+                            <td style="border:1px solid #ccc;padding:3mm 5mm;text-align:center;">
+                                <div style="font-size:14pt;font-weight:700;" id="sumAddonPrint">0</div>
+                                <div style="color:#555;margin-top:1mm;">รายการของเช่า</div>
+                            </td>
+                            <td style="border:1px solid #ccc;padding:3mm 5mm;text-align:center;">
+                                <div style="font-size:14pt;font-weight:700;" id="sumAllergyPrint">0</div>
+                                <div style="color:#555;margin-top:1mm;">แพ้อาหาร (คน)</div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Table -->
+                <div class="card" style="max-width:100%;overflow:hidden;">
+                    <div class="card-body p-0">
+                        <div style="overflow-x:auto;overflow-y:auto;max-height:62vh;width:100%;">
+                            <table class="table table-bordered rpt-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="min-width:28px;">#</th>
+                                        <th style="min-width:110px;">จุดขึ้นรถ</th>
+                                        <th style="min-width:110px;">จุดลงรถ</th>
+                                        <th style="min-width:58px;" class="text-center">รถตู้#</th>
+                                        <th style="min-width:55px;" class="text-center">ที่นั่ง#</th>
+                                        <th style="min-width:65px;">คำนำหน้า</th>
+                                        <th style="min-width:90px;">ชื่อ</th>
+                                        <th style="min-width:110px;">นามสกุล</th>
+                                        <th style="min-width:40px;" class="text-center">อายุ</th>
+                                        <th style="min-width:110px;">วัน/เดือน/ปีเกิด</th>
+                                        <th style="min-width:70px;">ชื่อเล่น</th>
+                                        <th style="min-width:110px;">โทรศัพท์</th>
+                                        <th style="min-width:130px;">ของเช่า 1</th>
+                                        <th style="min-width:130px;">ของเช่า 2</th>
+                                        <th style="min-width:100px;">แพ้อาหาร</th>
+                                        <th style="min-width:80px;">หมายเหตุ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rptBody">
+                                    <tr>
+                                        <td colspan="15" class="text-center py-4 text-muted">เลือกรอบรถเพื่อดูข้อมูล
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Signature block (print only) -->
+                <div id="signBlock">
+                    <div class="sign-item">
+                        <div class="sign-line"></div>
+                        <div>ผู้รับผิดชอบทริป</div>
+                    </div>
+                    <div class="sign-item">
+                        <div class="sign-line"></div>
+                        <div>พนักงานขับรถ</div>
+                    </div>
+                    <div class="sign-item">
+                        <div class="sign-line"></div>
+                        <div>ผู้ตรวจสอบ</div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/apiClient.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        const MONTH_TH_SHORT = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+        const MONTH_TH_FULL = ['', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+        let allRounds = [];
+        let tripDropIdx = -1;
+        let selectedTripId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initPage();
+            allRounds = await API.busRounds.list();
+
+            document.addEventListener('click', e => {
+                if (!e.target.closest('#tripDropdown') && e.target.id !== 'srchTrip')
+                    document.getElementById('tripDropdown').classList.add('d-none');
+            });
+
+            // Check for roundId in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const rid = urlParams.get('roundId');
+            if (rid) {
+                const r = allRounds.find(x => x.id === parseInt(rid));
+                if (r) {
+                    autoSelectRound(r);
+                }
+            }
+        });
+
+        /* ── 1. Trip Search ── */
+        function filterTripList() {
+            const q = document.getElementById('srchTrip').value.toLowerCase().trim();
+            const dropdown = document.getElementById('tripDropdown');
+            tripDropIdx = -1;
+
+            const tripMap = new Map();
+            allRounds.forEach(r => {
+                if (!r.trip) return;
+                if (!tripMap.has(r.tripId)) tripMap.set(r.tripId, { trip: r.trip, rounds: [] });
+                tripMap.get(r.tripId).rounds.push(r);
+            });
+
+            const list = [...tripMap.values()].filter(({ trip }) =>
+                !q || trip.title.toLowerCase().includes(q)
+            );
+
+            if (!list.length) {
+                dropdown.innerHTML = '<div class="px-3 py-2 text-muted small">ไม่พบทริป</div>';
+                dropdown.classList.remove('d-none');
+                return;
+            }
+
+            dropdown.innerHTML = list.map(({ trip, rounds }) => {
+                const dates = rounds.map(r => new Date(r.departDate)).sort((a, b) => a - b);
+                const earliest = dates[0];
+                const latest = dates[dates.length - 1];
+                const dateInfo = dates.length > 1
+                    ? `${earliest.getDate()} ${MONTH_TH_SHORT[earliest.getMonth() + 1]} — ${latest.getDate()} ${MONTH_TH_SHORT[latest.getMonth() + 1]} ${latest.getFullYear() + 543}`
+                    : `${earliest.getDate()} ${MONTH_TH_SHORT[earliest.getMonth() + 1]} ${earliest.getFullYear() + 543}`;
+
+                return `<div class="td-item px-3 py-2" data-tripid="${trip.id}"
+                     style="cursor:pointer;border-bottom:1px solid #f0f0f0;"
+                     onmousedown="selectTrip(${trip.id})">
+            <div class="fw-bold small">${trip.title}</div>
+            <div class="text-muted" style="font-size:.72rem;">${dateInfo} · ${rounds.length} รอบ</div>
+        </div>`;
+            }).join('');
+            dropdown.classList.remove('d-none');
+        }
+
+        function handleTripKey(e) {
+            const items = document.querySelectorAll('#tripDropdown .td-item');
+            if (e.key === 'ArrowDown') {
+                tripDropIdx = Math.min(tripDropIdx + 1, items.length - 1);
+                items.forEach((el, i) => el.classList.toggle('active', i === tripDropIdx));
+                e.preventDefault();
+            } else if (e.key === 'ArrowUp') {
+                tripDropIdx = Math.max(tripDropIdx - 1, -1);
+                items.forEach((el, i) => el.classList.toggle('active', i === tripDropIdx));
+                e.preventDefault();
+            } else if (e.key === 'Enter' && tripDropIdx >= 0 && items[tripDropIdx]) {
+                items[tripDropIdx].dispatchEvent(new MouseEvent('mousedown'));
+            } else if (e.key === 'Escape') {
+                document.getElementById('tripDropdown').classList.add('d-none');
+            }
+        }
+
+        function selectTrip(tripId) {
+            selectedTripId = tripId;
+            const tripRounds = allRounds.filter(r => r.tripId === tripId);
+            const tripTitle = tripRounds[0]?.trip?.title || '';
+
+            document.getElementById('srchTrip').value = tripTitle;
+            document.getElementById('btnClearSelection').style.display = '';
+            document.getElementById('tripDropdown').classList.add('d-none');
+
+            resetSelDate();
+            document.getElementById('filterRound').value = '';
+            loadReport(); // Clear view
+
+            const seen = new Map();
+            tripRounds.forEach(r => {
+                const key = `${r.busNumber}|${r.startPoint}|${r.endPoint}`;
+                if (!seen.has(key)) seen.set(key, r);
+            });
+
+            const selBus = document.getElementById('selBus');
+            selBus.innerHTML = '<option value="">— เลือกรถ —</option>' +
+                [...seen.values()].map(r =>
+                    `<option value="${r.busNumber}|${r.startPoint}|${r.endPoint}">` +
+                    `รถ ${r.busNumber}  ·  ${r.startPoint} → ${r.endPoint}</option>`
+                ).join('');
+            selBus.disabled = false;
+            selBus.value = '';
+
+            if (seen.size === 1) {
+                selBus.selectedIndex = 1;
+                onSelBusChange();
+            }
+        }
+
+        /* ── 2. Bus Selection ── */
+        function onSelBusChange() {
+            const busKey = document.getElementById('selBus').value;
+            resetSelDate();
+            if (!busKey) {
+                document.getElementById('filterRound').value = '';
+                loadReport();
+                return;
+            }
+
+            const [busNum, start, end] = busKey.split('|');
+            const filtered = allRounds.filter(r =>
+                r.tripId === selectedTripId &&
+                String(r.busNumber) === busNum &&
+                r.startPoint === start &&
+                r.endPoint === end
+            ).sort((a, b) => new Date(a.departDate) - new Date(b.departDate));
+
+            const selDate = document.getElementById('selDate');
+            selDate.innerHTML = '<option value="">— เลือกวันที่ —</option>' +
+                filtered.map(r => {
+                    const d = new Date(r.departDate);
+                    const dateStr = `${d.getDate()} ${MONTH_TH_SHORT[d.getMonth() + 1]} ${d.getFullYear() + 543}`;
+                    return `<option value="${r.id}">${dateStr}</option>`;
+                }).join('');
+            selDate.disabled = false;
+
+            if (filtered.length === 1) {
+                selDate.selectedIndex = 1;
+                onSelDateChange();
+            }
+        }
+
+        /* ── 3. Date Selection ── */
+        function onSelDateChange() {
+            const rid = document.getElementById('selDate').value;
+            document.getElementById('filterRound').value = rid;
+            loadReport();
+        }
+
+        function resetSelDate() {
+            const sel = document.getElementById('selDate');
+            sel.innerHTML = '<option value="">— เลือกวันที่ —</option>';
+            sel.disabled = true;
+        }
+
+        function clearRoundSelection() {
+            selectedTripId = null;
+            document.getElementById('filterRound').value = '';
+            document.getElementById('srchTrip').value = '';
+            document.getElementById('btnClearSelection').style.display = 'none';
+            document.getElementById('tripDropdown').classList.add('d-none');
+
+            const selBus = document.getElementById('selBus');
+            selBus.innerHTML = '<option value="">— เลือกรถ —</option>';
+            selBus.disabled = true;
+
+            resetSelDate();
+            loadReport();
+        }
+
+        function autoSelectRound(r) {
+            selectTrip(r.tripId);
+            const key = `${r.busNumber}|${r.startPoint}|${r.endPoint}`;
+            document.getElementById('selBus').value = key;
+            onSelBusChange();
+            document.getElementById('selDate').value = r.id;
+            onSelDateChange();
+        }
+
+        function calcAge(birthDateStr) {
+            if (!birthDateStr) return '-';
+            const b = new Date(birthDateStr);
+            const today = new Date();
+            let age = today.getFullYear() - b.getFullYear();
+            if (today.getMonth() < b.getMonth() || (today.getMonth() === b.getMonth() && today.getDate() < b.getDate())) age--;
+            return age;
+        }
+
+        function formatBirth(birthDateStr) {
+            if (!birthDateStr) return '-';
+            const d = new Date(birthDateStr);
+            return `${d.getDate()} ${MONTH_TH_SHORT[d.getMonth() + 1]} ${d.getFullYear() + 543}`;
+        }
+
+        /* ── Load & Render ── */
+        async function loadReport() {
+            const roundId = document.getElementById('filterRound').value;
+            const banner = document.getElementById('roundBanner');
+            const summary = document.getElementById('rptSummary');
+
+            if (!roundId) {
+                if (banner) banner.classList.add('d-none');
+                if (summary) summary.classList.add('d-none');
+                const countBadge = document.getElementById('countBadge');
+                if (countBadge) {
+                    countBadge.textContent = '0 คน';
+                    countBadge.style.display = 'none';
+                }
+                const rptBody = document.getElementById('rptBody');
+                if (rptBody) rptBody.innerHTML = '<tr><td colspan="15" class="text-center py-4 text-muted">เลือกรอบรถเพื่อดูข้อมูล</td></tr>';
+                return;
+            }
+
+            try {
+                const [rounds, bookings, allInsurance] = await Promise.all([
+                    API.busRounds.list(),
+                    API.bookings.byRound(roundId),
+                    API.insurance.list()
+                ]);
+
+                const round = rounds.find(r => r.id === Number(roundId));
+
+                /* Banner */
+                if (round) {
+                    banner.classList.remove('d-none');
+                    document.getElementById('bannerTrip').textContent = round.trip?.title || '';
+                    document.getElementById('bannerBus').textContent = `รถคันที่ ${round.busNumber}`;
+                    document.getElementById('bannerDate').textContent = formatDateTime(round.departDate);
+                    document.getElementById('bannerRoute').textContent = `${round.startPoint} → ${round.endPoint}`;
+                    document.getElementById('bannerResp').textContent = round.responsiblePerson || '';
+
+                    /* Print header */
+                    const today = new Date();
+                    document.getElementById('ph-trip').textContent =
+                        `${round.trip?.title || ''} — รถคันที่ ${round.busNumber}`;
+                    document.getElementById('ph-detail').textContent =
+                        `${round.startPoint} → ${round.endPoint}  |  ${formatDateTime(round.departDate)}`;
+                    document.getElementById('ph-printdate').textContent =
+                        `${today.getDate()} ${MONTH_TH_SHORT[today.getMonth() + 1]} ${today.getFullYear() + 543}`;
+                    document.getElementById('ph-resp').textContent =
+                        round.responsiblePerson ? `ผู้รับผิดชอบ: ${round.responsiblePerson}` : '';
+                }
+
+                /* Insurance map */
+                const insMap = {};
+                allInsurance.forEach(f => {
+                    if (!insMap[f.bookingId]) insMap[f.bookingId] = [];
+                    insMap[f.bookingId].push(f);
+                });
+
+                /* Build rows (1 per SeatBooking) */
+                const rows = [];
+                for (const b of bookings) {
+                    if (b.status === 'CANCELLED') continue;
+
+                    const seats = b.seatBookings || [];
+                    const addons = b.bookingAddons || [];
+
+                    if (seats.length === 0) {
+                        // Failsafe for bookings without explicitly stored seat details
+                        rows.push({ seat: null, booking: b, addons });
+                    } else {
+                        seats.forEach(seat => {
+                            rows.push({ seat, booking: b, addons });
+                        });
+                    }
+                }
+
+                /* Sort van → seat */
+                rows.sort((a, b) => {
+                    const va = a.seat?.vanOrder || 99, vb = b.seat?.vanOrder || 99;
+                    if (va !== vb) return va - vb;
+                    return (a.seat?.seatNumber || 99) - (b.seat?.seatNumber || 99);
+                });
+
+                if (!rows.length) {
+                    const rptBody = document.getElementById('rptBody');
+                    if (rptBody) rptBody.innerHTML = '<tr><td colspan="15" class="text-center py-4 text-muted">ยังไม่มีการจองที่ยืนยันในรอบนี้</td></tr>';
+                    if (summary) summary.classList.add('d-none');
+                    return;
+                }
+
+                /* Summary */
+                const totalAddonItems = rows.reduce((s, r) => s + r.addons.length, 0);
+                const totalAllergies = rows.filter(r => r.seat && r.seat.foodAllergy).length;
+                const totalGroups = bookings.filter(b => b.status !== 'CANCELLED').length;
+
+                document.getElementById('sumPax').textContent = rows.length;
+                document.getElementById('sumGroups').textContent = totalGroups;
+                document.getElementById('sumAddon').textContent = totalAddonItems;
+                document.getElementById('sumAllergy').textContent = totalAllergies;
+
+                // Print summary
+                document.getElementById('sumPaxPrint').textContent = rows.length;
+                document.getElementById('sumGroupsPrint').textContent = totalGroups;
+                document.getElementById('sumAddonPrint').textContent = totalAddonItems;
+                document.getElementById('sumAllergyPrint').textContent = totalAllergies;
+                document.getElementById('rptSummaryPrint').style.display = 'none'; // hidden on screen, shown via print CSS
+
+                document.getElementById('ph-pax').textContent = `ผู้โดยสาร ${rows.length} คน`;
+                if (summary) summary.classList.remove('d-none');
+
+                /* Render */
+                document.getElementById('rptBody').innerHTML = rows.map((r, i) => {
+                    const { seat: s, booking: b, addons } = r;
+
+                    const pickup = s?.pickupPoint || b.busRound?.startPoint || '-';
+                    const dropoff = s?.dropoffPoint || b.busRound?.endPoint || '-';
+                    const vanNo = s?.vanOrder ?? '-';
+                    const seatNo = s?.seatNumber ?? '-';
+                    const prefix = s?.namePrefix || '-';
+                    const fname = s?.firstName || b.user?.name || '-';
+                    const lname = s?.lastName || '';
+                    const age = s?.birthDate ? calcAge(s.birthDate) : '-';
+                    const birth = s?.birthDate ? formatBirth(s.birthDate) : '-';
+                    const nick = s?.nickname || '-';
+                    const phone = s?.phone || b.user?.phone || '-';
+
+                    const a1 = addons[0]
+                        ? `<span class="badge bg-light text-dark border">${addons[0].addon?.name || ''}</span> <small class="text-muted">×${addons[0].quantity}</small>`
+                        : '<span class="text-muted">-</span>';
+                    const a2 = addons[1]
+                        ? `<span class="badge bg-light text-dark border">${addons[1].addon?.name || ''}</span> <small class="text-muted">×${addons[1].quantity}</small>`
+                        : '<span class="text-muted">-</span>';
+
+                    const allergy = s?.foodAllergy
+                        ? `<span class="badge bg-warning text-dark" style="font-size:.7rem;white-space:normal;max-width:120px;">${s.foodAllergy}</span>`
+                        : '-';
+
+                    const rowClass = b.bookingType === 'GROUP' && i > 0 && rows[i - 1]?.booking.id === b.id
+                        ? 'table-light' : '';
+
+                    return `<tr class="${rowClass}">
+                <td class="text-muted text-center">${i + 1}</td>
+                <td>${pickup}</td>
+                <td>${dropoff}</td>
+                <td class="text-center"><span class="seat-badge">${vanNo}</span></td>
+                <td class="text-center"><span class="seat-badge">${seatNo}</span></td>
+                <td>${prefix}</td>
+                <td class="fw-semibold">${fname}</td>
+                <td>${lname}</td>
+                <td class="text-center">${age}</td>
+                <td>${birth}</td>
+                <td>${nick}</td>
+                <td>${phone}</td>
+                <td>${a1}</td>
+                <td>${a2}</td>
+                <td class="text-center">${allergy}</td>
+                <td><span class="text-muted small">-</span></td>
+            </tr>`;
+                }).join('');
+
+            } catch (e) { showToast('โหลดล้มเหลว: ' + e.message, 'danger'); }
+        }
+
+        function doPrint() {
+            if (!document.getElementById('filterRound').value) {
+                showToast('กรุณาเลือกรอบรถก่อนพิมพ์', 'warning');
+                return;
+            }
+            window.print();
+        }
+    </script>
+</body>
+
+</html>

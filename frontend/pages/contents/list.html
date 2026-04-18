@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เนื้อหาเว็บ - Tour Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../../assets/css/admin.css" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="d-flex">
+    <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+    <main class="main-content flex-fill">
+        <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+        <div class="page-content">
+            <div class="page-header d-flex justify-content-between align-items-center">
+                <div><h1 class="page-title">เนื้อหาเว็บ</h1><p class="page-subtitle">โพสต์ บล็อก FAQ และข้อมูลเกี่ยวกับเรา</p></div>
+                <button class="btn btn-primary" onclick="openModal()"><i class="bi bi-plus-lg me-1"></i>เพิ่มเนื้อหา</button>
+            </div>
+
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item"><a class="nav-link active" href="#" onclick="filterType('');return false;">ทั้งหมด</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType('TRIP_POST');return false;">โพสต์ทริป</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType('BLOG');return false;">บล็อก</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType('FAQ');return false;">FAQ</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType('ABOUT');return false;">เกี่ยวกับเรา</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType('SERVICE');return false;">บริการอื่นๆ</a></li>
+            </ul>
+
+            <div class="card">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr><th>#</th><th>ประเภท</th><th>หัวข้อ</th><th>ทริป</th><th>สถานะ</th><th>วันที่</th><th>จัดการ</th></tr>
+                        </thead>
+                        <tbody id="contentsBody">
+                            <tr><td colspan="7" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="contentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">เพิ่มเนื้อหา</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="contentForm">
+                    <input type="hidden" id="contentId">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">ประเภท <span class="text-danger">*</span></label>
+                            <select class="form-select" id="fType" required>
+                                <option value="TRIP_POST">โพสต์ทริป</option>
+                                <option value="BLOG">บล็อก</option>
+                                <option value="FAQ">FAQ</option>
+                                <option value="ABOUT">เกี่ยวกับเรา</option>
+                                <option value="SERVICE">บริการอื่นๆ</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ผูกกับทริป (ถ้ามี)</label>
+                            <select class="form-select" id="fTripId">
+                                <option value="">-- ไม่ระบุ --</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">หัวข้อ <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="fTitle" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">เนื้อหา</label>
+                            <textarea class="form-control" id="fBody" rows="5"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">URL รูปภาพ</label>
+                            <input type="text" class="form-control" id="fImage">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">URL วิดีโอ</label>
+                            <input type="text" class="form-control" id="fVideo">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ลิงก์</label>
+                            <input type="text" class="form-control" id="fLink">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" id="fActive" checked>
+                                <label class="form-check-label">เผยแพร่</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="saveContent()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/apiClient.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script>
+let modal, currentType = '';
+const typeLabel = { TRIP_POST:'โพสต์ทริป', BLOG:'บล็อก', FAQ:'FAQ', ABOUT:'เกี่ยวกับเรา', SERVICE:'บริการ' };
+const typeBadge = { TRIP_POST:'primary', BLOG:'info', FAQ:'warning', ABOUT:'secondary', SERVICE:'success' };
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await initPage();
+    modal = new bootstrap.Modal(document.getElementById('contentModal'));
+    const trips = await API.trips.list();
+    document.getElementById('fTripId').insertAdjacentHTML('beforeend', trips.map(t => `<option value="${t.id}">${t.title}</option>`).join(''));
+    loadContents();
+});
+
+function filterType(type) {
+    currentType = type;
+    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+    event.target.classList.add('active');
+    loadContents();
+}
+
+async function loadContents() {
+    try {
+        const data = await API.contents.list(currentType);
+        const tbody = document.getElementById('contentsBody');
+        if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">ไม่พบเนื้อหา</td></tr>'; return; }
+        tbody.innerHTML = data.map((c, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td><span class="badge bg-${typeBadge[c.type]}">${typeLabel[c.type]}</span></td>
+                <td><strong>${c.title}</strong></td>
+                <td>${c.trip?.title || '-'}</td>
+                <td><span class="badge ${c.isActive ? 'bg-success' : 'bg-secondary'}">${c.isActive ? 'เผยแพร่' : 'ซ่อน'}</span></td>
+                <td>${formatDateThai(c.createdAt)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editContent(${JSON.stringify(c).replace(/"/g,'&quot;')})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteContent(${c.id})"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>`).join('');
+    } catch (e) { showToast('โหลดล้มเหลว', 'danger'); }
+}
+
+function openModal() { document.getElementById('contentForm').reset(); document.getElementById('contentId').value = ''; document.getElementById('fActive').checked = true; modal.show(); }
+function editContent(c) {
+    document.getElementById('contentId').value = c.id;
+    document.getElementById('fType').value = c.type;
+    document.getElementById('fTripId').value = c.tripId || '';
+    document.getElementById('fTitle').value = c.title;
+    document.getElementById('fBody').value = c.body || '';
+    document.getElementById('fImage').value = c.imageUrl || '';
+    document.getElementById('fVideo').value = c.videoUrl || '';
+    document.getElementById('fLink').value = c.linkUrl || '';
+    document.getElementById('fActive').checked = c.isActive;
+    modal.show();
+}
+async function saveContent() {
+    const id = document.getElementById('contentId').value;
+    const tid = document.getElementById('fTripId').value;
+    const data = { type: document.getElementById('fType').value, tripId: tid ? parseInt(tid) : null, title: document.getElementById('fTitle').value, body: document.getElementById('fBody').value, imageUrl: document.getElementById('fImage').value, videoUrl: document.getElementById('fVideo').value, linkUrl: document.getElementById('fLink').value, isActive: document.getElementById('fActive').checked };
+    try {
+        if (id) await API.contents.update(id, data); else await API.contents.create(data);
+        modal.hide(); showToast('บันทึกสำเร็จ'); loadContents();
+    } catch (e) { showToast(e.message, 'danger'); }
+}
+async function deleteContent(id) {
+    confirmAction('ต้องการลบเนื้อหานี้?', async () => {
+        try { await API.contents.delete(id); showToast('ลบสำเร็จ'); loadContents(); }
+        catch (e) { showToast(e.message, 'danger'); }
+    });
+}
+</script>
+</body>
+</html>

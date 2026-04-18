@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แดชบอร์ด - Tour Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../assets/css/admin.css" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="d-flex">
+    <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+    <main class="main-content flex-fill">
+        <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+        <div class="page-content">
+            <div class="page-header">
+                <h1 class="page-title">แดชบอร์ด</h1>
+                <p class="page-subtitle">ภาพรวมระบบ Tour Backoffice</p>
+            </div>
+
+            <!-- Stat Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-sm-6 col-xl-3">
+                    <div class="stat-card bg-primary">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div><div class="stat-value" id="statTrips">-</div><div class="stat-label">ทริปทั้งหมด</div></div>
+                            <i class="bi bi-map stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="stat-card bg-success">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div><div class="stat-value" id="statBookings">-</div><div class="stat-label">การจองวันนี้</div></div>
+                            <i class="bi bi-ticket-detailed stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="stat-card bg-warning">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div><div class="stat-value" id="statPending">-</div><div class="stat-label">รอยืนยันสลิป</div></div>
+                            <i class="bi bi-clock stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="stat-card bg-info">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div><div class="stat-value" id="statRevenue">-</div><div class="stat-label">รายได้รวม (บาท)</div></div>
+                            <i class="bi bi-cash-coin stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header"><h5 class="card-title mb-0"><i class="bi bi-lightning me-2"></i>เมนูด่วน</h5></div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-sm-6 col-md-4">
+                                    <a href="/frontend/pages/trips/list.html" class="btn btn-outline-primary w-100 py-3">
+                                        <i class="bi bi-map d-block fs-3 mb-1"></i>ทริปท่องเที่ยว
+                                    </a>
+                                </div>
+                                <div class="col-sm-6 col-md-4">
+                                    <a href="/frontend/pages/bus-rounds/list.html" class="btn btn-outline-success w-100 py-3">
+                                        <i class="bi bi-bus-front d-block fs-3 mb-1"></i>รอบรถ / ตั๋ว
+                                    </a>
+                                </div>
+                                <div class="col-sm-6 col-md-4">
+                                    <a href="/frontend/pages/bookings/list.html" class="btn btn-outline-warning w-100 py-3">
+                                        <i class="bi bi-ticket-detailed d-block fs-3 mb-1"></i>การจอง
+                                    </a>
+                                </div>
+                                <div class="col-sm-6 col-md-4">
+                                    <a href="/frontend/pages/payments/list.html" class="btn btn-outline-danger w-100 py-3">
+                                        <i class="bi bi-credit-card d-block fs-3 mb-1"></i>ชำระเงิน/สลิป
+                                    </a>
+                                </div>
+                                <div class="col-sm-6 col-md-4">
+                                    <a href="/frontend/pages/reports/summary.html" class="btn btn-outline-info w-100 py-3">
+                                        <i class="bi bi-bar-chart d-block fs-3 mb-1"></i>สรุปรายงาน
+                                    </a>
+                                </div>
+                                <div class="col-sm-6 col-md-4">
+                                    <a href="/frontend/pages/contents/list.html" class="btn btn-outline-secondary w-100 py-3">
+                                        <i class="bi bi-file-text d-block fs-3 mb-1"></i>เนื้อหาเว็บ
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header"><h5 class="card-title mb-0"><i class="bi bi-info-circle me-2"></i>ข้อมูลระบบ</h5></div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span class="text-muted">เวอร์ชัน</span><strong>1.0.0</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span class="text-muted">วันที่</span><strong id="currentDate">-</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span class="text-muted">ผู้เข้าสู่ระบบ</span><strong id="loggedUser">-</strong>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script src="../assets/js/apiClient.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    await initPage();
+    document.getElementById('currentDate').textContent = formatDateThai(new Date());
+    const user = authManager.getUser();
+    document.getElementById('loggedUser').textContent = user?.name || user?.username || '-';
+
+    try {
+        const [trips, bookings, payments, report] = await Promise.all([
+            API.trips.list(),
+            API.bookings.list(),
+            API.payments.list(),
+            API.reports.summary()
+        ]);
+        document.getElementById('statTrips').textContent = trips.length;
+        document.getElementById('statBookings').textContent = bookings.length;
+        document.getElementById('statPending').textContent = payments.filter(p => p.status === 'PENDING').length;
+        document.getElementById('statRevenue').textContent = formatMoney(report.totalRevenue);
+    } catch (e) {
+        console.warn('Stats load error:', e);
+    }
+});
+</script>
+</body>
+</html>

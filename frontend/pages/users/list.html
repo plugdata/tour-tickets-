@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ผู้ใช้งาน - Tour Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../../assets/css/admin.css" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="d-flex">
+    <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+    <main class="main-content flex-fill">
+        <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+        <div class="page-content">
+            <div class="page-header d-flex justify-content-between align-items-center">
+                <div><h1 class="page-title">ผู้ใช้งาน</h1><p class="page-subtitle">จัดการ username, password, role</p></div>
+                <button class="btn btn-primary" onclick="openModal()"><i class="bi bi-plus-lg me-1"></i>เพิ่มผู้ใช้</button>
+            </div>
+            <div class="card">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr><th>#</th><th>Username</th><th>ชื่อ</th><th>โทร</th><th>อีเมล</th><th>Role</th><th>สร้างเมื่อ</th><th>จัดการ</th></tr>
+                        </thead>
+                        <tbody id="usersBody"><tr><td colspan="8" class="text-center py-4 text-muted">กำลังโหลด...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="modalTitle">เพิ่มผู้ใช้</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId">
+                    <div class="mb-3"><label class="form-label">Username <span class="text-danger">*</span></label><input type="text" class="form-control" id="fUsername" required></div>
+                    <div class="mb-3" id="pwField"><label class="form-label">Password <span class="text-danger">*</span></label><input type="password" class="form-control" id="fPassword"></div>
+                    <div class="mb-3"><label class="form-label">ชื่อ <span class="text-danger">*</span></label><input type="text" class="form-control" id="fName" required></div>
+                    <div class="mb-3"><label class="form-label">โทรศัพท์</label><input type="text" class="form-control" id="fPhone"></div>
+                    <div class="mb-3"><label class="form-label">อีเมล</label><input type="email" class="form-control" id="fEmail"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Role <span class="text-danger">*</span></label>
+                        <select class="form-select" id="fRole">
+                            <option value="ADMIN">ADMIN - ผู้ดูแลระบบ</option>
+                            <option value="STUFF">STUFF - เจ้าหน้าที่</option>
+                            <option value="CUSTOMER" selected>CUSTOMER - ลูกค้า</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="saveUser()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/apiClient.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script>
+let modal;
+const roleBadge = { ADMIN:'danger', STUFF:'warning', CUSTOMER:'primary' };
+const roleLabel = { ADMIN:'Admin', STUFF:'Staff', CUSTOMER:'Customer' };
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await initPage();
+    modal = new bootstrap.Modal(document.getElementById('userModal'));
+    loadUsers();
+});
+
+async function loadUsers() {
+    try {
+        const users = await API.users.list();
+        const tbody = document.getElementById('usersBody');
+        if (!users.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">ไม่พบข้อมูล</td></tr>'; return; }
+        tbody.innerHTML = users.map((u, i) => `
+            <tr>
+                <td>${i+1}</td><td><strong>${u.username}</strong></td><td>${u.name}</td>
+                <td>${u.phone || '-'}</td><td>${u.email || '-'}</td>
+                <td><span class="badge bg-${roleBadge[u.role]}">${roleLabel[u.role]}</span></td>
+                <td>${formatDateThai(u.createdAt)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editUser(${JSON.stringify(u).replace(/"/g,'&quot;')})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${u.id})"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>`).join('');
+    } catch (e) { showToast('โหลดล้มเหลว', 'danger'); }
+}
+
+function openModal() {
+    document.getElementById('modalTitle').textContent = 'เพิ่มผู้ใช้';
+    document.getElementById('userForm').reset();
+    document.getElementById('userId').value = '';
+    document.getElementById('pwField').style.display = '';
+    document.getElementById('fPassword').required = true;
+    modal.show();
+}
+function editUser(u) {
+    document.getElementById('modalTitle').textContent = 'แก้ไข Role';
+    document.getElementById('userId').value = u.id;
+    document.getElementById('fUsername').value = u.username;
+    document.getElementById('fName').value = u.name;
+    document.getElementById('fPhone').value = u.phone || '';
+    document.getElementById('fEmail').value = u.email || '';
+    document.getElementById('fRole').value = u.role;
+    document.getElementById('pwField').style.display = 'none';
+    document.getElementById('fPassword').required = false;
+    modal.show();
+}
+async function saveUser() {
+    const id = document.getElementById('userId').value;
+    const data = { username: document.getElementById('fUsername').value, name: document.getElementById('fName').value, phone: document.getElementById('fPhone').value, email: document.getElementById('fEmail').value, role: document.getElementById('fRole').value };
+    try {
+        if (id) { await API.users.update(id, { role: data.role }); }
+        else { data.password = document.getElementById('fPassword').value; await API.users.register(data); }
+        modal.hide(); showToast('บันทึกสำเร็จ'); loadUsers();
+    } catch (e) { showToast(e.message, 'danger'); }
+}
+async function deleteUser(id) {
+    confirmAction('ต้องการลบผู้ใช้นี้?', async () => {
+        try { await API.users.delete(id); showToast('ลบสำเร็จ'); loadUsers(); }
+        catch (e) { showToast(e.message, 'danger'); }
+    });
+}
+</script>
+</body>
+</html>

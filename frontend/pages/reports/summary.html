@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สรุปรายงาน - Tour Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../../assets/css/admin.css" rel="stylesheet">
+    <style>
+        @media print { .no-print { display: none !important; } body { font-size: 12px; } }
+        .profit-positive { color: #198754; }
+        .profit-negative { color: #dc3545; }
+        .blood-badge { font-size:.65rem; padding:.15rem .35rem; border-radius:.3rem; }
+        .avatar-sm { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.8rem; flex-shrink:0; }
+    </style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="d-flex">
+    <nav class="sidebar bg-white border-end no-print" id="sidebar"></nav>
+    <main class="main-content flex-fill">
+        <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm no-print"></header>
+        <div class="page-content">
+            <div class="page-header d-flex justify-content-between align-items-center no-print">
+                <div><h1 class="page-title">สรุปรายงาน</h1><p class="page-subtitle">ยอดรวมการจอง รายได้ และค่าใช้จ่าย</p></div>
+                <button class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>พิมพ์</button>
+            </div>
+
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-3 no-print" id="reportTabs">
+                <li class="nav-item">
+                    <button class="nav-link active" id="tab-trip-btn" onclick="switchTab('trip')">
+                        <i class="bi bi-bus-front me-1"></i>รายงานต่อทริป
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="tab-monthly-btn" onclick="switchTab('monthly')">
+                        <i class="bi bi-calendar3 me-1"></i>รายงานรายเดือน
+                    </button>
+                </li>
+            </ul>
+
+            <!-- ===== TAB 1: รายงานต่อทริป ===== -->
+            <div id="tab-trip">
+                <!-- Filter -->
+                <div class="card mb-4 no-print">
+                    <div class="card-body py-2">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-5">
+                                <select class="form-select" id="filterRound">
+                                    <option value="">-- ทุกรอบ --</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-primary" onclick="loadReport()"><i class="bi bi-search me-1"></i>ดูรายงาน</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-md-3">
+                        <div class="card text-center border-primary">
+                            <div class="card-body py-3"><div class="fs-3 fw-bold text-primary" id="sBookings">-</div><div class="text-muted small">การจอง</div></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card text-center border-success">
+                            <div class="card-body py-3"><div class="fs-3 fw-bold text-success" id="sPeople">-</div><div class="text-muted small">จำนวนคน</div></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card text-center border-info">
+                            <div class="card-body py-3"><div class="fs-3 fw-bold text-info" id="sRevenue">-</div><div class="text-muted small">รายได้ (บาท)</div></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card text-center border-danger">
+                            <div class="card-body py-3"><div class="fs-3 fw-bold text-danger" id="sExpenses">-</div><div class="text-muted small">ค่าใช้จ่าย (บาท)</div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card text-center border-success">
+                            <div class="card-body py-3"><div class="fs-2 fw-bold" id="sProfit">-</div><div class="text-muted small">กำไรสุทธิ (บาท)</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Booking list -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">รายชื่อผู้จอง (ยืนยันแล้ว)</h6>
+                        <span class="badge bg-secondary" id="bookingsCount">0</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr><th>#</th><th>ลูกค้า</th><th>ประเภท</th><th class="text-center">ที่นั่ง</th><th>อาหาร/แพ้</th><th>อุปกรณ์เช่า</th><th class="text-end">ยอด</th><th class="text-center">ชำระ</th></tr>
+                            </thead>
+                            <tbody id="bookingsList">
+                                <tr><td colspan="8" class="text-center py-3 text-muted">-</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Expenses list -->
+                <div class="card">
+                    <div class="card-header"><h6 class="mb-0">รายการค่าใช้จ่าย</h6></div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr><th>#</th><th>หมวดหมู่</th><th>รายละเอียด</th><th>จำนวน (บาท)</th><th>วันที่</th></tr>
+                            </thead>
+                            <tbody id="expensesList">
+                                <tr><td colspan="5" class="text-center py-3 text-muted">-</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB 2: รายงานรายเดือน ===== -->
+            <div id="tab-monthly" class="d-none">
+                <div id="monthlyLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary"></div>
+                    <div class="mt-2 text-muted">กำลังโหลด...</div>
+                </div>
+
+                <div id="monthlyContent" class="d-none">
+                    <!-- Filter เดือน -->
+                    <div class="card mb-3 no-print">
+                        <div class="card-body py-2">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-auto">
+                                    <label class="form-label mb-0 fw-semibold">เลือกเดือน</label>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select" id="filterMonth" onchange="renderMonthly()">
+                                        <option value="">-- ทุกเดือน --</option>
+                                    </select>
+                                </div>
+                                <div class="col-auto text-muted small" id="monthlyFilterLabel"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="row g-3 mb-4" id="monthlyGrandStats"></div>
+
+                    <!-- Monthly summary table (แสดงเมื่อเลือก "ทุกเดือน") -->
+                    <div class="card mb-4" id="monthlyTableCard">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-table me-1"></i>สรุปรายเดือน</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>เดือน</th>
+                                            <th class="text-center">จำนวนจอง</th>
+                                            <th class="text-center">จำนวนคน</th>
+                                            <th class="text-end">รายได้ (บาท)</th>
+                                            <th class="text-end">ค่าใช้จ่าย (บาท)</th>
+                                            <th class="text-end">กำไรสุทธิ (บาท)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthlyTableBody"></tbody>
+                                    <tfoot class="table-light fw-bold" id="monthlyTableFoot"></tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- รายชื่อผู้จอง (แสดงเมื่อเลือกเดือนเดียว) -->
+                    <div class="card mb-4 d-none" id="monthlyBookingsCard">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">รายชื่อผู้จอง (ยืนยันแล้ว)</h6>
+                            <span class="badge bg-secondary" id="monthlyBookingsCount">0</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr><th>#</th><th>ลูกค้า</th><th>ทริป</th><th>ประเภท</th><th class="text-center">ที่นั่ง</th><th>อาหาร/แพ้</th><th class="text-end">ยอด</th><th class="text-center">ชำระ</th></tr>
+                                </thead>
+                                <tbody id="monthlyBookingsList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Expense breakdown accordion -->
+                    <div class="card">
+                        <div class="card-header"><h6 class="mb-0"><i class="bi bi-list-ul me-1"></i>รายละเอียดค่าใช้จ่าย</h6></div>
+                        <div class="card-body p-0">
+                            <div class="accordion accordion-flush" id="monthlyExpenseAccordion"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/apiClient.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script>
+const MONTH_TH   = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                    'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const BLOOD_COLOR = { 'A+':'#dc3545','A-':'#fd7e14','B+':'#0d6efd','B-':'#6610f2','AB+':'#198754','AB-':'#0dcaf0','O+':'#d63384','O-':'#6c757d' };
+const AVATAR_COLORS = ['#0d6efd','#198754','#fd7e14','#dc3545','#6610f2','#0dcaf0','#d63384'];
+function avatarColor(name) {
+    let h = 0; for (const c of (name||'')) h = (h*31+c.charCodeAt(0)) % AVATAR_COLORS.length;
+    return AVATAR_COLORS[h];
+}
+
+function buildCustomerCell(b) {
+    const forms = b.insuranceForms || [];
+    if (forms.length === 0) {
+        const name = b.user?.name || '-';
+        const color = avatarColor(name);
+        const initials = name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase() || '?';
+        return `<div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm text-white" style="background:${color}">${initials}</div>
+            <div><div class="fw-semibold small">${name}</div>
+            <div class="text-muted" style="font-size:.73rem">${b.user?.phone||''}</div></div>
+        </div>`;
+    }
+    if (forms.length === 1) {
+        const f = forms[0];
+        const color = avatarColor(f.firstName);
+        const initials = ((f.firstName[0]||'')+(f.lastName[0]||'')).toUpperCase();
+        const bloodBadge = f.bloodType
+            ? `<span class="badge blood-badge text-white ms-1" style="background:${BLOOD_COLOR[f.bloodType]||'#aaa'}">${f.bloodType}</span>` : '';
+        return `<div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm text-white" style="background:${color}">${initials}</div>
+            <div><div class="fw-semibold small">${f.namePrefix} ${f.firstName} ${f.lastName}${bloodBadge}</div>
+            <div class="text-muted" style="font-size:.72rem"><code style="font-size:.7rem">${f.nationalId||'-'}</code> · ${f.phone||'-'}</div></div>
+        </div>`;
+    }
+    // กลุ่ม
+    const f0 = forms[0];
+    const color = avatarColor(f0.firstName);
+    const initials = ((f0.firstName[0]||'')+(f0.lastName[0]||'')).toUpperCase();
+    const names = forms.map(f=>`${f.namePrefix} ${f.firstName} ${f.lastName}`).join(', ');
+    return `<div class="d-flex align-items-center gap-2">
+        <div class="avatar-sm text-white" style="background:${color}">${initials}</div>
+        <div><div class="fw-semibold small"><i class="bi bi-people-fill me-1 text-primary"></i>${forms.length} คน
+            <span class="badge bg-secondary ms-1" style="font-size:.65rem">+${forms.length-1}</span></div>
+        <div class="text-muted" style="font-size:.72rem" title="${names}">${names.length>45?names.substring(0,45)+'…':names}</div></div>
+    </div>`;
+}
+
+const PAY_BADGE = { PENDING:'bg-warning text-dark', CONFIRMED:'bg-success', REJECTED:'bg-danger', NONE:'bg-light text-muted border' };
+const PAY_LABEL = { PENDING:'รอ', CONFIRMED:'ยืนยัน', REJECTED:'ปฏิเสธ', NONE:'-' };
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await initPage();
+    const rounds = await API.busRounds.list();
+    const sel = document.getElementById('filterRound');
+    rounds.forEach(r => sel.insertAdjacentHTML('beforeend',
+        `<option value="${r.id}">รถ${r.busNumber} — ${r.trip?.title || ''} (${formatDateThai(r.departDate)})</option>`));
+    loadReport();
+});
+
+function switchTab(tab) {
+    document.getElementById('tab-trip').classList.toggle('d-none', tab !== 'trip');
+    document.getElementById('tab-monthly').classList.toggle('d-none', tab !== 'monthly');
+    document.getElementById('tab-trip-btn').classList.toggle('active', tab === 'trip');
+    document.getElementById('tab-monthly-btn').classList.toggle('active', tab === 'monthly');
+    if (tab === 'monthly') loadMonthly();
+}
+
+// ===== TAB 1: ต่อทริป =====
+async function loadReport() {
+    const roundId = document.getElementById('filterRound').value;
+    const q = roundId ? { busRoundId: roundId } : {};
+    try {
+        const data = await API.reports.summary(q);
+        document.getElementById('sBookings').textContent = data.totalBookings;
+        document.getElementById('sPeople').textContent = data.totalPeople;
+        document.getElementById('sRevenue').textContent = formatMoney(data.totalRevenue);
+        document.getElementById('sExpenses').textContent = formatMoney(data.totalExpenses);
+
+        const profit = data.netProfit;
+        const profitEl = document.getElementById('sProfit');
+        profitEl.textContent = formatMoney(profit);
+        profitEl.className = `fs-2 fw-bold ${profit >= 0 ? 'profit-positive' : 'profit-negative'}`;
+
+        const bList = data.bookings || [];
+        document.getElementById('bookingsCount').textContent = bList.length;
+        document.getElementById('bookingsList').innerHTML = bList.length
+            ? bList.map((b, i) => {
+                const addons = b.bookingAddons?.map(a => `${a.addon?.name} x${a.quantity}`).join(', ') || '-';
+                const pKey   = b.payment?.status || 'NONE';
+                const allergyBadge = b.foodAllergy
+                    ? `<span class="badge bg-warning text-dark" style="font-size:.68rem">${b.foodAllergy}</span>` : '<span class="text-muted">-</span>';
+                const typeBadge = b.bookingType === 'GROUP'
+                    ? `<span class="badge bg-primary"><i class="bi bi-people-fill me-1"></i>กลุ่ม ${b.seats} คน</span>`
+                    : `<span class="badge bg-info text-dark"><i class="bi bi-person-fill me-1"></i>เดี่ยว</span>`;
+                return `<tr>
+                    <td class="text-muted small">${i+1}</td>
+                    <td>${buildCustomerCell(b)}</td>
+                    <td>${typeBadge}</td>
+                    <td class="text-center fw-bold">${b.seats}</td>
+                    <td>${allergyBadge}</td>
+                    <td class="small text-muted">${addons}</td>
+                    <td class="text-end fw-semibold text-success">${formatMoney(b.totalAmount)}</td>
+                    <td class="text-center"><span class="badge ${PAY_BADGE[pKey]}">${PAY_LABEL[pKey]}</span></td>
+                </tr>`;
+              }).join('')
+            : '<tr><td colspan="8" class="text-center text-muted">ไม่มีข้อมูล</td></tr>';
+
+        document.getElementById('expensesList').innerHTML = data.expenses.length
+            ? data.expenses.map((e, i) => `
+                <tr><td>${i+1}</td><td>${e.category}</td><td>${e.description || '-'}</td>
+                <td class="text-danger">${formatMoney(e.amount)}</td><td>${formatDateThai(e.date)}</td></tr>`).join('')
+            : '<tr><td colspan="5" class="text-center text-muted">ไม่มีข้อมูล</td></tr>';
+    } catch (e) { showToast('โหลดล้มเหลว', 'danger'); }
+}
+
+// ===== TAB 2: รายเดือน =====
+let allMonthlyData = null;
+
+async function loadMonthly() {
+    if (allMonthlyData) { renderMonthly(); return; }
+    try {
+        allMonthlyData = await API.reports.monthly();
+        document.getElementById('monthlyLoading').classList.add('d-none');
+        document.getElementById('monthlyContent').classList.remove('d-none');
+
+        // populate month selector
+        const sel = document.getElementById('filterMonth');
+        allMonthlyData.forEach(m => {
+            const label = `${MONTH_TH[m.month]} ${m.year + 543}`;
+            sel.insertAdjacentHTML('beforeend', `<option value="${m.monthKey}">${label}</option>`);
+        });
+
+        renderMonthly();
+    } catch (e) {
+        document.getElementById('monthlyLoading').innerHTML =
+            `<i class="bi bi-exclamation-triangle text-danger fs-3"></i><p class="text-danger mt-2">${e.message}</p>`;
+    }
+}
+
+function renderMonthly() {
+    const selectedKey = document.getElementById('filterMonth').value;
+    const data = selectedKey
+        ? allMonthlyData.filter(m => m.monthKey === selectedKey)
+        : allMonthlyData;
+
+    const isSingleMonth = selectedKey && data.length === 1;
+
+    // Label
+    document.getElementById('monthlyFilterLabel').textContent =
+        isSingleMonth ? `แสดง: ${MONTH_TH[data[0].month]} ${data[0].year + 543}` : `แสดง: ทุกเดือน (${data.length} เดือน)`;
+
+    // Show/hide monthly summary table vs single-month bookings
+    document.getElementById('monthlyTableCard').classList.toggle('d-none', isSingleMonth);
+    document.getElementById('monthlyBookingsCard').classList.toggle('d-none', !isSingleMonth);
+
+    // Stats (aggregate ตาม data ที่ filter)
+    const grandRevenue  = data.reduce((s, m) => s + m.totalRevenue, 0);
+    const grandExpenses = data.reduce((s, m) => s + m.totalExpenses, 0);
+    const grandProfit   = grandRevenue - grandExpenses;
+    const grandBookings = data.reduce((s, m) => s + m.totalBookings, 0);
+    const grandPeople   = data.reduce((s, m) => s + m.totalPeople, 0);
+
+    document.getElementById('monthlyGrandStats').innerHTML = `
+        <div class="col-6 col-md-3">
+            <div class="card text-center border-primary">
+                <div class="card-body py-3"><div class="fs-3 fw-bold text-primary">${grandBookings}</div><div class="text-muted small">การจอง</div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center border-success">
+                <div class="card-body py-3"><div class="fs-3 fw-bold text-success">${grandPeople}</div><div class="text-muted small">จำนวนคน</div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center border-info">
+                <div class="card-body py-3"><div class="fs-3 fw-bold text-info">${formatMoney(grandRevenue)}</div><div class="text-muted small">รายได้ (บาท)</div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center border-${grandProfit >= 0 ? 'success' : 'danger'}">
+                <div class="card-body py-3">
+                    <div class="fs-3 fw-bold ${grandProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatMoney(grandProfit)}</div>
+                    <div class="text-muted small">กำไรสุทธิ (บาท)</div>
+                </div>
+            </div>
+        </div>`;
+
+    // ถ้าเลือกทุกเดือน: แสดงตารางสรุปรายเดือน
+    if (!isSingleMonth) {
+        document.getElementById('monthlyTableBody').innerHTML = data.map(m => {
+            const profit = m.netProfit;
+            const mLabel = `${MONTH_TH[m.month]} ${m.year + 543}`;
+            return `<tr>
+                <td><strong>${mLabel}</strong></td>
+                <td class="text-center">${m.totalBookings}</td>
+                <td class="text-center">${m.totalPeople}</td>
+                <td class="text-end text-success fw-semibold">${formatMoney(m.totalRevenue)}</td>
+                <td class="text-end text-danger fw-semibold">${formatMoney(m.totalExpenses)}</td>
+                <td class="text-end fw-bold ${profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatMoney(profit)}</td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="6" class="text-center text-muted py-3">ยังไม่มีข้อมูล</td></tr>';
+
+        document.getElementById('monthlyTableFoot').innerHTML = `
+            <tr>
+                <td>รวมทั้งหมด</td>
+                <td class="text-center">${grandBookings}</td>
+                <td class="text-center">${grandPeople}</td>
+                <td class="text-end text-success">${formatMoney(grandRevenue)}</td>
+                <td class="text-end text-danger">${formatMoney(grandExpenses)}</td>
+                <td class="text-end ${grandProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatMoney(grandProfit)}</td>
+            </tr>`;
+    }
+
+    // ถ้าเลือกเดือนเดียว: แสดงรายชื่อผู้จอง
+    if (isSingleMonth) {
+        const m = data[0];
+        const mBookings = m.bookings || [];
+        document.getElementById('monthlyBookingsCount').textContent = mBookings.length;
+        document.getElementById('monthlyBookingsList').innerHTML = mBookings.length
+            ? mBookings.map((b, i) => {
+                const pKey = b.payment?.status || 'NONE';
+                const allergyBadge = b.foodAllergy
+                    ? `<span class="badge bg-warning text-dark" style="font-size:.68rem">${b.foodAllergy}</span>` : '<span class="text-muted">-</span>';
+                const typeBadge = b.bookingType === 'GROUP'
+                    ? `<span class="badge bg-primary"><i class="bi bi-people-fill me-1"></i>กลุ่ม ${b.seats} คน</span>`
+                    : `<span class="badge bg-info text-dark"><i class="bi bi-person-fill me-1"></i>เดี่ยว</span>`;
+                return `<tr>
+                    <td class="text-muted small">${i+1}</td>
+                    <td>${buildCustomerCell(b)}</td>
+                    <td class="small">${b.busRound?.trip?.title || '-'}</td>
+                    <td>${typeBadge}</td>
+                    <td class="text-center fw-bold">${b.seats}</td>
+                    <td>${allergyBadge}</td>
+                    <td class="text-end fw-semibold text-success">${formatMoney(b.totalAmount)}</td>
+                    <td class="text-center"><span class="badge ${PAY_BADGE[pKey]}">${PAY_LABEL[pKey]}</span></td>
+                </tr>`;
+              }).join('')
+            : '<tr><td colspan="8" class="text-center text-muted py-3">ไม่มีข้อมูลการจอง</td></tr>';
+    }
+
+    // Expense accordion (แสดงทุกกรณี)
+    document.getElementById('monthlyExpenseAccordion').innerHTML = data.map((m, idx) => {
+        const mLabel = `${MONTH_TH[m.month]} ${m.year + 543}`;
+        const rows = m.expenses.length
+            ? m.expenses.map((e, i) => `<tr>
+                <td>${i+1}</td><td>${e.category}</td><td>${e.description || '-'}</td>
+                <td class="text-danger fw-semibold">${formatMoney(e.amount)}</td>
+                <td>${formatDateThai(e.date)}</td>
+              </tr>`).join('')
+            : '<tr><td colspan="5" class="text-center text-muted">ไม่มีค่าใช้จ่าย</td></tr>';
+
+        const open = isSingleMonth || idx === 0;
+        return `
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button ${open ? '' : 'collapsed'}" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#mexp-${m.monthKey}">
+                    <div class="d-flex w-100 justify-content-between align-items-center me-3">
+                        <span><strong>${mLabel}</strong>
+                            <span class="badge bg-light text-dark border ms-2">${m.expenses.length} รายการ</span>
+                        </span>
+                        <span class="text-danger fw-bold">฿${formatMoney(m.totalExpenses)}</span>
+                    </div>
+                </button>
+            </h2>
+            <div id="mexp-${m.monthKey}" class="accordion-collapse collapse ${open ? 'show' : ''}">
+                <div class="accordion-body p-0">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr><th>#</th><th>หมวดหมู่</th><th>รายละเอียด</th><th>จำนวน (บาท)</th><th>วันที่</th></tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            </div>
+        </div>`;
+    }).join('') || '<div class="text-center py-4 text-muted">ยังไม่มีข้อมูล</div>';
+}
+</script>
+</body>
+</html>

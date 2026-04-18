@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการเงื่อนไขประกันภัย - Tour Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../../assets/css/admin.css" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <style>
+        /* Quill editor overrides */
+        .ql-container { font-family: 'Sarabun', sans-serif; font-size: .9rem; border-radius: 0 0 .375rem .375rem !important; }
+        .ql-toolbar { border-radius: .375rem .375rem 0 0 !important; background: #f8f9fa; }
+        .ql-editor { min-height: 200px; max-height: 320px; overflow-y: auto; line-height: 1.8; }
+        .ql-editor p, .ql-editor li { margin-bottom: .25rem; }
+        .ql-editor h6 { font-size: 1rem; font-weight: 700; margin-top: .75rem; margin-bottom: .25rem; }
+    </style>
+    <style>
+        .cond-card { border-left: 4px solid #0d6efd; transition: all .15s; }
+        .cond-card.inactive { border-left-color: #adb5bd; opacity: .65; }
+        .cond-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+        .sort-badge { width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center;
+                      background: #0d6efd; color: #fff; border-radius: 50%; font-weight: 700; font-size: .85rem; flex-shrink: 0; }
+        .sort-badge.inactive { background: #adb5bd; }
+        .icon-preview { font-size: 1.2rem; }
+        .preview-box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: .5rem; padding: 1rem; }
+        .preview-check { display: flex; align-items: flex-start; gap: .5rem; }
+    </style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="d-flex">
+    <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+    <main class="main-content flex-fill">
+        <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+        <div class="page-content">
+
+            <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h1 class="page-title">เงื่อนไขความคุ้มครองและการยินยอม</h1>
+                    <p class="page-subtitle">กำหนดข้อความ checkbox ที่ลูกค้าต้องยืนยันในแบบฟอร์มประกันภัย</p>
+                </div>
+                <button class="btn btn-primary" onclick="openCreate()">
+                    <i class="bi bi-plus-lg me-1"></i>เพิ่มเงื่อนไข
+                </button>
+            </div>
+
+            <!-- ═══ Policy Content Editor ═══ -->
+            <div class="card mb-4" style="border-left:4px solid #198754;">
+                <div class="card-header bg-transparent d-flex align-items-center justify-content-between py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-file-earmark-text fs-5 text-success"></i>
+                        <h6 class="mb-0 fw-bold">เนื้อหากรมธรรม์ (ข้อความในกรอบ Section 4)</h6>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#policyEditorCollapse">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                </div>
+                <div class="collapse show" id="policyEditorCollapse">
+                    <div class="card-body">
+                        <!-- Type toggle -->
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="policyType" id="typeText" value="text" checked onchange="switchPolicyType()">
+                                <label class="form-check-label fw-semibold" for="typeText">
+                                    <i class="bi bi-type me-1 text-primary"></i>พิมพ์ข้อความ (HTML)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="policyType" id="typeImage" value="image" onchange="switchPolicyType()">
+                                <label class="form-check-label fw-semibold" for="typeImage">
+                                    <i class="bi bi-image me-1 text-success"></i>อัปโหลดรูปภาพ
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Text editor (Quill WYSIWYG) -->
+                        <div id="policyTextPane">
+                            <label class="form-label fw-semibold">ข้อความกรมธรรม์</label>
+                            <div id="quillEditor"></div>
+                        </div>
+
+                        <!-- Image pane -->
+                        <div id="policyImagePane" class="d-none">
+                            <label class="form-label fw-semibold">อัปโหลดไฟล์รูปภาพ</label>
+                            <div class="border rounded p-3 text-center mb-3"
+                                 style="border-style:dashed!important;background:#f8f9fa;cursor:pointer;"
+                                 onclick="document.getElementById('policyImgFile').click()">
+                                <i class="bi bi-cloud-upload fs-2 text-muted"></i>
+                                <div class="small text-muted mt-1" id="policyImgLabel">คลิกเพื่ออัปโหลด JPG / PNG (ไฟล์จะเก็บใน memory)</div>
+                            </div>
+                            <input type="file" id="policyImgFile" accept=".jpg,.jpeg,.png" class="d-none" onchange="handlePolicyImage(this)">
+                            <div class="mb-2">
+                                <label class="form-label small text-muted">หรือวาง URL รูปภาพ</label>
+                                <input type="url" class="form-control" id="policyImgUrl"
+                                       placeholder="https://..." oninput="updatePolicyPreview()">
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="mt-3">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <label class="form-label fw-semibold mb-0 text-muted">
+                                    <i class="bi bi-eye me-1"></i>ตัวอย่างที่จะแสดงในฟอร์ม
+                                </label>
+                                <a href="form.html" target="_blank" class="btn btn-sm btn-outline-secondary py-0">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i>ดูฟอร์มจริง
+                                </a>
+                            </div>
+                            <div class="border rounded p-3" style="background:#fff;max-height:220px;overflow-y:auto;font-size:.875rem;line-height:1.8;" id="policyPreview">
+                                <span class="text-muted fst-italic small">ตัวอย่างจะแสดงที่นี่...</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 d-flex gap-2">
+                            <button class="btn btn-success" onclick="savePolicyContent()">
+                                <i class="bi bi-save me-1"></i>บันทึกเนื้อหากรมธรรม์
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="loadPolicyContent()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>รีเซ็ต
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ Conditions list ═══ -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-ui-checks me-2 text-primary"></i>รายการเงื่อนไข Checkbox</h6>
+                <span class="text-muted small">เงื่อนไขที่ Active จะแสดงในฟอร์ม</span>
+            </div>
+
+            <!-- List -->
+            <div id="condList">
+                <div class="text-center py-5 text-muted"><div class="spinner-border text-primary mb-2"></div><div>กำลังโหลด...</div></div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Create / Edit Modal -->
+<div class="modal fade" id="condModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="condModalTitle">เพิ่มเงื่อนไข</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="condId">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">ข้อความเงื่อนไข <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="condTitle" rows="3"
+                            placeholder="ข้อความที่แสดงหน้า checkbox เช่น ข้าพเจ้ารับทราบและยอมรับ..."></textarea>
+                        <small class="text-muted">ข้อความนี้จะแสดงในฟอร์มประกันภัย</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">ชื่อย่อ (Admin)</label>
+                        <input type="text" class="form-control" id="condDescription"
+                            placeholder="เช่น รับทราบกรมธรรม์">
+                        <small class="text-muted">ใช้แสดงในหน้า admin เท่านั้น</small>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Bootstrap Icon</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i id="iconPreviewSmall" class="bi bi-check-circle-fill text-success"></i></span>
+                            <input type="text" class="form-control" id="condIconClass"
+                                placeholder="bi-check-circle-fill text-success"
+                                oninput="previewIcon()">
+                        </div>
+                        <small class="text-muted">
+                            <a href="https://icons.getbootstrap.com" target="_blank">icons.getbootstrap.com</a>
+                        </small>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">ลำดับ</label>
+                        <input type="number" class="form-control" id="condSortOrder" value="99" min="1">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="condIsRequired" checked>
+                            <label class="form-check-label fw-semibold" for="condIsRequired">
+                                <i class="bi bi-asterisk text-danger me-1" style="font-size:.7rem;"></i>บังคับต้องติ๊ก
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mt-1">ถ้าปิด: ลูกค้าไม่ติ๊กก็ส่งฟอร์มได้</small>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="condIsActive" checked>
+                            <label class="form-check-label fw-semibold" for="condIsActive">เปิดใช้งาน</label>
+                        </div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="col-12">
+                        <label class="form-label fw-semibold text-muted">ตัวอย่างที่จะแสดงในฟอร์ม</label>
+                        <div class="preview-box">
+                            <div class="preview-check">
+                                <input type="checkbox" class="form-check-input mt-1" disabled>
+                                <label class="form-check-label fw-semibold">
+                                    <i id="condIconPreview" class="bi bi-check-circle-fill text-success me-1"></i>
+                                    <span id="condTitlePreview" class="text-muted fst-italic">ข้อความเงื่อนไข...</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="saveCondition()">
+                    <i class="bi bi-save me-1"></i>บันทึก
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/apiClient.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script>
+let allConditions = [];
+let condModal;
+let policyEditor = null;        // Quill instance
+let policyImageDataUrl = null;  // base64 of uploaded image
+
+/* ── Policy Content ── */
+function initQuill() {
+    if (policyEditor) return;
+    policyEditor = new Quill('#quillEditor', {
+        theme: 'snow',
+        placeholder: 'พิมพ์เนื้อหากรมธรรม์ที่นี่...',
+        modules: {
+            toolbar: [
+                [{ header: [3, 4, 5, false] }],
+                ['bold', 'italic', 'underline'],
+                [{ color: [] }],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['clean']
+            ]
+        }
+    });
+    policyEditor.on('text-change', updatePolicyPreview);
+}
+
+async function loadPolicyContent() {
+    try {
+        const content = await API.insurance.policyContent.get();
+        document.querySelector(`input[name="policyType"][value="${content.contentType || 'text'}"]`).checked = true;
+        // Set Quill content
+        if (policyEditor) {
+            policyEditor.root.innerHTML = content.textContent || '';
+        }
+        document.getElementById('policyImgUrl').value = content.imageUrl || '';
+        policyImageDataUrl = (content.contentType === 'image' && content.imageUrl?.startsWith('data:')) ? content.imageUrl : null;
+        switchPolicyType();
+        updatePolicyPreview();
+    } catch(e) { showToast('โหลดเนื้อหากรมธรรม์ล้มเหลว', 'danger'); }
+}
+
+function switchPolicyType() {
+    const isImage = document.getElementById('typeImage').checked;
+    document.getElementById('policyTextPane').classList.toggle('d-none', isImage);
+    document.getElementById('policyImagePane').classList.toggle('d-none', !isImage);
+    updatePolicyPreview();
+}
+
+function updatePolicyPreview() {
+    const preview = document.getElementById('policyPreview');
+    if (document.getElementById('typeImage').checked) {
+        const url = policyImageDataUrl || document.getElementById('policyImgUrl').value.trim();
+        preview.innerHTML = url
+            ? `<img src="${url}" class="img-fluid rounded" style="max-width:100%;" alt="preview">`
+            : '<span class="text-muted fst-italic small">ยังไม่มีรูปภาพ</span>';
+    } else {
+        const html = policyEditor ? policyEditor.root.innerHTML : '';
+        preview.innerHTML = html || '<span class="text-muted fst-italic small">ตัวอย่างจะแสดงที่นี่...</span>';
+    }
+}
+
+function handlePolicyImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    document.getElementById('policyImgLabel').textContent = `${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+    const reader = new FileReader();
+    reader.onload = e => {
+        policyImageDataUrl = e.target.result;
+        document.getElementById('policyImgUrl').value = '';
+        updatePolicyPreview();
+    };
+    reader.readAsDataURL(file);
+}
+
+async function savePolicyContent() {
+    const isImage = document.getElementById('typeImage').checked;
+    const data = {
+        contentType: isImage ? 'image' : 'text',
+        textContent: isImage ? null : (policyEditor ? policyEditor.root.innerHTML : ''),
+        imageUrl:    isImage ? (policyImageDataUrl || document.getElementById('policyImgUrl').value.trim()) : null,
+    };
+    try {
+        await API.insurance.policyContent.update(data);
+        showToast('บันทึกเนื้อหากรมธรรม์สำเร็จ');
+    } catch(e) { showToast(e.message, 'danger'); }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await initPage();
+    condModal = new bootstrap.Modal(document.getElementById('condModal'));
+
+    initQuill();
+    loadPolicyContent();
+
+    // Live preview
+    document.getElementById('condTitle').oninput = () => {
+        const v = document.getElementById('condTitle').value.trim();
+        document.getElementById('condTitlePreview').textContent = v || 'ข้อความเงื่อนไข...';
+        document.getElementById('condTitlePreview').classList.toggle('text-muted', !v);
+        document.getElementById('condTitlePreview').classList.toggle('fst-italic', !v);
+    };
+
+    loadConditions();
+});
+
+async function loadConditions() {
+    try {
+        allConditions = await API.insurance.conditions.list(true); // all=1 for admin
+        renderConditions();
+    } catch(e) { showToast('โหลดล้มเหลว: ' + e.message, 'danger'); }
+}
+
+function renderConditions() {
+    const el = document.getElementById('condList');
+    if (!allConditions.length) {
+        el.innerHTML = '<div class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>ยังไม่มีเงื่อนไข</div>';
+        return;
+    }
+    el.innerHTML = allConditions.map(c => `
+        <div class="card cond-card mb-3 ${c.isActive ? '' : 'inactive'}">
+            <div class="card-body d-flex align-items-start gap-3">
+                <div class="sort-badge ${c.isActive ? '' : 'inactive'}">${c.sortOrder}</div>
+                <div class="flex-fill">
+                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                        <span class="fw-bold">${c.description || '-'}</span>
+                        ${c.isRequired ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size:.7rem;">บังคับ</span>' : '<span class="badge bg-secondary-subtle text-secondary border" style="font-size:.7rem;">ไม่บังคับ</span>'}
+                        ${c.isActive ? '<span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:.7rem;"><i class="bi bi-circle-fill me-1" style="font-size:.5rem;"></i>Active</span>' : '<span class="badge bg-secondary text-white" style="font-size:.7rem;">Inactive</span>'}
+                    </div>
+                    <div class="d-flex align-items-start gap-2 preview-box py-2 px-3">
+                        <i class="bi ${c.iconClass || 'bi-check-circle'} mt-1"></i>
+                        <span class="small">${c.title}</span>
+                    </div>
+                </div>
+                <div class="d-flex flex-column gap-1" style="min-width:120px;">
+                    <button class="btn btn-sm btn-outline-primary" onclick="openEdit(${c.id})">
+                        <i class="bi bi-pencil me-1"></i>แก้ไข
+                    </button>
+                    <button class="btn btn-sm ${c.isActive ? 'btn-outline-secondary' : 'btn-outline-success'}" onclick="toggleCond(${c.id})">
+                        <i class="bi bi-${c.isActive ? 'toggle-on' : 'toggle-off'} me-1"></i>${c.isActive ? 'ปิด' : 'เปิด'}
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCond(${c.id})">
+                        <i class="bi bi-trash me-1"></i>ลบ
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function previewIcon() {
+    const cls = document.getElementById('condIconClass').value.trim();
+    const iconEl = document.getElementById('condIconPreview');
+    const smallEl = document.getElementById('iconPreviewSmall');
+    iconEl.className = `bi ${cls} me-1`;
+    smallEl.className = `bi ${cls}`;
+}
+
+function openCreate() {
+    document.getElementById('condId').value = '';
+    document.getElementById('condModalTitle').textContent = 'เพิ่มเงื่อนไข';
+    document.getElementById('condTitle').value = '';
+    document.getElementById('condDescription').value = '';
+    document.getElementById('condIconClass').value = 'bi-check-circle-fill text-success';
+    document.getElementById('condSortOrder').value = (allConditions.length + 1);
+    document.getElementById('condIsRequired').checked = true;
+    document.getElementById('condIsActive').checked = true;
+    document.getElementById('condTitlePreview').textContent = 'ข้อความเงื่อนไข...';
+    document.getElementById('condTitlePreview').className = 'text-muted fst-italic';
+    document.getElementById('condIconPreview').className = 'bi bi-check-circle-fill text-success me-1';
+    document.getElementById('iconPreviewSmall').className = 'bi bi-check-circle-fill text-success';
+    condModal.show();
+}
+
+function openEdit(id) {
+    const c = allConditions.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('condId').value = c.id;
+    document.getElementById('condModalTitle').textContent = 'แก้ไขเงื่อนไข';
+    document.getElementById('condTitle').value = c.title || '';
+    document.getElementById('condDescription').value = c.description || '';
+    document.getElementById('condIconClass').value = c.iconClass || '';
+    document.getElementById('condSortOrder').value = c.sortOrder || 1;
+    document.getElementById('condIsRequired').checked = c.isRequired;
+    document.getElementById('condIsActive').checked = c.isActive;
+    document.getElementById('condTitlePreview').textContent = c.title || 'ข้อความเงื่อนไข...';
+    document.getElementById('condTitlePreview').className = c.title ? '' : 'text-muted fst-italic';
+    const cls = c.iconClass || 'bi-check-circle';
+    document.getElementById('condIconPreview').className = `bi ${cls} me-1`;
+    document.getElementById('iconPreviewSmall').className = `bi ${cls}`;
+    condModal.show();
+}
+
+async function saveCondition() {
+    const title = document.getElementById('condTitle').value.trim();
+    if (!title) { showToast('กรุณากรอกข้อความเงื่อนไข', 'danger'); return; }
+
+    const data = {
+        title,
+        description: document.getElementById('condDescription').value.trim(),
+        iconClass:   document.getElementById('condIconClass').value.trim() || 'bi-check-circle-fill text-success',
+        sortOrder:   Number(document.getElementById('condSortOrder').value) || 99,
+        isRequired:  document.getElementById('condIsRequired').checked,
+        isActive:    document.getElementById('condIsActive').checked,
+    };
+
+    const id = document.getElementById('condId').value;
+    try {
+        if (id) {
+            await API.insurance.conditions.update(Number(id), data);
+            showToast('บันทึกสำเร็จ');
+        } else {
+            await API.insurance.conditions.create(data);
+            showToast('เพิ่มเงื่อนไขสำเร็จ');
+        }
+        condModal.hide();
+        loadConditions();
+    } catch(e) { showToast(e.message, 'danger'); }
+}
+
+async function toggleCond(id) {
+    try {
+        await API.insurance.conditions.toggle(id);
+        loadConditions();
+    } catch(e) { showToast(e.message, 'danger'); }
+}
+
+async function deleteCond(id) {
+    const c = allConditions.find(x => x.id === id);
+    confirmAction(`ลบเงื่อนไข "${c?.description || id}" ออก?`, async () => {
+        try {
+            await API.insurance.conditions.remove(id);
+            showToast('ลบสำเร็จ');
+            loadConditions();
+        } catch(e) { showToast(e.message, 'danger'); }
+    });
+}
+</script>
+</body>
+</html>

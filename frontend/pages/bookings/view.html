@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายละเอียดการจอง - Tour Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="../../assets/css/admin.css" rel="stylesheet">
+    <style>
+        :root {
+            --doc-bg: #fff;
+            --doc-border: #e9ecef;
+            --doc-label: #6c757d;
+            --doc-title: #495057;
+        }
+
+        body {
+            background-color: #f4f7f6;
+        }
+
+        .document-container {
+            background-color: var(--doc-bg);
+            border-radius: 8px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--doc-border);
+        }
+
+        .doc-section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--doc-title);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #f4f7f6;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+            margin-top: 30px;
+        }
+
+        .doc-section-title:first-child {
+            margin-top: 0;
+        }
+
+        .data-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-label {
+            font-size: 0.8rem;
+            color: var(--doc-label);
+            margin-bottom: 4px;
+            font-weight: 400;
+        }
+
+        .data-value {
+            font-weight: 500;
+            color: #212529;
+            font-size: 0.95rem;
+            word-break: break-all;
+        }
+
+        .data-value.primary {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+
+        .data-value.success {
+            color: #198754;
+            font-weight: 600;
+        }
+
+        .data-value.danger {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .passenger-table {
+            font-size: 0.9rem;
+        }
+
+        .passenger-table thead th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 1px solid #dee2e6;
+            padding: 12px 15px;
+        }
+
+        .passenger-table tbody td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f3f5;
+            vertical-align: middle;
+        }
+
+        .blood-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            vertical-align: middle;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        code {
+            font-size: 0.85rem;
+            color: #d63384;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="d-flex">
+        <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+        <main class="main-content flex-fill">
+            <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+            <div class="page-content">
+
+                <!-- Header -->
+                <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <a href="list.html" class="btn btn-sm btn-outline-secondary me-2">
+                            <i class="bi bi-arrow-left me-1"></i>กลับ
+                        </a>
+                        <span class="page-title" id="pageTitle">รายละเอียดการจอง</span>
+                    </div>
+                    <div id="statusActions" class="d-flex gap-2"></div>
+                </div>
+
+                <!-- Loading -->
+                <div id="loadingState" class="text-center py-5">
+                    <div class="spinner-border text-primary"></div>
+                    <div class="mt-2 text-muted">กำลังโหลด...</div>
+                </div>
+
+                <div id="mainContent" class="d-none">
+                    <!-- Status Banner -->
+                    <div id="statusBanner" class="alert d-flex align-items-center gap-3 mb-4"></div>
+
+                    <div class="document-container" id="documentContent">
+                        <div class="doc-section-title">Detail</div>
+                        <div id="bookingInfo" class="row"></div>
+
+                        <div class="doc-section-title mt-5">Customer Information</div>
+                        <div id="customerInfo"></div>
+
+                        <div class="doc-section-title mt-5">Payment & Insurance Information</div>
+                        <div class="row">
+                            <div class="col-md-6 border-end">
+                                <h6 class="fw-bold mb-3 small text-muted">Payment Status</h6>
+                                <div id="paymentInfo"></div>
+                            </div>
+                            <div class="col-md-6 ps-md-4">
+                                <h6 class="fw-bold mb-3 small text-muted">Insurance Status</h6>
+                                <div id="insuranceInfo"></div>
+                            </div>
+                        </div>
+                        <div id="documentActions" class="d-flex justify-content-end gap-2 mt-5 border-top pt-4"></div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Cancel Modal -->
+    <div class="modal fade" id="cancelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-danger">
+                <!--     <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>ยกเลิกการจอง</h5>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div> -->
+                <div class="modal-body">
+                    <div class="alert alert-warning py-2"><i class="bi bi-exclamation-triangle me-1"></i>
+                        การจองที่ยกเลิกจะถูกบันทึก log และ<strong>ไม่สามารถกู้คืนได้</strong>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">เหตุผล <span
+                                class="text-muted small">(ไม่บังคับ)</span></label>
+                        <textarea class="form-control" id="cancelReason" rows="2"></textarea>
+                    </div>
+                    <div class="p-2 bg-light rounded small text-muted">
+                        <i class="bi bi-person-check me-1"></i>ยกเลิกโดย: <strong id="cancelAdminInfo"></strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">ไม่ยกเลิก</button>
+                    <button class="btn btn-danger" onclick="doCancel()"><i
+                            class="bi bi-x-circle me-1"></i>ยืนยันยกเลิก</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/apiClient.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        const BOOKING_BADGE = { PENDING: 'bg-warning text-dark', CONFIRMED: 'bg-success', CANCELLED: 'bg-secondary' };
+        const BOOKING_LABEL = { PENDING: 'รอยืนยัน', CONFIRMED: 'ยืนยันแล้ว', CANCELLED: 'ยกเลิก' };
+        const PAY_BADGE = { PENDING: 'bg-warning text-dark', CONFIRMED: 'bg-success', REJECTED: 'bg-danger' };
+        const PAY_LABEL = { PENDING: 'รอตรวจสอบ', CONFIRMED: 'ยืนยันแล้ว', REJECTED: 'ปฏิเสธ' };
+        const INS_BADGE = { DRAFT: 'bg-secondary', SUBMITTED: 'bg-info text-dark', APPROVED: 'bg-success', REJECTED: 'bg-danger' };
+        const INS_LABEL = { DRAFT: 'ร่าง', SUBMITTED: 'รอตรวจสอบ', APPROVED: 'อนุมัติ', REJECTED: 'ปฏิเสธ' };
+        const BLOOD_COLOR = { 'A+': '#dc3545', 'A-': '#fd7e14', 'B+': '#0d6efd', 'B-': '#6610f2', 'AB+': '#198754', 'AB-': '#0dcaf0', 'O+': '#d63384', 'O-': '#6c757d' };
+
+        let cancelModal, bookingId, bookingData, fromRoundId;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initPage();
+            cancelModal = new bootstrap.Modal(document.getElementById('cancelModal'));
+            const params = new URLSearchParams(location.search);
+            bookingId = params.get('id');
+            fromRoundId = params.get('fromRound');
+
+            if (fromRoundId) {
+                const backUrl = `../monitor/list.html?roundId=${fromRoundId}`;
+                document.querySelectorAll('a[href="list.html"]').forEach(a => {
+                    a.href = backUrl;
+                    if (a.textContent.trim() === 'กลับ') {
+                        a.innerHTML = '<i class="bi bi-arrow-left me-1"></i>กลับหน้า Monitor';
+                    }
+                });
+            }
+
+            if (!bookingId) { showError('ไม่พบ ID การจอง'); return; }
+            loadBooking();
+        });
+
+        async function loadBooking() {
+            try {
+                const [booking, forms] = await Promise.all([
+                    API.bookings.get(bookingId),
+                    API.insurance.getByBooking(bookingId)
+                ]);
+                bookingData = booking;
+                render(booking, forms);
+            } catch (e) { showError(e.message); }
+        }
+
+        function render(b, forms) {
+            document.getElementById('loadingState').classList.add('d-none');
+            document.getElementById('mainContent').classList.remove('d-none');
+            document.getElementById('pageTitle').textContent = `การจอง #${b.id}`;
+            document.title = `การจอง #${b.id} - Tour Backoffice`;
+
+            // Status banner
+            const bannerColor = { PENDING: 'warning', CONFIRMED: 'success', CANCELLED: 'secondary' }[b.status];
+            document.getElementById('statusBanner').className = `alert alert-${bannerColor} d-flex align-items-center gap-3 mb-4`;
+            document.getElementById('statusBanner').innerHTML = `
+        <i class="bi bi-info-circle-fill fs-4"></i>
+        <div class="flex-fill">
+            <div class="fw-semibold">สถานะการจอง: <span class="badge ${BOOKING_BADGE[b.status]}">${BOOKING_LABEL[b.status]}</span></div>
+            <div class="small text-muted">วันที่จอง: ${formatDateThai(b.createdAt)} · ผู้บันทึก: ${b.recordedBy || '-'}</div>
+        </div>`;
+
+            // Action buttons
+            let topActions = '';
+            let bottomActions = '';
+
+            if (b.status === 'PENDING') {
+                topActions = `<button class="btn btn-success px-4" onclick="doConfirm()"><i class="bi bi-check-lg me-1"></i>ยืนยันการจอง</button>`;
+                bottomActions = `
+                    <button class="btn btn-success px-4" onclick="doConfirm()"><i class="bi bi-check-lg me-1"></i>ยืนยันการจอง</button>
+                    <button class="btn btn-outline-danger px-4" onclick="openCancel()"><i class="bi bi-x-lg me-1"></i>ยกเลิกการจอง</button>
+                `;
+            } else if (b.status === 'CONFIRMED') {
+                bottomActions = `<button class="btn btn-outline-danger px-4" onclick="openCancel()"><i class="bi bi-x-lg me-1"></i>ยกเลิกการจอง</button>`;
+            }
+
+            document.getElementById('statusActions').innerHTML = topActions;
+            document.getElementById('documentActions').innerHTML = bottomActions;
+
+            // Helper for data groups
+            const dataGroup = (label, value, col = 4, extraClass = '') => `
+        <div class="col-md-${col} data-group">
+            <div class="data-label">${label}</div>
+            <div class="data-value ${extraClass}">${value || '-'}</div>
+        </div>`;
+
+            // ===== Booking Info (Detail Section) =====
+            const addons = b.bookingAddons?.length ? b.bookingAddons.map(a => `${a.addon?.name} x${a.quantity}`).join(', ') : 'ไม่มี';
+            document.getElementById('bookingInfo').innerHTML = `
+        ${dataGroup('ทริป / โปรแกรม', b.busRound?.trip?.title, 4, 'fw-bold')}
+        ${dataGroup('วันเวลาเดินทาง', b.busRound?.departDate ? formatDateTime(b.busRound.departDate) : '-', 4)}
+        ${dataGroup('สถานะ', `<span class="badge ${BOOKING_BADGE[b.status]} status-badge">${BOOKING_LABEL[b.status]}</span>`, 4)}
+        
+        ${dataGroup('ต้นทาง → ปลายทาง', `${b.busRound?.startPoint || '-'} → ${b.busRound?.endPoint || '-'}`, 4)}
+        ${dataGroup('รถคันที่', b.busRound?.busNumber, 4)}
+        ${dataGroup('จำนวนที่นั่ง', `${b.seats} ที่นั่ง`, 4, 'primary')}
+
+        ${dataGroup('อุปกรณ์เช่า', addons, 4)}
+        ${dataGroup('ยอดรวมสุทธิ', `${formatMoney(b.totalAmount)} บาท`, 4, 'success fs-5')}
+        ${dataGroup('ผู้ดูแลทริป', b.busRound?.responsiblePerson, 4)}
+    `;
+
+            // ===== Customer Info Section =====
+            if (forms.length === 0) {
+                // No insurance forms, show basic user info
+                document.getElementById('customerInfo').innerHTML = `
+            <div class="row">
+                ${dataGroup('ชื่อลูกค้า', b.user?.name, 4)}
+                ${dataGroup('เบอร์โทรศัพท์', b.user?.phone, 4)}
+                ${dataGroup('อีเมล์', b.user?.email, 4)}
+                ${dataGroup('แพ้อาหาร', b.foodAllergy || 'ไม่มี', 4)}
+            </div>
+            <div class="alert alert-light border small mt-3"><i class="bi bi-info-circle me-1"></i>ยังไม่มีรายละเอียดผู้โดยสารรายบุคคล (ข้อมูลประกันภัย)</div>
+        `;
+            } else {
+                // Show table like the reference
+                let tableRows = forms.map((f, idx) => {
+                    const sb = f.seatBooking || {};
+                    const prefix = sb.namePrefix || '';
+                    const fname = sb.firstName || '';
+                    const lname = sb.lastName || '';
+                    const fullName = `${prefix}${fname} ${lname}`.trim() || 'ไม่ระบุชื่อ';
+
+                    return `
+            <tr>
+                <td class="text-center text-muted small">${idx + 1}</td>
+                <td>
+                    <div class="fw-bold text-dark">${fullName}</div>
+                    <div class="small text-muted">${sb.nickname ? `ชื่อเล่น: ${sb.nickname}` : ''}</div>
+                </td>
+                <td>
+                    ${sb.phone || '-'}<br>
+                    <span class="small text-muted">${sb.email || ''}</span>
+                </td>
+                <td>
+                    <code>${sb.nationalId || '-'}</code><br>
+                    ${sb.bloodType ? `<span class="badge blood-badge text-white" style="background:${BLOOD_COLOR[sb.bloodType] || '#aaa'}">${sb.bloodType}</span>` : ''}
+                </td>
+                <td>
+                    <div class="small"><b>ฉุกเฉิน:</b> ${f.emergencyName || '-'}</div>
+                    <div class="small text-muted">${f.emergencyPhone || ''}</div>
+                </td>
+                <td>
+                    ${f.foodAllergy ? `<span class="badge bg-warning text-dark small">${f.foodAllergy}</span>` : '<span class="text-muted small">ไม่มี</span>'}
+                </td>
+            </tr>`;
+                }).join('');
+
+                document.getElementById('customerInfo').innerHTML = `
+            <div class="table-responsive">
+                <table class="table passenger-table">
+                    <thead>
+                        <tr>
+                            <th width="40">#</th>
+                            <th>ชื่อ-นามสกุล</th>
+                            <th>การติดต่อ</th>
+                            <th>เลขบัตร / เลือด</th>
+                            <th>ติดต่อฉุกเฉิน</th>
+                            <th>แพ้อาหาร</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            </div>`;
+            }
+
+            // ===== Payment Info Section =====
+            const p = b.payment;
+            if (!p) {
+                document.getElementById('paymentInfo').innerHTML = `
+            <div class="p-4 text-center bg-light rounded shadow-sm border border-dashed">
+                <i class="bi bi-credit-card fs-3 text-muted"></i>
+                <p class="text-muted small mt-2 mb-0">ยังไม่มีการแจ้งชำระเงิน</p>
+            </div>`;
+            } else {
+                const typeLabel = { DEPOSIT: 'มัดจำ', FULL: 'เต็มจำนวน' }[p.type] || p.type;
+                document.getElementById('paymentInfo').innerHTML = `
+            <div class="row g-3">
+                ${dataGroup('สถานะการจ่าย', `<span class="badge ${PAY_BADGE[p.status]} status-badge">${PAY_LABEL[p.status]}</span>`, 6)}
+                ${dataGroup('ยอดที่แจ้งโอน', `${formatMoney(p.amount)} บาท`, 6, 'success fw-bold')}
+                ${dataGroup('ประเภท', typeLabel, 6)}
+                ${dataGroup('วันที่แจ้ง', formatDateThai(p.createdAt), 6)}
+                ${p.confirmedAt ? dataGroup('ยืนยันเมื่อ', formatDateThai(p.confirmedAt), 12, 'text-success small') : ''}
+                <div class="col-12 mt-2">
+                    ${p.slipUrl ? `
+                        <a href="${p.slipUrl}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-image me-1"></i>ดูหลักฐานการโอน
+                        </a>` : '<span class="text-muted small">ไม่มีสลิป</span>'}
+                </div>
+                ${p.status === 'PENDING' ? `
+                    <div class="col-12 mt-3 d-flex gap-2">
+                        <button class="btn btn-success btn-sm flex-fill" onclick="confirmPayment(${p.id},'CONFIRMED')">อนุมัติการจ่าย</button>
+                        <button class="btn btn-outline-danger btn-sm flex-fill" onclick="confirmPayment(${p.id},'REJECTED')">ปฏิเสธ</button>
+                    </div>` : ''}
+            </div>`;
+            }
+
+            // ===== Insurance Info Section =====
+            if (forms.length === 0) {
+                document.getElementById('insuranceInfo').innerHTML = `
+            <div class="p-4 text-center bg-light rounded shadow-sm border border-dashed">
+                <i class="bi bi-shield-slash fs-3 text-muted"></i>
+                <p class="text-muted small mt-2 mb-0">ยังไม่มีข้อมูลประกันภัย</p>
+            </div>`;
+            } else {
+                document.getElementById('insuranceInfo').innerHTML = forms.map((f, idx) => {
+                    const sb = f.seatBooking || {};
+                    return `
+            <div class="mb-4 border-bottom pb-3 last-child-no-border">
+                <div class="fw-bold small text-primary mb-2">ลำดับที่ ${idx + 1}: ${sb.firstName || ''} ${sb.lastName || ''}</div>
+                <div class="row g-2">
+                    ${dataGroup('สถานะประกัน', `<span class="badge ${INS_BADGE[f.status]} status-badge">${INS_LABEL[f.status]}</span>`, 6)}
+                    ${dataGroup('กรมธรรม์', f.issuedPolicyNo || '<span class="text-muted small">รอดำเนินการ</span>', 6, f.issuedPolicyNo ? 'text-success' : '')}
+                    ${dataGroup('วงเงินคุ้มครอง', f.coverageAmount ? formatMoney(f.coverageAmount) + ' บาท' : '-', 6)}
+                    ${dataGroup('ผู้รับประโยชน์', f.beneficiaryName, 6)}
+                    ${f.rejectReason ? dataGroup('เหตุผลที่ปฏิเสธ', f.rejectReason, 12, 'danger small') : ''}
+                </div>
+            </div>`;
+                }).join('');
+            }
+        }
+
+        // ===== Actions =====
+        async function doConfirm() {
+            confirmAction('ยืนยันการจองนี้?', async () => {
+                try {
+                    await API.bookings.updateStatus(bookingId, 'CONFIRMED');
+                    showToast('ยืนยันสำเร็จ');
+                    loadBooking();
+                } catch (e) { showToast(e.message, 'danger'); }
+            });
+        }
+
+        function openCancel() {
+            const admin = authManager.getUser();
+            document.getElementById('cancelAdminInfo').textContent = `${admin?.name || admin?.username} (${admin?.username})`;
+            document.getElementById('cancelReason').value = '';
+            cancelModal.show();
+        }
+
+        async function doCancel() {
+            const reason = document.getElementById('cancelReason').value.trim();
+            try {
+                await API.bookings.updateStatus(bookingId, 'CANCELLED', reason);
+                cancelModal.hide();
+                showToast('ยกเลิกสำเร็จ — บันทึก log แล้ว');
+                loadBooking();
+            } catch (e) { showToast(e.message, 'danger'); }
+        }
+
+        async function confirmPayment(id, status) {
+            const lbl = { CONFIRMED: 'ยืนยัน', REJECTED: 'ปฏิเสธ' }[status];
+            confirmAction(`ต้องการ${lbl}การชำระเงิน?`, async () => {
+                try { await API.payments.confirm(id, status); showToast(`${lbl}สำเร็จ`); loadBooking(); }
+                catch (e) { showToast(e.message, 'danger'); }
+            });
+        }
+
+        function showError(msg) {
+            document.getElementById('loadingState').innerHTML =
+                `<i class="bi bi-exclamation-triangle text-danger fs-2"></i><p class="text-danger mt-2">${msg}</p>
+         <a href="list.html" class="btn btn-outline-secondary mt-2"><i class="bi bi-arrow-left me-1"></i>กลับ</a>`;
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เลือกที่นั่ง</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- seatchart.js -->
+  <link  href="https://cdn.jsdelivr.net/npm/seatchart@0.1.0/dist/seatchart.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/seatchart@0.1.0/dist/seatchart.min.js"></script>
+
+  <style>
+    /* ─── base ─────────────────────────────────────────────── */
+    body { font-family: 'Sarabun', sans-serif; background: #f0f2f5; }
+
+    /* ─── step bar ─────────────────────────────────────────── */
+    .step-bar        { display: flex; background: #fff; border-bottom: 1px solid #dee2e6; }
+    .step-item       { flex: 1; text-align: center; padding: .5rem .25rem;
+                       font-size: .78rem; color: #adb5bd; border-bottom: 3px solid transparent; }
+    .step-item.active{ color: #0d6efd; border-color: #0d6efd; font-weight: 600; }
+    .step-item.done  { color: #198754; border-color: #198754; }
+
+    /* ─── van shell ─────────────────────────────────────────── */
+    .van-shell {
+      max-width: 340px; margin: 0 auto;
+      background: #fff;
+      border: 3px solid #495057;
+      border-radius: 28px 28px 16px 16px;
+      padding: 12px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.14);
+    }
+    .van-windshield {
+      height: 10px;
+      background: linear-gradient(90deg,#6c757d,#adb5bd 50%,#6c757d);
+      border-radius: 6px; opacity: .4; margin-bottom: 10px;
+    }
+    .van-front {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-bottom: 10px; padding-bottom: 10px;
+      border-bottom: 2px dashed #e9ecef;
+    }
+    .van-static-seat {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 70px; border-radius: 10px; border: 2px solid #dee2e6;
+      background: #f1f3f5; color: #868e96; font-size: .72rem; font-weight: 600; gap: 2px;
+    }
+    .van-static-seat i { font-size: 1.3rem; }
+    .van-divider { border-bottom: 2px dashed #e9ecef; margin: 2px 0 8px; }
+
+    /* ─── seatchart.js overrides ────────────────────────────── */
+    /* strip seatchart chrome — keep only the map */
+    #sc-wrap .sc-main-container  { display: block !important; }
+    #sc-wrap .sc-right-container { display: none  !important; }
+    #sc-wrap .sc-legend          { display: none  !important; }
+    #sc-wrap .sc-front           { display: none  !important; }
+    #sc-wrap .sc-indexer         { display: none  !important; }
+
+    /* seat cell size */
+    #sc-wrap .sc-seat {
+      width: 70px !important; height: 70px !important;
+      border-radius: 10px !important;
+      display: flex !important; flex-direction: column !important;
+      align-items: center !important; justify-content: center !important;
+      gap: 2px !important;
+      font-family: 'Sarabun', sans-serif !important;
+      font-size: .78rem !important; font-weight: 700 !important;
+      transition: transform .15s, box-shadow .15s !important;
+      cursor: pointer !important;
+      position: relative !important;
+      border: 2px solid #ced4da !important;
+    }
+    #sc-wrap .sc-seat:hover:not(.sc-seat-reserved):not(.sc-seat-disabled) {
+      transform: translateY(-2px) scale(1.04) !important;
+      box-shadow: 0 6px 16px rgba(0,0,0,.18) !important;
+    }
+
+    /* gap between rows */
+    #sc-wrap .sc-seat-row { gap: 8px !important; margin-bottom: 8px !important; }
+    #sc-wrap .sc-seats-container { gap: 0 !important; padding: 4px !important; }
+
+    /* ── available ── */
+    #sc-wrap .sc-seat-available {
+      background: #f8f9fa !important; border-color: #ced4da !important; color: #6c757d !important;
+    }
+    #sc-wrap .sc-seat-available::before { content: '○'; font-size: .85rem; opacity: .5; }
+
+    /* ── disabled (future: non-seat cells) ── */
+    #sc-wrap .sc-seat-disabled {
+      background: #f1f3f5 !important; border-color: #dee2e6 !important;
+      color: #adb5bd !important; cursor: default !important; opacity: .6 !important;
+    }
+
+    /* ══ GENDER TYPE STYLES ══════════════════════════════════ */
+
+    /* ── selected — no gender yet (pending) ── */
+    #sc-wrap .sc-seat-selected:not(.seat-male):not(.seat-female) {
+      background: #fff3cd !important; border-color: #ffc107 !important; color: #856404 !important;
+      box-shadow: 0 0 0 3px rgba(255,193,7,.35) !important;
+      animation: pulse-pending 1s ease-in-out infinite alternate !important;
+    }
+    #sc-wrap .sc-seat-selected:not(.seat-male):not(.seat-female)::before { content: '?'; font-size: 1.1rem; }
+
+    /* ── selected — MALE (my pick) ── */
+    #sc-wrap .sc-seat-selected.seat-male {
+      background: linear-gradient(135deg,#dbeafe,#bfdbfe) !important;
+      border-color: #3b82f6 !important; color: #1e40af !important;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.3) !important;
+      animation: pulse-male 1.2s ease-in-out infinite !important;
+    }
+    #sc-wrap .sc-seat-selected.seat-male::before { content: '♂'; font-size: 1.2rem; display: block; }
+
+    /* ── selected — FEMALE (my pick) ── */
+    #sc-wrap .sc-seat-selected.seat-female {
+      background: linear-gradient(135deg,#fce7f3,#fbcfe8) !important;
+      border-color: #ec4899 !important; color: #9d174d !important;
+      box-shadow: 0 0 0 3px rgba(236,72,153,.3) !important;
+      animation: pulse-female 1.2s ease-in-out infinite !important;
+    }
+    #sc-wrap .sc-seat-selected.seat-female::before { content: '♀'; font-size: 1.2rem; display: block; }
+
+    /* ── reserved — MALE (confirmed booking) ── */
+    #sc-wrap .sc-seat-reserved.seat-male {
+      background: linear-gradient(135deg,#eff6ff,#dbeafe) !important;
+      border-color: #93c5fd !important; color: #1d4ed8 !important;
+      cursor: not-allowed !important;
+    }
+    #sc-wrap .sc-seat-reserved.seat-male::before { content: '♂'; font-size: 1.1rem; display: block; }
+
+    /* ── reserved — FEMALE (confirmed booking) ── */
+    #sc-wrap .sc-seat-reserved.seat-female {
+      background: linear-gradient(135deg,#fdf2f8,#fce7f3) !important;
+      border-color: #f9a8d4 !important; color: #be185d !important;
+      cursor: not-allowed !important;
+    }
+    #sc-wrap .sc-seat-reserved.seat-female::before { content: '♀'; font-size: 1.1rem; display: block; }
+
+    /* ── reserved — HOLD (someone else selecting) ── */
+    #sc-wrap .sc-seat-reserved.seat-hold {
+      background: repeating-linear-gradient(
+        45deg,#fff8dc,#fff8dc 4px,#fef9e7 4px,#fef9e7 8px) !important;
+      border-color: #fbbf24 !important; color: #92400e !important;
+      cursor: not-allowed !important;
+    }
+    #sc-wrap .sc-seat-reserved.seat-hold::before { content: '⏳'; font-size: .9rem; }
+
+    /* ── animations ── */
+    @keyframes pulse-pending {
+      from { box-shadow: 0 0 0 0 rgba(255,193,7,.5); }
+      to   { box-shadow: 0 0 0 8px rgba(255,193,7,0); }
+    }
+    @keyframes pulse-male {
+      0%,100% { box-shadow: 0 0 0 3px rgba(59,130,246,.3); }
+      50%      { box-shadow: 0 0 0 8px rgba(59,130,246,.0); }
+    }
+    @keyframes pulse-female {
+      0%,100% { box-shadow: 0 0 0 3px rgba(236,72,153,.3); }
+      50%      { box-shadow: 0 0 0 8px rgba(236,72,153,.0); }
+    }
+
+    /* ─── real-time indicator ───────────────────────────────── */
+    .rt-bar { display: flex; align-items: center; gap: 8px;
+              font-size: .78rem; color: #6c757d;
+              background: #f8f9fa; border-radius: 8px;
+              padding: .4rem .75rem; border: 1px solid #e9ecef; }
+    .rt-dot { width: 8px; height: 8px; border-radius: 50%;
+              background: #22c55e; animation: blink 1.2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    /* ─── legend ────────────────────────────────────────────── */
+    .legend-box { width: 20px; height: 20px; border-radius: 5px; border: 2px solid; flex-shrink: 0; }
+
+    /* ─── selected-seat chips ───────────────────────────────── */
+    .seat-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: .3rem .65rem; border-radius: 8px; font-size: .82rem;
+      font-weight: 600; border: 1.5px solid;
+    }
+
+    /* ─── gender modal cards ────────────────────────────────── */
+    .gender-card {
+      border: 2px solid #dee2e6; border-radius: 14px;
+      padding: 1.25rem .75rem; cursor: pointer; text-align: center;
+      transition: all .18s;
+    }
+    .gender-card:hover           { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+    .gender-card.sel-male        { border-color: #3b82f6; background: #dbeafe; }
+    .gender-card.sel-female      { border-color: #ec4899; background: #fce7f3; }
+
+    /* ─── action bar ────────────────────────────────────────── */
+    #actionBar {
+      background: #fff; border-top: 1px solid #dee2e6;
+      box-shadow: 0 -4px 16px rgba(0,0,0,.08); z-index: 200;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-light bg-white border-bottom px-3 py-2 sticky-top shadow-sm">
+  <div class="d-flex align-items-center gap-2 w-100">
+    <a href="#" class="btn btn-sm btn-outline-secondary" onclick="history.back()">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div class="flex-grow-1 ms-1">
+      <div class="fw-semibold lh-1" id="hdrTitle">กำลังโหลด...</div>
+      <div class="text-muted mt-1" style="font-size:.75rem" id="hdrSub"></div>
+    </div>
+    <span id="hdrBadge"></span>
+  </div>
+</nav>
+
+<!-- Step bar -->
+<div class="step-bar">
+  <div class="step-item active"><i class="bi bi-grid-3x3-gap me-1"></i>เลือกที่นั่ง</div>
+  <div class="step-item"><i class="bi bi-person-lines-fill me-1"></i>ข้อมูลผู้โดยสาร</div>
+  <div class="step-item"><i class="bi bi-credit-card me-1"></i>ชำระเงิน</div>
+</div>
+
+<!-- Main -->
+<div class="container-fluid px-3 py-3 pb-5 mb-4">
+
+  <!-- Loading -->
+  <div id="loadingState" class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+    <div class="mt-2 text-muted small">กำลังโหลดข้อมูล...</div>
+  </div>
+
+  <div id="mainContent" class="d-none">
+    <div class="row g-3">
+
+      <!-- ═══ Left: Van Diagram ═══ -->
+      <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+            <span class="fw-semibold small">
+              <i class="bi bi-car-front me-1 text-primary"></i>แผนผังที่นั่ง
+            </span>
+            <span class="badge bg-light text-dark border small" id="seatCountLabel">–</span>
+          </div>
+          <div class="card-body p-3">
+
+            <!-- Real-time bar -->
+            <div class="rt-bar mb-3">
+              <div class="rt-dot"></div>
+              <span>Live</span>
+              <span class="ms-auto fw-semibold text-dark" id="lastUpdate">–</span>
+            </div>
+
+            <!-- Van shell -->
+            <div class="van-shell">
+              <div class="van-windshield"></div>
+
+              <!-- STAFF + DRIVER (static HTML) -->
+              <div class="van-front">
+                <div class="van-static-seat">
+                  <i class="bi bi-person-badge"></i>
+                  <span>Staff</span>
+                </div>
+                <div class="van-static-seat">
+                  <i class="bi bi-person-workspace"></i>
+                  <span>Driver</span>
+                </div>
+              </div>
+
+              <div class="van-divider"></div>
+
+              <!-- seatchart.js renders here -->
+              <div id="sc-wrap">
+                <div id="seatchart"></div>
+              </div>
+            </div><!-- /van-shell -->
+
+            <!-- Legend -->
+            <div class="mt-3 pt-3 border-top">
+              <div class="row g-2" style="font-size:.78rem">
+                <div class="col-6">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="legend-box" style="background:#f8f9fa;border-color:#ced4da"></div>
+                    <span class="text-muted">ว่าง</span>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="legend-box" style="background:#fff3cd;border-color:#ffc107"></div>
+                    <span class="text-muted">กำลังเลือก</span>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="legend-box" style="background:#dbeafe;border-color:#3b82f6"></div>
+                    <span style="color:#1d4ed8">♂ ชาย</span>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="legend-box" style="background:#fce7f3;border-color:#ec4899"></div>
+                    <span style="color:#be185d">♀ หญิง</span>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="legend-box"
+                      style="background:repeating-linear-gradient(45deg,#fff8dc,#fff8dc 3px,#fef9e7 3px,#fef9e7 6px);border-color:#fbbf24"></div>
+                    <span class="text-muted">กำลังจอง</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ Right: Info ═══ -->
+      <div class="col-lg-7">
+
+        <!-- Selected seats -->
+        <div class="card border-0 shadow-sm mb-3">
+          <div class="card-header bg-white py-2">
+            <span class="fw-semibold small">
+              <i class="bi bi-check2-all me-1 text-success"></i>ที่นั่งที่เลือก
+            </span>
+          </div>
+          <div class="card-body p-3" id="selectedInfo">
+            <p class="text-muted small mb-0 py-1">
+              <i class="bi bi-hand-index me-1"></i>คลิกที่นั่งในแผนผังเพื่อเลือก
+            </p>
+          </div>
+        </div>
+
+        <!-- Trip info -->
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white py-2">
+            <span class="fw-semibold small">
+              <i class="bi bi-map me-1 text-primary"></i>ข้อมูลทริป
+            </span>
+          </div>
+          <div class="card-body p-3" id="tripInfo">
+            <div class="text-muted small">กำลังโหลด...</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom action bar -->
+<div class="position-fixed bottom-0 start-0 end-0 px-3 py-2" id="actionBar">
+  <div class="d-flex align-items-center gap-3">
+    <div class="flex-grow-1">
+      <div class="text-muted" style="font-size:.72rem">ที่นั่งที่เลือก</div>
+      <div class="fw-bold fs-5 lh-1 mt-1" id="selCountLabel">0 ที่นั่ง</div>
+    </div>
+    <div class="text-end">
+      <div class="text-muted" style="font-size:.72rem">ยอดรวม</div>
+      <div class="fw-bold text-primary lh-1 mt-1" id="totalPrice">0 บาท</div>
+    </div>
+    <button class="btn btn-primary px-4 py-2" id="btnNext" disabled onclick="goNext()">
+      ถัดไป <i class="bi bi-arrow-right ms-1"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Gender modal -->
+<div class="modal fade" id="genderModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h6 class="modal-title fw-bold">
+          เลือกเพศสำหรับที่นั่ง
+          <span id="genderSeatNum" class="badge bg-secondary ms-1 fw-normal"></span>
+        </h6>
+        <button class="btn-close btn-sm" onclick="cancelGender()"></button>
+      </div>
+      <div class="modal-body px-4 pt-2 pb-3">
+        <p class="text-muted small mb-3">ระบุเพศเพื่อจัดที่นั่งให้เหมาะสม</p>
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="gender-card" id="cardMale" onclick="pickGender('MALE')">
+              <i class="bi bi-gender-male text-primary" style="font-size:2.2rem"></i>
+              <div class="fw-semibold mt-2">ผู้ชาย</div>
+              <small class="text-muted">Male</small>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="gender-card" id="cardFemale" onclick="pickGender('FEMALE')">
+              <i class="bi bi-gender-female" style="font-size:2.2rem;color:#ec4899"></i>
+              <div class="fw-semibold mt-2">ผู้หญิง</div>
+              <small class="text-muted">Female</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 px-4 pb-4 pt-0 gap-2">
+        <button class="btn btn-light btn-sm flex-fill" onclick="cancelGender()">ยกเลิก</button>
+        <button class="btn btn-primary btn-sm flex-fill" id="btnConfirmGender"
+          onclick="confirmGender()" disabled>
+          <i class="bi bi-check-lg me-1"></i>ยืนยัน
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toastC" class="position-fixed bottom-0 end-0 p-3" style="z-index:9999"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script>
+// ════════════════════════════════════════════════════════════════
+// State
+// ════════════════════════════════════════════════════════════════
+const SESSION_KEY = 'bk_session_token'
+
+let roundId       = null
+let roundData     = null
+let totalSeats    = 9           // overwritten from API
+let sc            = null        // Seatchart instance
+let genderModal
+let pollInterval  = null
+let sessionToken  = localStorage.getItem(SESSION_KEY)
+
+// { seatNumber: 'MALE' | 'FEMALE' }  — seats with confirmed gender
+let myGenders    = {}
+// { row, column } — seat awaiting gender confirmation
+let pendingIdx   = null
+// picked gender in modal (before confirm)
+let pickedGender = null
+// flag: suppress cartchange during programmatic setSeat
+let suppressCart = false
+
+// ════════════════════════════════════════════════════════════════
+// Coordinate helpers  (seats 2..N+1  →  row 0..R-1, col 0..2)
+//
+// ⚠️ seatchart.js v0.1.0 ใช้ { row, col } ไม่ใช่ { row, column }
+//    ทั้ง input ของ getSeat/setSeat และ output ของ getCart()
+// ════════════════════════════════════════════════════════════════
+function seatToIdx(n) {
+  // ส่ง col AND column เพื่อรองรับทั้ง seatchart internal (col) และ TypeScript type (column)
+  const col = (n - 2) % 3
+  const row = Math.floor((n - 2) / 3)
+  return { row, col, column: col }
+}
+
+// รับได้ทั้ง { row, col } และ { row, column } และ (row, col) สองตัว
+function idxToSeat(rowOrIdx, maybeCol) {
+  if (typeof rowOrIdx === 'object' && rowOrIdx !== null) {
+    const col = rowOrIdx.col ?? rowOrIdx.column ?? 0
+    return (rowOrIdx.row * 3) + col + 2
+  }
+  return (rowOrIdx * 3) + (maybeCol ?? 0) + 2
+}
+
+// เปรียบเทียบ SeatIndex รองรับทั้ง col/column
+function idxEq(a, b) {
+  const aC = a.col ?? a.column ?? 0
+  const bC = b.col ?? b.column ?? 0
+  return a.row === b.row && aC === bC
+}
+
+// ════════════════════════════════════════════════════════════════
+// API helpers
+// ════════════════════════════════════════════════════════════════
+async function apiFetch(path, opts = {}) {
+  const r    = await fetch(API_BASE_URL + path, opts)
+  const data = await r.json()
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`)
+  return data
+}
+
+// ════════════════════════════════════════════════════════════════
+// Init
+// ════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  genderModal = new bootstrap.Modal(document.getElementById('genderModal'))
+
+  roundId = new URLSearchParams(location.search).get('roundId')
+  if (!roundId) { showError('ไม่พบ roundId ใน URL'); return }
+
+  // Resume existing session (404/410 → ล้าง token เก่า ไม่ throw)
+  if (sessionToken) {
+    try {
+      const r = await fetch(API_BASE_URL + '/booking-sessions/' + sessionToken)
+      if (r.status === 404 || r.status === 410) {
+        // token หมดอายุหรือไม่มีใน DB (เช่น หลัง DB reset)
+        sessionToken = null
+        localStorage.removeItem(SESSION_KEY)
+      } else if (r.ok) {
+        const sess = await r.json()
+        if (sess && sess.busRoundId == roundId && Array.isArray(sess.selectedSeats)) {
+          sess.selectedSeats.forEach(s => { myGenders[s.seatNumber] = s.gender })
+        }
+      }
+    } catch { sessionToken = null; localStorage.removeItem(SESSION_KEY) }
+  }
+
+  // Load round info first (need price for seatchart init)
+  await loadRound()
+
+  // Init seatchart
+  initSeatchart()
+
+  // First poll (marks reserved seats, restores session)
+  await pollSeats()
+
+  // Start live polling
+  pollInterval = setInterval(pollSeats, 5000)
+
+  document.getElementById('loadingState').classList.add('d-none')
+  document.getElementById('mainContent').classList.remove('d-none')
+})
+
+// ════════════════════════════════════════════════════════════════
+// Load round info
+// ════════════════════════════════════════════════════════════════
+async function loadRound() {
+  const all = await apiFetch('/bus-rounds')
+  roundData = all.find(r => r.id == roundId)
+  if (!roundData) { showError('ไม่พบรอบรถนี้'); throw new Error('not found') }
+
+  totalSeats = roundData.totalSeats || 9
+
+  const isFull = roundData.bookedSeats >= totalSeats
+  const isOpen = roundData.isOpen && !isFull
+  const d      = new Date(roundData.departDate)
+
+  document.getElementById('hdrTitle').textContent =
+    `${roundData.trip?.title || 'ทริป'} — รถคันที่ ${roundData.busNumber}`
+  document.getElementById('hdrSub').textContent =
+    `${roundData.startPoint} → ${roundData.endPoint}` +
+    (roundData.duration ? ` · ${roundData.duration}` : '')
+  document.getElementById('hdrBadge').innerHTML =
+    `<span class="badge ${isOpen ? 'bg-success' : 'bg-danger'}">
+       ${isFull ? 'เต็มแล้ว' : isOpen ? 'เปิดจอง' : 'ปิดจอง'}</span>`
+
+  document.getElementById('tripInfo').innerHTML = `
+    <div class="row g-2" style="font-size:.85rem">
+      <div class="col-sm-6">
+        <div class="text-muted small">ทริป</div>
+        <div class="fw-semibold">${roundData.trip?.title || '–'}</div>
+      </div>
+      <div class="col-sm-6">
+        <div class="text-muted small">รถคันที่</div>
+        <div class="fw-semibold">${roundData.busNumber}</div>
+      </div>
+      <div class="col-sm-6">
+        <div class="text-muted small">จุดเริ่มต้น</div>
+        <div class="fw-semibold">${roundData.startPoint}</div>
+      </div>
+      <div class="col-sm-6">
+        <div class="text-muted small">ปลายทาง</div>
+        <div class="fw-semibold">${roundData.endPoint}</div>
+      </div>
+      <div class="col-sm-6">
+        <div class="text-muted small">วันเดินทาง</div>
+        <div class="fw-semibold">${d.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})}</div>
+      </div>
+      <div class="col-sm-6">
+        <div class="text-muted small">เวลา</div>
+        <div class="fw-semibold">${d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+      ${roundData.duration ? `
+      <div class="col-sm-6">
+        <div class="text-muted small">ระยะเวลา</div>
+        <div class="fw-semibold">${roundData.duration}</div>
+      </div>` : ''}
+      <div class="col-12 mt-1 pt-2 border-top">
+        <div class="text-muted small">ราคา / คน</div>
+        <div class="fw-bold text-primary fs-5">${Number(roundData.trip?.price||0).toLocaleString('th-TH')} บาท</div>
+      </div>
+    </div>`
+}
+
+// ════════════════════════════════════════════════════════════════
+// seatchart.js init
+// ════════════════════════════════════════════════════════════════
+function initSeatchart() {
+  const rows = Math.ceil(totalSeats / 3)   // 9 seats → 3 rows
+  const cols = 3
+  const price = roundData?.trip?.price || 0
+
+  sc = new Seatchart(document.getElementById('seatchart'), {
+    map: {
+      rows,
+      columns: cols,
+      // รับได้ทั้ง seatLabel(row, col) และ seatLabel({row, column})
+      seatLabel: (rowOrIdx, maybeCol) => String(idxToSeat(rowOrIdx, maybeCol)),
+      rowIndexer:    { visible: false },
+      columnIndexer: { visible: false },
+      seatTypes: {
+        // default — selectable seats
+        economy: { label: 'ว่าง',  price, cssClass: 'seat-economy',
+                   seatRows: Array.from({ length: rows }, (_, i) => i) },
+        // booked male
+        male:    { label: 'ชาย',   price, cssClass: 'seat-male',    seats: [] },
+        // booked female
+        female:  { label: 'หญิง',  price, cssClass: 'seat-female',  seats: [] },
+        // temp hold by someone else
+        hold:    { label: 'hold',  price: 0, cssClass: 'seat-hold', seats: [] }
+      }
+    },
+    cart:          { visible: false },
+    legendVisible: false
+  })
+
+  // ── cartchange: seat selected / deselected ──
+  sc.addEventListener('cartchange', onCartChange)
+}
+
+// ════════════════════════════════════════════════════════════════
+// cartchange handler
+// ════════════════════════════════════════════════════════════════
+function onCartChange() {
+  if (suppressCart) return
+
+  const cart     = sc.getCart()
+  const cartNums = cart.map(s => idxToSeat(s.index))
+
+  // ── newly selected seat (not in myGenders yet) ──
+  const newSeatInfo = cart.find(s => {
+    const n = idxToSeat(s.index)
+    return myGenders[n] === undefined && !(pendingIdx && idxEq(s.index, pendingIdx))
+  })
+  if (newSeatInfo) {
+    pendingIdx   = newSeatInfo.index
+    pickedGender = null
+    const seatNum = idxToSeat(pendingIdx)
+    document.getElementById('genderSeatNum').textContent = `ที่นั่ง ${seatNum}`
+    document.getElementById('cardMale').className   = 'gender-card'
+    document.getElementById('cardFemale').className = 'gender-card'
+    document.getElementById('btnConfirmGender').disabled = true
+    genderModal.show()
+    return
+  }
+
+  // ── deselected seat (was in myGenders, now not in cart) ──
+  Object.keys(myGenders).forEach(n => {
+    if (!cartNums.includes(Number(n))) {
+      delete myGenders[n]
+    }
+  })
+
+  updateSummary()
+}
+
+// ════════════════════════════════════════════════════════════════
+// Gender modal
+// ════════════════════════════════════════════════════════════════
+function pickGender(g) {
+  pickedGender = g
+  document.getElementById('cardMale').className   = `gender-card${g === 'MALE'   ? ' sel-male'   : ''}`
+  document.getElementById('cardFemale').className = `gender-card${g === 'FEMALE' ? ' sel-female' : ''}`
+  document.getElementById('btnConfirmGender').disabled = false
+}
+
+function confirmGender() {
+  if (!pendingIdx || !pickedGender) return
+  const n = idxToSeat(pendingIdx)
+  myGenders[n] = pickedGender
+
+  // Update seat type → triggers CSS color change (no cartchange suppression needed, type change only)
+  suppressCart = true
+  sc.setSeat(pendingIdx, { type: pickedGender === 'MALE' ? 'male' : 'female' })
+  suppressCart = false
+
+  pendingIdx   = null
+  pickedGender = null
+  genderModal.hide()
+  updateSummary()
+}
+
+function cancelGender() {
+  if (!pendingIdx) { genderModal.hide(); return }
+
+  // Deselect the seat — suppress cartchange to avoid re-triggering modal
+  suppressCart = true
+  sc.setSeat(pendingIdx, { state: 'available', type: 'economy',
+    label: String(idxToSeat(pendingIdx)) })
+  suppressCart = false
+
+  pendingIdx   = null
+  pickedGender = null
+  genderModal.hide()
+  updateSummary()
+}
+
+// ════════════════════════════════════════════════════════════════
+// Live polling — update seat states from DB
+// ════════════════════════════════════════════════════════════════
+async function pollSeats() {
+  try {
+    const data = await apiFetch(`/seat-bookings/round/${roundId}`)
+    const apiSeats   = data.seats || {}
+    totalSeats       = data.totalSeats || totalSeats
+
+    const cart     = sc.getCart()
+    // getCart() → [{index:{row,column}, label, state, type}, ...]
+    const cartNums = cart.map(s => idxToSeat(s.index))
+
+    suppressCart = true   // prevent cartchange during programmatic updates
+
+    // seats 2 .. (totalSeats+1) → e.g. totalSeats=9 → 2..10
+    const lastSeat = totalSeats + 1
+    for (let n = 2; n <= lastSeat; n++) {
+      const idx     = seatToIdx(n)
+      const apiInfo = apiSeats[n]
+
+      // Skip seats currently in user's cart (my selection)
+      if (cartNums.includes(n)) continue
+      // Skip pending seat (user currently looking at gender modal)
+      if (pendingIdx && idxEq(idx, pendingIdx)) continue
+
+      const cur = sc.getSeat(idx)
+
+      if (!apiInfo || apiInfo.status === 'AVAILABLE') {
+        // Free up previously reserved seat
+        if (cur.state === 'reserved') {
+          sc.setSeat(idx, { state: 'available', type: 'economy', label: String(n) })
+        }
+      } else if (apiInfo.status === 'BOOKED') {
+        const type  = apiInfo.gender === 'MALE' ? 'male'
+                    : apiInfo.gender === 'FEMALE' ? 'female'
+                    : 'economy'
+        // Show nickname → firstName → gender symbol → seat number
+        const label = apiInfo.nickname || apiInfo.firstName
+                    || (apiInfo.gender === 'MALE' ? 'ชาย' : apiInfo.gender === 'FEMALE' ? 'หญิง' : String(n))
+        if (cur.state !== 'reserved' || cur.label !== label || cur.type !== type) {
+          sc.setSeat(idx, { state: 'reserved', type, label })
+        }
+      } else if (apiInfo.status === 'SELECTED') {
+        // Temp hold by another user
+        if (cur.state !== 'reserved' || cur.type !== 'hold') {
+          sc.setSeat(idx, { state: 'reserved', type: 'hold', label: '...' })
+        }
+      }
+    }
+
+    // Restore my selected seats — ห้ามส่ง state:'selected' ซ้ำ (seatchart จะ duplicate ใน cart)
+    Object.entries(myGenders).forEach(([n, gender]) => {
+      const idx  = seatToIdx(Number(n))
+      const cur  = sc.getSeat(idx)
+      const type = gender === 'MALE' ? 'male' : 'female'
+      if (cur.state !== 'selected') {
+        // ที่นั่งถูก poll reset → select กลับมา
+        sc.setSeat(idx, { state: 'selected', type, label: String(n) })
+      } else if (cur.type !== type) {
+        // selected อยู่แล้ว แค่ fix type (ไม่แตะ state ป้องกัน duplicate)
+        sc.setSeat(idx, { type, label: String(n) })
+      }
+    })
+
+    suppressCart = false
+
+    // Update counter
+    const bookedCount = Object.values(apiSeats).filter(s => s.status === 'BOOKED').length
+    document.getElementById('seatCountLabel').textContent =
+      `ว่าง ${totalSeats - bookedCount} / ${totalSeats} ที่นั่ง`
+    document.getElementById('lastUpdate').textContent =
+      new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+
+    updateSummary()
+  } catch {
+    suppressCart = false
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// Summary panel + action bar
+// ════════════════════════════════════════════════════════════════
+function updateSummary() {
+  const keys  = Object.keys(myGenders)
+  const count = keys.length
+  const price = Number(roundData?.trip?.price || 0)
+
+  document.getElementById('selCountLabel').textContent = `${count} ที่นั่ง`
+  document.getElementById('totalPrice').textContent    = `${(price * count).toLocaleString('th-TH')} บาท`
+  document.getElementById('btnNext').disabled          = count === 0
+
+  const info = document.getElementById('selectedInfo')
+  if (!count) {
+    info.innerHTML = `<p class="text-muted small mb-0 py-1">
+      <i class="bi bi-hand-index me-1"></i>คลิกที่นั่งในแผนผังเพื่อเลือก</p>`
+    return
+  }
+
+  const chips = keys.map(n => {
+    const g      = myGenders[n]
+    const isMale = g === 'MALE'
+    return `<span class="seat-chip"
+        style="background:${isMale?'#dbeafe':'#fce7f3'};
+               border-color:${isMale?'#3b82f6':'#ec4899'};
+               color:${isMale?'#1e40af':'#9d174d'}">
+        ${isMale ? '♂' : '♀'} ที่นั่ง ${n}
+      </span>`
+  }).join('')
+
+  info.innerHTML = `
+    <div class="d-flex flex-wrap gap-2 mb-3">${chips}</div>
+    <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+      <span class="text-muted small">${count} ที่นั่ง × ${price.toLocaleString('th-TH')} บาท</span>
+      <span class="fw-bold text-primary">${(price*count).toLocaleString('th-TH')} บาท</span>
+    </div>`
+}
+
+// ════════════════════════════════════════════════════════════════
+// Next: hold seats → save session → navigate
+// ════════════════════════════════════════════════════════════════
+async function goNext() {
+  // Validate all selected seats have gender
+  const cart = sc.getCart()
+
+  // deduplicate — seatchart อาจ return seat เดิมซ้ำถ้า setSeat ถูกเรียกผิดลำดับ
+  const seenNums  = new Set()
+  const seatsData = cart
+    .map(s => ({ seatNumber: idxToSeat(s.index), gender: myGenders[idxToSeat(s.index)] || null }))
+    .filter(s => !isNaN(s.seatNumber) && s.seatNumber >= 2 && !seenNums.has(s.seatNumber)
+                 && seenNums.add(s.seatNumber))
+
+  const missingGender = seatsData.filter(s => !s.gender)
+  if (missingGender.length) {
+    showToast('กรุณาระบุเพศให้ครบทุกที่นั่ง', 'warning'); return
+  }
+
+  try {
+    // Upsert session
+    const sess = await apiFetch('/booking-sessions', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        token:         sessionToken || undefined,
+        busRoundId:    parseInt(roundId),
+        step:          1,
+        selectedSeats: seatsData
+      })
+    })
+    sessionToken = sess.token
+    localStorage.setItem(SESSION_KEY, sessionToken)
+
+    // Hold seats (temp lock, 10 min)
+    await apiFetch('/seat-bookings/hold', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        busRoundId:  parseInt(roundId),
+        seatNumbers: seatsData.map(s => s.seatNumber),
+        sessionToken
+      })
+    })
+
+    clearInterval(pollInterval)
+    window.location.href = `/frontend/pages/booking/form.html?token=${sessionToken}`
+  } catch (e) {
+    showToast(e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่', 'danger')
+    await pollSeats() // refresh to show any conflicts
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// Helpers
+// ════════════════════════════════════════════════════════════════
+function showError(msg) {
+  document.getElementById('loadingState').innerHTML = `
+    <i class="bi bi-exclamation-triangle text-danger" style="font-size:2rem"></i>
+    <p class="text-danger mt-2 mb-0">${msg}</p>`
+}
+
+function showToast(msg, type = 'warning') {
+  const id = 't' + Date.now()
+  document.getElementById('toastC').insertAdjacentHTML('beforeend', `
+    <div id="${id}" class="toast align-items-center text-bg-${type} border-0 show rounded-3 mb-2">
+      <div class="d-flex">
+        <div class="toast-body">${msg}</div>
+        <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>`)
+  setTimeout(() => document.getElementById(id)?.remove(), 4000)
+}
+</script>
+</body>
+</html>

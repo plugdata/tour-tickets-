@@ -1,0 +1,1062 @@
+================================================================================
+  BACKOFFICE TICKET SYSTEM — SYSTEM FLOW, DATABASE & API DESIGN
+  Project: Tour Vehicle & Equipment Booking Management
+  Date: 2026-04-05
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1 — SYSTEM OVERVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ระบบจัดการ Backoffice สำหรับบริษัททัวร์ ครอบคลุม:
+  1. User & Role Management
+  2. Trip Management
+  3. Content & Post Management (Website CMS)
+  4. Ticket & Booking System
+  5. Add-on / Equipment Rental
+  6. Payment & Slip Verification
+  7. Staff Print Sheet
+  8. Financial Monitor & Summary
+  9. Insurance Policy Form (กรมธรรม์ประกันภัย)
+
+Tech Stack แนะนำ:
+  - Backend  : Node.js + Express / NestJS
+  - Database : PostgreSQL
+  - ORM      : Prisma
+  - Auth     : JWT + Cookie Session
+  - Frontend : Next.js (Backoffice) + Next.js (Public)
+  - Storage  : S3 / Cloudinary (images, slips)
+  - QR Code  : qrcode.js
+  - Language : Thai / English (i18n)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2 — ROLE & PERMISSION MATRIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Role Hierarchy:
+  DETAIL_MANAGE  (Super Admin)  — full system, manage all roles, see hidden fields
+  ADMIN                         — read + create + edit all (except user role management)
+  STAFF                         — read-only pages + print sheet access
+  CUSTOMER                      — frontend only, no backoffice access
+
+Permission Table:
+┌──────────────────────────────┬────────────────┬───────┬───────┬──────────┐
+│ Module                       │ DETAIL_MANAGE  │ ADMIN │ STAFF │ CUSTOMER │
+├──────────────────────────────┼────────────────┼───────┼───────┼──────────┤
+│ User Management              │ CRUD           │ R     │ —     │ —        │
+│ Role Assignment              │ CRUD           │ —     │ —     │ —        │
+│ Trip Management              │ CRUD           │ CRUD  │ R     │ frontend │
+│ Vehicle/Round Management     │ CRUD           │ CRUD  │ R     │ —        │
+│ Content / CMS                │ CRUD           │ CRUD  │ R     │ frontend │
+│ Booking Management           │ CRUD           │ CRUD  │ R     │ self     │
+│ Ticket Issuance              │ CRUD           │ CRUD  │ R     │ —        │
+│ Payment Confirm              │ CRUD           │ CRUD  │ R     │ submit   │
+│ Add-on / Rental Mgmt         │ CRUD           │ CRUD  │ R     │ select   │
+│ Expense Record               │ CRUD           │ CRUD  │ —     │ —        │
+│ Financial Summary            │ CRUD           │ R     │ —     │ —        │
+│ Staff Print Sheet            │ CRUD           │ CRUD  │ R     │ —        │
+│ Guard / Visibility Config    │ CRUD           │ —     │ —     │ —        │
+│ Insurance Form (ส่ง)         │ CRUD           │ CRUD  │ R     │ submit   │
+│ Insurance Form (ดู/export)   │ CRUD           │ CRUD  │ R     │ self     │
+└──────────────────────────────┴────────────────┴───────┴───────┴──────────┘
+
+Guard System (Visibility Control):
+  - DETAIL_MANAGE สามารถ config ซ่อน: page, table, column, field
+  - เก็บใน table VisibilityGuard โดย target role
+  - Frontend/API check guard ก่อน render/return data
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3 — DATABASE SCHEMA (PRISMA)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// ─── schema.prisma ────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────
+// 1. USER & AUTH
+// ──────────────────────────────────────────────
+
+enum Role {
+  DETAIL_MANAGE
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  password     String                         // bcrypt hashed
+  role         Role      @default(CUSTOMER)
+  namePrefix   String?                        // คำนำหน้านาม
+  firstName    String
+  lastName     String
+  nickname     String?
+  nationalId   String?   @unique
+  birthDate    DateTime?
+  phone        String
+  email        String?   @unique
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions     Session[]
+  bookings     Booking[]
+  payments     Payment[]
+  expensesBy   Expense[]
+}
+
+model Session {
+  id          String    @id @default(cuid())
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+  token       String    @unique              // JWT or cookie token
+  cookieData  Json?                          // customer browser cookie data
+  qrCode      String?                        // QR code value (for vehicle link)
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+}
+
+// Guard: ซ่อน element ตาม role
+model VisibilityGuard {
+  id          String   @id @default(cuid())
+  targetRole  Role
+  pageKey     String                         // e.g. "booking", "payment"
+  elementType String                         // "page" | "table" | "column" | "field"
+  elementKey  String                         // e.g. "nationalId", "totalAmount"
+  isHidden    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+  updatedBy   String
+
+  @@unique([targetRole, pageKey, elementKey])
+}
+
+// ──────────────────────────────────────────────
+// 2. TRIP MANAGEMENT
+// ──────────────────────────────────────────────
+
+enum TripStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  CANCELLED
+}
+
+model Trip {
+  id          String      @id @default(cuid())
+  titleTh     String
+  titleEn     String
+  descTh      String?
+  descEn      String?
+  coverImage  String?
+  status      TripStatus  @default(DRAFT)
+  departDate  DateTime
+  returnDate  DateTime
+  priceBase   Decimal                        // ราคาพื้นฐานต่อคน
+  depositAmt  Decimal                        // ยอดมัดจำ (เช่น 1000)
+  maxCapacity Int
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  vehicles    TripVehicle[]
+  tripAddons  TripAddon[]
+  posts       Post[]
+  bookings    Booking[]
+}
+
+// ──────────────────────────────────────────────
+// 3. VEHICLE & ROUND (รอบรถ)
+// ──────────────────────────────────────────────
+
+enum VehicleStatus {
+  OPEN
+  FULL
+  CLOSED
+  CANCELLED
+}
+
+model Vehicle {
+  id           String   @id @default(cuid())
+  name         String                         // ชื่อรถ เช่น "รถตู้ VIP 1"
+  licensePlate String?
+  capacity     Int                            // จำนวนที่นั่ง
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  tripVehicles TripVehicle[]
+}
+
+model TripVehicle {
+  id            String        @id @default(cuid())
+  tripId        String
+  trip          Trip          @relation(fields: [tripId], references: [id])
+  vehicleId     String
+  vehicle       Vehicle       @relation(fields: [vehicleId], references: [id])
+  roundNumber   Int                           // ลำดับรถตู้ที่ (1, 2, 3...)
+  startPoint    String                        // จุดขึ้นรถ
+  endPoint      String                        // จุดลงรถ
+  departureAt   DateTime
+  capacity      Int                           // override จาก vehicle ได้
+  bookedCount   Int           @default(0)
+  status        VehicleStatus @default(OPEN)
+  publicLink    String?       @unique         // link สาธารณะสำหรับจอง
+  qrCodeUrl     String?                       // QR code image url
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  seats         Seat[]
+  bookings      Booking[]
+
+  @@unique([tripId, roundNumber])
+}
+
+model Seat {
+  id              String       @id @default(cuid())
+  tripVehicleId   String
+  tripVehicle     TripVehicle  @relation(fields: [tripVehicleId], references: [id])
+  seatNumber      String                      // เช่น "1A", "2B"
+  isBooked        Boolean      @default(false)
+
+  booking         Booking?
+
+  @@unique([tripVehicleId, seatNumber])
+}
+
+// ──────────────────────────────────────────────
+// 4. ADD-ON / RENTAL EQUIPMENT
+// ──────────────────────────────────────────────
+
+model AddonCategory {
+  id      String   @id @default(cuid())
+  nameTh  String
+  nameEn  String
+  sortOrder Int    @default(0)
+
+  addons  Addon[]
+}
+
+model Addon {
+  id           String        @id @default(cuid())
+  categoryId   String
+  category     AddonCategory @relation(fields: [categoryId], references: [id])
+  nameTh       String
+  nameEn       String
+  descTh       String?
+  descEn       String?
+  priceBase    Decimal
+  stockTotal   Int
+  image        String?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  tripAddons    TripAddon[]
+  bookingAddons BookingAddon[]
+}
+
+// เชื่อม addon กับ trip (กำหนดราคา/จำนวนต่อ trip)
+model TripAddon {
+  id          String   @id @default(cuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id])
+  addonId     String
+  addon       Addon    @relation(fields: [addonId], references: [id])
+  priceOverride Decimal?                     // ถ้า null ใช้ priceBase
+  stockLimit  Int?                           // จำนวนสูงสุดสำหรับ trip นี้
+
+  @@unique([tripId, addonId])
+}
+
+// ──────────────────────────────────────────────
+// 5. BOOKING
+// ──────────────────────────────────────────────
+
+enum BookingStatus {
+  PENDING           // รอยืนยัน
+  AWAITING_PAYMENT  // รอชำระ
+  DEPOSIT_PAID      // จ่ายมัดจำแล้ว
+  FULLY_PAID        // จ่ายครบแล้ว
+  CONFIRMED         // admin ยืนยันแล้ว
+  CANCELLED
+  COMPLETED
+}
+
+model Booking {
+  id              String         @id @default(cuid())
+  bookingCode     String         @unique     // auto-gen เช่น "TRP-20260405-0001"
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  tripId          String
+  trip            Trip           @relation(fields: [tripId], references: [id])
+  tripVehicleId   String?
+  tripVehicle     TripVehicle?   @relation(fields: [tripVehicleId], references: [id])
+  seatId          String?        @unique
+  seat            Seat?          @relation(fields: [seatId], references: [id])
+
+  // ข้อมูลลูกค้า (snapshot ณ เวลาจอง)
+  namePrefix      String?
+  firstName       String
+  lastName        String
+  nickname        String?
+  nationalId      String?
+  birthDate       DateTime?
+  phone           String
+  email           String?
+  foodAllergy     String?        // แพ้อาหาร
+  specialRequest  String?
+  bloodType       String?        // หมู่เลือด: A, B, AB, O (+ / -)
+
+  status          BookingStatus  @default(PENDING)
+  baseAmount      Decimal        // ราคาทริป
+  addonAmount     Decimal        @default(0)
+  totalAmount     Decimal        // baseAmount + addonAmount
+  depositRequired Decimal        // ยอดมัดจำที่ต้องจ่าย
+  paidAmount      Decimal        @default(0)
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  addons          BookingAddon[]
+  payments        Payment[]
+  ticket          Ticket?
+  insurance       InsuranceForm?
+}
+
+model BookingAddon {
+  id          String   @id @default(cuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  addonId     String
+  addon       Addon    @relation(fields: [addonId], references: [id])
+  quantity    Int
+  unitPrice   Decimal
+  subtotal    Decimal
+
+  @@unique([bookingId, addonId])
+}
+
+// ──────────────────────────────────────────────
+// 6. INSURANCE POLICY FORM (กรมธรรม์ประกันภัย)
+// ──────────────────────────────────────────────
+
+enum InsuranceStatus {
+  DRAFT         // กรอกยังไม่ครบ
+  SUBMITTED     // ส่งแล้ว รอ admin
+  APPROVED      // admin อนุมัติแล้ว
+  REJECTED      // admin ปฏิเสธ (ขอแก้ไข)
+}
+
+enum BeneficiaryRelation {
+  LEGAL_HEIR    // ทายาทตามกฎหมาย
+  SPOUSE        // คู่สมรส
+  FATHER        // บิดา
+  MOTHER        // มารดา
+  SIBLING       // พี่น้อง
+  OTHER         // อื่น ๆ
+}
+
+model InsuranceForm {
+  id              String             @id @default(cuid())
+  bookingId       String             @unique
+  booking         Booking            @relation(fields: [bookingId], references: [id])
+
+  // ─── Section 1: ข้อมูลส่วนบุคคล (snapshot จาก Booking) ───
+  // (namePrefix, firstName, lastName, nickname, nationalId,
+  //  birthDate, phone มาจาก Booking โดยตรง — ไม่ duplicate)
+  bloodType       String             // "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-"
+
+  // ─── Section 2: บุคคลติดต่อกรณีฉุกเฉิน ───
+  emergencyName   String             // ชื่อ-นามสกุล
+  emergencyPhone  String             // หมายเลขโทรศัพท์
+
+  // ─── Section 3: ผู้รับประโยชน์ ───
+  beneficiaryName     String         // คำนำหน้า + ชื่อ + สกุล (full string)
+  beneficiaryRelation BeneficiaryRelation
+  beneficiaryRelationOther String?   // กรณีเลือก OTHER
+
+  // ─── Section 4: การยินยอมและเงื่อนไขกรมธรรม์ ───
+  consentPolicyRead       Boolean    @default(false)  // 4.1 รับทราบข้อมูลกรมธรรม์
+  consentTermsAccepted    Boolean    @default(false)  // 4.2 ยอมรับเงื่อนไขความคุ้มครอง
+  consent4WD              Boolean    @default(false)  // 4.3 รับทราบ 4WD ไม่คุ้มครอง
+  consentDomesticOnly     Boolean    @default(false)  // 4.4 รับทราบคุ้มครองเฉพาะในไทย
+
+  // ─── Section 5: เอกสารประกอบ ───
+  idCardImageUrl  String?            // URL รูปบัตรประชาชน (PDF/JPG/PNG ≤10MB)
+  idCardFileName  String?            // original file name
+  idCardFileSize  Int?               // bytes
+
+  // ─── Metadata ───
+  status          InsuranceStatus    @default(DRAFT)
+  submittedAt     DateTime?
+  reviewedBy      String?            // admin userId
+  reviewedAt      DateTime?
+  rejectReason    String?
+  coverageAmount  Decimal            @default(1000000) // วงเงินคุ้มครอง (บาท)
+  issuedPolicyNo  String?            // เลขกรมธรรม์ที่ได้รับ (admin กรอก)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+// ──────────────────────────────────────────────
+// 7. TICKET  (เลื่อนจาก 6)
+// ──────────────────────────────────────────────
+
+model Ticket {
+  id          String    @id @default(cuid())
+  bookingId   String    @unique
+  booking     Booking   @relation(fields:[bookingId], references: [id])
+  ticketCode  String    @unique              // เช่น "TKT-0001-A1"
+  qrCodeUrl   String?
+  issuedAt    DateTime  @default(now())
+  isUsed      Boolean   @default(false)
+  usedAt      DateTime?
+}
+
+// ──────────────────────────────────────────────
+// 7. PAYMENT
+// ──────────────────────────────────────────────
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+enum PaymentType {
+  DEPOSIT    // มัดจำ
+  REMAINING  // ชำระส่วนที่เหลือ
+  FULL       // โอนเต็ม
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  bookingId     String
+  booking       Booking       @relation(fields: [bookingId], references: [id])
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  paymentType   PaymentType
+  amount        Decimal
+  slipImage     String?       // URL of uploaded slip
+  slipRefCode   String?       // เลขสลิป
+  status        PaymentStatus @default(PENDING)
+  confirmedBy   String?       // admin userId
+  confirmedAt   DateTime?
+  rejectReason  String?
+  note          String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// ──────────────────────────────────────────────
+// 8. CONTENT / CMS
+// ──────────────────────────────────────────────
+
+enum PostType {
+  TRIP_CONTENT   // เนื้อหาทริป
+  SERVICE        // บริการอื่นๆ
+  IMPRESSION     // บล็อคภาพความประทับใจ
+  FAQ            // คำถามที่พบบ่อย
+  ABOUT          // เกี่ยวกับเรา
+  ANNOUNCEMENT   // ประกาศ
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  tripId      String?
+  trip        Trip?     @relation(fields: [tripId], references: [id])
+  type        PostType
+  titleTh     String
+  titleEn     String?
+  contentTh   String?   @db.Text
+  contentEn   String?   @db.Text
+  mediaLinks  Json?     // [{ type: "image"|"video", url: "...", caption: "..." }]
+  externalLink String?
+  sortOrder   Int       @default(0)
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ──────────────────────────────────────────────
+// 9. EXPENSE (ค่าใช้จ่ายในทริป)
+// ──────────────────────────────────────────────
+
+model Expense {
+  id          String   @id @default(cuid())
+  tripId      String?                        // null = ค่าใช้จ่ายทั่วไป
+  tripVehicleId String?
+  category    String                         // "fuel" | "food" | "accommodation" | "other"
+  descTh      String?
+  amount      Decimal
+  receiptImg  String?
+  recordedBy  String
+  recordedByUser User  @relation(fields: [recordedBy], references: [id])
+  recordedAt  DateTime @default(now())
+  month       Int      // 1-12
+  year        Int
+}
+
+// ──────────────────────────────────────────────
+// 10. NOTIFICATION LOG
+// ──────────────────────────────────────────────
+
+model Notification {
+  id          String   @id @default(cuid())
+  type        String   // "VEHICLE_FULL" | "PAYMENT_RECEIVED" | "BOOKING_CONFIRMED"
+  targetRole  Role?    // ส่งไปยัง role ใด
+  targetUserId String?
+  message     String
+  isRead      Boolean  @default(false)
+  relatedId   String?  // bookingId / tripVehicleId ที่เกี่ยวข้อง
+  createdAt   DateTime @default(now())
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4 — API DESIGN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Base URL: /api/v1
+
+[AUTH]
+  POST   /auth/login              → { username, password } → JWT token + set cookie
+  POST   /auth/logout             → clear session
+  GET    /auth/me                 → current user profile
+  POST   /auth/refresh            → refresh JWT
+
+[USER MANAGEMENT]  (DETAIL_MANAGE only)
+  GET    /users                   → list users (paginate, filter by role)
+  POST   /users                   → create user
+  GET    /users/:id               → get user detail
+  PUT    /users/:id               → update user
+  DELETE /users/:id               → soft delete (isActive = false)
+  PATCH  /users/:id/role          → change role
+
+[TRIP]
+  GET    /trips                   → list trips (filter: status, date)
+  POST   /trips                   → create trip                [ADMIN+]
+  GET    /trips/:id               → trip detail
+  PUT    /trips/:id               → update trip                [ADMIN+]
+  PATCH  /trips/:id/status        → publish / close trip       [ADMIN+]
+  DELETE /trips/:id               → soft delete                [DETAIL_MANAGE]
+  GET    /trips/:id/summary       → summary: bookings, revenue, people count
+
+[VEHICLE / ROUND]
+  GET    /trips/:tripId/vehicles            → list rounds for trip
+  POST   /trips/:tripId/vehicles            → add vehicle round   [ADMIN+]
+  PUT    /trips/:tripId/vehicles/:id        → update round
+  PATCH  /trips/:tripId/vehicles/:id/status → open/close/full
+  POST   /trips/:tripId/vehicles/:id/open-next → เปิดรถคันต่อไป (notify)
+  GET    /trips/:tripId/vehicles/:id/seats  → seat map
+  GET    /vehicles/:id/link                 → get public link + QR code
+  POST   /vehicles/:id/regenerate-link      → regenerate link/QR
+
+[ADD-ON / RENTAL]
+  GET    /addon-categories              → list categories
+  POST   /addon-categories              → create category        [ADMIN+]
+  GET    /addons                        → list addons (filter: category, active)
+  POST   /addons                        → create addon           [ADMIN+]
+  PUT    /addons/:id                    → update addon
+  PATCH  /addons/:id/status             → activate / deactivate
+  GET    /trips/:tripId/addons          → addons available for trip
+  POST   /trips/:tripId/addons          → attach addon to trip
+  DELETE /trips/:tripId/addons/:addonId → remove addon from trip
+
+[BOOKING]  (CUSTOMER via public, ADMIN/STAFF via backoffice)
+  GET    /bookings                      → list bookings (filter: trip, status, date)
+  POST   /bookings                      → create booking
+  GET    /bookings/:id                  → booking detail
+  PUT    /bookings/:id                  → update booking (admin)
+  PATCH  /bookings/:id/status           → confirm / cancel
+  GET    /bookings/:id/print            → print sheet data (STAFF+)
+  GET    /trips/:tripId/bookings/export → export to CSV
+
+[TICKET]
+  POST   /bookings/:bookingId/ticket    → issue ticket (auto after payment confirm)
+  GET    /tickets/:ticketCode           → validate ticket (scan QR)
+  PATCH  /tickets/:ticketCode/use       → mark as used
+
+[PAYMENT]
+  GET    /payments                      → list payments (filter: status, date)
+  POST   /bookings/:bookingId/payments  → customer submit payment + slip
+  GET    /payments/:id                  → payment detail
+  PATCH  /payments/:id/confirm          → admin confirm payment  [ADMIN+]
+  PATCH  /payments/:id/reject           → admin reject payment   [ADMIN+]
+  GET    /payments/:id/slip             → get slip image
+
+[INSURANCE FORM]
+  GET    /bookings/:bookingId/insurance         → get insurance form (own or STAFF+)
+  POST   /bookings/:bookingId/insurance         → create / submit form (CUSTOMER)
+  PUT    /bookings/:bookingId/insurance         → update draft form  (CUSTOMER)
+  PATCH  /bookings/:bookingId/insurance/submit  → finalize & submit  (CUSTOMER)
+  PATCH  /insurance/:id/approve                 → admin approve      [ADMIN+]
+  PATCH  /insurance/:id/reject                  → admin reject + reason [ADMIN+]
+  POST   /insurance/:id/upload-id-card          → upload บัตรประชาชน (multipart)
+  GET    /insurance/:id/id-card                 → download/view บัตรประชาชน [ADMIN+]
+  GET    /trips/:tripId/insurance               → list all insurance forms in trip [ADMIN+]
+  GET    /trips/:tripId/insurance/export        → export CSV/PDF for insurer [ADMIN+]
+
+[CONTENT / CMS]
+  GET    /posts                         → list posts (filter: type, published)
+  POST   /posts                         → create post            [ADMIN+]
+  GET    /posts/:id                     → post detail
+  PUT    /posts/:id                     → update post
+  PATCH  /posts/:id/publish             → publish / unpublish
+  DELETE /posts/:id                     → delete
+
+[EXPENSE]
+  GET    /expenses                      → list (filter: tripId, month, year)
+  POST   /expenses                      → record expense         [ADMIN+]
+  PUT    /expenses/:id                  → update
+  DELETE /expenses/:id                  → delete
+
+[FINANCIAL SUMMARY / MONITOR]
+  GET    /summary/trip/:tripId          → summary per trip
+  GET    /summary/monthly?month=&year=  → monthly summary
+  GET    /summary/yearly?year=          → yearly summary
+  GET    /summary/export?type=&...      → export PDF/CSV
+
+[NOTIFICATION]
+  GET    /notifications                 → my notifications
+  PATCH  /notifications/:id/read        → mark read
+  POST   /notifications/broadcast       → send to role           [DETAIL_MANAGE]
+
+[VISIBILITY GUARD]
+  GET    /guards                        → list all guards
+  POST   /guards                        → create guard rule      [DETAIL_MANAGE]
+  PUT    /guards/:id                    → update guard rule
+  DELETE /guards/:id                    → remove guard rule
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5 — BUSINESS LOGIC FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+──────────────────────────────────────────
+FLOW A: BOOKING & PAYMENT (CUSTOMER)
+──────────────────────────────────────────
+
+  [1] Customer เข้า public website
+       ↓ เลือก Trip ที่ต้องการ
+       ↓ ระบบแสดง รอบรถ (TripVehicle) ที่ยังเปิดจอง
+
+  [2] Customer กรอกข้อมูลจอง
+       - จุดขึ้นรถ / จุดลงรถ
+       - เลือกลำดับรถตู้ + หมายเลขที่นั่ง
+       - กรอกข้อมูลส่วนตัว (ชื่อ, เลขบัตร, เกิด, โทร ฯลฯ)
+       - ระบุ แพ้อาหาร (ถ้ามี)
+       - เลือก ของเช่าเสริม (Addon)
+       ↓
+       POST /bookings
+       → สร้าง Booking (status: PENDING)
+       → จอง Seat (isBooked = true)
+       → บวก bookedCount ใน TripVehicle
+       → ถ้า bookedCount == capacity → status = FULL
+                                      → Notify ADMIN/STAFF: "รถคันที่ X เต็มแล้ว"
+
+  [3] Customer ชำระเงิน (โอนพร้อมสลิป)
+       - อัปโหลดสลิป + เลขสลิป + เลือก ประเภท (มัดจำ / เต็ม)
+       ↓
+       POST /bookings/:id/payments
+       → สร้าง Payment (status: PENDING)
+       → Booking status → AWAITING_PAYMENT
+       → Notify ADMIN: "มีการส่งสลิปใหม่ จาก [ชื่อลูกค้า]"
+
+  [4] Admin ตรวจสอบสลิป
+       GET /payments → กรอง PENDING
+       → ดูสลิป + เช็คยอด
+       → PATCH /payments/:id/confirm
+          ✓ Payment status → CONFIRMED
+          ✓ Booking.paidAmount += amount
+          ✓ เช็ค:
+              paidAmount >= depositRequired → status = DEPOSIT_PAID
+              paidAmount >= totalAmount     → status = FULLY_PAID
+          ✓ Notify Customer: "ยืนยันการชำระเงินแล้ว"
+
+  [5] ออกตั๋ว (Ticket Issuance)
+       → Auto-trigger เมื่อ Booking status = FULLY_PAID หรือ CONFIRMED
+       POST /bookings/:id/ticket
+       → สร้าง Ticket พร้อม ticketCode + QR Code
+       → ส่ง QR Code ให้ Customer (email / SMS / link)
+
+──────────────────────────────────────────
+FLOW B: VEHICLE FULL → OPEN NEXT ROUND
+──────────────────────────────────────────
+
+  TripVehicle.bookedCount == TripVehicle.capacity
+       ↓
+  ระบบ auto-set status = FULL
+       ↓
+  Notification → ADMIN/STAFF: "รถตู้คันที่ [N] เต็มแล้ว กรุณาเปิดรถคันใหม่"
+       ↓
+  Admin: POST /trips/:tripId/vehicles/:id/open-next
+       → สร้าง TripVehicle ใหม่ (roundNumber + 1)
+       → สร้าง Seats ใหม่
+       → สร้าง publicLink + QR Code ใหม่
+       → status = OPEN
+       ↓
+  Customer สามารถจองรถคันใหม่ได้
+
+──────────────────────────────────────────
+FLOW C: VEHICLE LINK & QR CODE
+──────────────────────────────────────────
+
+  POST /trips/:tripId/vehicles (สร้าง round ใหม่)
+       ↓
+  ระบบ generate:
+    - publicLink: https://domain.com/book?ref=[uuid]
+    - qrCodeUrl : image QR encode publicLink
+       ↓
+  เก็บ cookie บน browser customer เมื่อเข้า link:
+    - Session สร้าง record (userId optional, cookieData)
+    - ติดตาม source ของ customer
+       ↓
+  Customer กรอกข้อมูลจอง → FLOW A ต่อ
+
+──────────────────────────────────────────
+FLOW D: STAFF PRINT SHEET
+──────────────────────────────────────────
+
+  Staff เปิด GET /trips/:tripId/bookings
+       ↓
+  เลือก TripVehicle (รอบรถ)
+       ↓
+  GET /trips/:tripId/bookings?vehicleId=...
+       ↓
+  แสดงตาราง:
+    - ที่นั่ง | ชื่อ-นามสกุล | ชื่อเล่น | โทรศัพท์
+    - แพ้อาหาร | ของเช่าเสริม | ยอดมัดจำ | ยอดที่เหลือ
+    - สถานะการชำระ
+       ↓
+  GET /bookings/:id/print → print-friendly view
+  → print CSS / PDF export
+
+──────────────────────────────────────────
+FLOW E: FINANCIAL SUMMARY & MONITOR
+──────────────────────────────────────────
+
+  GET /summary/trip/:tripId
+    → จำนวนผู้โดยสาร
+    → รายได้จากทริป (baseAmount sum)
+    → รายได้จาก addon (addonAmount sum)
+    → ยอดรวม (totalAmount sum)
+    → ยอดที่ได้รับจริง (paidAmount sum)
+    → รายจ่ายในทริป (Expense sum)
+    → กำไร/ขาดทุน
+
+  GET /summary/monthly?month=4&year=2026
+    → สรุปรายเดือน: trips, bookings, revenue, expenses
+
+  GET /summary/yearly?year=2026
+    → สรุปรายปี: แยกตามเดือน
+
+  → Export PDF/CSV: print รายงาน
+
+──────────────────────────────────────────
+FLOW F: CMS CONTENT MANAGEMENT
+──────────────────────────────────────────
+
+
+  Admin สร้าง/แก้ไข Post:
+    - เลือก type: TRIP_CONTENT / SERVICE / IMPRESSION / FAQ / ABOUT
+    - กรอก titleTh, titleEn
+    - เขียน contentTh, contentEn (rich text)
+    - แนบ mediaLinks: [{type:"image", url:"...", caption:"..."}]
+    - แปะ externalLink (YouTube, etc.)
+    - เชื่อมกับ Trip (ถ้าเป็น TRIP_CONTENT)
+    ↓
+  PATCH /posts/:id/publish → isPublished = true → แสดงหน้าเว็บ
+
+──────────────────────────────────────────
+FLOW G: INSURANCE FORM (กรมธรรม์ประกันภัย)
+──────────────────────────────────────────
+
+  [1] หลัง Booking ถูกสร้าง (หรือ Payment CONFIRMED ครั้งแรก)
+       ↓
+  ระบบแจ้งเตือน Customer: "กรุณากรอกข้อมูลประกันภัย เพื่อทำกรมธรรม์"
+  Notification type: INSURANCE_REQUIRED
+
+  [2] Customer เปิดฟอร์ม (frontend หรือ link ที่ส่งให้)
+       ↓
+  POST /bookings/:id/insurance  (status: DRAFT)
+
+  [3] Customer กรอกข้อมูลทีละ section แล้ว save draft
+  Section 1 — ข้อมูลส่วนบุคคล:
+    - namePrefix, firstName, lastName, nickname  → ดึงจาก Booking อัตโนมัติ
+    - nationalId, birthDate, phone               → ดึงจาก Booking อัตโนมัติ
+    - bloodType *          → เลือก: A+ / A- / B+ / B- / AB+ / AB- / O+ / O-
+
+  Section 2 — บุคคลติดต่อกรณีฉุกเฉิน:
+    - emergencyName  *     → ชื่อ-นามสกุล
+    - emergencyPhone *     → หมายเลขโทรศัพท์
+
+  Section 3 — ผู้รับประโยชน์:
+    - beneficiaryName *        → คำนำหน้า + ชื่อ + สกุล
+    - beneficiaryRelation *    → LEGAL_HEIR / SPOUSE / FATHER / MOTHER / SIBLING / OTHER
+    - beneficiaryRelationOther → (กรณีเลือก OTHER ระบุ)
+
+  Section 4 — การยินยอมและเงื่อนไข (ต้องยอมรับทั้งหมด):
+    - consentPolicyRead    *   → ☐ ยอมรับ / ไม่ยอมรับ  (4.1)
+    - consentTermsAccepted *   → ☐ ยอมรับ / ไม่ยอมรับ  (4.2)
+    - consent4WD           *   → ☐ ยอมรับ / ไม่ยอมรับ  (4.3 ไม่คุ้มครองขณะโดยสาร 4WD)
+    - consentDomesticOnly  *   → ☐ ยอมรับ / ไม่ยอมรับ  (4.4 คุ้มครองเฉพาะในไทย)
+    Validation: ทั้ง 4 ต้อง = true จึงจะ submit ได้
+
+  Section 5 — เอกสารประกอบ:
+    - idCardImageUrl *    → อัปโหลดรูปบัตรประชาชน
+                            รองรับ: PDF / JPG / PNG
+                            ขนาด: ≤ 10 MB
+                            จำนวน: 1 ไฟล์
+    POST /insurance/:id/upload-id-card (multipart/form-data)
+    → validate file type + size → upload S3 → save URL
+
+  [4] Customer กด "ส่งข้อมูล"
+       ↓
+  PATCH /bookings/:id/insurance/submit
+  Validation:
+    ✓ bloodType ไม่ว่าง
+    ✓ emergencyName, emergencyPhone ไม่ว่าง
+    ✓ beneficiaryName, beneficiaryRelation ไม่ว่าง
+    ✓ consent ทั้ง 4 = true
+    ✓ idCardImageUrl ไม่ว่าง
+  → status: DRAFT → SUBMITTED
+  → Notify ADMIN: "มีแบบฟอร์มประกันภัยใหม่จาก [ชื่อลูกค้า] [bookingCode]"
+
+  [5] Admin ตรวจสอบ
+  GET /trips/:tripId/insurance
+    → รายการ SUBMITTED ที่รอตรวจ
+    → ดูรูปบัตรประชาชน GET /insurance/:id/id-card
+    → ตรวจเอกสาร + ข้อมูล
+
+  กรณี ผ่าน:
+    PATCH /insurance/:id/approve
+    → status: APPROVED
+    → admin กรอก issuedPolicyNo (เลขกรมธรรม์)
+    → Notify Customer: "กรมธรรม์ของคุณได้รับการอนุมัติแล้ว เลขที่ [policyNo]"
+
+  กรณี ไม่ผ่าน:
+    PATCH /insurance/:id/reject { rejectReason: "..." }
+    → status: REJECTED
+    → Notify Customer: "กรุณาแก้ไขเอกสาร: [reason]"
+    → Customer แก้ไข → submit ใหม่ → loop กลับ step 4
+
+  [6] Export ส่งบริษัทประกัน
+  GET /trips/:tripId/insurance/export
+    → รวมข้อมูลทุก APPROVED ใน trip
+    → Output: CSV หรือ PDF ครบทุก field ตามแบบฟอร์ม
+    → พร้อม print / ส่งต่อบริษัทประกัน
+
+  Validation Rules:
+  ┌─────────────────────────────────────────────────────────────┐
+  │ Field                │ Rule                                  │
+  ├─────────────────────────────────────────────────────────────┤
+  │ bloodType            │ required, enum 8 values               │
+  │ emergencyPhone       │ required, TH phone format             │
+  │ beneficiaryName      │ required, min 3 chars                 │
+  │ beneficiaryRelation  │ required, enum                        │
+  │ consent (x4)         │ all must be true to submit            │
+  │ idCardImageUrl       │ required on submit                    │
+  │ idCardFileSize       │ max 10,485,760 bytes (10MB)           │
+  │ idCardFileType       │ PDF / JPG / JPEG / PNG only           │
+  └─────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 6 — PAGE MAP (BACKOFFICE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/backoffice
+  ├── /dashboard            → Monitor summary (trip count, revenue, pending payments)
+  ├── /users                → User list + create/edit  [DETAIL_MANAGE]
+  ├── /trips
+  │     ├── /               → Trip list
+  │     ├── /new            → Create trip
+  │     ├── /:id            → Trip detail
+  │     ├── /:id/vehicles   → Vehicle rounds management
+  │     └── /:id/summary    → Trip financial summary
+  ├── /bookings
+  │     ├── /               → Booking list (filter by trip, status)
+  │     └── /:id            → Booking detail + payment history
+  ├── /payments
+  │     └── /               → Payment list (pending first) + confirm/reject
+  ├── /insurance
+  │     ├── /               → Insurance list (filter: status, trip)  [ADMIN+]
+  │     └── /:id            → Form detail + approve/reject + view ID card
+  ├── /tickets
+  │     └── /scan           → QR scanner for check-in
+  ├── /addons
+  │     ├── /categories     → Category management
+  │     └── /               → Addon list
+  ├── /content
+  │     ├── /posts          → CMS post list
+  │     └── /posts/:id      → Edit post
+  ├── /expenses             → Expense recording
+  ├── /reports
+  │     ├── /trip/:id       → Per-trip report + print
+  │     ├── /monthly        → Monthly report
+  │     └── /yearly         → Yearly report
+  └── /settings
+        ├── /guards         → Visibility guard config  [DETAIL_MANAGE]
+        └── /notifications  → Notification log
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 7 — DATA MAPPING FROM CSV (db-name.csv)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CSV Fields           → Database Field
+──────────────────────────────────────────────────────
+จุดขึ้นรถ           → TripVehicle.startPoint (+ Booking snapshot)
+จุดลงรถ             → TripVehicle.endPoint
+ลำดับรถตู้ที่เลือก   → TripVehicle.roundNumber
+หมายเลขที่นั่งที่เลือก → Seat.seatNumber
+คำนำหน้านาม         → Booking.namePrefix
+ชื่อ                → Booking.firstName
+นามสกุล             → Booking.lastName
+เลขประจำตัวประชาชน  → Booking.nationalId
+อายุ                → (computed from birthDate)
+วัน / เดือน / ปี / เกิด → Booking.birthDate
+ชื่อเล่น             → Booking.nickname
+หมายเลขโทรศัพท์     → Booking.phone
+มัดจำ 1000          → Trip.depositAmt (config per trip)
+ยอดมัดจำ            → Payment.amount (type=DEPOSIT)
+เลขสลิป (มัดจำ)     → Payment.slipRefCode
+ยอดที่เหลือ          → Booking.totalAmount - Booking.paidAmount
+เลขสลิป (เต็ม)      → Payment.slipRefCode (type=REMAINING/FULL)
+รวม                 → Booking.totalAmount
+ของเช่า [1]         → BookingAddon (qty, addonId)
+ของเช่า [2]         → BookingAddon (qty, addonId)
+เลขสลิป (ของเช่า)   → Payment.slipRefCode (type with addon)
+
+Insurance Form Fields → Database Field
+──────────────────────────────────────────────────────
+หมู่เลือด            → Booking.bloodType + InsuranceForm.bloodType
+ชื่อ-สกุล (ฉุกเฉิน) → InsuranceForm.emergencyName
+โทร (ฉุกเฉิน)        → InsuranceForm.emergencyPhone
+ผู้รับประโยชน์        → InsuranceForm.beneficiaryName
+ความสัมพันธ์         → InsuranceForm.beneficiaryRelation (enum)
+ยินยอม 4.1           → InsuranceForm.consentPolicyRead
+ยินยอม 4.2           → InsuranceForm.consentTermsAccepted
+ยินยอม 4.3 (4WD)     → InsuranceForm.consent4WD
+ยินยอม 4.4 (ในไทย)   → InsuranceForm.consentDomesticOnly
+รูปบัตรประชาชน       → InsuranceForm.idCardImageUrl
+วงเงินคุ้มครอง       → InsuranceForm.coverageAmount (default 1,000,000 บาท)
+เลขกรมธรรม์          → InsuranceForm.issuedPolicyNo (admin กรอกหลัง approve)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 8 — BOOKING CODE & TICKET CODE FORMAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Booking Code : BK-YYYYMMDD-XXXXX   e.g. BK-20260405-00001
+Ticket Code  : TKT-[VehicleRound]-[SeatNo]-[6char]  e.g. TKT-V1-A3-K9P2MX
+Public Link  : https://domain.com/book/[uuid-v4]
+QR Code      : encode publicLink → PNG stored in S3
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 9 — NOTIFICATION TRIGGERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Event                          → Notify Who    → Message
+─────────────────────────────────────────────────────────────────────────────
+Booking created                → ADMIN         → "มีการจองใหม่: [bookingCode]"
+Payment slip submitted         → ADMIN         → "ลูกค้า [name] ส่งสลิปแล้ว"
+Payment confirmed              → CUSTOMER      → "ยืนยันการชำระเงินแล้ว ยอด [x]"
+Payment rejected               → CUSTOMER      → "สลิปไม่ถูกต้อง: [reason]"
+Ticket issued                  → CUSTOMER      → "ตั๋วของคุณพร้อมแล้ว [ticketCode]"
+TripVehicle status = FULL      → ADMIN+STAFF   → "รถคันที่ [N] Trip [title] เต็มแล้ว"
+New vehicle round opened       → (log only)    → "เปิดรถคันที่ [N+1] แล้ว"
+Trip published                 → (public feed) → ประกาศทริปใหม่
+Booking cancelled              → ADMIN+CUST    → "ยกเลิกการจอง [bookingCode]"
+Insurance form required        → CUSTOMER      → "กรุณากรอกข้อมูลประกันภัย"
+Insurance form submitted       → ADMIN         → "แบบฟอร์มประกันจาก [name] รอตรวจสอบ"
+Insurance form approved        → CUSTOMER      → "กรมธรรม์อนุมัติแล้ว เลขที่ [policyNo]"
+Insurance form rejected        → CUSTOMER      → "กรุณาแก้ไขเอกสาร: [reason]"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 10 — INSURANCE FORM FIELD SPECIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ชื่อเอกสาร : แบบฟอร์มข้อมูลสำหรับทำกรมธรรม์ประกันภัย
+บริษัท     : เพื่อนเดินป่า จำกัด
+วงเงินคุ้มครอง: 1,000,000 บาท (ภายในประเทศไทยเท่านั้น)
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Section 1 — ข้อมูลส่วนบุคคล                                                 │
+├──────────────────────────────┬──────────────────┬────────┬──────────────────┤
+│ Field Label (TH)             │ DB Field         │ Req    │ Input Type        │
+├──────────────────────────────┼──────────────────┼────────┼──────────────────┤
+│ คำนำหน้านาม                  │ Booking.namePrefix    │ *  │ select           │
+│ ชื่อ                         │ Booking.firstName     │ *  │ text (readonly)  │
+│ นามสกุล                      │ Booking.lastName      │ *  │ text (readonly)  │
+│ ชื่อเล่น                     │ Booking.nickname      │ *  │ text (readonly)  │
+│ เลขประจำตัวประชาชน            │ Booking.nationalId    │ *  │ text (readonly)  │
+│ อายุ                         │ computed             │ *  │ display only     │
+│ วัน / เดือน / ปี เกิด        │ Booking.birthDate     │ *  │ date (readonly)  │
+│ หมู่เลือด                    │ InsuranceForm.bloodType│ * │ select           │
+│ หมายเลขโทรศัพท์               │ Booking.phone         │ *  │ tel (readonly)   │
+└──────────────────────────────┴──────────────────┴────────┴──────────────────┘
+
+bloodType options: A+ | A- | B+ | B- | AB+ | AB- | O+ | O-
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Section 2 — บุคคลติดต่อกรณีฉุกเฉิน                                          │
+├──────────────────────────────┬──────────────────────────┬───┬───────────────┤
+│ ชื่อ-นามสกุล                 │ InsuranceForm.emergencyName   │ * │ text      │
+│ หมายเลขโทรศัพท์              │ InsuranceForm.emergencyPhone  │ * │ tel       │
+└──────────────────────────────┴──────────────────────────┴───┴───────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Section 3 — ผู้รับประโยชน์                                                   │
+├──────────────────────────────┬────────────────────────────────┬───┬─────────┤
+│ ชื่อ-นามสกุลผู้รับประโยชน์   │ InsuranceForm.beneficiaryName  │ * │ text    │
+│ ความสัมพันธ์                 │ InsuranceForm.beneficiaryRelation│* │ select  │
+│ อื่นๆ (ระบุ)                 │ InsuranceForm.beneficiaryRelationOther│  │ text│
+└──────────────────────────────┴────────────────────────────────┴───┴─────────┘
+
+beneficiaryRelation options:
+  LEGAL_HEIR → ทายาทตามกฎหมาย
+  SPOUSE     → คู่สมรส
+  FATHER     → บิดา
+  MOTHER     → มารดา
+  SIBLING    → พี่น้อง
+  OTHER      → อื่น ๆ (ระบุ) → แสดง text input เพิ่มเติม
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Section 4 — การยินยอมและเงื่อนไขกรมธรรม์                                    │
+├───────┬────────────────────────────────────────────┬─────────┬──────────────┤
+│ ข้อ   │ เนื้อหา                                     │ DB Field│ Required     │
+├───────┼────────────────────────────────────────────┼─────────┼──────────────┤
+│ 4.1   │ อ่านและเข้าใจรายละเอียดกรมธรรม์แล้ว         │ consentPolicyRead    │ * ยอมรับ=true │
+│ 4.2   │ ยอมรับเงื่อนไขความคุ้มครองตามที่บริษัทกำหนด  │ consentTermsAccepted │ * ยอมรับ=true │
+│ 4.3   │ รับทราบ: ไม่คุ้มครองขณะโดยสาร 4WD           │ consent4WD           │ * ยอมรับ=true │
+│ 4.4   │ รับทราบ: คุ้มครองเฉพาะในประเทศไทยเท่านั้น   │ consentDomesticOnly  │ * ยอมรับ=true │
+└───────┴────────────────────────────────────────────┴─────────┴──────────────┘
+
+UI Rule: ปุ่ม "ส่งข้อมูล" จะ enable เมื่อ consent ทั้ง 4 ข้อ = true เท่านั้น
+         ถ้าเลือก "ไม่ยอมรับ" ข้อใดข้อหนึ่ง → แจ้ง error + block submit
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Section 5 — เอกสารประกอบ                                                     │
+├────────────────────────┬───────────────────────────────────────────────────-┤
+│ เอกสาร                 │ รูปถ่ายบัตรประจำตัวประชาชน (สำหรับทำประกัน)       │
+│ วงเงิน                 │ 1,000,000 บาท                                       │
+│ รูปแบบไฟล์             │ PDF / JPG / PNG                                     │
+│ ขนาดสูงสุด             │ 10 MB (10,485,760 bytes)                             │
+│ จำนวนไฟล์              │ 1 ไฟล์                                               │
+│ DB Field               │ InsuranceForm.idCardImageUrl (S3 URL)               │
+│ Endpoint               │ POST /insurance/:id/upload-id-card (multipart)      │
+└────────────────────────┴─────────────────────────────────────────────────────┘
+
+Insurance Status Flow:
+  DRAFT → (customer submit) → SUBMITTED → (admin approve) → APPROVED
+                                        → (admin reject)  → REJECTED
+  REJECTED → (customer resubmit) → SUBMITTED → ...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+END OF DOCUMENT
+================================================================================

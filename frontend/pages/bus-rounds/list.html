@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รอบรถ / ตั๋ว - Tour Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../../assets/css/admin.css" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="d-flex">
+    <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+    <main class="main-content flex-fill">
+        <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+        <div class="page-content">
+            <div class="page-header d-flex justify-content-between align-items-center">
+                <div><h1 class="page-title">รอบรถ / ตั๋ว</h1><p class="page-subtitle">จัดการรอบรถและที่นั่ง</p></div>
+                <button class="btn btn-primary" onclick="openModal()"><i class="bi bi-plus-lg me-1"></i>เปิดรอบรถ</button>
+            </div>
+
+            <!-- Filter + Search -->
+            <div class="card mb-3">
+                <div class="card-body py-2">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-3 position-relative">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-map text-muted"></i></span>
+                                <input type="text" class="form-control border-start-0" id="filterTrip"
+                                    placeholder="ค้นหาชื่อทริป..."
+                                    oninput="onFilterTripInput()"
+                                    onfocus="showTripDropdown()"
+                                    onkeydown="handleTripFilterKey(event)"
+                                    autocomplete="off">
+                                <button class="btn btn-outline-secondary btn-sm px-2" onclick="clearTripFilter()" title="ล้าง">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                            <div id="tripFilterDropdown"
+                                class="position-absolute bg-white border rounded-3 shadow d-none"
+                                style="z-index:1050;max-height:240px;overflow-y:auto;top:calc(100% + 2px);left:0;right:0;">
+                            </div>
+                        </div>
+
+                        <!-- ค้นหาเป็นช่วงเวลา -->
+                        <div class="col-md-5">
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-white"><i class="bi bi-calendar3 text-muted"></i></span>
+                                <input type="text" class="form-control border-end-0 text-dark" id="startDate"
+                                    placeholder="เริ่มวันที่..." readonly style="background:white; font-size: .85rem;">
+                                <span class="input-group-text bg-white border-start-0 border-end-0 text-muted px-1">ถึง</span>
+                                <input type="text" class="form-control border-start-0 text-dark" id="endDate"
+                                    placeholder="ถึงวันที่..." readonly style="background:white; font-size: .85rem;">
+                                <button class="btn btn-outline-secondary border-start-0" onclick="clearDateRange()" title="ล้าง">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control border-start-0" id="searchInput"
+                                    placeholder="ค้นหาจุดเริ่ม / ปลายทาง..." oninput="renderRounds()">
+                            </div>
+                        </div>
+
+                        <div class="col-auto">
+                            <span class="badge bg-secondary" id="roundCount">0 รอบ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3" id="roundsGrid">
+                <div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Create Round Modal -->
+<div class="modal fade" id="roundModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">เปิดรอบรถ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="roundForm">
+                    <input type="hidden" id="roundId">
+                    <div class="mb-3">
+                        <label class="form-label">ทริป <span class="text-danger">*</span></label>
+                        <select class="form-select" id="fTripId" required></select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">รถคันที่</label>
+                            <input type="number" class="form-control" id="fBusNum" value="1" min="1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">จำนวนที่นั่ง <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="fSeats" min="1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">จุดเริ่มต้น <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="fStart" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">จุดสิ้นสุด <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="fEnd" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">วัน-เวลาออกเดินทาง <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" id="fDepart" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ระยะเวลา</label>
+                            <input type="text" class="form-control" id="fDuration" placeholder="เช่น 2 วัน 1 คืน, 6 ชั่วโมง">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="saveRound()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/apiClient.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script src="../../assets/js/features/thai-calendar.js"></script>
+<script>
+let roundModal, startPicker, endPicker;
+let trips = [], allRounds = [];
+
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await initPage();
+    roundModal = new bootstrap.Modal(document.getElementById('roundModal'));
+
+    trips = await API.trips.list();
+    const fSel = document.getElementById('fTripId');
+    trips.forEach(t => {
+        fSel.insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.title}</option>`);
+    });
+
+    // ถ้ามี tripId ใน URL → ใส่ชื่อทริปในช่องค้นหาเลย
+    const urlTripId = new URLSearchParams(location.search).get('tripId');
+    if (urlTripId) {
+        const matched = trips.find(t => String(t.id) === urlTripId);
+        if (matched) document.getElementById('filterTrip').value = matched.title;
+    }
+
+    await loadRounds();
+
+    // เริ่มต้นตัวเลือกช่วงวันที่ไทย
+    startPicker = await ThaiCalendar.init('#startDate', {
+        onChange: () => renderRounds()
+    });
+    endPicker = await ThaiCalendar.init('#endDate', {
+        onChange: () => renderRounds()
+    });
+
+    // ปิด dropdown เมื่อคลิกนอก
+    document.addEventListener('click', e => {
+        if (!document.getElementById('filterTrip').contains(e.target) &&
+            !document.getElementById('tripFilterDropdown').contains(e.target)) {
+            hideTripDropdown();
+        }
+    });
+});
+
+// ─── Trip Filter Autocomplete ───────────────────────────────
+function showTripDropdown() {
+    const q = document.getElementById('filterTrip').value.toLowerCase().trim();
+    const dd = document.getElementById('tripFilterDropdown');
+    const filtered = q ? trips.filter(t => t.title.toLowerCase().includes(q)) : trips;
+
+    if (!filtered.length) { dd.classList.add('d-none'); return; }
+
+    dd.innerHTML = filtered.map((t, i) => `
+        <div class="trip-dd-item px-3 py-2" data-idx="${i}"
+            style="cursor:pointer;font-size:.88rem;border-bottom:1px solid #f0f0f0;"
+            onmousedown="selectTrip('${t.title.replace(/'/g, "\\'")}')"
+            onmouseover="this.style.background='#f0fdf9'"
+            onmouseout="this.style.background=''">
+            <i class="bi bi-map me-2 text-muted" style="font-size:.8rem;"></i>${t.title}
+        </div>`).join('');
+
+    dd.classList.remove('d-none');
+}
+
+function onFilterTripInput() {
+    showTripDropdown();
+    renderRounds();
+}
+
+function selectTrip(title) {
+    document.getElementById('filterTrip').value = title;
+    hideTripDropdown();
+    renderRounds();
+}
+
+function hideTripDropdown() {
+    document.getElementById('tripFilterDropdown').classList.add('d-none');
+}
+
+function clearTripFilter() {
+    document.getElementById('filterTrip').value = '';
+    hideTripDropdown();
+    renderRounds();
+}
+
+function clearDateRange() {
+    if (startPicker) startPicker.clear();
+    if (endPicker) endPicker.clear();
+    renderRounds();
+}
+
+function handleTripFilterKey(e) {
+    if (e.key === 'Escape') { hideTripDropdown(); }
+    if (e.key === 'Enter')  { hideTripDropdown(); renderRounds(); }
+}
+
+async function loadRounds() {
+    try {
+        allRounds = await API.busRounds.list();
+        renderRounds();
+    } catch (e) { showToast('โหลดล้มเหลว', 'danger'); }
+}
+
+function renderRounds() {
+    const tripQ = document.getElementById('filterTrip').value.toLowerCase().trim();
+    const startQ = document.getElementById('startDate').value;
+    const endQ = document.getElementById('endDate').value;
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+
+    let data = allRounds;
+    if (tripQ) data = data.filter(r => (r.trip?.title || '').toLowerCase().includes(tripQ));
+    if (startQ || endQ) {
+        data = ThaiCalendar.filterByDateRange(data, 'departDate', startQ, endQ);
+    }
+    if (q) data = data.filter(r =>
+        (r.trip?.title || '').toLowerCase().includes(q) ||
+        (r.startPoint || '').toLowerCase().includes(q) ||
+        (r.endPoint || '').toLowerCase().includes(q)
+    );
+
+    document.getElementById('roundCount').textContent = `${data.length} รอบ`;
+    const grid = document.getElementById('roundsGrid');
+
+    if (!data.length) {
+        grid.innerHTML = '<div class="col-12 text-center py-4 text-muted">ไม่พบรอบรถ</div>';
+        return;
+    }
+
+    grid.innerHTML = data.map(r => {
+        const pct    = Math.round((r.bookedSeats / r.totalSeats) * 100);
+        const isFull = r.bookedSeats >= r.totalSeats;
+        return `<div class="col-md-6 col-xl-4">
+            <div class="card h-100 ${!r.isOpen ? 'border-secondary opacity-75' : ''}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold"><i class="bi bi-bus-front me-1"></i>รถ${r.busNumber} — ${r.trip?.title || ''}</span>
+                    <span class="badge ${r.isOpen ? 'bg-success' : 'bg-secondary'}">${r.isOpen ? 'เปิดจอง' : 'ปิดจอง'}</span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2 text-muted small"><i class="bi bi-geo-alt me-1"></i>${r.startPoint} → ${r.endPoint}</div>
+                    <div class="mb-2 text-muted small"><i class="bi bi-calendar me-1"></i>${formatDateTime(r.departDate)}</div>
+                    ${r.duration ? `<div class="mb-2 text-muted small"><i class="bi bi-clock me-1"></i>${r.duration}</div>` : ''}
+                    <div class="mb-1 d-flex justify-content-between small">
+                        <span>ที่นั่ง</span>
+                        <span class="fw-semibold ${isFull ? 'text-danger' : ''}">${r.bookedSeats}/${r.totalSeats}</span>
+                    </div>
+                    <div class="progress mb-3" style="height:6px">
+                        <div class="progress-bar ${isFull ? 'bg-danger' : 'bg-success'}" style="width:${pct}%"></div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="/frontend/pages/monitor/list.html?roundId=${r.id}"
+                           class="btn btn-sm btn-outline-primary flex-fill">
+                            <i class="bi bi-ticket-perforated me-1"></i>ดูตั๋ว
+                            ${r.bookedSeats > 0 ? `<span class="badge bg-primary ms-1">${r.bookedSeats}</span>` : ''}
+                        </a>
+                        <a href="/frontend/pages/booking/seats.html?roundId=${r.id}"
+                           class="btn btn-sm btn-outline-warning" title="หน้าจองที่นั่ง (ลูกค้า)" target="_blank">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                        </a>
+                        <button class="btn btn-sm ${r.isOpen ? 'btn-outline-danger' : 'btn-outline-success'}"
+                            onclick="toggleRound(${r.id})" title="${r.isOpen ? 'ปิดจอง' : 'เปิดจอง'}">
+                            <i class="bi bi-${r.isOpen ? 'lock' : 'unlock'}"></i>
+                        </button>
+                        <a href="/frontend/pages/reports/print.html?roundId=${r.id}"
+                           class="btn btn-sm btn-outline-secondary" title="พิมพ์">
+                            <i class="bi bi-printer"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ===== Round CRUD =====
+function openModal() {
+    document.getElementById('roundForm').reset();
+    document.getElementById('roundId').value = '';
+    document.getElementById('fBusNum').value = 1;
+    document.getElementById('fDuration').value = '';
+    roundModal.show();
+}
+
+async function saveRound() {
+    const data = {
+        tripId:     parseInt(document.getElementById('fTripId').value),
+        busNumber:  parseInt(document.getElementById('fBusNum').value),
+        totalSeats: parseInt(document.getElementById('fSeats').value),
+        startPoint: document.getElementById('fStart').value,
+        endPoint:   document.getElementById('fEnd').value,
+        departDate: document.getElementById('fDepart').value,
+        duration:   document.getElementById('fDuration').value || null
+    };
+    try {
+        await API.busRounds.create(data);
+        roundModal.hide();
+        showToast('เปิดรอบรถสำเร็จ');
+        await loadRounds();
+    } catch (e) { showToast(e.message, 'danger'); }
+}
+
+async function toggleRound(id) {
+    try { await API.busRounds.toggle(id); showToast('อัปเดตสำเร็จ'); await loadRounds(); }
+    catch (e) { showToast(e.message, 'danger'); }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตารางการจองและอนุมัติ - Tour Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="../../assets/css/admin.css" rel="stylesheet">
+    <!-- Separate Styles -->
+    <link href="./monitor.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="d-flex">
+        <nav class="sidebar bg-white border-end no-print" id="sidebar"></nav>
+        <main class="main-content flex-fill" style="min-width:0;overflow-x:hidden;">
+            <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm no-print"></header>
+
+            <div class="page-content p-3" style="overflow-x:hidden;min-height:100vh;">
+                <div class="print-wrap">
+
+
+                    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+                        <div>
+                            <h5 class="mb-0 fw-bold" style="color:#2c3e50;">
+                                <i class="bi bi-table me-2" style="color:#3eb39d;"></i>ตารางการจองและอนุมัติ
+                            </h5>
+                            <p class="text-muted small mb-0" style="font-size:.75rem;">
+                                ตารางผู้โดยสาร · แผนผังที่นั่ง · สถานะการอนุมัติ
+                            </p>
+                        </div>
+                        <div class="d-flex gap-2 align-items-center">
+                            <button class="btn btn-sm btn-outline-success" onclick="exportCSV()">
+                                <i class="bi bi-filetype-csv me-1"></i>CSV
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="exportExcel()">
+                                <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" id="btnPrintSelected" onclick="printSelected()" style="display:none;">
+                                <i class="bi bi-person-check me-1"></i>พิมพ์เฉพาะที่เลือก (<span id="selectedCount">0</span>)
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="openReport('passenger')">
+                                <i class="bi bi-printer me-1"></i>พิมพ์ตารางผู้โดยสาร
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="openReport('all')">
+                                <i class="bi bi-printer-fill me-1"></i>พิมพ์รายงานทั้งหมด
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ══ Filter Bar ════════════════════════════════════ -->
+                    <div class="card filter-card mb-3 no-print">
+                        <div class="card-body py-2 px-3">
+                            <div class="row g-2 align-items-end">
+
+                                <!-- 1 ─ ชื่อทริป (typeahead, unique trips) -->
+                                <div class="col-md-4 position-relative">
+                                    <div class="srch-label"><i class="bi bi-map me-1"></i>ชื่อทริป</div>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-white text-muted border-end-0">
+                                            <i class="bi bi-search" style="font-size:.75rem;"></i>
+                                        </span>
+                                        <input type="text" class="form-control border-start-0" id="srchTrip"
+                                            placeholder="พิมพ์ชื่อทริป..." autocomplete="off" oninput="filterTripList()"
+                                            onfocus="filterTripList()" onkeydown="handleTripKey(event)">
+                                    </div>
+                                    <!-- Trip autocomplete dropdown -->
+                                    <div id="tripDropdown"
+                                        class="position-absolute bg-white border rounded-3 shadow d-none" style="z-index:1050;max-height:260px;overflow-y:auto;
+                                        top:calc(100% + 2px);left:0;right:0;"></div>
+                                </div>
+
+                                <!-- 2 ─ รถ + เส้นทาง (select, enabled after trip) -->
+                                <div class="col-md-3">
+                                    <div class="srch-label"><i class="bi bi-bus-front me-1"></i>รถ + เส้นทาง</div>
+                                    <select class="form-select form-select-sm" id="selBus" onchange="onSelBusChange()"
+                                        disabled>
+                                        <option value="">— เลือกรถ —</option>
+                                    </select>
+                                </div>
+
+                                <!-- 3 ─ วันที่ / เดือน ปี (select, enabled after bus) -->
+                                <div class="col-md-3">
+                                    <div class="srch-label"><i class="bi bi-calendar3 me-1"></i>วันที่ / เดือน ปี</div>
+                                    <select class="form-select form-select-sm" id="selDate" onchange="onSelDateChange()"
+                                        disabled>
+                                        <option value="">— เลือกวันที่ —</option>
+                                    </select>
+                                </div>
+
+                                <!-- clear button -->
+                                <div class="col-md-2 d-flex align-items-end justify-content-end pb-1">
+                                    <button class="btn btn-sm btn-outline-secondary py-1 px-4 w-100"
+                                        id="btnClearSelection" style="display:none;" onclick="clearRound()">
+                                        <i class="bi bi-x-circle me-1 text-danger opacity-75"></i>ล้างข้อมูล
+                                    </button>
+                                </div>
+
+                            </div>
+
+                            <input type="hidden" id="filterRound">
+
+                        </div>
+                    </div>
+
+                    <!-- ══ Trip Info Strip ══ -->
+                    <div id="tripStrip" class="d-none mb-3 no-print">
+                        <div class="strip-inner">
+                            <div class="row align-items-center">
+                                <!-- Left: Trip Info -->
+                                <div class="col-lg-4">
+                                    <div class="strip-name" id="bannerTrip"></div>
+                                    <div class="strip-meta">
+                                        <i class="bi bi-bus-front me-1"></i><span id="bannerBus"></span>
+                                        <span class="mx-2">·</span>
+                                        <i class="bi bi-calendar3 me-1"></i><span id="bannerDate"></span>
+                                        <div class="mt-1"><i class="bi bi-arrow-right-short me-1" style="color:#1cb8a0;"></i><span id="bannerRoute"></span></div>
+                                    </div>
+                                </div>
+
+                                <!-- Middle: KPIs -->
+                                <div class="col-lg-5">
+                                    <div class="d-flex justify-content-around">
+                                        <div class="kpi-indicator">
+                                            <div class="label">ผู้โดยสารรวม</div>
+                                            <div class="value" id="bannerPax">0</div>
+                                        </div>
+                                        <div class="kpi-indicator">
+                                            <div class="label">ยอดจองรวม</div>
+                                            <div class="value success" id="bannerRevenue">0.00</div>
+                                        </div>
+                                        <div class="kpi-indicator">
+                                            <div class="label">มัดจำรับแล้ว</div>
+                                            <div class="value warning" id="bannerDeposit">0.00</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Task Status -->
+                                <div class="col-lg-3 text-end">
+                                    <div class="task-status-box d-inline-block text-start">
+                                        <div class="label">ผู้ดูแลทริป / สถานะ</div>
+                                        <div class="value mb-2" id="bannerResponsible"><i class="bi bi-person-circle me-1" style="color:#1cb8a0;"></i>-</div>
+                                        <div id="bannerStatusWrap">
+                                            <span class="badge py-1 px-3" id="bannerStatus"
+                                                style="background:#e6faf6;color:#0d9488;border:1px solid #99f6e4;font-size:.78rem;">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ══ Main Panel : Seat Map (left) + Content (right) ══ -->
+                    <div id="mainPanel" class="row g-3 d-none">
+
+                        <!-- ── Left: Seat Map ── -->
+                        <div class="col-lg-3 no-print">
+                            <div class="card seatmap-card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-grid-3x3-gap me-1"></i>แผนผังที่นั่ง</span>
+                                    <span class="badge py-1 px-2" id="seatOccupancy"
+                                        style="background:#1cb8a0;color:#fff;font-size:.72rem;">0/0</span>
+                                </div>
+                                <div class="card-body p-3" id="seatMapContent">
+                                    <div class="text-center text-muted py-3 small">กำลังโหลด...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── Right: Tabs + Table ── -->
+                        <div class="col-lg-9">
+                            <div class="card content-card">
+                                <div class="card-header">
+                                    <ul class="nav nav-tabs" role="tablist">
+                                        <li class="nav-item">
+                                            <button class="nav-link active" data-bs-toggle="tab"
+                                                data-bs-target="#tabTable" type="button">
+                                                <i class="bi bi-table me-1"></i>ตารางผู้โดยสาร
+                                                <span class="badge ms-1" id="tabPaxBadge"
+                                                    style="background:#1cb8a0;color:#fff;font-size:.68rem;">0</span>
+                                            </button>
+                                        </li>
+                                        <li class="nav-item">
+                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabApproval"
+                                                type="button">
+                                                <i class="bi bi-clipboard-check me-1"></i>สถานะการอนุมัติ
+                                                <span class="badge ms-1" id="tabPendingBadge"
+                                                    style="display:none;background:#fef3c7;color:#92400e;font-size:.68rem;">0</span>
+                                            </button>
+                                        </li>
+                                        <li class="nav-item">
+                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabExpense"
+                                                type="button" id="tabExpenseBtn"
+                                                onclick="onExpenseTabShow()">
+                                                <i class="bi bi-cash-stack me-1"></i>รายจ่าย
+                                                <span class="badge ms-1" id="tabExpenseBadge"
+                                                    style="display:none;background:#fee2e2;color:#991b1b;font-size:.68rem;">0</span>
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div class="tab-content">
+
+                                    <!-- Tab 1: ตารางผู้โดยสาร -->
+                                    <div class="tab-pane fade show active" id="tabTable">
+                                        <div style="overflow-x:auto;overflow-y:auto;max-height:58vh;">
+                                            <table class="table table-bordered booking-table mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th rowspan="2" class="text-center no-print" style="width:30px;border-bottom:2px solid #10b981 !important;">
+                                                            <input type="checkbox" class="form-check-input" id="checkAllPax" onchange="toggleAllPax(this)">
+                                                        </th>
+                                                        <th rowspan="2" style="min-width:32px;border-bottom:2px solid #10b981 !important;">#</th>
+                                                        <th rowspan="2" class="text-center" style="min-width:90px;border-bottom:2px solid #10b981 !important;">สถานะ
+                                                        </th>
+                                                        <th colspan="4" class="group-h" style="min-width:160px">เส้นทาง
+                                                            / รถ</th>
+                                                        <th colspan="9" class="group-h col-div" style="min-width:440px">
+                                                            ข้อมูลผู้โดยสาร / ประกันภัย</th>
+                                                        <th colspan="6" class="group-h col-div" style="min-width:300px">
+                                                            การชำระเงิน</th>
+                                                        <th colspan="3" class="group-h col-div" style="min-width:160px">
+                                                            ของเช่า</th>
+                                                        <th rowspan="2"
+                                                            class="group-h col-div col-link text-center no-print"
+                                                            style="min-width:54px">ลิงก์</th>
+                                                        <th rowspan="2" class="group-h col-div text-center no-print"
+                                                            style="min-width:90px">จัดการ</th>
+                                                    </tr>
+                                                    <tr>
+                                                        <th style="min-width:100px">จุดขึ้นรถ</th>
+                                                        <th style="min-width:100px">จุดลงรถ</th>
+                                                        <th style="min-width:52px" class="text-center">รถ#</th>
+                                                        <th style="min-width:48px" class="text-center">นั่ง#</th>
+                                                        <th style="min-width:55px" class="col-div">คำนำ</th>
+                                                        <th style="min-width:75px">ชื่อ</th>
+                                                        <th style="min-width:90px">นามสกุล</th>
+                                                        <th style="min-width:115px">เลขบัตร</th>
+                                                        <th style="min-width:36px" class="text-center">อายุ</th>
+                                                        <th style="min-width:90px">วันเกิด</th>
+                                                        <th style="min-width:60px">ชื่อเล่น</th>
+                                                        <th style="min-width:95px">โทรศัพท์</th>
+                                                        <th style="min-width:80px" class="text-center">กรมธรรม์</th>
+                                                        <th style="min-width:55px" class="text-center col-div">
+                                                            มัดจำ<br>1,000</th>
+                                                        <th style="min-width:75px" class="text-end">มัดจำ</th>
+                                                        <th style="min-width:85px">สลิปมัดจำ</th>
+                                                        <th style="min-width:75px" class="text-end">คงเหลือ</th>
+                                                        <th style="min-width:85px">สลิปส่วนที่เหลือ</th>
+                                                        <th style="min-width:75px" class="text-end">รวม</th>
+                                                        <th style="min-width:110px" class="col-div">รายการ 1</th>
+                                                        <th style="min-width:110px">รายการ 2</th>
+                                                        <th style="min-width:90px">สลิปทริป</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="monitorBody">
+                                                    <tr>
+                                                        <td colspan="25" class="text-center py-5 text-muted">
+                                                            เลือกรอบรถเพื่อดูข้อมูล
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div><!-- /#tabTable -->
+
+                                    <!-- Tab 2: สถานะการอนุมัติ -->
+                                    <div class="tab-pane fade" id="tabApproval">
+                                        <!-- print-all section label -->
+                                        <div id="print-section-label-approval" style="display:none;" class="fw-bold pt-2 pb-1 border-bottom mb-2" style="font-size:9pt;">
+                                            <i class="bi bi-clipboard-check me-1"></i>สถานะการอนุมัติ
+                                        </div>
+                                        <div style="overflow-y:auto;max-height:58vh;">
+                                            <table class="table table-bordered approval-table mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="min-width:32px;">#</th>
+                                                        <th style="min-width:220px;">ผู้จอง / รายชื่อผู้โดยสาร</th>
+                                                        <th style="min-width:100px;">โทรศัพท์</th>
+                                                        <th class="text-center" style="min-width:60px;">ที่นั่ง</th>
+                                                        <th class="text-center" style="min-width:70px;">เลือก<br>ที่นั่ง</th>
+                                                        <th class="text-center" style="min-width:70px;">มัดจำ 1K</th>
+                                                        <th class="text-center" style="min-width:70px;">ชำระครบ</th>
+                                                        <th class="text-center" style="min-width:90px;">สถานะ</th>
+                                                        <th class="text-end" style="min-width:90px;">รวม (บาท)</th>
+                                                        <th class="text-center no-print" style="min-width:100px;">จัดการ</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="approvalBody">
+                                                    <tr>
+                                                        <td colspan="10" class="text-center py-4 text-muted">
+                                                            เลือกรอบรถเพื่อดูสถานะ
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div><!-- /#tabApproval -->
+
+                                    <!-- Tab 3: รายจ่าย -->
+                                    <div class="tab-pane fade" id="tabExpense">
+                                        <!-- Summary bar -->
+                                        <div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom no-print"
+                                            style="background:#f8fffe;">
+                                            <span class="text-muted small fw-semibold">
+                                                <i class="bi bi-cash-stack me-1" style="color:#1cb8a0;"></i>ค่าใช้จ่ายรอบนี้
+                                            </span>
+                                            <span class="fw-bold" id="expenseRoundTotal"
+                                                style="color:#0d9488;font-size:1rem;">฿0</span>
+                                            <div class="ms-auto no-print">
+                                                <button class="btn btn-sm px-3" onclick="openExpenseModal()"
+                                                    style="background:#1cb8a0;color:#fff;border:none;border-radius:6px;font-size:.82rem;">
+                                                    <i class="bi bi-plus-lg me-1"></i>บันทึกค่าใช้จ่าย
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <!-- Category summary chips -->
+                                        <div class="d-flex flex-wrap gap-2 px-3 py-2 border-bottom no-print" id="expenseCatSummary"></div>
+                                        <!-- Table -->
+                                        <div style="overflow-y:auto;max-height:50vh;">
+                                            <table class="table table-bordered table-hover align-middle mb-0" style="font-size:.82rem;">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th style="min-width:30px">#</th>
+                                                        <th style="min-width:130px">หมวดหมู่</th>
+                                                        <th style="min-width:160px">รายละเอียด</th>
+                                                        <th class="text-end" style="min-width:100px">จำนวน (บาท)</th>
+                                                        <th style="min-width:90px">วันที่</th>
+                                                        <th class="text-center no-print" style="min-width:70px">จัดการ</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="expenseBody">
+                                                    <tr><td colspan="6" class="text-center py-4 text-muted">เลือกรอบรถเพื่อดูรายจ่าย</td></tr>
+                                                </tbody>
+                                                <tfoot class="table-light" id="expenseFoot" style="display:none;">
+                                                    <tr>
+                                                        <td colspan="3" class="text-end fw-bold">รวม</td>
+                                                        <td class="text-end fw-bold text-danger" id="expenseFootTotal">0</td>
+                                                        <td colspan="2"></td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div><!-- /#tabExpense -->
+
+                                </div><!-- /.tab-content -->
+                            </div><!-- /.content-card -->
+                        </div><!-- /.col-lg-9 -->
+
+                    </div><!-- /#mainPanel -->
+
+                    <!-- ══ Empty State ════════════════════════════════════ -->
+                    <div id="emptyState" class="text-center py-5">
+                        <i class="bi bi-bus-front empty-icon d-block mb-3"></i>
+                        <h5>เลือกรอบรถเพื่อดูข้อมูล</h5>
+                        <p>พิมพ์ชื่อทริปหรือวันที่ในช่องค้นหาด้านบน</p>
+                    </div>
+
+                </div><!-- /.print-wrap -->
+            </div>
+        </main>
+    </div>
+
+    <!-- ══ Cancel Modal ══════════════════════════════════════════════ -->
+    <div class="modal fade" id="cancelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger">
+                        <i class="bi bi-x-octagon me-2"></i>ยืนยันการยกเลิกการจอง
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">
+                        การดำเนินการนี้ไม่สามารถย้อนกลับได้ ระบบจะบันทึกประวัติการยกเลิกโดยอัตโนมัติ
+                    </p>
+                    <div class="alert alert-warning py-2 small">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        ยกเลิกการจอง #<strong id="cancelBookingId"></strong>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold small">เหตุผลการยกเลิก
+                            <span class="text-muted fw-normal">(ไม่บังคับ)</span>
+                        </label>
+                        <textarea class="form-control" id="cancelReason" rows="2"
+                            placeholder="เช่น ลูกค้าขอยกเลิก, ไม่มาชำระเงิน..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button>
+                    <button class="btn btn-danger" onclick="confirmCancel()">
+                        <i class="bi bi-x-lg me-1"></i>ยืนยันยกเลิก
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ Expense Modal ══════════════════════════════════════════════ -->
+    <div class="modal fade" id="expenseModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-cash-stack me-2 text-danger"></i>บันทึกค่าใช้จ่าย
+                    </h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="expenseForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">หมวดหมู่ <span class="text-danger">*</span></label>
+                            <select class="form-select" id="fExpCategory" required>
+                                <option value="รายจ่าย จานช้อน">รายจ่าย จานช้อน</option>
+                                <option value="อุปกรณ์สิ้นเปลือง">อุปกรณ์สิ้นเปลือง</option>
+                                <option value="ค่าซักเต็นท์เช่า">ค่าซักเต็นท์เช่า</option>
+                                <option value="ค่าบริการซักถุงนอนเช่า">ค่าบริการซักถุงนอนเช่า</option>
+                                <option value="ค่าซักอุปกรณ์กองกลาง">ค่าซักอุปกรณ์กองกลาง</option>
+                                <option value="อาหาร">อาหาร</option>
+                                <option value="เงินสำรอง">เงินสำรอง</option>
+                                <option value="ประกันภัย">ประกันภัย</option>
+                                <option value="ค่ารถ">ค่ารถ</option>
+                                <option value="ค่าสตาฟ">ค่าสตาฟ</option>
+                                <option value="อื่นๆ">อื่นๆ</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">รายละเอียด</label>
+                            <input type="text" class="form-control" id="fExpDesc" placeholder="รายละเอียดเพิ่มเติม">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">จำนวนเงิน (บาท) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="fExpAmount" min="0" step="0.01" required placeholder="0.00">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">วันที่</label>
+                            <input type="date" class="form-control" id="fExpDate">
+                        </div>
+                        <input type="hidden" id="fExpRoundId">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button class="btn btn-primary" onclick="saveExpenseFromMonitor()">
+                        <i class="bi bi-floppy me-1"></i>บันทึก
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ Scripts ═══════════════════════════════════════════════════ -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/apiClient.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <!-- Separate Scripts -->
+    <script src="./monitor.js"></script>
+</body>
+
+</html>

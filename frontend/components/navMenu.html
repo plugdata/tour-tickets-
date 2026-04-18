@@ -1,0 +1,162 @@
+<style>
+    .nav-link {
+        color: var(--sidebar-text) !important;
+        font-weight: 400;
+    }
+
+    .nav-link:hover {
+        background-color: var(--sidebar-hover) !important;
+        color: #198754 !important;
+    }
+
+    .nav-link:hover span,
+    .nav-link:hover i {
+        color: #198754 !important;
+    }
+
+    .nav-link.active {
+        background-color: var(--sidebar-active) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(25, 135, 84, 0.2);
+    }
+
+    .nav-link.active span,
+    .nav-link.active i {
+        color: #ffffff !important;
+    }
+</style>
+<div class="p-3">
+    <h5 class="mb-4 fw-bold px-2" style="color:#212529; letter-spacing:0.01em;">
+        <i class="bi bi-bus-front-fill me-2" style="color:#3eb39d;"></i>Tour Backoffice
+    </h5>
+    <ul class="nav flex-column gap-1">
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded" href="/frontend/pages/dashboard.html">
+                <i class="bi bi-speedometer2" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>แดชบอร์ด</span>
+            </a>
+        </li>
+
+        <li class="mt-3 mb-1 px-2"
+            style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#3eb39d;">
+            จัดการทริป</li>
+
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded"
+                href="/frontend/pages/trips/list.html">
+                <i class="bi bi-map" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>ทริปท่องเที่ยว</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded"
+                href="/frontend/pages/bus-rounds/list.html">
+                <i class="bi bi-bus-front" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>รอบรถ / ตั๋ว</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded"
+                href="/frontend/pages/addons/list.html">
+                <i class="bi bi-bag-plus" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>อุปกรณ์เช่า / บริการ</span>
+            </a>
+        </li>
+
+        <li class="mt-3 mb-1 px-2"
+            style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#3eb39d;">
+            การจองและการเงิน</li>
+
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded"
+                href="/frontend/pages/monitor/list.html">
+                <i class="bi bi-table" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>ตารางการจองและอนุมัติ</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded"
+                href="/frontend/pages/payments/list.html">
+                <i class="bi bi-credit-card" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>การชำระเงิน / สลิป</span>
+            </a>
+        </li>
+
+        <li class="mt-3 mb-1 px-2"
+            style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#3eb39d;">
+            เนื้อหาเว็บ</li>
+
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded"
+                href="/frontend/pages/contents/list.html">
+                <i class="bi bi-file-text" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>โพสต์ / FAQ / About</span>
+            </a>
+        </li>
+
+        <li class="mt-3 mb-1 px-2"
+            style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#3eb39d;">
+            ประกันภัย</li>
+
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded"
+                href="/frontend/pages/insurance/list.html">
+                <i class="bi bi-shield-check" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>กรมธรรม์ประกันภัย</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded"
+                href="/frontend/pages/insurance/conditions.html">
+                <i class="bi bi-ui-checks" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>เงื่อนไขการยินยอม</span>
+            </a>
+        </li>
+
+        <li class="mt-3 mb-1 px-2"
+            style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#3eb39d;">
+            รายงาน</li>
+
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded"
+                href="/frontend/pages/reports/staff-report.html">
+                <i class="bi bi-printer" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>รายงาน Staff (ปริ้น)</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded"
+                href="/frontend/pages/expenses/list.html">
+                <i class="bi bi-wallet2" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>รายงานค่าใช้จ่าย/รายได้</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded"
+                href="/frontend/pages/reports/summary.html">
+                <i class="bi bi-bar-chart" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>สรุปรายงาน</span>
+            </a>
+        </li>
+
+        <li class="mt-3 mb-1 px-2"
+            style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#3eb39d;">ระบบ
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded"
+                href="/frontend/pages/users/list.html">
+                <i class="bi bi-people" style="color:#3eb39d;width:1.2rem;text-align:center;"></i>
+                <span>ผู้ใช้งาน</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 px-2 py-2 rounded" href="javascript:void(0)"
+                onclick="authManager.logout()" style="color:#dc3545;">
+                <i class="bi bi-box-arrow-right" style="color:#dc3545;width:1.2rem;text-align:center;"></i>
+                <span>ออกจากระบบ</span>
+            </a>
+        </li>
+    </ul>
+</div>

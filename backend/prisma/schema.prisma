@@ -1,0 +1,300 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// ===== USER & AUTH =====
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      Role     @default(CUSTOMER)
+  name      String
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings  Booking[]
+  payments  Payment[]
+}
+
+enum Role {
+  ADMIN
+  STUFF
+  CUSTOMER
+}
+
+// ===== TRIP =====
+model Trip {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  imageUrl    String?
+  price       Float
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  busRounds   BusRound[]
+  addons      Addon[]
+  contents    Content[]
+}
+
+// ===== BUS ROUND (ตั๋วรถ) =====
+model BusRound {
+  id          Int      @id @default(autoincrement())
+  tripId      Int
+  trip        Trip     @relation(fields: [tripId], references: [id])
+  busNumber         Int      @default(1)
+  startPoint        String
+  endPoint          String
+  departDate        DateTime
+  duration          String?
+  totalSeats        Int
+  bookedSeats       Int      @default(0)
+  isOpen            Boolean  @default(true)
+  responsiblePerson String?
+  createdAt         DateTime @default(now())
+
+  bookings     Booking[]
+  seatBookings SeatBooking[]
+}
+
+// ===== BOOKING (การจอง) =====
+model Booking {
+  id          Int           @id @default(autoincrement())
+  userId      Int
+  user        User          @relation(fields: [userId], references: [id])
+  busRoundId  Int
+  busRound    BusRound      @relation(fields: [busRoundId], references: [id])
+  seats       Int           @default(1)
+  bookingType String        @default("SINGLE")
+  foodAllergy String?
+  status      BookingStatus @default(PENDING)
+  totalAmount Float
+  recordedBy  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  bookingAddons  BookingAddon[]
+  payment        Payment?
+  seatBookings   SeatBooking[]
+  insuranceForms InsuranceForm[]
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+// ===== ADDON (อุปกรณ์เช่า / บริการเสริม) =====
+model Addon {
+  id          Int      @id @default(autoincrement())
+  tripId      Int?
+  trip        Trip?    @relation(fields: [tripId], references: [id])
+  name        String
+  description String?
+  price       Float
+  isActive    Boolean  @default(true)
+
+  bookingAddons BookingAddon[]
+}
+
+model BookingAddon {
+  id        Int     @id @default(autoincrement())
+  bookingId Int
+  booking   Booking @relation(fields: [bookingId], references: [id])
+  addonId   Int
+  addon     Addon   @relation(fields: [addonId], references: [id])
+  quantity  Int     @default(1)
+  price     Float
+}
+
+// ===== PAYMENT (การชำระเงิน) =====
+model Payment {
+  id          Int           @id @default(autoincrement())
+  bookingId   Int           @unique
+  booking     Booking       @relation(fields: [bookingId], references: [id])
+  userId      Int
+  user        User          @relation(fields: [userId], references: [id])
+  amount      Float
+  type        PaymentType   @default(FULL)
+  slipUrl     String?
+  status      PaymentStatus @default(PENDING)
+  confirmedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+enum PaymentType {
+  DEPOSIT
+  FULL
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+// ===== CONTENT (โพสต์/เนื้อหาเว็บ) =====
+model Content {
+  id        Int         @id @default(autoincrement())
+  tripId    Int?
+  trip      Trip?       @relation(fields: [tripId], references: [id])
+  type      ContentType
+  title     String
+  body      String?
+  imageUrl  String?
+  videoUrl  String?
+  linkUrl   String?
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+enum ContentType {
+  TRIP_POST
+  BLOG
+  FAQ
+  ABOUT
+  SERVICE
+}
+
+// ===== EXPENSE (บันทึกค่าใช้จ่าย) =====
+model Expense {
+  id          Int      @id @default(autoincrement())
+  busRoundId  Int?
+  category    String
+  description String?
+  amount      Float
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+// ===== INSURANCE FORM (เฉพาะข้อมูลประกันภัย) =====
+model InsuranceForm {
+  id            Int         @id @default(autoincrement())
+  bookingId     Int
+  booking       Booking     @relation(fields: [bookingId], references: [id])
+  seatBookingId Int         @unique
+  seatBooking   SeatBooking @relation(fields: [seatBookingId], references: [id])
+
+  // ผู้รับประโยชน์
+  beneficiaryName          String?
+  beneficiaryRelation      String?
+  beneficiaryRelationOther String?
+
+  // เงื่อนไขความคุ้มครองและการยินยอม
+  coverageAmount       Float   @default(1000000)
+  consentPolicyRead    Boolean @default(false)
+  consentTermsAccepted Boolean @default(false)
+  consent4WD           Boolean @default(false)
+  consentDomesticOnly  Boolean @default(false)
+  customConditions     String?
+
+  // workflow สถานะประกัน
+  status         String    @default("DRAFT")
+  submittedAt    DateTime?
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  rejectReason   String?
+  issuedPolicyNo String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// ===== CANCEL LOG =====
+model CancelLog {
+  id                   Int      @id @default(autoincrement())
+  bookingId            Int
+  cancelledById        Int
+  cancelledByUsername  String
+  cancelledByName      String
+  cancelReason         String?
+  cancelledAt          DateTime @default(now())
+}
+
+// ===== SEAT BOOKING (จองที่นั่งรายตัว + ข้อมูลผู้โดยสาร) =====
+model SeatBooking {
+  id            Int       @id @default(autoincrement())
+  busRoundId    Int
+  busRound      BusRound  @relation(fields: [busRoundId], references: [id], onDelete: Cascade)
+  bookingId     Int?
+  booking       Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  seatNumber    Int
+  vanOrder      Int?      // ลำดับรถตู้ (กรณีหลายคัน)
+
+  // ส่วน 1: ข้อมูลส่วนตัว
+  namePrefix     String?
+  firstName      String?
+  lastName       String?
+  nickname       String?
+  gender         String?   // "MALE" | "FEMALE"
+  nationalId     String?
+  birthDate      DateTime?
+  phone          String?
+  email          String?
+  bloodType      String?
+  idCardImageUrl String?
+
+  // ส่วน 2: ข้อมูลการเดินทาง / ฉุกเฉิน
+  foodAllergy    String?
+  pickupPoint    String?
+  dropoffPoint   String?
+  emergencyName  String?
+  emergencyPhone String?
+
+  // hold session
+  sessionToken  String?
+  holdExpiresAt DateTime?
+  createdAt     DateTime  @default(now())
+
+  insuranceForm InsuranceForm?
+
+  @@unique([busRoundId, seatNumber])
+}
+
+// ===== BOOKING SESSION (ติดตาม flow การจอง) =====
+model BookingSession {
+  id            Int      @id @default(autoincrement())
+  token         String   @unique
+  busRoundId    Int?
+  step          Int      @default(1) // 1=เลือกที่นั่ง 2=กรอกข้อมูล 3=ชำระเงิน
+  selectedSeats String?  // JSON: [{seatNumber, gender, passengerName, phone, foodAllergy}]
+  customerData  String?  // JSON: ข้อมูลผู้จอง
+  addonsData    String?  // JSON: อุปกรณ์เสริมที่เลือก
+  bookingId     Int?     // เมื่อสร้าง booking แล้ว
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ===== INSURANCE POLICY CONTENT (เนื้อหากรมธรรม์) =====
+model InsurancePolicyContent {
+  id          Int      @id @default(1)
+  contentType String   @default("text") // "text" | "image"
+  textContent String?
+  imageUrl    String?
+  updatedAt   DateTime @updatedAt
+}
+
+// ===== INSURANCE CONDITION (เงื่อนไข Checkbox) =====
+model InsuranceCondition {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  iconClass   String?  @default("bi-check-circle-fill text-success")
+  sortOrder   Int      @default(99)
+  isRequired  Boolean  @default(true)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

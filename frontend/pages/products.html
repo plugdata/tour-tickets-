@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Products List - Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="../assets/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <div class="d-flex">
+    <nav class="sidebar bg-white border-end" id="sidebar">
+      <!-- Sidebar content loaded from ../components/navMenu.html -->
+    </nav>
+
+    <main class="main-content flex-fill">
+      <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm">
+        <!-- Header content loaded from ../components/header.html -->
+      </header>
+
+      <section class="p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h3 class="fw-semibold mb-0">Products List</h3>
+          <button id="btn-add-product" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Add Product
+          </button>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <div class="row g-3 align-items-center">
+              <div class="col-12 col-md-4">
+                <div class="position-relative">
+                  <i class="fas fa-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+                  <input id="filter-search" type="text" class="form-control ps-5"
+                    placeholder="Search by name or SKU...">
+                </div>
+              </div>
+              <div class="col-12 col-md-3">
+                <select id="filter-category" class="form-select">
+                  <option value="">All Categories</option>
+                  <option value="electronics">Electronics</option>
+                  <option value="clothing">Clothing</option>
+                  <option value="accessories">Accessories</option>
+                  <option value="home">Home & Garden</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-3">
+                <select id="filter-stock" class="form-select">
+                  <option value="">All Stock Status</option>
+                  <option value="in-stock">In Stock</option>
+                  <option value="low-stock">Low Stock</option>
+                  <option value="out-of-stock">Out of Stock</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-2">
+                <button id="btn-reset-filters" class="btn btn-outline-secondary w-100">Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card shadow-sm">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-4">Name</th>
+                    <th>SKU</th>
+                    <th class="text-end">Price</th>
+                    <th class="text-center">Stock</th>
+                    <th>Category</th>
+                    <th class="text-center pe-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="ps-4">
+                      <div class="d-flex align-items-center">
+                        <div class="bg-light rounded p-2 me-3">
+                          <i class="fas fa-headphones text-primary"></i>
+                        </div>
+                        <div>
+                          <div class="fw-semibold">Wireless Headphones</div>
+                          <small class="text-muted">Premium Audio Device</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td><code>SKU-WH001</code></td>
+                    <td class="text-end fw-semibold">$120.00</td>
+                    <td class="text-center"><span class="badge bg-success">156</span></td>
+                    <td>Electronics</td>
+                    <td class="text-center pe-4">
+                      <button id="btn-edit-wh001" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i
+                          class="fas fa-edit"></i></button>
+                      <button id="btn-delete-wh001" class="btn btn-sm btn-outline-danger" title="Delete"><i
+                          class="fas fa-trash"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ps-4">
+                      <div class="d-flex align-items-center">
+                        <div class="bg-light rounded p-2 me-3">
+                          <i class="fas fa-clock text-primary"></i>
+                        </div>
+                        <div>
+                          <div class="fw-semibold">Smart Watch Pro</div>
+                          <small class="text-muted">Fitness Tracker</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td><code>SKU-SW002</code></td>
+                    <td class="text-end fw-semibold">$250.00</td>
+                    <td class="text-center"><span class="badge bg-warning text-dark">24</span></td>
+                    <td>Electronics</td>
+                    <td class="text-center pe-4">
+                      <button id="btn-edit-sw002" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i
+                          class="fas fa-edit"></i></button>
+                      <button id="btn-delete-sw002" class="btn btn-sm btn-outline-danger" title="Delete"><i
+                          class="fas fa-trash"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ps-4">
+                      <div class="d-flex align-items-center">
+                        <div class="bg-light rounded p-2 me-3">
+                          <i class="fas fa-laptop text-primary"></i>
+                        </div>
+                        <div>
+                          <div class="fw-semibold">Laptop Stand</div>
+                          <small class="text-muted">Ergonomic Design</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td><code>SKU-LS003</code></td>
+                    <td class="text-end fw-semibold">$45.00</td>
+                    <td class="text-center"><span class="badge bg-success">89</span></td>
+                    <td>Accessories</td>
+                    <td class="text-center pe-4">
+                      <button id="btn-edit-ls003" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i
+                          class="fas fa-edit"></i></button>
+                      <button id="btn-delete-ls003" class="btn btn-sm btn-outline-danger" title="Delete"><i
+                          class="fas fa-trash"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ps-4">
+                      <div class="d-flex align-items-center">
+                        <div class="bg-light rounded p-2 me-3">
+                          <i class="fas fa-plug text-primary"></i>
+                        </div>
+                        <div>
+                          <div class="fw-semibold">USB-C Hub 7-in-1</div>
+                          <small class="text-muted">Multi-port Adapter</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td><code>SKU-UH004</code></td>
+                    <td class="text-end fw-semibold">$75.00</td>
+                    <td class="text-center"><span class="badge bg-danger">8</span></td>
+                    <td>Electronics</td>
+                    <td class="text-center pe-4">
+                      <button id="btn-edit-uh004" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i
+                          class="fas fa-edit"></i></button>
+                      <button id="btn-delete-uh004" class="btn btn-sm btn-outline-danger" title="Delete"><i
+                          class="fas fa-trash"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ps-4">
+                      <div class="d-flex align-items-center">
+                        <div class="bg-light rounded p-2 me-3">
+                          <i class="fas fa-keyboard text-primary"></i>
+                        </div>
+                        <div>
+                          <div class="fw-semibold">Mechanical Keyboard</div>
+                          <small class="text-muted">RGB Backlit</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td><code>SKU-MK005</code></td>
+                    <td class="text-end fw-semibold">$180.00</td>
+                    <td class="text-center"><span class="badge bg-success">62</span></td>
+                    <td>Electronics</td>
+                    <td class="text-center pe-4">
+                      <button id="btn-edit-mk005" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i
+                          class="fas fa-edit"></i></button>
+                      <button id="btn-delete-mk005" class="btn btn-sm btn-outline-danger" title="Delete"><i
+                          class="fas fa-trash"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ps-4">
+                      <div class="d-flex align-items-center">
+                        <div class="bg-light rounded p-2 me-3">
+                          <i class="fas fa-mouse text-primary"></i>
+                        </div>
+                        <div>
+                          <div class="fw-semibold">Wireless Mouse</div>
+                          <small class="text-muted">Ergonomic Design</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td><code>SKU-WM006</code></td>
+                    <td class="text-end fw-semibold">$35.00</td>
+                    <td class="text-center"><span class="badge bg-success">234</span></td>
+                    <td>Electronics</td>
+                    <td class="text-center pe-4">
+                      <button id="btn-edit-wm006" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i
+                          class="fas fa-edit"></i></button>
+                      <button id="btn-delete-wm006" class="btn btn-sm btn-outline-danger" title="Delete"><i
+                          class="fas fa-trash"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ps-4">
+                      <div class="d-flex align-items-center">
+                        <div class="bg-light rounded p-2 me-3">
+                          <i class="fas fa-tshirt text-primary"></i>
+                        </div>
+                        <div>
+                          <div class="fw-semibold">Cotton T-Shirt</div>
+                          <small class="text-muted">Unisex Classic Fit</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td><code>SKU-CT007</code></td>
+                    <td class="text-end fw-semibold">$25.00</td>
+                    <td class="text-center"><span class="badge bg-warning text-dark">18</span></td>
+                    <td>Clothing</td>
+                    <td class="text-center pe-4">
+                      <button id="btn-edit-ct007" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i
+                          class="fas fa-edit"></i></button>
+                      <button id="btn-delete-ct007" class="btn btn-sm btn-outline-danger" title="Delete"><i
+                          class="fas fa-trash"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ps-4">
+                      <div class="d-flex align-items-center">
+                        <div class="bg-light rounded p-2 me-3">
+                          <i class="fas fa-briefcase text-primary"></i>
+                        </div>
+                        <div>
+                          <div class="fw-semibold">Leather Backpack</div>
+                          <small class="text-muted">15" Laptop Compatible</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td><code>SKU-LB008</code></td>
+                    <td class="text-end fw-semibold">$89.00</td>
+                    <td class="text-center"><span class="badge bg-danger">0</span></td>
+                    <td>Accessories</td>
+                    <td class="text-center pe-4">
+                      <button id="btn-edit-lb008" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i
+                          class="fas fa-edit"></i></button>
+                      <button id="btn-delete-lb008" class="btn btn-sm btn-outline-danger" title="Delete"><i
+                          class="fas fa-trash"></i></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer bg-white border-top">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted small">Showing 1-8 of 156 products</span>
+              <nav>
+                <ul class="pagination pagination-sm mb-0">
+                  <li class="page-item disabled">
+                    <a id="pagination-prev" class="page-link" href="#">Previous</a>
+                  </li>
+                  <li class="page-item active">
+                    <a id="pagination-1" class="page-link" href="#">1</a>
+                  </li>
+                  <li class="page-item">
+                    <a id="pagination-2" class="page-link" href="#">2</a>
+                  </li>
+                  <li class="page-item">
+                    <a id="pagination-3" class="page-link" href="#">3</a>
+                  </li>
+                  <li class="page-item">
+                    <a id="pagination-next" class="page-link" href="#">Next</a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+      // Load components
+      await Promise.all([
+        loadComponent('../components/navMenu.html', 'sidebar'),
+        loadComponent('../components/header.html', 'main-header')
+      ]);
+
+      var resetBtn = document.getElementById('btn-reset-filters');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+          document.getElementById('filter-search').value = '';
+          document.getElementById('filter-category').value = '';
+          document.getElementById('filter-stock').value = '';
+        });
+      }
+
+      var paginationLinks = document.querySelectorAll('.pagination .page-link');
+      paginationLinks.forEach(function (link) {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          if (!this.parentElement.classList.contains('disabled')) {
+            document.querySelectorAll('.pagination .page-item').forEach(function (item) {
+              item.classList.remove('active');
+            });
+            if (this.textContent.match(/^\d+$/)) {
+              this.parentElement.classList.add('active');
+            }
+          }
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

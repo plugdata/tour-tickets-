@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ทริปท่องเที่ยว - Tour Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../../assets/css/admin.css" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="d-flex">
+    <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+    <main class="main-content flex-fill">
+        <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+        <div class="page-content">
+            <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div><h1 class="page-title">ทริปท่องเที่ยว</h1><p class="page-subtitle">จัดการทริปและแพ็กเกจท่องเที่ยว</p></div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <!-- ค้นหาชื่อ -->
+                    <div class="input-group shadow-sm" style="width: 280px;">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" id="searchTrip" placeholder="ค้นหาชื่อทริป..." onkeyup="if(event.key==='Enter') loadTrips()">
+                    </div>
+
+                    <!-- ค้นหาเป็นช่วงเวลา -->
+                    <div class="input-group shadow-sm" style="width: 380px;">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-calendar3 text-muted"></i></span>
+                        <input type="text" class="form-control border-end-0 text-dark bg-white" id="startDate"
+                            placeholder="เริ่มวันที่" readonly style="font-size: .85rem;">
+                        <span class="input-group-text bg-white border-start-0 border-end-0 text-muted px-1">ถึง</span>
+                        <input type="text" class="form-control border-start-0 text-dark bg-white" id="endDate"
+                            placeholder="ถึงวันที่" readonly style="font-size: .85rem;">
+                        <button class="btn btn-outline-secondary border-start-0" onclick="clearDateRange()" title="ล้าง">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="openModal()"><i class="bi bi-plus-lg me-1"></i>เพิ่มทริป</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0" id="tripsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th><th>ชื่อทริป</th><th>ราคา (บาท)</th><th>สถานะ</th><th>สร้างเมื่อ</th><th>จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tripsBody">
+                            <tr><td colspan="6" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="tripModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">เพิ่มทริป</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="tripForm">
+                    <input type="hidden" id="tripId">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">ชื่อทริป <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="fTitle" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">คำอธิบาย</label>
+                            <textarea class="form-control" id="fDesc" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ราคา (บาท) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="fPrice" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">URL รูปภาพ</label>
+                            <input type="text" class="form-control" id="fImage">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="fActive" checked>
+                                <label class="form-check-label" for="fActive">เปิดใช้งาน</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-primary" onclick="saveTrip()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/apiClient.js"></script>
+<script src="../../assets/js/features/thai-calendar.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script>
+let modal, allTrips = [];
+document.addEventListener('DOMContentLoaded', async () => {
+    await initPage();
+    modal = new bootstrap.Modal(document.getElementById('tripModal'));
+
+    // Init Thai Calendar
+    await ThaiCalendar.init('#startDate', { onChange: loadTrips });
+    await ThaiCalendar.init('#endDate', { onChange: loadTrips });
+
+    loadTrips();
+});
+
+function clearDateRange() {
+    document.getElementById('startDate')._flatpickr.clear();
+    document.getElementById('endDate')._flatpickr.clear();
+    loadTrips();
+}
+
+async function loadTrips() {
+    try {
+        const query = document.getElementById('searchTrip').value.toLowerCase();
+        const start = document.getElementById('startDate').value; // YYYY-MM-DD
+        const end   = document.getElementById('endDate').value;
+
+        let trips = await API.trips.list();
+        allTrips = trips;
+
+        // Filter search text
+        if (query) {
+            trips = trips.filter(t => t.title.toLowerCase().includes(query) || (t.description || '').toLowerCase().includes(query));
+        }
+
+        // Filter date range (createdAt)
+        if (start || end) {
+            trips = ThaiCalendar.filterByDateRange(trips, 'createdAt', start, end);
+        }
+
+        const tbody = document.getElementById('tripsBody');
+        if (!trips.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">ไม่พบข้อมูลทริป</td></tr>'; return; }
+        tbody.innerHTML = trips.map((t, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td>
+                    <strong>${t.title}</strong>
+                    ${t.description ? `<br><small class="text-muted">${t.description.substring(0,60)}...</small>` : ''}
+                </td>
+                <td>${formatMoney(t.price)}</td>
+                <td><span class="badge ${t.isActive ? 'bg-success' : 'bg-secondary'}">${t.isActive ? 'เปิด' : 'ปิด'}</span></td>
+                <td>${formatDateThai(t.createdAt)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editTrip(${JSON.stringify(t).replace(/"/g,'&quot;')})"><i class="bi bi-pencil"></i></button>
+                    <a href="/frontend/pages/bus-rounds/list.html?tripId=${t.id}" class="btn btn-sm btn-outline-success me-1" title="รอบรถ"><i class="bi bi-bus-front"></i></a>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteTrip(${t.id})"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>`).join('');
+    } catch (e) { showToast('โหลดข้อมูลล้มเหลว', 'danger'); }
+}
+
+function openModal(title='เพิ่มทริป') {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('tripForm').reset();
+    document.getElementById('tripId').value = '';
+    document.getElementById('fActive').checked = true;
+    modal.show();
+}
+
+function editTrip(t) {
+    document.getElementById('modalTitle').textContent = 'แก้ไขทริป';
+    document.getElementById('tripId').value = t.id;
+    document.getElementById('fTitle').value = t.title;
+    document.getElementById('fDesc').value = t.description || '';
+    document.getElementById('fPrice').value = t.price;
+    document.getElementById('fImage').value = t.imageUrl || '';
+    document.getElementById('fActive').checked = t.isActive;
+    modal.show();
+}
+
+async function saveTrip() {
+    const id = document.getElementById('tripId').value;
+    const data = {
+        title: document.getElementById('fTitle').value,
+        description: document.getElementById('fDesc').value,
+        price: parseFloat(document.getElementById('fPrice').value),
+        imageUrl: document.getElementById('fImage').value,
+        isActive: document.getElementById('fActive').checked
+    };
+    try {
+        if (id) await API.trips.update(id, data);
+        else await API.trips.create(data);
+        modal.hide();
+        showToast('บันทึกสำเร็จ');
+        loadTrips();
+    } catch (e) { showToast(e.message, 'danger'); }
+}
+
+async function deleteTrip(id) {
+    confirmAction('ต้องการลบทริปนี้?', async () => {
+        try { await API.trips.delete(id); showToast('ลบสำเร็จ'); loadTrips(); }
+        catch (e) { showToast(e.message, 'danger'); }
+    });
+}
+</script>
+</body>
+</html>

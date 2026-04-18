@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตั๋วและการชำระเงิน - จองรถตู้</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background: #f8f9fa; }
+        .step-bar { display: flex; gap: 0; }
+        .step-item {
+            flex: 1; text-align: center; padding: .4rem;
+            font-size: .8rem; color: #6c757d; border-bottom: 3px solid #dee2e6;
+        }
+        .step-item.active { color: #0d6efd; border-color: #0d6efd; font-weight: 600; }
+        .step-item.done   { color: #198754; border-color: #198754; }
+        .ticket-card {
+            border: 2px solid #dee2e6; border-radius: 16px;
+            overflow: hidden; background: #fff;
+        }
+        .ticket-header {
+            background: linear-gradient(135deg, #0d6efd, #6610f2);
+            color: #fff; padding: 1.5rem;
+        }
+        .ticket-body { padding: 1.25rem; }
+        .ticket-divider {
+            border: none; border-top: 2px dashed #dee2e6;
+            margin: 1rem 0; position: relative;
+        }
+        .ticket-divider::before,
+        .ticket-divider::after {
+            content: ''; position: absolute; top: -10px;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: #f8f9fa; border: 2px solid #dee2e6;
+        }
+        .ticket-divider::before { left: -12px; }
+        .ticket-divider::after  { right: -12px; }
+        .seat-chip-m { background:#cfe2ff; color:#084298; border-radius:8px; padding:.3rem .6rem; font-weight:700; }
+        .seat-chip-f { background:#f8d7f0; color:#892b5d; border-radius:8px; padding:.3rem .6rem; font-weight:700; }
+        .pay-option {
+            border: 2px solid #dee2e6; border-radius: 12px; padding: 1rem;
+            cursor: pointer; transition: all .2s;
+        }
+        .pay-option:hover { border-color: #0d6efd; background: #f0f5ff; }
+        .pay-option.selected { border-color: #0d6efd; background: #e8f0fe; }
+        .qr-placeholder {
+            width: 150px; height: 150px; border: 2px dashed #dee2e6;
+            border-radius: 12px; display: flex; align-items: center;
+            justify-content: center; color: #6c757d; font-size: .85rem;
+            text-align: center;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<nav class="navbar navbar-light bg-white border-bottom px-3 py-2 sticky-top shadow-sm no-print">
+    <div class="d-flex align-items-center gap-2 w-100">
+        <a href="#" class="btn btn-sm btn-outline-secondary" onclick="goBack()">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div class="fw-semibold flex-grow-1">สรุปการจองและชำระเงิน</div>
+        <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>พิมพ์
+        </button>
+    </div>
+</nav>
+
+<!-- 4-Step bar -->
+<div class="step-bar bg-white border-bottom mb-3 no-print">
+    <div class="step-item done"><i class="bi bi-check2 me-1"></i>เลือกที่นั่ง</div>
+    <div class="step-item done"><i class="bi bi-check2 me-1"></i>ข้อมูล</div>
+    <div class="step-item done"><i class="bi bi-check2 me-1"></i>ประกัน</div>
+    <div class="step-item active"><i class="bi bi-credit-card me-1"></i>ชำระเงิน</div>
+</div>
+
+<div class="container-fluid px-3 pb-5">
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <div class="mt-2 text-muted">กำลังโหลด...</div>
+    </div>
+
+    <div id="mainContent" class="d-none">
+
+        <!-- Booking confirmed banner (shown after confirm) -->
+        <div id="confirmedBanner" class="d-none alert alert-success d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-check-circle-fill fs-4"></i>
+            <div>
+                <div class="fw-semibold">จองสำเร็จ! รหัสการจอง <span id="confirmedBookingId" class="badge bg-success fs-6"></span></div>
+                <div class="small">บันทึก URL นี้ไว้เพื่อดูสถานะการจองในภายหลัง</div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+
+            <!-- Ticket -->
+            <div class="col-lg-7">
+                <div class="ticket-card mb-3">
+                    <div class="ticket-header">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-bus-front fs-4"></i>
+                            <div>
+                                <div class="fw-bold fs-5" id="tktTitle">-</div>
+                                <div class="small opacity-75" id="tktRoute">-</div>
+                            </div>
+                        </div>
+                        <div class="row g-2 small">
+                            <div class="col-6">
+                                <div class="opacity-75">วันออกเดินทาง</div>
+                                <div class="fw-semibold" id="tktDate">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="opacity-75">เวลา</div>
+                                <div class="fw-semibold" id="tktTime">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="opacity-75">รถคันที่</div>
+                                <div class="fw-semibold" id="tktBus">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="opacity-75">ระยะเวลา</div>
+                                <div class="fw-semibold" id="tktDuration">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ticket-body">
+                        <div class="ticket-divider"></div>
+
+                        <!-- Seat list -->
+                        <div class="fw-semibold small mb-2">ที่นั่งผู้โดยสาร</div>
+                        <div id="tktSeats" class="mb-3"></div>
+
+                        <div class="ticket-divider"></div>
+
+                        <!-- Booker info -->
+                        <div class="fw-semibold small mb-2">ผู้จอง</div>
+                        <div id="tktBooker" class="small"></div>
+
+                        <div class="ticket-divider"></div>
+
+                        <!-- Price breakdown -->
+                        <div id="tktPriceBreakdown"></div>
+
+                        <!-- Token/Link -->
+                        <div class="mt-3 p-2 bg-light rounded small">
+                            <div class="text-muted mb-1"><i class="bi bi-link-45deg me-1"></i>ลิงก์ตรวจสอบการจอง</div>
+                            <div class="d-flex gap-2 align-items-center">
+                                <code id="tktLink" class="flex-grow-1 text-break" style="font-size:.72rem"></code>
+                                <button class="btn btn-sm btn-outline-secondary flex-shrink-0" onclick="copyLink()">
+                                    <i class="bi bi-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment -->
+            <div class="col-lg-5 no-print">
+                <!-- Addons selection -->
+                <div class="card mb-3" id="addonsCard">
+                    <div class="card-header fw-semibold">
+                        <i class="bi bi-bag-plus me-1 text-warning"></i>อุปกรณ์เช่าเสริม
+                    </div>
+                    <div class="card-body" id="addonsList">
+                        <div class="text-muted small">กำลังโหลด...</div>
+                    </div>
+                </div>
+
+                <!-- Payment method -->
+                <div class="card mb-3">
+                    <div class="card-header fw-semibold">
+                        <i class="bi bi-cash-coin me-1 text-success"></i>การชำระเงิน
+                    </div>
+                    <div class="card-body">
+                        <!-- Payment type -->
+                        <div class="mb-3">
+                            <div class="small fw-semibold text-muted mb-2">เลือกประเภทการชำระ</div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="pay-option" id="payDeposit" onclick="selectPayType('DEPOSIT')">
+                                        <div class="fw-semibold small"><i class="bi bi-cash me-1"></i>มัดจำ</div>
+                                        <div class="text-muted" style="font-size:.75rem">ชำระส่วนหนึ่งก่อน</div>
+                                        <div class="text-warning fw-bold mt-1" id="depositAmt">-</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="pay-option selected" id="payFull" onclick="selectPayType('FULL')">
+                                        <div class="fw-semibold small"><i class="bi bi-check-circle me-1 text-success"></i>เต็มจำนวน</div>
+                                        <div class="text-muted" style="font-size:.75rem">ชำระครบทันที</div>
+                                        <div class="text-success fw-bold mt-1" id="fullAmt">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slip upload -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">แนบสลิปโอนเงิน</label>
+                            <input type="file" class="form-control" id="slipFile" accept="image/*">
+                            <div class="form-text">รองรับ JPG, PNG ขนาดไม่เกิน 5MB</div>
+                        </div>
+
+                        <!-- Total -->
+                        <div class="p-3 bg-light rounded mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold">ยอดที่ต้องชำระ</span>
+                                <span class="fw-bold text-primary fs-5" id="payAmt">-</span>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-success w-100 btn-lg" id="btnConfirm" onclick="confirmBooking()">
+                            <i class="bi bi-check-circle me-1"></i>ยืนยันการจอง
+                        </button>
+                        <div class="text-muted small text-center mt-2">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Admin จะตรวจสอบสลิปและยืนยันภายใน 24 ชั่วโมง
+                        </div>
+                        <div class="text-center mt-2">
+                            <a href="/frontend/pages/booking/status.html" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-search me-1"></i>ตรวจสอบสถานะการจอง
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script>
+const SESSION_COOKIE = 'bk_session_token';
+let sessionToken = null;
+let sessionData = null;
+let roundData = null;
+let addonsList = [];
+let selectedAddons = {};  // { addonId: quantity }
+let payType = 'FULL';
+const DEPOSIT_RATE = 0.3; // มัดจำ 30%
+
+document.addEventListener('DOMContentLoaded', async () => {
+    sessionToken = new URLSearchParams(location.search).get('token')
+                || localStorage.getItem(SESSION_COOKIE);
+    if (!sessionToken) { showError('ไม่พบ session'); return; }
+
+    try {
+        sessionData = await fetchAPI('/booking-sessions/' + sessionToken);
+        if (!sessionData) { showError('Session หมดอายุ'); return; }
+
+        const all = await fetchAPI('/bus-rounds');
+        roundData = all.find(r => r.id == sessionData.busRoundId);
+        if (!roundData) { showError('ไม่พบข้อมูลรอบรถ'); return; }
+
+        // Load all active addons (shared)
+        try {
+            addonsList = await fetchAPI('/addons/active');
+        } catch (_) { addonsList = []; }
+
+        renderTicket();
+        renderAddons();
+        updatePayAmounts();
+
+        // ถ้า session มี bookingId แล้ว (resume หลังจองสำเร็จ)
+        if (sessionData.bookingId) {
+            showConfirmedBanner(sessionData.bookingId);
+        }
+
+        document.getElementById('loadingState').classList.add('d-none');
+        document.getElementById('mainContent').classList.remove('d-none');
+
+        document.getElementById('tktLink').textContent = window.location.href;
+    } catch (e) {
+        showError(e.message);
+    }
+});
+
+async function fetchAPI(path) {
+    const r = await fetch(API_BASE_URL + path);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+}
+async function postAPI(path, body) {
+    const r = await fetch(API_BASE_URL + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+    return data;
+}
+
+function renderTicket() {
+    const rd = roundData;
+    const sd = sessionData;
+
+    document.getElementById('tktTitle').textContent  = rd.trip?.title || 'ทริป';
+    document.getElementById('tktRoute').textContent  = `${rd.startPoint} → ${rd.endPoint}`;
+    const dep = new Date(rd.departDate);
+    document.getElementById('tktDate').textContent = dep.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('tktTime').textContent = dep.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('tktBus').textContent  = `คันที่ ${rd.busNumber}`;
+    document.getElementById('tktDuration').textContent = rd.duration || '-';
+
+    // Seats
+    const seats = sd.selectedSeats || [];
+    document.getElementById('tktSeats').innerHTML = seats.map(s => {
+        const chipCls = s.gender === 'MALE' ? 'seat-chip-m' : 'seat-chip-f';
+        const genderIcon = s.gender === 'MALE' ? '♂' : '♀';
+        return `<div class="d-flex align-items-center gap-2 mb-2">
+            <span class="${chipCls}">${genderIcon} ที่นั่ง ${s.seatNumber}</span>
+            <div class="small">
+                <div class="fw-semibold">${s.passengerName || '-'}</div>
+                ${s.phone ? `<div class="text-muted">${s.phone}</div>` : ''}
+                ${s.foodAllergy ? `<span class="badge bg-warning text-dark" style="font-size:.7rem">${s.foodAllergy}</span>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+
+    // Booker
+    const cd = sd.customerData || {};
+    document.getElementById('tktBooker').innerHTML = `
+        <div><strong>${cd.mainName || '-'}</strong></div>
+        <div class="text-muted">${cd.mainPhone || ''} ${cd.mainEmail ? '· ' + cd.mainEmail : ''}</div>
+        ${cd.mainNote ? `<div class="text-muted small mt-1"><i class="bi bi-sticky me-1"></i>${cd.mainNote}</div>` : ''}
+    `;
+
+    // Price breakdown
+    const pricePerSeat = rd.trip?.price || 0;
+    const seatTotal = seats.length * pricePerSeat;
+    document.getElementById('tktPriceBreakdown').innerHTML = `
+        <div class="row g-1 small">
+            <div class="col-7 text-muted">ค่าที่นั่ง (${seats.length} × ${Number(pricePerSeat).toLocaleString('th-TH')} บาท)</div>
+            <div class="col-5 text-end">${Number(seatTotal).toLocaleString('th-TH')} บาท</div>
+            <div class="col-7 text-muted" id="addonTotalLabel">อุปกรณ์เช่า</div>
+            <div class="col-5 text-end" id="addonTotalAmt">0 บาท</div>
+            <div class="col-12"><hr class="my-1"></div>
+            <div class="col-7 fw-bold">รวม</div>
+            <div class="col-5 text-end fw-bold text-primary" id="grandTotal">${Number(seatTotal).toLocaleString('th-TH')} บาท</div>
+        </div>
+    `;
+}
+
+function renderAddons() {
+    const container = document.getElementById('addonsList');
+    if (!addonsList.length) {
+        container.innerHTML = '<p class="text-muted small mb-0">ไม่มีอุปกรณ์เสริมสำหรับทริปนี้</p>';
+        return;
+    }
+    container.innerHTML = addonsList.filter(a => a.isActive).map(a => `
+        <div class="d-flex align-items-center justify-content-between mb-2 py-1 border-bottom">
+            <div class="small">
+                <div class="fw-semibold">${a.name}</div>
+                ${a.description ? `<div class="text-muted">${a.description}</div>` : ''}
+                <div class="text-primary">${Number(a.price).toLocaleString('th-TH')} บาท/ชิ้น</div>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+                <button class="btn btn-sm btn-outline-secondary" onclick="changeAddon(${a.id},-1)" style="width:28px;height:28px;padding:0">-</button>
+                <span class="fw-bold small" id="addonQty_${a.id}" style="min-width:20px;text-align:center">${selectedAddons[a.id]||0}</span>
+                <button class="btn btn-sm btn-outline-primary" onclick="changeAddon(${a.id},1)" style="width:28px;height:28px;padding:0">+</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function changeAddon(id, delta) {
+    selectedAddons[id] = Math.max(0, (selectedAddons[id] || 0) + delta);
+    document.getElementById(`addonQty_${id}`).textContent = selectedAddons[id];
+    if (selectedAddons[id] === 0) delete selectedAddons[id];
+    updatePayAmounts();
+}
+
+function calcTotals() {
+    const seats = sessionData.selectedSeats || [];
+    const seatTotal = seats.length * (roundData?.trip?.price || 0);
+    let addonTotal = 0;
+    for (const [id, qty] of Object.entries(selectedAddons)) {
+        const addon = addonsList.find(a => a.id == id);
+        if (addon) addonTotal += addon.price * qty;
+    }
+    return { seatTotal, addonTotal, grand: seatTotal + addonTotal };
+}
+
+function updatePayAmounts() {
+    const { seatTotal, addonTotal, grand } = calcTotals();
+    const deposit = Math.ceil(grand * DEPOSIT_RATE);
+
+    document.getElementById('depositAmt').textContent = `${Number(deposit).toLocaleString('th-TH')} บาท`;
+    document.getElementById('fullAmt').textContent    = `${Number(grand).toLocaleString('th-TH')} บาท`;
+    document.getElementById('payAmt').textContent     = `${Number(payType === 'DEPOSIT' ? deposit : grand).toLocaleString('th-TH')} บาท`;
+
+    // Update addon totals in ticket
+    const addonEl = document.getElementById('addonTotalAmt');
+    if (addonEl) addonEl.textContent = `${Number(addonTotal).toLocaleString('th-TH')} บาท`;
+    const grandEl = document.getElementById('grandTotal');
+    if (grandEl) grandEl.textContent = `${Number(grand).toLocaleString('th-TH')} บาท`;
+}
+
+function selectPayType(type) {
+    payType = type;
+    document.getElementById('payDeposit').classList.toggle('selected', type === 'DEPOSIT');
+    document.getElementById('payFull').classList.toggle('selected', type === 'FULL');
+    updatePayAmounts();
+}
+
+async function confirmBooking() {
+    const btn = document.getElementById('btnConfirm');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังดำเนินการ...';
+
+    try {
+        const { grand } = calcTotals();
+        const deposit = Math.ceil(grand * DEPOSIT_RATE);
+        const amount = payType === 'DEPOSIT' ? deposit : grand;
+
+        const seats = sessionData.selectedSeats || [];
+        const cd = sessionData.customerData || {};
+
+        // สร้าง booking (ต้องใช้ auth token ของลูกค้า - ถ้ามี)
+        // ถ้าไม่มี auth จะส่งข้อมูลครบแล้วรอ admin confirm
+        const addonsPayload = Object.entries(selectedAddons).map(([id, qty]) => ({
+            addonId: parseInt(id), quantity: qty
+        }));
+
+        // อัปเดต session ด้วยข้อมูล addons
+        await postAPI('/booking-sessions', {
+            token: sessionToken,
+            step: 3,
+            addonsData: addonsPayload
+        });
+
+        showToast('บันทึกการจองแล้ว! Admin จะยืนยันเร็วๆ นี้', 'success');
+
+        // แสดง banner
+        showConfirmedBanner('รอยืนยัน');
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>ส่งข้อมูลแล้ว';
+        btn.className = 'btn btn-secondary w-100 btn-lg';
+
+    } catch (e) {
+        showToast(e.message || 'เกิดข้อผิดพลาด');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>ยืนยันการจอง';
+    }
+}
+
+function showConfirmedBanner(bookingId) {
+    const banner = document.getElementById('confirmedBanner');
+    document.getElementById('confirmedBookingId').textContent = `#${bookingId}`;
+    banner.classList.remove('d-none');
+}
+
+function copyLink() {
+    navigator.clipboard.writeText(window.location.href)
+        .then(() => showToast('คัดลอกลิงก์แล้ว', 'success'))
+        .catch(() => showToast('ไม่สามารถคัดลอกได้'));
+}
+
+function goBack() {
+    window.location.href = `/frontend/pages/booking/insurance.html?token=${sessionToken}`;
+}
+
+function showError(msg) {
+    document.getElementById('loadingState').innerHTML =
+        `<i class="bi bi-exclamation-triangle text-danger fs-2"></i>
+         <p class="text-danger mt-2">${msg}</p>
+         <a href="/frontend/pages/trips/list.html" class="btn btn-outline-primary mt-2">กลับหน้าทริป</a>`;
+}
+
+function showToast(msg, type = 'warning') {
+    let c = document.getElementById('toastC');
+    if (!c) {
+        c = document.createElement('div');
+        c.id = 'toastC';
+        c.className = 'position-fixed bottom-0 end-0 p-3';
+        c.style.zIndex = 9999;
+        document.body.appendChild(c);
+    }
+    const id = 't' + Date.now();
+    c.insertAdjacentHTML('beforeend', `
+        <div id="${id}" class="toast align-items-center text-bg-${type} border-0 show">
+            <div class="d-flex"><div class="toast-body">${msg}</div>
+            <button class="btn-close btn-close-white me-2 m-auto"></button>
+            </div></div>`);
+    setTimeout(() => document.getElementById(id)?.remove(), 4000);
+}
+</script>
+</body>
+</html>

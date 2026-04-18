@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - Backoffice</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts - Sarabun -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Admin CSS -->
+    <link href="/frontend/assets/css/admin.css" rel="stylesheet">
+</head>
+
+<body class="login-page">
+    <div class="login-card">
+        <div class="login-logo">
+            <img src="/public/logo.png" alt="Logo" class="img-fluid"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <i class="bi bi-building" style="display:none;"></i>
+        </div>
+        <h1 class="login-title">ระบบ Backoffice</h1>
+        <p class="login-subtitle">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+
+        <form id="loginForm">
+            <div class="mb-3">
+                <label class="form-label" for="username">ชื่อผู้ใช้หรืออีเมล</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="กรอกชื่อผู้ใช้"
+                        required autofocus>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="password">รหัสผ่าน</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="กรอกรหัสผ่าน"
+                        required>
+                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                    <label class="form-check-label" for="remember">จดจำการเข้าสู่ระบบ</label>
+                </div>
+            </div>
+
+            <div id="loginError" class="alert alert-danger d-none" role="alert"></div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2" id="loginBtn">
+                <span class="btn-text">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>เข้าสู่ระบบ
+                </span>
+                <span class="btn-loading d-none">
+                    <span class="spinner-border spinner-border-sm me-2"></span>กำลังเข้าสู่ระบบ...
+                </span>
+            </button>
+        </form>
+
+        <div class="text-center mt-4 text-muted">
+            <small>&copy; 2024 Backoffice System</small>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="/frontend/assets/js/auth.js"></script>
+
+    <script>
+        // Check if already logged in
+        if (authManager.isAuthenticated()) {
+            window.location.href = '/frontend/pages/dashboard.html';
+        }
+
+        // Toggle password visibility
+        const toggleBtn = document.getElementById('togglePassword');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function () {
+                const passwordInput = document.getElementById('password');
+                const icon = this.querySelector('i');
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.replace('bi-eye', 'bi-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.replace('bi-eye-slash', 'bi-eye');
+                }
+            });
+        }
+
+        // Handle URL Parameters for auto-login
+        document.addEventListener('DOMContentLoaded', async function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const usernameParam = urlParams.get('username');
+            const passwordParam = urlParams.get('password');
+
+            if (usernameParam) {
+                document.getElementById('username').value = usernameParam;
+            }
+            if (passwordParam) {
+                document.getElementById('password').value = passwordParam;
+            }
+
+            // Auto login if both params exist
+            if (usernameParam && passwordParam) {
+                console.log('Attempting auto-login with URL parameters...');
+                handleLogin(usernameParam, passwordParam, true);
+            }
+        });
+
+        async function handleLogin(username, password, remember) {
+            const loginBtn = document.getElementById('loginBtn');
+            const errorDiv = document.getElementById('loginError');
+
+            // Show loading state
+            if (loginBtn) {
+                loginBtn.querySelector('.btn-text').classList.add('d-none');
+                loginBtn.querySelector('.btn-loading').classList.remove('d-none');
+                loginBtn.disabled = true;
+            }
+            if (errorDiv) errorDiv.classList.add('d-none');
+
+            try {
+                const result = await authManager.login(username, password, remember);
+
+                if (result.success) {
+                    window.location.href = '/frontend/pages/dashboard.html';
+                } else {
+                    if (errorDiv) {
+                        errorDiv.textContent = result.error || 'เข้าสู่ระบบไม่สำเร็จ';
+                        errorDiv.classList.remove('d-none');
+                    }
+                }
+            } catch (error) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
+                    errorDiv.classList.remove('d-none');
+                }
+            } finally {
+                if (loginBtn) {
+                    loginBtn.querySelector('.btn-text').classList.remove('d-none');
+                    loginBtn.querySelector('.btn-loading').classList.add('d-none');
+                    loginBtn.disabled = false;
+                }
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+            handleLogin(username, password, remember);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ประวัติลูกค้า - Tour Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../../assets/css/admin.css" rel="stylesheet">
+    <style>
+        .avatar-lg { width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:700;color:#fff;flex-shrink:0; }
+        .info-row { display:flex;gap:.5rem;padding:.5rem 0;border-bottom:1px solid #f0f0f0; }
+        .info-row:last-child { border-bottom:none; }
+        .info-label { color:#6c757d;font-size:.875rem;min-width:160px;flex-shrink:0; }
+        .info-value { font-weight:500; }
+        .timeline-item { position:relative;padding-left:2rem;padding-bottom:1.5rem; }
+        .timeline-item::before { content:'';position:absolute;left:.5rem;top:.5rem;bottom:0;width:2px;background:#dee2e6; }
+        .timeline-item:last-child::before { display:none; }
+        .timeline-dot { position:absolute;left:0;top:.25rem;width:1rem;height:1rem;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 2px #dee2e6; }
+        .consent-item { display:flex;align-items:center;gap:.5rem;padding:.4rem 0; }
+    </style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="d-flex">
+    <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+    <main class="main-content flex-fill">
+        <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+        <div class="page-content">
+
+            <div id="loadingState" class="text-center py-5">
+                <div class="spinner-border text-primary"></div>
+                <div class="mt-2 text-muted">กำลังโหลดข้อมูล...</div>
+            </div>
+
+            <div id="mainContent" class="d-none">
+                <!-- Header -->
+                <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+                    <a href="list.html" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>กลับ
+                    </a>
+                    <div class="d-flex align-items-center gap-3 flex-grow-1">
+                        <div class="avatar-lg" id="avatarEl">LL</div>
+                        <div>
+                            <h2 class="mb-0" id="customerName">-</h2>
+                            <div class="text-muted" id="customerSub">-</div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a id="btnEditInsurance" href="#" class="btn btn-primary">
+                            <i class="bi bi-pencil me-1"></i>แก้ไขกรมธรรม์
+                        </a>
+                        <button class="btn btn-outline-secondary" onclick="window.print()">
+                            <i class="bi bi-printer me-1"></i>พิมพ์
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Left column -->
+                    <div class="col-lg-4">
+                        <!-- Personal Info -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-person me-2"></i>ข้อมูลส่วนบุคคล</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="personalInfoBlock"></div>
+                            </div>
+                        </div>
+
+                        <!-- Emergency Contact -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-telephone-fill text-danger me-2"></i>ผู้ติดต่อกรณีฉุกเฉิน</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="emergencyBlock"></div>
+                            </div>
+                        </div>
+
+                        <!-- Beneficiary -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-person-check me-2 text-success"></i>ผู้รับประโยชน์</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="beneficiaryBlock"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right column -->
+                    <div class="col-lg-8">
+                        <!-- Insurance Status Card -->
+                        <div class="card mb-4" id="insuranceStatusCard">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="bi bi-shield-check me-2 text-primary"></i>สถานะกรมธรรม์ประกันภัย</h6>
+                                <span class="badge fs-6 px-3" id="statusBadge">-</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3" id="insuranceStatusDetails"></div>
+                            </div>
+                        </div>
+
+                        <!-- Consent Section -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-check2-all me-2 text-success"></i>การยินยอมเงื่อนไข</h6>
+                            </div>
+                            <div class="card-body" id="consentBlock"></div>
+                        </div>
+
+                        <!-- Custom Conditions -->
+                        <div class="card mb-4 d-none" id="customCondCard">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-pencil-square me-2 text-warning"></i>เงื่อนไขพิเศษ / ข้อตกลงเพิ่มเติม</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-0" id="customCondText" style="white-space:pre-wrap;line-height:1.8"></p>
+                            </div>
+                        </div>
+
+                        <!-- Booking History Timeline -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>ประวัติการจอง</h6>
+                            </div>
+                            <div class="card-body" id="bookingHistoryBlock">
+                                <p class="text-muted small">กำลังโหลด...</p>
+                            </div>
+                        </div>
+
+                        <!-- Timeline / Activity -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-activity me-2"></i>ประวัติกรมธรรม์</h6>
+                            </div>
+                            <div class="card-body" id="timelineBlock"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/apiClient.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script>
+const STATUS_BADGE = { DRAFT:'bg-secondary', SUBMITTED:'bg-info text-dark', APPROVED:'bg-success', REJECTED:'bg-danger' }
+const STATUS_LABEL = { DRAFT:'ร่าง (กรอกไม่ครบ)', SUBMITTED:'รอตรวจสอบ', APPROVED:'อนุมัติแล้ว', REJECTED:'ปฏิเสธ' }
+const RELATION_LABEL = { LEGAL_HEIR:'ทายาทตามกฎหมาย', SPOUSE:'คู่สมรส', FATHER:'บิดา', MOTHER:'มารดา', SIBLING:'พี่น้อง', OTHER:'อื่น ๆ' }
+const BLOOD_COLOR = {'A+':'#dc3545','A-':'#fd7e14','B+':'#0d6efd','B-':'#6610f2','AB+':'#198754','AB-':'#0dcaf0','O+':'#d63384','O-':'#6c757d'}
+const AVATAR_COLORS = ['#0d6efd','#198754','#fd7e14','#dc3545','#6610f2','#0dcaf0','#d63384']
+
+function avatarColor(name) {
+    let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) % AVATAR_COLORS.length
+    return AVATAR_COLORS[h]
+}
+
+function infoRow(label, value, html = false) {
+    const val = html ? value : `<span class="info-value">${value || '<span class="text-muted">-</span>'}</span>`
+    return `<div class="info-row"><div class="info-label">${label}</div>${val}</div>`
+}
+
+function formatDate(iso) {
+    if (!iso) return '-'
+    return new Date(iso).toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' })
+}
+
+function calcAge(iso) {
+    if (!iso) return ''
+    const diff = Date.now() - new Date(iso)
+    return ` (${Math.floor(diff / 31536000000)} ปี)`
+}
+
+function consentIcon(val) {
+    return val
+        ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>'
+        : '<i class="bi bi-x-circle-fill text-danger fs-5"></i>'
+}
+
+function renderCustomer(f) {
+    const initials = (f.firstName[0]||'') + (f.lastName[0]||'')
+    const color = avatarColor(f.firstName)
+
+    // Avatar & header
+    document.getElementById('avatarEl').style.background = color
+    document.getElementById('avatarEl').textContent = initials
+    document.getElementById('customerName').textContent = `${f.namePrefix} ${f.firstName} ${f.lastName}${f.nickname ? ` "${f.nickname}"` : ''}`
+    document.getElementById('customerSub').innerHTML = `
+        <span class="badge text-white me-2" style="background:${BLOOD_COLOR[f.bloodType]||'#aaa'}">${f.bloodType||'-'}</span>
+        <span class="me-2">${f.phone || '-'}</span>
+        ${f.email ? `<span>${f.email}</span>` : ''}
+    `
+    document.getElementById('btnEditInsurance').href = `/frontend/pages/insurance/form.html?id=${f.id}`
+
+    // Personal
+    document.getElementById('personalInfoBlock').innerHTML = [
+        infoRow('คำนำหน้า', f.namePrefix),
+        infoRow('ชื่อ', f.firstName),
+        infoRow('นามสกุล', f.lastName),
+        infoRow('ชื่อเล่น', f.nickname),
+        infoRow('เลขบัตรประชาชน', `<code class="info-value">${f.nationalId||'-'}</code>`, true),
+        infoRow('วันเกิด', formatDate(f.birthDate) + calcAge(f.birthDate)),
+        infoRow('หมู่เลือด', `<span class="badge text-white" style="background:${BLOOD_COLOR[f.bloodType]||'#aaa'}">${f.bloodType||'-'}</span>`, true),
+        infoRow('โทรศัพท์', f.phone),
+        infoRow('อีเมล', f.email),
+        infoRow('แพ้อาหาร / สุขภาพ', f.foodAllergy ? `<span class="badge bg-warning text-dark">${f.foodAllergy}</span>` : null, true),
+    ].join('')
+
+    // Emergency
+    document.getElementById('emergencyBlock').innerHTML = [
+        infoRow('ชื่อ-นามสกุล', f.emergencyName),
+        infoRow('โทรศัพท์', `<a href="tel:${f.emergencyPhone}" class="info-value">${f.emergencyPhone||'-'}</a>`, true),
+    ].join('')
+
+    // Beneficiary
+    const relLabel = f.beneficiaryRelation === 'OTHER'
+        ? (f.beneficiaryRelationOther || 'อื่น ๆ')
+        : (RELATION_LABEL[f.beneficiaryRelation] || f.beneficiaryRelation)
+    document.getElementById('beneficiaryBlock').innerHTML = [
+        infoRow('ชื่อ-นามสกุล', f.beneficiaryName),
+        infoRow('ความสัมพันธ์', relLabel),
+    ].join('')
+
+    // Insurance status
+    document.getElementById('statusBadge').textContent = STATUS_LABEL[f.status]
+    document.getElementById('statusBadge').className = `badge fs-6 px-3 ${STATUS_BADGE[f.status]}`
+
+    const coverageFmt = f.coverageAmount ? Number(f.coverageAmount).toLocaleString('th-TH') : '1,000,000'
+    let detailsHtml = `
+        <div class="col-sm-6"><div class="info-row">${infoRow('วงเงินคุ้มครอง', `<strong class="text-primary fs-5">${coverageFmt} บาท</strong>`, true)}</div></div>
+        <div class="col-sm-6"><div class="info-row">${infoRow('วันที่ส่งฟอร์ม', formatDate(f.submittedAt))}</div></div>
+    `
+    if (f.status === 'APPROVED') {
+        detailsHtml += `
+            <div class="col-sm-6"><div class="info-row">${infoRow('เลขกรมธรรม์', `<code class="text-success fw-bold">${f.issuedPolicyNo||'-'}</code>`, true)}</div></div>
+            <div class="col-sm-6"><div class="info-row">${infoRow('วันที่อนุมัติ', formatDate(f.reviewedAt))}</div></div>
+        `
+    }
+    if (f.status === 'REJECTED') {
+        detailsHtml += `
+            <div class="col-12"><div class="alert alert-danger mb-0"><i class="bi bi-x-circle me-2"></i><strong>เหตุผลที่ปฏิเสธ:</strong> ${f.rejectReason||'-'}</div></div>
+        `
+    }
+    document.getElementById('insuranceStatusDetails').innerHTML = detailsHtml
+
+    // Consent
+    document.getElementById('consentBlock').innerHTML = `
+        <div class="consent-item">${consentIcon(f.consentPolicyRead)} <span>รับทราบและเข้าใจข้อมูลกรมธรรม์ประกันภัยครบถ้วน</span></div>
+        <div class="consent-item">${consentIcon(f.consentTermsAccepted)} <span>ยอมรับเงื่อนไขความคุ้มครองและข้อยกเว้นทั้งหมด</span></div>
+        <div class="consent-item">${consentIcon(f.consent4WD)} <span>รับทราบว่ากิจกรรม 4WD / Off-Road ไม่ได้รับความคุ้มครอง</span></div>
+        <div class="consent-item">${consentIcon(f.consentDomesticOnly)} <span>รับทราบว่าคุ้มครองเฉพาะในราชอาณาจักรไทยเท่านั้น</span></div>
+    `
+
+    // Custom conditions
+    if (f.customConditions) {
+        document.getElementById('customCondCard').classList.remove('d-none')
+        document.getElementById('customCondText').textContent = f.customConditions
+    }
+
+    // Timeline
+    const events = []
+    if (f.createdAt) events.push({ date: f.createdAt, label: 'สร้างฟอร์ม', icon: 'bi-file-earmark-plus', color: '#6c757d' })
+    if (f.submittedAt) events.push({ date: f.submittedAt, label: 'ส่งฟอร์มแล้ว', icon: 'bi-send', color: '#0dcaf0' })
+    if (f.reviewedAt && f.status === 'APPROVED') events.push({ date: f.reviewedAt, label: `อนุมัติโดย ${f.reviewedBy||'admin'} · เลขกรมธรรม์: ${f.issuedPolicyNo||'-'}`, icon: 'bi-check-circle', color: '#198754' })
+    if (f.reviewedAt && f.status === 'REJECTED') events.push({ date: f.reviewedAt, label: `ปฏิเสธโดย ${f.reviewedBy||'admin'} · ${f.rejectReason||''}`, icon: 'bi-x-circle', color: '#dc3545' })
+    events.sort((a,b) => new Date(a.date)-new Date(b.date))
+
+    document.getElementById('timelineBlock').innerHTML = events.map((e,i) => `
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background:${e.color};box-shadow:0 0 0 2px ${e.color}40"></div>
+            <div class="d-flex align-items-start gap-2">
+                <i class="bi ${e.icon} mt-1" style="color:${e.color}"></i>
+                <div>
+                    <div class="fw-semibold">${e.label}</div>
+                    <div class="text-muted small">${formatDate(e.date)}</div>
+                </div>
+            </div>
+        </div>
+    `).join('')
+
+    // Booking history (from booking data on the form)
+    const booking = f.booking
+    if (booking) {
+        document.getElementById('bookingHistoryBlock').innerHTML = `
+            <div class="border rounded p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-semibold">การจอง #${booking.id}</span>
+                    <span class="badge ${booking.status==='CONFIRMED'?'bg-success':booking.status==='PENDING'?'bg-warning text-dark':'bg-secondary'}">${booking.status}</span>
+                </div>
+                <div class="row g-2 small text-muted">
+                    <div class="col-sm-4"><i class="bi bi-people me-1"></i>จำนวน ${booking.seats} ที่นั่ง</div>
+                    <div class="col-sm-4"><i class="bi bi-cash me-1"></i>ยอด ${Number(booking.totalAmount).toLocaleString('th-TH')} บาท</div>
+                    <div class="col-sm-4"><i class="bi bi-calendar me-1"></i>${formatDate(booking.createdAt)}</div>
+                </div>
+                ${booking.foodAllergy ? `<div class="mt-2 small"><span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle me-1"></i>แพ้ ${booking.foodAllergy}</span></div>` : ''}
+            </div>
+        `
+    } else {
+        document.getElementById('bookingHistoryBlock').innerHTML = '<p class="text-muted small mb-0">ไม่พบข้อมูลการจอง</p>'
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await initPage()
+    const params = new URLSearchParams(window.location.search)
+    const id = params.get('id')
+    if (!id) { window.location.href = 'list.html'; return }
+    try {
+        const data = await API.insurance.get(Number(id))
+        if (!data) { window.location.href = 'list.html'; return }
+        renderCustomer(data)
+        document.getElementById('loadingState').classList.add('d-none')
+        document.getElementById('mainContent').classList.remove('d-none')
+    } catch (e) {
+        document.getElementById('loadingState').innerHTML = `<i class="bi bi-exclamation-triangle text-danger fs-3"></i><p class="text-danger mt-2">${e.message}</p>`
+    }
+})
+</script>
+</body>
+</html>

@@ -1,0 +1,482 @@
+/* ═══════════════════════════════════════════════════════════
+   MONITOR  —  EZBooking-style formal design
+═══════════════════════════════════════════════════════════ */
+
+/* ── Global ──────────────────────────────────────────── */
+body { font-family: 'Sarabun', sans-serif !important; font-size: 15px; background: #f5f6fa; color: #222; }
+.page-content { background: #f5f6fa; padding: 20px; }
+
+/* ── Filter Card ─────────────────────────────────────── */
+.filter-card {
+    border: 1px solid #e4e6ef;
+    border-radius: 8px;
+    box-shadow: none;
+    background: #fff;
+}
+
+/* ── Page Title strip ────────────────────────────────── */
+.page-title-strip h5 { font-size: 1.05rem; font-weight: 700; color: #1a2340; }
+.page-title-strip p  { font-size: .78rem; color: #8492a6; }
+
+/* ── Trip Info Strip ─────────────────────────────────── */
+#tripStrip .strip-inner {
+    background: #fff;
+    border: 1px solid #e4e6ef;
+    border-left: 4px solid #1cb8a0;
+    border-radius: 8px;
+    padding: 16px 22px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+}
+
+#tripStrip .strip-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a2340;
+}
+
+#tripStrip .strip-meta {
+    font-size: .82rem;
+    color: #8492a6;
+    margin-top: 4px;
+}
+
+.kpi-indicator {
+    border-left: 1px solid #e4e6ef;
+    padding-left: 1.4rem;
+}
+
+.kpi-indicator .label {
+    font-size: .67rem;
+    text-transform: uppercase;
+    color: #aab0be;
+    font-weight: 700;
+    letter-spacing: .07em;
+    margin-bottom: 2px;
+}
+
+.kpi-indicator .value       { font-size: 1.1rem; font-weight: 700; color: #1a2340; }
+.kpi-indicator .value.success{ color: #1cb8a0; }
+.kpi-indicator .value.warning{ color: #f59e0b; }
+
+.task-status-box {
+    border-left: 1px solid #e4e6ef;
+    padding-left: 1.4rem;
+    min-width: 170px;
+}
+
+.task-status-box .label {
+    font-size: .67rem;
+    text-transform: uppercase;
+    color: #aab0be;
+    font-weight: 700;
+    letter-spacing: .07em;
+    margin-bottom: 4px;
+}
+
+.task-status-box .value { font-size: .88rem; font-weight: 600; color: #1a2340; }
+
+@media (max-width: 991.98px) {
+    .kpi-indicator, .task-status-box {
+        border-left: none; padding-left: 0;
+        margin-top: 16px; padding-top: 12px;
+        border-top: 1px solid #e4e6ef;
+    }
+    #tripStrip .text-end { text-align: left !important; }
+    .kpi-indicator { flex: 1; text-align: center; border-top: none; padding-top: 0; }
+    .kpi-indicator:first-child { padding-left: 0; }
+}
+
+/* ── Seat Map Panel ──────────────────────────────────── */
+.seatmap-card {
+    border: 1px solid #e4e6ef;
+    border-radius: 8px;
+    box-shadow: none;
+    height: 100%;
+    background: #fff;
+}
+
+.seatmap-card .card-header {
+    background: #1a2340;
+    color: #fff;
+    border-radius: 8px 8px 0 0;
+    padding: .5rem .9rem;
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+.sc-windshield {
+    height: 6px;
+    background: linear-gradient(90deg, #aab0be, #d1d5db 50%, #aab0be);
+    border-radius: 3px;
+    opacity: .4;
+    margin-bottom: 8px;
+}
+
+.sc-front {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 4px; margin-bottom: 6px; padding-bottom: 6px;
+    border-bottom: 1.5px dashed #e4e6ef;
+}
+
+.sc-static {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 42px; border-radius: 6px;
+    border: 1.5px solid #e4e6ef;
+    background: #f8f9fc; color: #8492a6;
+    font-size: .6rem; font-weight: 600; gap: 1px;
+}
+.sc-static i { font-size: .88rem; }
+
+.sc-divider { border-bottom: 1.5px dashed #e4e6ef; margin: 0 0 6px; }
+
+.sc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
+
+.sc-cell {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 58px; border-radius: 6px;
+    border: 1.5px solid #e4e6ef;
+    background: #f8f9fc; color: #8492a6;
+    font-size: .78rem; font-weight: 700;
+    cursor: default; transition: transform .12s;
+}
+.sc-cell:hover { transform: scale(1.04); }
+.sc-cell.male   { background: #eaf4ff; border-color: #93c5fd; color: #1d4ed8; }
+.sc-cell.female { background: #fff0f7; border-color: #f9a8d4; color: #be185d; }
+.sc-cell.booked { background: #e6faf6; border-color: #6ee7b7; color: #065f46; }
+.sc-cell.cancelled { opacity:.32; background:#f8f9fc !important; border-style:dashed !important; }
+
+.sc-num  { font-size: .72rem; line-height: 1; }
+.sc-name { font-size: .62rem; line-height: 1.1; max-width:62px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.sc-legend span { font-size: .78rem; color: #8492a6; }
+.sc-dot { display:inline-block; width:11px; height:11px; border-radius:3px; border:1.5px solid; vertical-align:middle; margin-right:3px; }
+
+/* ── Content Card (tabs wrapper) ─────────────────────── */
+.content-card {
+    border: 1px solid #e4e6ef;
+    border-radius: 8px;
+    box-shadow: none;
+    background: #fff;
+}
+
+.content-card .card-header {
+    background: #fff;
+    border-bottom: 1px solid #e4e6ef;
+    border-radius: 8px 8px 0 0;
+    padding: 0 1rem;
+}
+
+/* ── Nav Tabs ────────────────────────────────────────── */
+.content-card .nav-tabs .nav-link {
+    padding: .7rem 1rem;
+    font-size: .83rem;
+    font-weight: 500;
+    color: #8492a6;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+    border-radius: 0;
+    letter-spacing: .01em;
+    transition: color .15s;
+}
+.content-card .nav-tabs .nav-link .bi { font-size: .85rem; }
+.content-card .nav-tabs .nav-link.active {
+    color: #1cb8a0;
+    font-weight: 700;
+    border-bottom-color: #1cb8a0;
+    background: transparent;
+}
+.content-card .nav-tabs .nav-link:hover:not(.active) { color: #1a2340; }
+
+/* ── Booking Table (Tab 1) ───────────────────────────── */
+.booking-table {
+    font-size: .82rem;
+    white-space: nowrap;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.booking-table thead tr:first-child th {
+    background: #f1f5f9;
+    color: #0f172a;
+    font-weight: 800;
+    font-size: .72rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .85rem .8rem;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border: none;
+    border-bottom: 2px solid #cbd5e1;
+    text-align: center;
+    vertical-align: middle;
+}
+.booking-table thead tr:first-child th.group-h {
+    background: #f8fafc;
+    color: #334155;
+    font-size: .68rem;
+    border-bottom: 2px solid #1cb8a0;
+    text-align: center;
+}
+
+.booking-table thead tr:last-child th {
+    background: #fff;
+    color: #1e293b;
+    font-size: .7rem;
+    font-weight: 700;
+    padding: .6rem .7rem;
+    position: sticky;
+    top: 40px;
+    z-index: 2;
+    border: none;
+    border-bottom: 2px solid #f1f5f9;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.booking-table td {
+    padding: .45rem .65rem;
+    vertical-align: middle;
+    border-color: #f1f5f9;
+}
+
+/* Row tints */
+.booking-table tr.s-confirmed td { background: #f0fdf9; }
+.booking-table tr.s-pending   td { background: #fffbeb; }
+.booking-table tr.s-cancelled td { background: #fafafa; opacity: .5; }
+.booking-table tbody tr:hover td { background: #f1f5f9 !important; }
+
+.col-div  { border-left: 2px solid #1cb8a0 !important; }
+.col-link { white-space: nowrap; }
+.cell-id  { font-family: monospace; font-size: .68rem; color: #64748b; }
+
+.paid-full    { color: #059669; font-weight: 700; }
+.paid-partial { color: #d97706; font-weight: 700; }
+.unpaid       { color: #dc2626; font-weight: 700; }
+
+.seat-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 24px; height: 22px; padding: 0 5px;
+    border-radius: 4px; background: #f1f5f9;
+    font-weight: 800; font-size: .72rem;
+    border: 1px solid #cbd5e1;
+    color: #1e293b;
+}
+
+/* ── Approval Table (Tab 2) ──────────────────────────── */
+.approval-table { font-size: .88rem; width: 100%; border-collapse: separate; border-spacing: 0; }
+
+.approval-table thead th {
+    background: #f8fafc;
+    color: #0f172a;
+    font-weight: 800;
+    font-size: .75rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .95rem .9rem;
+    border-bottom: 2px solid #cbd5e1;
+    border-top: none;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.approval-table td {
+    padding: .9rem .9rem;
+    vertical-align: middle;
+    border-color: #f1f5f9;
+    background: #fff;
+    transition: background .15s;
+}
+.approval-table tbody tr:hover td { background: #f8fbff; }
+
+/* Status indicator on the left edge */
+.approval-table tr.s-confirmed td:first-child { border-left: 5px solid #10b981; }
+.approval-table tr.s-pending   td:first-child { border-left: 5px solid #f59e0b; }
+.approval-table tr.s-cancelled td:first-child { border-left: 5px solid #94a3b8; }
+.approval-table tr.s-cancelled { opacity: .65; }
+
+/* ── Expense Table (Tab 3) ───────────────────────────── */
+#tabExpense .table thead th {
+    text-align: center;
+    vertical-align: middle;
+    background: #f8fafc;
+    color: #0f172a;
+    font-weight: 800;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: .8rem .9rem;
+    border-bottom: 2px solid #cbd5e1;
+}
+
+.check-dot {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    font-size: .72rem; font-weight: 700;
+}
+.check-dot.yes { background: #d1faf4; color: #0d9488; }
+.check-dot.no  { background: #fee2e2; color: #dc2626; }
+
+/* ── Status Badges ───────────────────────────────────── */
+.badge-confirmed { background: #d1faf4; color: #0d9488; font-weight: 600; border-radius: 20px; }
+.badge-pending   { background: #fef3c7; color: #92400e; font-weight: 600; border-radius: 20px; }
+.badge-cancelled { background: #f3f4f6; color: #6b7280; font-weight: 600; border-radius: 20px; }
+
+/* ── Search labels ───────────────────────────────────── */
+.srch-label {
+    font-size: .67rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .07em;
+    color: #8492a6; margin-bottom: 3px;
+}
+
+/* ── Trip typeahead dropdown ─────────────────────────── */
+#tripDropdown .td-item:hover  { background: #f0fdf9; }
+#tripDropdown .td-item.active { background: #d1faf4; }
+#seatMiniBar .progress { height: 5px; }
+
+/* ── Empty State ─────────────────────────────────────── */
+#emptyState .empty-icon { font-size: 3rem; color: #d1d5db; }
+#emptyState h5 { color: #6b7280; font-weight: 600; }
+#emptyState p  { color: #9ca3af; font-size: .88rem; }
+
+/* ── Print Header ────────────────────────────────────── */
+#printHeader { display: none; }
+
+/* ═══════════════════════════════════════════════════════
+   PRINT
+═══════════════════════════════════════════════════════ */
+@page {
+    size: A4 landscape;
+    margin: 6mm 8mm;
+}
+
+@media print {
+
+    .no-print,
+    .sidebar, .sidebar-overlay, #sidebar, #main-header,
+    .page-header, #tripStrip, #kpiRow, #emptyState,
+    .seatmap-card, .content-card .nav-tabs,
+    .tab-pane:not(.active) {
+        display: none !important;
+    }
+
+    html, body {
+        margin: 0;
+        background: #fff !important;
+        font-size: 8pt !important;
+        color: #111 !important;
+    }
+
+    .d-flex { display: block !important; }
+
+    .main-content { margin-left: 0 !important; overflow: visible !important; }
+    .page-content  { padding: 0 !important; background: #fff !important; }
+    .print-wrap    { overflow: visible !important; }
+
+    #printHeader {
+        display: block !important;
+        margin-bottom: 8mm;
+    }
+
+    /* Right panel full-width */
+    #mainPanel .col-lg-3 { display: none !important; }
+    #mainPanel .col-lg-9 { width: 100% !important; max-width: 100% !important; }
+
+    .content-card {
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+    .content-card .card-header { display: none !important; }
+
+    /* Booking table */
+    .booking-table {
+        font-size: 5.2pt !important;
+        width: 100% !important;
+        table-layout: auto !important;
+        border-collapse: collapse !important;
+        white-space: nowrap !important;
+        border: 1px solid #cbd5e1 !important;
+    }
+
+    .booking-table thead tr:first-child th {
+        background: #1a2340 !important;
+        color: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        font-size: 4.8pt !important;
+        padding: 1.2mm 1.5mm !important;
+        position: static !important;
+        border-bottom: 2px solid #1cb8a0 !important;
+    }
+
+    .booking-table thead tr:first-child th.group-h {
+        background: #111827 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .booking-table thead tr:last-child th {
+        background: #f1f5f9 !important;
+        color: #1a2340 !important;
+        font-weight: 700 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        font-size: 4.5pt !important;
+        padding: 1mm 1.5mm !important;
+        position: static !important;
+        border-bottom: 1px solid #cbd5e1 !important;
+    }
+
+    .booking-table td {
+        padding: 0.8mm 1.5mm !important;
+        font-size: 5.2pt !important;
+        white-space: nowrap !important;
+        border-bottom: 0.5pt solid #e2e8f0 !important;
+        color: #1a2340 !important;
+    }
+
+    .booking-table tr { page-break-inside: avoid; }
+
+    .booking-table tr.s-confirmed td {
+        background: #f0fdf9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .booking-table tr.s-cancelled td { opacity: .4 !important; }
+
+    .col-link { display: none !important; }
+    .no-print { display: none !important; }
+
+    /* print-all mode */
+    body.print-all .tab-pane { display: block !important; opacity: 1 !important; }
+    body.print-all #tabApproval { page-break-before: always; }
+
+    body.print-all .approval-table {
+        font-size: 7pt !important;
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    body.print-all .approval-table thead th {
+        background: #fafbfc !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        font-size: 6.5pt !important;
+        padding: 1.5mm 2mm !important;
+        border-bottom: 1.5pt solid #1cb8a0 !important;
+    }
+
+    body.print-all .approval-table td {
+        padding: 1.2mm 2mm !important;
+        font-size: 7pt !important;
+    }
+
+    body.print-all #print-section-label-approval { display: block !important; }
+}
