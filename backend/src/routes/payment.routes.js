@@ -25,7 +25,8 @@ router.get('/', authenticate, authorize('ADMIN', 'STUFF'), async (req, res) => {
       booking: { 
         include: { 
           user: { select: { id: true, name: true, phone: true } },
-          busRound: { include: { trip: true } } 
+          busRound: { include: { trip: true } },
+          seatBookings: true
         } 
       },
       user: { select: { id: true, name: true, phone: true } }

@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GROW UP GO ANYWHERE - GUGA Travels</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    
+    <style>
+        :root {
+            --primary-green: #00d9b4;
+            --dark-navy: #0f1419;
+            --dark-blue: #1a2332;
+            --darker-blue: #141b26;
+            --text-white: #ffffff;
+            --text-gray: #a0aec0;
+            --card-bg: #1e2837;
+            --card-hover: #252e3f;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--dark-navy);
+            color: var(--text-white);
+            overflow-x: hidden;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Kanit', sans-serif;
+            font-weight: 700;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background-color: rgba(15, 20, 25, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: var(--text-white) !important;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 800;
+            font-size: 1.3rem;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-green), #00c4a0);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .btn-login {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-white);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            margin-right: 1rem;
+        }
+        
+        .btn-login:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: var(--text-white);
+        }
+        
+        .btn-register {
+            background: linear-gradient(135deg, var(--primary-green), #00c4a0);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.8rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 217, 180, 0.3);
+        }
+        
+        .lang-switch {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            color: var(--text-white);
+            margin-right: 1rem;
+            cursor: pointer;
+        }
+        
+        /* Hero Section */
+        .hero-section {
+            min-height: 100vh;
+            background: linear-gradient(rgba(15, 20, 25, 0.7), rgba(15, 20, 25, 0.8)), 
+                        url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&h=1080&fit=crop') center/cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
+        
+        .hero-content h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-gray);
+            max-width: 800px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.8;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+        
+        .btn-hero {
+            background: linear-gradient(135deg, var(--primary-green), #00c4a0);
+            color: white;
+            padding: 1rem 3rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+            animation: fadeInUp 1s ease-out 0.4s both;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-hero:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 217, 180, 0.4);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .location-badge {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 1.2rem;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            font-size: 0.95rem;
+        }
+        
+        /* Fire Icon Animation */
+        .fire-section {
+            background-color: var(--darker-blue);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .fire-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #ff6b35, #ff8557);
+            padding: 0.5rem 1.2rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        /* Section Titles */
+        .section {
+            padding: 5rem 0;
+            background-color: var(--dark-navy);
+        }
+        
+        .section-alt {
+            background-color: var(--dark-blue);
+        }
+        
+        .section-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .section-subtitle {
+            color: var(--primary-green);
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+        
+        /* Trip Cards */
+        .trip-card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            height: 100%;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .trip-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(0, 217, 180, 0.3);
+        }
+        
+        .trip-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            position: relative;
+        }
+        
+        .trip-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .trip-content {
+            padding: 1.5rem;
+        }
+        
+        .trip-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .trip-duration {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .trip-price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-green);
+        }
+        
+        .trip-price-label {
+            font-size: 0.85rem;
+            color: var(--text-gray);
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        
+        .btn-view-more {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-white);
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            width: 100%;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-view-more:hover {
+            background-color: rgba(0, 217, 180, 0.1);
+            color: var(--primary-green);
+        }
+        
+        /* Swiper Customization */
+        .swiper {
+            padding: 2rem 0 3rem !important;
+        }
+        
+        .swiper-button-next,
+        .swiper-button-prev {
+            color: var(--primary-green) !important;
+            background-color: rgba(0, 217, 180, 0.1);
+            width: 50px !important;
+            height: 50px !important;
+            border-radius: 50%;
+        }
+        
+        .swiper-button-next:after,
+        .swiper-button-prev:after {
+            font-size: 20px !important;
+        }
+        
+        .swiper-pagination-bullet {
+            background-color: var(--text-gray) !important;
+        }
+        
+        .swiper-pagination-bullet-active {
+            background-color: var(--primary-green) !important;
+        }
+        
+        /* Feature Cards */
+        .feature-card {
+            background: linear-gradient(135deg, rgba(30, 40, 55, 0.8), rgba(30, 40, 55, 0.4));
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop') center/cover;
+            opacity: 0.15;
+            z-index: 0;
+            transition: all 0.4s ease;
+        }
+        
+        .feature-card:hover::before {
+            opacity: 0.25;
+            transform: scale(1.1);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(0, 217, 180, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .feature-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .feature-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary-green), #00c4a0);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+        }
+        
+        .feature-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-text {
+            color: var(--text-gray);
+            line-height: 1.7;
+        }
+        
+        /* Blog/Inspiration Cards */
+        .blog-card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+        }
+        
+        .blog-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+        
+        .blog-image-container {
+            position: relative;
+            height: 250px;
+            overflow: hidden;
+        }
+        
+        .blog-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+        
+        .blog-card:hover .blog-image {
+            transform: scale(1.1);
+        }
+        
+        .blog-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 1.5rem;
+        }
+        
+        .blog-category {
+            background: rgba(0, 217, 180, 0.9);
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            display: inline-block;
+            width: fit-content;
+            margin-bottom: 0.8rem;
+        }
+        
+        .blog-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        /* Services Section */
+        .service-card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .service-card:hover {
+            background-color: var(--card-hover);
+            border-color: rgba(0, 217, 180, 0.2);
+        }
+        
+        .service-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 217, 180, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.2rem;
+            font-size: 1.8rem;
+            color: var(--primary-green);
+        }
+        
+        .service-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+        }
+        
+        .service-text {
+            color: var(--text-gray);
+            line-height: 1.6;
+        }
+        
+        /* FAQ Section */
+        .faq-section {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .faq-item {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .faq-question {
+            padding: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .faq-question:hover {
+            background-color: rgba(0, 217, 180, 0.05);
+        }
+        
+        .faq-question h5 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        
+        .faq-icon {
+            color: var(--primary-green);
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .faq-answer-content {
+            padding: 0 1.5rem 1.5rem;
+            color: var(--text-gray);
+            line-height: 1.7;
+        }
+        
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+        }
+        
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+        
+        /* Social Contact Section */
+        .social-contact {
+            text-align: center;
+            padding: 4rem 0;
+        }
+        
+        .social-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            max-width: 900px;
+            margin: 3rem auto 0;
+        }
+        
+        .social-item {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-white);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .social-item:hover {
+            background-color: var(--card-hover);
+            transform: translateY(-5px);
+            color: var(--text-white);
+            border-color: var(--primary-green);
+        }
+        
+        .social-item i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .social-item.facebook i { color: #1877f2; }
+        .social-item.line i { color: #00c300; }
+        .social-item.instagram i { color: #e4405f; }
+        .social-item.tiktok i { color: #000000; background: linear-gradient(45deg, #00f2ea, #ff0050); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .social-item.email i { color: var(--primary-green); }
+        
+        /* Footer */
+        footer {
+            background-color: #0a0f14;
+            padding: 2rem 0 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .footer-text {
+            text-align: center;
+            color: var(--text-gray);
+            font-size: 0.9rem;
+        }
+        
+        /* Cookie Notice */
+        .cookie-notice {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(30, 40, 55, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.2rem 2rem;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            max-width: 90%;
+            width: 800px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 9999;
+        }
+        
+        .cookie-notice.hidden {
+            display: none;
+        }
+        
+        .cookie-icon {
+            color: var(--primary-green);
+            font-size: 1.5rem;
+        }
+        
+        .cookie-text {
+            flex: 1;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .cookie-text a {
+            color: var(--primary-green);
+            text-decoration: underline;
+        }
+        
+        .btn-cookie {
+            background: linear-gradient(135deg, var(--primary-green), #00c4a0);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.8rem;
+            border-radius: 8px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        /* Location Filter */
+        .location-filter {
+            background-color: var(--card-bg);
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-white);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-content h1 {
+                font-size: 3rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .social-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .cookie-notice {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <div class="logo-icon">
+                    <i class="bi bi-geo-alt"></i>
+                </div>
+                <span>GROW UP GO ANYWHERE</span>
+            </a>
+            
+            <div class="d-flex align-items-center">
+                <button class="btn btn-login d-none d-md-inline-flex">
+                    <i class="bi bi-person"></i> หน้าแรก
+                </button>
+                <button class="btn lang-switch d-none d-md-inline-block">
+                    <i class="bi bi-globe"></i> EN
+                </button>
+                <button class="btn-search d-md-none" style="background: none; border: none; color: white; font-size: 1.2rem; margin-right: 0.5rem;">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button class="btn btn-register">ลงทะเบียน</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>โตละ...จะไปไหนก็ได้</h1>
+            <p class="hero-subtitle">
+                ชีนดีต้องรับผิงพอ Grow up Go anywhere ที่มีชื่อยอดมรดกการเดินทางที่ง่ายมวยของอกไป้
+                เปิดโลกกว้างด่วงคีม เรคิอเที่อมร่วมทางที่จะชาดูคมใบจุเล่นทางธรรมชาติ เติมน้ำ และ
+                ดะสุฎที่เที่ยวรวยนา กิ่งในโขมและสวางป​ระเทด ไม่วาคุมจะเป็นสมายอุมเข็อใหม่​ครือล่ล กิม
+                ด้วย เราพี่พ​รำบตแลละชาคุมในใคนเที่ยงป​ระสบการณ์​ในน่า เตร็ยมเป็งยกุดให้พ​รำม
+                เเล้วมาเดินใชนำการเดินทางในทุกที่ภเมพ "Grow up, Go anywhere" กับพวกเรากันเลย!
+            </p>
+            <button class="btn-hero">
+                เช็คทริปและจองทริป <i class="bi bi-arrow-right"></i>
+            </button>
+            <div class="location-badge">
+                <i class="bi bi-geo-alt"></i>
+                ประเทศ & อุปกรณ์
+            </div>
+        </div>
+    </section>
+
+    <!-- Fire Section - Hot Trips -->
+    <div class="container fire-section">
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <span class="fire-badge">
+                    <i class="bi bi-fire"></i> ทริปไฟแรก
+                </span>
+            </div>
+            <div class="col-md-9">
+                <div class="swiper fire-swiper">
+                    <div class="swiper-wrapper">
+                        <div class="swiper-slide">
+                            <div style="background: url('https://images.unsplash.com/photo-1528181304800-259b08848526?w=400&h=200&fit=crop') center/cover; height: 80px; border-radius: 10px; position: relative;">
+                                <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.75rem;">
+                                    <i class="bi bi-calendar"></i> 10-15 เม.ย. 2569
+                                </div>
+                                <div style="position: absolute; bottom: 10px; left: 10px; color: white; font-weight: 600;">
+                                    ฿3,790 บาท
+                                </div>
+                            </div>
+                        </div>
+                        <div class="swiper-slide">
+                            <div style="background: url('https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&h=200&fit=crop') center/cover; height: 80px; border-radius: 10px; position: relative;">
+                                <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.75rem;">
+                                    <i class="bi bi-calendar"></i> 18-19 เม.ย. 2569
+                                </div>
+                                <div style="position: absolute; bottom: 10px; left: 10px; color: white; font-weight: 600;">
+                                    ฿3,490 บาท
+                                </div>
+                            </div>
+                        </div>
+                        <div class="swiper-slide">
+                            <div style="background: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=200&fit=crop') center/cover; height: 80px; border-radius: 10px; position: relative;">
+                                <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.75rem;">
+                                    <i class="bi bi-calendar"></i> 3-4 พ.ค. 2569
+                                </div>
+                                <div style="position: absolute; bottom: 10px; left: 10px; color: white; font-weight: 600;">
+                                    ฿4,890 บาท
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Domestic Trips Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">ทริปในประเทศ</h2>
+            <p class="section-subtitle">สัมผัสธรรมชาติที่ยอดอยู่รอบตัวคุณ</p>
+            
+            <div class="text-center mb-4">
+                <div class="location-filter">
+                    <i class="bi bi-geo-alt" style="color: var(--primary-green);"></i>
+                    ตราษยอดอรมที่งหนอ...
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+            </div>
+            
+            <div class="swiper domestic-swiper">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <div class="trip-card">
+                            <div style="position: relative;">
+                                <img src="https://images.unsplash.com/photo-1528181304800-259b08848526?w=600&h=400&fit=crop" alt="ทริป" class="trip-image">
+                                <div class="trip-badge">
+                                    <i class="bi bi-geo-alt-fill"></i> ตาก, ไทย
+                                </div>
+                            </div>
+                            <div class="trip-content">
+                                <h3 class="trip-title">เปย์ใต้ลุอด ดอยมะปงตาอาหนั่น</h3>
+                                <div class="trip-duration">
+                                    <i class="bi bi-calendar"></i> 3 วัน 2 คืน
+                                </div>
+                                <span class="trip-price-label">ราคาเริ่มต้น</span>
+                                <div class="trip-price">฿3,790</div>
+                                <button class="btn-view-more">
+                                    ดูรายละเอียด <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="swiper-slide">
+                        <div class="trip-card">
+                            <div style="position: relative;">
+                                <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&h=400&fit=crop" alt="ทริป" class="trip-image">
+                                <div class="trip-badge">
+                                    <i class="bi bi-geo-alt-fill"></i> แม่ฮ่องสอน, ไทย
+                                </div>
+                            </div>
+                            <div class="trip-content">
+                                <h3 class="trip-title">หว้าหาใจ~หยอมใข้~ปูยหลวง</h3>
+                                <div class="trip-duration">
+                                    <i class="bi bi-calendar"></i> 3 วัน 2 คืน
+                                </div>
+                                <span class="trip-price-label">ราคาเริ่มต้น</span>
+                                <div class="trip-price">฿4,890</div>
+                                <button class="btn-view-more">
+                                    ดูรายละเอียด <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="swiper-slide">
+                        <div class="trip-card">
+                            <div style="position: relative;">
+                                <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop" alt="ทริป" class="trip-image">
+                                <div class="trip-badge">
+                                    <i class="bi bi-geo-alt-fill"></i> เชียงใหม่, ไทย
+                                </div>
+                            </div>
+                            <div class="trip-content">
+                                <h3 class="trip-title">น้ำตกห้วยน้ำเย็น + เคลอเนไอมสเซ่ย์</h3>
+                                <div class="trip-duration">
+                                    <i class="bi bi-calendar"></i> 2 วัน 1 คืน
+                                </div>
+                                <span class="trip-price-label">ราคาเริ่มต้น</span>
+                                <div class="trip-price">฿3,490</div>
+                                <button class="btn-view-more">
+                                    ดูรายละเอียด <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="swiper-slide">
+                        <div class="trip-card">
+                            <div style="position: relative;">
+                                <img src="https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?w=600&h=400&fit=crop" alt="ทริป" class="trip-image">
+                                <div class="trip-badge">
+                                    <i class="bi bi-geo-alt-fill"></i> ตาก, ไทย
+                                </div>
+                            </div>
+                            <div class="trip-content">
+                                <h3 class="trip-title">คะหร็ญู จอวาเล ดูเล</h3>
+                                <div class="trip-duration">
+                                    <i class="bi bi-calendar"></i> 3 วัน 2 คืน
+                                </div>
+                                <span class="trip-price-label">ราคาเริ่มต้น</span>
+                                <div class="trip-price">฿4,190</div>
+                                <button class="btn-view-more">
+                                    ดูรายละเอียด <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-pagination"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- International Trips Section -->
+    <section class="section section-alt">
+        <div class="container">
+            <h2 class="section-title">ทริปต่างประเทศ</h2>
+            <p class="section-subtitle">ก้าวข้ามย้ตราวาด สู่อดเวเทีรูทีส่งที่สุด</p>
+            
+            <div class="text-center mb-4">
+                <div class="location-filter">
+                    <i class="bi bi-geo-alt" style="color: var(--primary-green);"></i>
+                    ตราษยอดอรมที่งหนอ...
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+            </div>
+            
+            <div class="swiper international-swiper">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <div class="trip-card">
+                            <div style="position: relative;">
+                                <img src="https://images.unsplash.com/photo-1555073980-682d69c05249?w=600&h=400&fit=crop" alt="ทริป" class="trip-image">
+                                <div class="trip-badge" style="background: rgba(255, 100, 50, 0.9);">
+                                    <i class="bi bi-geo-alt-fill"></i> Indonesia
+                                </div>
+                                <div style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.9); color: #333; padding: 0.3rem 0.7rem; border-radius: 15px; font-size: 0.8rem;">
+                                    Line @guga
+                                </div>
+                            </div>
+                            <div class="trip-content">
+                                <h3 class="trip-title">Rinjani</h3>
+                                <div class="trip-duration">
+                                    <i class="bi bi-calendar"></i> 4วัน 3คืน
+                                </div>
+                                <span class="trip-price-label">ราคาเริ่มต้น</span>
+                                <div class="trip-price">฿12,500</div>
+                                <button class="btn-view-more">
+                                    ดูรายละเอียด <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="swiper-slide">
+                        <div class="trip-card">
+                            <div style="position: relative;">
+                                <img src="https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=600&h=400&fit=crop" alt="ทริป" class="trip-image">
+                                <div class="trip-badge" style="background: rgba(255, 100, 50, 0.9);">
+                                    <i class="bi bi-geo-alt-fill"></i> Indonesia
+                                </div>
+                                <div style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.9); color: #333; padding: 0.3rem 0.7rem; border-radius: 15px; font-size: 0.8rem;">
+                                    Line @guga
+                                </div>
+                            </div>
+                            <div class="trip-content">
+                                <h3 class="trip-title">BROMO</h3>
+                                <div class="trip-duration">
+                                    <i class="bi bi-calendar"></i> 4-7 วัน
+                                </div>
+                                <span class="trip-price-label">ราคาเริ่มต้น</span>
+                                <div class="trip-price">฿12,900</div>
+                                <button class="btn-view-more">
+                                    ดูรายละเอียด <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="swiper-slide">
+                        <div class="trip-card">
+                            <div style="position: relative;">
+                                <img src="https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=600&h=400&fit=crop" alt="ทริป" class="trip-image">
+                                <div class="trip-badge" style="background: rgba(50, 100, 200, 0.9);">
+                                    <i class="bi bi-geo-alt-fill"></i> Philippine
+                                </div>
+                                <div style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.9); color: #333; padding: 0.3rem 0.7rem; border-radius: 15px; font-size: 0.8rem;">
+                                    Line @guga
+                                </div>
+                            </div>
+                            <div class="trip-content">
+                                <h3 class="trip-title">CEBU</h3>
+                                <div class="trip-duration">
+                                    <i class="bi bi-calendar"></i> 4 วัน 3 คืน
+                                </div>
+                                <span class="trip-price-label">ราคาเริ่มต้น</span>
+                                <div class="trip-price">฿9,900</div>
+                                <button class="btn-view-more">
+                                    ดูรายละเอียด <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="swiper-slide">
+                        <div class="trip-card">
+                            <div style="position: relative;">
+                                <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop" alt="ทริป" class="trip-image">
+                                <div class="trip-badge" style="background: rgba(100, 150, 250, 0.9);">
+                                    <i class="bi bi-geo-alt-fill"></i> ชิลี
+                                </div>
+                                <div style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.9); color: #333; padding: 0.3rem 0.7rem; border-radius: 15px; font-size: 0.8rem;">
+                                    Line @guga
+                                </div>
+                            </div>
+                            <div class="trip-content">
+                                <h3 class="trip-title">4 ตริหู้</h3>
+                                <div class="trip-duration">
+                                    <i class="bi bi-calendar"></i> 4 คืน 5 วัน
+                                </div>
+                                <span class="trip-price-label">ราคาเริ่มต้น</span>
+                                <div class="trip-price">฿15,900</div>
+                                <button class="btn-view-more">
+                                    ดูรายละเอียด <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-pagination"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Us Section -->
+    <section class="section">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="feature-card">
+                        <div class="feature-content">
+                            <div class="feature-icon">
+                                <i class="bi bi-hand-thumbs-up"></i>
+                            </div>
+                            <h3 class="feature-title">ทีมงานมากประสบการณ์</h3>
+                            <p class="feature-text">
+                                ทีมงานมากประสบการณ์ ดูแลตุกระยะเอียดจ้อดชอยางดิพ งันแต่กราอามปลอกภัย ความสะดวกสบาย และประสบการณ์ของผู้รับเดินทาง พร้อมทาตุคุมมอกใจ้นั้นมิส่โอก​น​า​โอกศึกษาเก​าห​วท​ิรและดั๊น​ิมไอโตไปที่นวณ​อิี่ตมแทบทนาง
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="feature-card">
+                        <div class="feature-content">
+                            <div class="feature-icon" style="background: linear-gradient(135deg, #ff6b6b, #ee5a6f);">
+                                <i class="bi bi-cup-hot"></i>
+                            </div>
+                            <h3 class="feature-title">เรื่องอาหารใว้ใจเราได้</h3>
+                            <p class="feature-text">
+                                เต็มพลังหลังการเดินป่าด้วยเมนูอาหารสุดอร่อย ถ้าคอนใชมุมบดอต พร้อมเครื่องตั้น ต​รัมเมล์ สามหย่า
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-content">
+                            <div class="feature-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <h3 class="feature-title">มิตรภาพระห่วางทาง</h3>
+                            <p class="feature-text">
+                                ใบ​อีเราคะร้​วะได้​อีันขุทะทรีขนารลลที่ อนม้ัน เป้นที่เนอง เทเำัใบูให้ทียักเพื่อนกู้รื​อ
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-8">
+                    <div class="feature-card">
+                        <div class="feature-content">
+                            <div class="feature-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                                <i class="bi bi-suitcase"></i>
+                            </div>
+                            <h3 class="feature-title">การท่องเที่ยวเชิงอุปรัก​ษ์</h3>
+                            <p class="feature-text">
+                                การท้องเที่ยวเชิงอุปรักษ์ ค้ิวการเดินทางที่ใสใจธรรมชาติและชุมชนท้องถ่ิน ลดผลกิระทบต่อสิ่งแวดล้อม พร้อมรักศาไจใรธำนีวแชีกีอ วันเธรรม และช่วยส่วนสมุนาราบูรุกฏ์ท่ีทาองถูดื​อ ใบงงางั​่งชื่น
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Inspiration/Blog Section -->
+    <section class="section section-alt">
+        <div class="container">
+            <h2 class="section-title">ภาพความประทับใจ</h2>
+            <p class="section-subtitle">บันทึกความทรงจำและรอยย้้นจากการเดินทาง เราปิคำตอบ</p>
+            
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="blog-card">
+                        <div class="blog-image-container">
+                            <img src="https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=800&h=500&fit=crop" alt="Blog" class="blog-image">
+                            <div class="blog-overlay">
+                                <span class="blog-category">
+                                    <i class="bi bi-tag"></i> Lifestyle
+                                </span>
+                                <h4 class="blog-title">หนีเมืยมาพั้พหน่วง! บันทึกตะลุยารมีบึ 6 วัน 5 คืน...</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="blog-card">
+                        <div class="blog-image-container">
+                            <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=500&fit=crop" alt="Blog" class="blog-image">
+                            <div class="blog-overlay">
+                                <span class="blog-category">
+                                    <i class="bi bi-tag"></i> ลาก, ไทย
+                                </span>
+                                <h4 class="blog-title">เลอควาเดา สง้คาย ตุดากล</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">บริการอื่นๆ</h2>
+            <p class="section-subtitle">มากด้วนัเค้าการเดินทาง เรามอบประสบกรณ์ที่งหนำงมื่อระดับใช้คุม</p>
+            
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <h4 class="service-title">รับจัดทริปเต่มป้าแมบสัว้นตัว</h4>
+                        <p class="service-text">
+                            หากคุมบึกลี่มแข่อทํิะอุครอบุรวตั้งแต้้่โรงม่วนตัว เบิม 8-10) ศ้นนี้เป็น สามาลดตติดต่องพื่อให้โจอรแนบเดินทางานต้่กรประสีบแดดนดนที่วารพับุมที​อมกอง ริ​อักระเปช​าหลิงง จ​​ัเต่​งที​ฌแบด​เฟ​วโปรงคง​นึสงีต้ง คิงหระอง พร้อมคมซอเตรี่ยมกิคุมอุนรื้ทำอรงคิถุง
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="bi bi-compass"></i>
+                        </div>
+                        <h4 class="service-title">อุปกรณ์เข้าพร้อม</h4>
+                        <p class="service-text">
+                            เราบีทึง เต้นท์ และ เครอุงบอนใช่งา อะน่าสดวกสนย ราคาไม่แพง แมรนด้ NH , Mobi Garden
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="bi bi-geo-alt-fill"></i>
+                        </div>
+                        <h4 class="service-title">รับจัดสำหรับ ออฟฟิท และบริษัทใหญ่ๆ</h4>
+                        <p class="service-text">
+                            การเราสบากรอบหารร้องตาคตอน การฉามายนดุน​อข​กือ​สทิป​อมนบอน​บาทไ​ด้ พร้อมริจเสริยมกับทานสเนาสทงบบล​อง​กุคน สุดถตาม และหะถ​ึบา้งการกามใต่คว่งอบมนอลี่งดูกงบ้้นงชทมูร​เคระเมอ​กว​กทเปีัน​ยอะเงยุ​อะ​ดับตัน​อังทูดทีกทับี ของทุคคน
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section section-alt">
+        <div class="container">
+            <h2 class="section-title">คำถามที่พบบ่อย</h2>
+            <p class="section-subtitle">ข้อสงังิเกี่ยวกับการเดินทาง เรามีคำตอบ</p>
+            
+            <div class="faq-section">
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <h5>ไม่คยมีประสบการณ์เต็มป่ามาก่อน สามารถร่วมทริปได้หรือไป?</h5>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            ได้เลยครับ! ทริปของเรามี guide มืออาชีพคอยดูแลและให้คำแนะนำตลอดการเดินทาง เหมาะสำหรับทั้งมือใหม่และผู้มีประสบการณ์
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <h5>สามารถจองทีตั้งเลระนั้นเต็มบ้ได้อชางไร?</h5>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            สามารถจองได้ผ่านเว็บไซต์ หรือติดต่อทาง LINE Official Account @guga หรือโทรศัพท์โดยตรง ทีมงานพร้อมให้คำปรึกษา
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <h5>มีช่องทางการชำระเงินใบบาง?</h5>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            รับชำระผ่านการโอนเงิน, พร้อมเพย์, บัตรเครดิต และชำระเงินสดที่สำนักงาน
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <h5>จุดนัดพบมีรสคตูส่วนใหญ่อยู่ที่ใหน?</h5>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            จุดนัดพบส่วนใหญ่จะอยู่ที่กรุงเทพฯ หรือจังหวัดที่เป็นจุดเริ่มต้นของทริป ทางทีมจะแจ้งรายละเอียดให้ทราบล่วงหน้า
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <h5>มีบริการช่าอปทุกภรศมีเต็มป่า (ป่น เต้นทื, ถุงนอน) หรือไม?</h5>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            มีบริการให้เช่าอุปกรณ์ครบครัน ทั้งเต้นท์, ถุงนอน และอุปกรณ์เดินป่าอื่นๆ ในราคาที่เหมาะสม
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Contact Section -->
+    <section class="social-contact">
+        <div class="container">
+            <h2 class="section-title">เริ่มต้นการเดินทางของคุณ</h2>
+            <p class="section-subtitle">เลือกช่องทางที่คุณสะดวกเพื่อสอบถามหรือจองบริการทุกที่ทั้งเรา</p>
+            
+            <div class="social-grid">
+                <a href="#" class="social-item facebook">
+                    <i class="bi bi-facebook"></i>
+                    <div>Facebook</div>
+                </a>
+                <a href="#" class="social-item line">
+                    <i class="bi bi-line"></i>
+                    <div>LINE</div>
+                </a>
+                <a href="#" class="social-item instagram">
+                    <i class="bi bi-instagram"></i>
+                    <div>Instagram</div>
+                </a>
+                <a href="#" class="social-item tiktok">
+                    <i class="bi bi-tiktok"></i>
+                    <div>TikTok</div>
+                </a>
+                <a href="#" class="social-item email">
+                    <i class="bi bi-envelope"></i>
+                    <div>Email</div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p class="footer-text">© 2026 GROW UP GO ANYWHERE. All rights reserved. | Powered by GUGA Travels</p>
+        </div>
+    </footer>
+
+    <!-- Cookie Notice -->
+    <div class="cookie-notice" id="cookieNotice">
+        <i class="bi bi-shield-check cookie-icon"></i>
+        <div class="cookie-text">
+            เว็บไซต์นี้ใช้คุกกี้ (Cookies) เพื่อนำเสนอประสบการณ์การใช้งานที่ดีที่สุดให้กับคุณ การใช้งานเว็บไซต์นี้ถือว่าคุณยอมรับ
+            <a href="#">นโยบายความเป็นส่วนตัว</a> ของเรา
+        </div>
+        <button class="btn-cookie" onclick="acceptCookies()">เข้าใจและยอมรับ</button>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    
+    <script>
+        // Initialize Swiper for Fire Trips
+        new Swiper('.fire-swiper', {
+            slidesPerView: 1,
+            spaceBetween: 10,
+            loop: true,
+            autoplay: {
+                delay: 3000,
+            },
+            breakpoints: {
+                640: {
+                    slidesPerView: 2,
+                },
+                1024: {
+                    slidesPerView: 3,
+                },
+            }
+        });
+        
+        // Initialize Swiper for Domestic Trips
+        new Swiper('.domestic-swiper', {
+            slidesPerView: 1,
+            spaceBetween: 20,
+            loop: true,
+            navigation: {
+                nextEl: '.domestic-swiper .swiper-button-next',
+                prevEl: '.domestic-swiper .swiper-button-prev',
+            },
+            pagination: {
+                el: '.domestic-swiper .swiper-pagination',
+                clickable: true,
+            },
+            breakpoints: {
+                640: {
+                    slidesPerView: 2,
+                },
+                1024: {
+                    slidesPerView: 3,
+                },
+                1400: {
+                    slidesPerView: 4,
+                },
+            }
+        });
+        
+        // Initialize Swiper for International Trips
+        new Swiper('.international-swiper', {
+            slidesPerView: 1,
+            spaceBetween: 20,
+            loop: true,
+            navigation: {
+                nextEl: '.international-swiper .swiper-button-next',
+                prevEl: '.international-swiper .swiper-button-prev',
+            },
+            pagination: {
+                el: '.international-swiper .swiper-pagination',
+                clickable: true,
+            },
+            breakpoints: {
+                640: {
+                    slidesPerView: 2,
+                },
+                1024: {
+                    slidesPerView: 3,
+                },
+                1400: {
+                    slidesPerView: 4,
+                },
+            }
+        });
+        
+        // FAQ Toggle
+        function toggleFAQ(element) {
+            const faqItem = element.parentElement;
+            const allItems = document.querySelectorAll('.faq-item');
+            
+            allItems.forEach(item => {
+                if (item !== faqItem) {
+                    item.classList.remove('active');
+                }
+            });
+            
+            faqItem.classList.toggle('active');
+        }
+        
+        // Cookie Notice
+        function acceptCookies() {
+            document.getElementById('cookieNotice').classList.add('hidden');
+            localStorage.setItem('cookiesAccepted', 'true');
+        }
+        
+        // Check if cookies already accepted
+        if (localStorage.getItem('cookiesAccepted') === 'true') {
+            document.getElementById('cookieNotice').classList.add('hidden');
+        }
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Navbar scroll effect
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll > 100) {
+                navbar.style.background = 'rgba(15, 20, 25, 0.98)';
+                navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
+            } else {
+                navbar.style.background = 'rgba(15, 20, 25, 0.95)';
+                navbar.style.boxShadow = 'none';
+            }
+            
+            lastScroll = currentScroll;
+        });
+    </script>
+</body>
+</html>

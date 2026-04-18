@@ -144,6 +144,9 @@
                             </table>
                         </div>
                     </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <div id="paymentPagination"></div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -165,11 +168,15 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/i18n.js"></script>
     <script src="../../assets/js/auth.js"></script>
     <script src="../../assets/js/apiClient.js"></script>
+    <script src="../../modules/PaginationManager.js"></script>
     <script src="../../assets/js/app.js"></script>
     <script>
         let allPayments = [], insuranceMap = {}, slipModal;
+        let pagination;
+        let currentPage = 1, perPage = 10, filteredData = [];
 
         const PAY_BADGE = { PENDING: 'status-pending', CONFIRMED: 'status-confirmed', REJECTED: 'status-rejected' };
         const PAY_LABEL = { PENDING: 'รอตรวจสอบ', CONFIRMED: 'ยืนยันแล้ว', REJECTED: 'ปฏิเสธ' };
@@ -185,6 +192,13 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await initPage();
             slipModal = new bootstrap.Modal(document.getElementById('slipModal'));
+
+            // Init Pagination
+            pagination = new PaginationManager({
+                containerId: 'paymentPagination',
+                onPageChange: (p) => { currentPage = p; renderPayments(false); },
+                onPerPageChange: (pp) => { perPage = pp; currentPage = 1; renderPayments(false); }
+            });
             try {
                 const [payments, insuranceForms] = await Promise.all([
                     API.payments.list(),
@@ -204,7 +218,9 @@
             }
         });
 
-        function renderPayments() {
+        function renderPayments(resetPage = true) {
+            if (resetPage) currentPage = 1;
+
             const status = document.getElementById('filterStatus').value;
             const q = document.getElementById('searchInput').value.toLowerCase().trim();
 
@@ -222,15 +238,20 @@
                     (p.booking?.busRound?.trip?.title || '').toLowerCase().includes(q);
             });
 
+            filteredData = data;
             document.getElementById('countBadge').textContent = `${data.length} รายการ`;
             const tbody = document.getElementById('paymentsBody');
 
             if (!data.length) {
                 tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">ไม่พบข้อมูล</td></tr>';
+                pagination.render({ totalRecords: 0, currentPage, perPage });
                 return;
             }
 
-            tbody.innerHTML = data.map(p => {
+            const startIdx = (currentPage - 1) * perPage;
+            const pagedData = data.slice(startIdx, startIdx + perPage);
+
+            tbody.innerHTML = pagedData.map(p => {
                 const forms = insuranceMap[p.bookingId] || [];
                 const customerCell = buildCustomerCell(p, forms);
                 const tripTitle = p.booking?.busRound?.trip?.title || '-';
@@ -284,46 +305,64 @@
             </td>
         </tr>`;
             }).join('');
+
+            pagination.render({ totalRecords: data.length, currentPage, perPage });
         }
 
         function buildCustomerCell(p, forms) {
-            // พยายามหาชื่อที่สมบูรณ์ที่สุดจาก Insurance Forms ก่อน
-            let f = forms.find(x => x.firstName || x.lastName);
+            // Priority 1: SeatBooking (Traveller Names)
+            const seats = p.booking?.seatBookings || [];
+            const seat = seats.find(s => s.firstName || s.lastName);
 
-            // ถ้าไม่มีชื่อใน Forms เลย หรือไม่มี Forms เลย ให้ใช้ User Data
-            if (!f) {
-                const name = p.booking?.user?.name || '-';
+            if (seat) {
+                const name = [seat.namePrefix, seat.firstName, seat.lastName].filter(Boolean).join(' ').trim() || 'ไม่ระบุ';
+                const phone = seat.phone || '-';
                 const color = avatarColor(name);
-        const initials = name.split(' ').filter(x => x).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
-        return `<div class="d-flex align-items-center gap-3">
-            <div class="avatar-circle text-white" style="background:${color}">${initials}</div>
-            <div>
-                <div class="fw-bold text-dark">${name}</div>
-                <div class="text-muted" style="font-size:0.75rem;"><i class="bi bi-phone me-1"></i>${p.booking?.user?.phone || ''}</div>
-            </div>
-        </div>`;
-    }
+                const initials = name.split(' ').filter(x => x).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+                const moreCount = seats.length > 1 ? ` <span class="badge bg-secondary ms-1">+${seats.length - 1}</span>` : '';
 
-        const color = avatarColor(f.firstName || f.lastName || '?');
-        const firstChar = (f.firstName && f.firstName.length > 0) ? f.firstName[0] : '';
-        const lastChar = (f.lastName && f.lastName.length > 0) ? f.lastName[0] : '';
-        const initials = (firstChar + lastChar).toUpperCase() || '?';
+                return `<div class="d-flex align-items-center gap-3">
+                    <div class="avatar-circle text-white" style="background:${color}">${initials}</div>
+                    <div>
+                        <div class="fw-bold text-dark">${name}${moreCount}</div>
+                        <div class="text-muted" style="font-size:0.75rem;"><i class="bi bi-phone me-1"></i>${phone}</div>
+                    </div>
+                </div>`;
+            }
 
-        const bloodBadge = f.bloodType
-            ? `<span class="badge blood-badge text-white ms-1" style="background:${BLOOD_COLOR[f.bloodType] || '#aaa'}">${f.bloodType}</span>`
-            : '';
-        const moreCount = forms.length > 1 ? ` <span class="badge bg-secondary ms-1">+${forms.length - 1}</span>` : '';
+            // Priority 2: Insurance Forms Fallback
+            const f = forms.find(x => x.firstName || x.lastName);
+            if (f) {
+                const name = `${f.firstName || ''} ${f.lastName || ''}`.trim() || 'ไม่ระบุ';
+                const phone = f.phone || '-';
+                const color = avatarColor(name);
+                const initials = name.split(' ').filter(x => x).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+                const moreCount = forms.length > 1 ? ` <span class="badge bg-secondary ms-1">+${forms.length - 1}</span>` : '';
 
-        return `<div class="d-flex align-items-center gap-3">
-        <div class="avatar-circle text-white" style="background:${color}">${initials}</div>
-        <div>
-            <div class="fw-bold text-dark">${f.namePrefix || ''} ${f.firstName || '-'} ${f.lastName || ''}${moreCount}</div>
-            <div class="text-muted" style="font-size:0.75rem;">
-                <i class="bi bi-phone me-1"></i>${f.phone || '-'} ${bloodBadge}
-            </div>
-        </div>
-    </div>`;
-    }
+                return `<div class="d-flex align-items-center gap-3">
+                    <div class="avatar-circle text-white" style="background:${color}">${initials}</div>
+                    <div>
+                        <div class="fw-bold text-dark">${name}${moreCount}</div>
+                        <div class="text-muted" style="font-size:0.75rem;"><i class="bi bi-phone me-1"></i>${phone}</div>
+                    </div>
+                </div>`;
+            }
+
+            // Priority 3: User Account (Booker)
+            const user = p.booking?.user;
+            const userName = user?.name || 'ไม่ระบุ';
+            const userPhone = user?.phone || '-';
+            const color = avatarColor(userName);
+            const initials = userName.split(' ').filter(x => x).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+
+            return `<div class="d-flex align-items-center gap-3">
+                <div class="avatar-circle text-white" style="background:${color}">${initials}</div>
+                <div>
+                    <div class="fw-bold text-dark">${userName} (ผู้จอง)</div>
+                    <div class="text-muted" style="font-size:0.75rem;"><i class="bi bi-phone me-1"></i>${userPhone}</div>
+                </div>
+            </div>`;
+        }
 
         function viewSlip(p) {
             document.getElementById('slipContent').innerHTML = `

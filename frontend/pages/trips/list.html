@@ -61,6 +61,9 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="card-footer bg-white border-top-0">
+                    <div id="tripPagination"></div>
+                </div>
             </div>
         </div>
     </main>
@@ -91,8 +94,16 @@
                             <input type="number" class="form-control" id="fPrice" min="0" step="0.01" required>
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label">เงินมัดจำ (บาท)</label>
+                            <input type="number" class="form-control" id="fDeposit" min="0" step="0.01" value="0">
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label">รูปภาพทริป</label>
                             <div id="imageUploadContainer"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ไฟล์/ลิงก์อธิบายทริป</label>
+                            <div id="docUploadContainer"></div>
                         </div>
                         <div class="col-12">
                             <div class="form-check form-switch">
@@ -113,25 +124,45 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/i18n.js"></script>
 <script src="../../assets/js/auth.js"></script>
 <script src="../../assets/js/apiClient.js"></script>
 <script src="../../assets/js/features/thai-calendar.js"></script>
 <script src="../../assets/js/features/file-upload.js"></script>
+<script src="../../modules/PaginationManager.js"></script>
 <script src="../../assets/js/app.js"></script>
 <script>
-let modal, allTrips = [];
+let modal, pagination;
+let currentPage = 1, perPage = 10, filteredData = [];
+
 document.addEventListener('DOMContentLoaded', async () => {
     await initPage();
     modal = new bootstrap.Modal(document.getElementById('tripModal'));
+
+    // Init Pagination
+    pagination = new PaginationManager({
+        containerId: 'tripPagination',
+        onPageChange: (p) => { currentPage = p; renderTrips(); },
+        onPerPageChange: (pp) => { perPage = pp; currentPage = 1; renderTrips(); }
+    });
 
     // Init Thai Calendar
     await ThaiCalendar.init('#startDate', { onChange: loadTrips });
     await ThaiCalendar.init('#endDate', { onChange: loadTrips });
 
-    // Init Upload Component
+    // Init Upload Component for Images
     FileUpload.init('#imageUploadContainer', { 
         targetInputId: 'fImage', 
         multiple: true 
+    });
+
+    // Init Upload Component for Document (Single)
+    FileUpload.init('#docUploadContainer', {
+        targetInputId: 'fDocUrl',
+        multiple: false,
+        btnText: 'เลือกไฟล์อธิบาย',
+        btnIcon: 'bi-file-earmark-text',
+        allowedTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/html']
     });
 
     loadTrips();
@@ -146,42 +177,61 @@ function clearDateRange() {
 async function loadTrips() {
     try {
         const query = document.getElementById('searchTrip').value.toLowerCase();
-        const start = document.getElementById('startDate').value; // YYYY-MM-DD
+        const start = document.getElementById('startDate').value;
         const end   = document.getElementById('endDate').value;
 
         let trips = await API.trips.list();
-        allTrips = trips;
 
         // Filter search text
         if (query) {
             trips = trips.filter(t => t.title.toLowerCase().includes(query) || (t.description || '').toLowerCase().includes(query));
         }
 
-        // Filter date range (createdAt)
+        // Filter date range
         if (start || end) {
             trips = ThaiCalendar.filterByDateRange(trips, 'createdAt', start, end);
         }
 
-        const tbody = document.getElementById('tripsBody');
-        if (!trips.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">ไม่พบข้อมูลทริป</td></tr>'; return; }
-        tbody.innerHTML = trips.map((t, i) => `
-            <tr>
-                <td>${i+1}</td>
-                <td>
-                    <strong>${t.title}</strong>
-                    ${t.imageUrl ? `<br><small class="text-primary"><i class="bi bi-image me-1"></i>${t.imageUrl.split(',').filter(x=>x).length} รูป</small>` : ''}
-                    ${t.description ? `<br><small class="text-muted">${t.description.substring(0,60)}...</small>` : ''}
-                </td>
-                <td>${formatMoney(t.price)}</td>
-                <td><span class="badge ${t.isActive ? 'bg-success' : 'bg-secondary'}">${t.isActive ? 'เปิด' : 'ปิด'}</span></td>
-                <td>${formatDateThai(t.createdAt)}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editTrip(${JSON.stringify(t).replace(/"/g,'&quot;')})"><i class="bi bi-pencil"></i></button>
-                    <a href="/frontend/pages/bus-rounds/list.html?tripId=${t.id}" class="btn btn-sm btn-outline-success me-1" title="รอบรถ"><i class="bi bi-bus-front"></i></a>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteTrip(${t.id})"><i class="bi bi-trash"></i></button>
-                </td>
-            </tr>`).join('');
+        filteredData = trips;
+        currentPage = 1;
+        renderTrips();
     } catch (e) { showToast('โหลดข้อมูลล้มเหลว', 'danger'); }
+}
+
+function renderTrips() {
+    const tbody = document.getElementById('tripsBody');
+    const startIdx = (currentPage - 1) * perPage;
+    const pagedData = filteredData.slice(startIdx, startIdx + perPage);
+
+    if (!filteredData.length) { 
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">ไม่พบข้อมูลทริป</td></tr>'; 
+        pagination.render({ totalRecords: 0, currentPage, perPage });
+        return; 
+    }
+
+    tbody.innerHTML = pagedData.map((t, i) => `
+        <tr>
+            <td>${startIdx + i + 1}</td>
+            <td>
+                <strong>${t.title}</strong>
+                ${t.imageUrl ? `<br><small class="text-primary"><i class="bi bi-image me-1"></i>${t.imageUrl.split(',').filter(x=>x).length} รูป</small>` : ''}
+                ${t.docUrl ? `<a href="${t.docUrl}" target="_blank" class="ms-2 small text-success"><i class="bi bi-file-earmark-text me-1"></i>เอกสาร</a>` : ''}
+                ${t.description ? `<br><small class="text-muted">${t.description.substring(0,60)}...</small>` : ''}
+            </td>
+            <td>
+                ${formatMoney(t.price)}
+                ${t.deposit ? `<br><small class="text-warning">มัดจำ: ${formatMoney(t.deposit)}</small>` : ''}
+            </td>
+            <td><span class="badge ${t.isActive ? 'bg-success' : 'bg-secondary'}">${t.isActive ? 'เปิด' : 'ปิด'}</span></td>
+            <td>${formatDateThai(t.createdAt)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editTrip(${JSON.stringify(t).replace(/"/g,'&quot;')})"><i class="bi bi-pencil"></i></button>
+                <a href="/frontend/pages/bus-rounds/list.html?tripId=${t.id}" class="btn btn-sm btn-outline-success me-1" title="รอบรถ"><i class="bi bi-bus-front"></i></a>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteTrip(${t.id})"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>`).join('');
+
+    pagination.render({ totalRecords: filteredData.length, currentPage, perPage });
 }
 
 function openModal(title='เพิ่มทริป') {
@@ -189,7 +239,8 @@ function openModal(title='เพิ่มทริป') {
     document.getElementById('tripForm').reset();
     document.getElementById('tripId').value = '';
     document.getElementById('fActive').checked = true;
-    FileUpload.setExisting('');
+    FileUpload.setExisting('', 'fImage');
+    FileUpload.setExisting('', 'fDocUrl');
     modal.show();
 }
 
@@ -199,7 +250,9 @@ function editTrip(t) {
     document.getElementById('fTitle').value = t.title;
     document.getElementById('fDesc').value = t.description || '';
     document.getElementById('fPrice').value = t.price;
-    FileUpload.setExisting(t.imageUrl);
+    document.getElementById('fDeposit').value = t.deposit || 0;
+    FileUpload.setExisting(t.imageUrl, 'fImage');
+    FileUpload.setExisting(t.docUrl, 'fDocUrl');
     document.getElementById('fActive').checked = t.isActive;
     modal.show();
 }
@@ -213,18 +266,26 @@ async function saveTrip() {
         btnSave.disabled = true;
         btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> กำลังบันทึก...';
 
-        // 1. Upload pending images first
-        const newUrls = await FileUpload.uploadAllPending();
+        // 1. Upload pending for both containers
+        const [newImages, newDocs] = await Promise.all([
+            FileUpload.uploadAllPending('fImage'),
+            FileUpload.uploadAllPending('fDocUrl')
+        ]);
         
-        // 2. Combine with existing URLs
-        const existingUrls = document.getElementById('fImage').value.split(',').filter(x => x);
-        const finalUrls = [...existingUrls, ...newUrls].join(',');
+        // 2. Combine with existing
+        const existingImages = document.getElementById('fImage').value.split(',').filter(x => x);
+        const finalImages = [...existingImages, ...newImages].join(',');
+
+        const existingDocs = document.getElementById('fDocUrl').value.split(',').filter(x => x);
+        const finalDoc = [...existingDocs, ...newDocs][0] || ''; // Single doc expected
 
         const data = {
             title: document.getElementById('fTitle').value,
             description: document.getElementById('fDesc').value,
             price: parseFloat(document.getElementById('fPrice').value),
-            imageUrl: finalUrls,
+            deposit: parseFloat(document.getElementById('fDeposit').value || 0),
+            imageUrl: finalImages,
+            docUrl: finalDoc,
             isActive: document.getElementById('fActive').checked
         };
 

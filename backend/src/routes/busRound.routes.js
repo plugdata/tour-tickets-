@@ -33,7 +33,8 @@ router.get('/', async (req, res) => {
             }
           }
         }
-      }
+      },
+      orderBy: { updatedAt: 'desc' }
     })
     // Override cached bookedSeats with real-time count from SeatBooking
     const result = rounds.map(({ _count, ...r }) => ({
@@ -76,7 +77,8 @@ router.get('/trip/:tripId', async (req, res) => {
             }
           }
         }
-      }
+      },
+      orderBy: { updatedAt: 'desc' }
     })
     const result = rounds.map(({ _count, ...r }) => ({
       ...r,

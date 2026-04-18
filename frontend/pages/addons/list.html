@@ -77,6 +77,9 @@
                         </table>
                     </div>
                 </div>
+                <div class="card-footer bg-white border-top-0">
+                    <div id="addonPagination"></div>
+                </div>
             </div>
         </div>
     </main>
@@ -122,22 +125,34 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/i18n.js"></script>
 <script src="../../assets/js/auth.js"></script>
 <script src="../../assets/js/apiClient.js"></script>
+<script src="../../modules/PaginationManager.js"></script>
 <script src="../../assets/js/app.js"></script>
 <script>
 let modal, allAddons = [];
-
+let pagination;
+let currentPage = 1, perPage = 10, filteredData = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     await initPage();
     modal = new bootstrap.Modal(document.getElementById('addonModal'));
 
+    // Init Pagination
+    pagination = new PaginationManager({
+        containerId: 'addonPagination',
+        onPageChange: (p) => { currentPage = p; renderAddons(false); },
+        onPerPageChange: (pp) => { perPage = pp; currentPage = 1; renderAddons(false); }
+    });
+
     allAddons = await API.addons.list();
     renderAddons();
 });
 
-function renderAddons() {
+function renderAddons(resetPage = true) {
+    if (resetPage) currentPage = 1;
+
     const q       = document.getElementById('searchInput').value.toLowerCase().trim();
     const status  = document.getElementById('filterStatus').value;
 
@@ -149,17 +164,22 @@ function renderAddons() {
     if (status === 'active')   data = data.filter(a => a.isActive);
     if (status === 'inactive') data = data.filter(a => !a.isActive);
 
+    filteredData = data;
     document.getElementById('countBadge').textContent = `${data.length} รายการ`;
     const tbody = document.getElementById('addonsBody');
 
     if (!data.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">ไม่พบรายการ</td></tr>';
+        pagination.render({ totalRecords: 0, currentPage, perPage });
         return;
     }
 
-    tbody.innerHTML = data.map((a, i) => {
+    const startIdx = (currentPage - 1) * perPage;
+    const pagedData = data.slice(startIdx, startIdx + perPage);
+
+    tbody.innerHTML = pagedData.map((a, i) => {
         return `<tr class="${!a.isActive ? 'opacity-60' : ''}">
-            <td class="text-muted small">${i + 1}</td>
+            <td class="text-muted small">${startIdx + i + 1}</td>
             <td>
                 <div class="addon-name">${a.name}</div>
             </td>
@@ -192,6 +212,8 @@ function renderAddons() {
             </td>
         </tr>`;
     }).join('');
+
+    pagination.render({ totalRecords: data.length, currentPage, perPage });
 }
 
 function openModal() {

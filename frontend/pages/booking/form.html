@@ -245,14 +245,10 @@ function renderForms() {
                         <label class="form-label small">หมู่เลือด <span class="text-danger">*</span></label>
                         <select class="form-select form-select-sm passenger-bloodtype" data-seat="${sn}" required>
                             <option value="">-</option>
-                            <option ${s.bloodType==='A+' ?'selected':''}>A+</option>
-                            <option ${s.bloodType==='A-' ?'selected':''}>A-</option>
-                            <option ${s.bloodType==='B+' ?'selected':''}>B+</option>
-                            <option ${s.bloodType==='B-' ?'selected':''}>B-</option>
-                            <option ${s.bloodType==='AB+'?'selected':''}>AB+</option>
-                            <option ${s.bloodType==='AB-'?'selected':''}>AB-</option>
-                            <option ${s.bloodType==='O+' ?'selected':''}>O+</option>
-                            <option ${s.bloodType==='O-' ?'selected':''}>O-</option>
+                            <option ${s.bloodType==='A' ?'selected':''}>A</option>
+                            <option ${s.bloodType==='B' ?'selected':''}>B</option>
+                            <option ${s.bloodType==='AB'?'selected':''}>AB</option>
+                            <option ${s.bloodType==='O' ?'selected':''}>O</option>
                         </select>
                     </div>
                     <!-- Row 3: phone + allergy -->
@@ -374,9 +370,7 @@ async function goNext() {
 }
 
 function goBack() {
-    if (sessionData?.busRoundId) {
-        window.location.href = `/frontend/pages/booking/seats.html?roundId=${sessionData.busRoundId}`;
-    } else history.back();
+    window.location.href = '/frontend/pages/bus-rounds/list.html';
 }
 
 // ── API helpers ───────────────────────────────────────────────────────────────
