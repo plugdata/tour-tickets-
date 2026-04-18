@@ -1,202 +1,279 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>การชำระเงิน - Tour Backoffice</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link href="../../assets/css/admin.css" rel="stylesheet">
     <style>
-        .blood-badge { font-size:.68rem; padding:.2rem .4rem; border-radius:.3rem; }
-        .avatar-circle { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; flex-shrink:0; }
+        body { background-color: #f4f7f6; }
+
+        .page-title { font-size: 1.25rem; color: #333; font-weight: 700; margin-bottom: 0.2rem; }
+        .page-subtitle { color: #888; font-size: 0.85rem; }
+
+        /* Table Design */
+        .table thead th {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            color: #555;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.6rem 0.75rem;
+        }
+        .table tbody td {
+            padding: 0.75rem 0.75rem;
+            color: #444;
+            vertical-align: middle;
+            border-bottom: 1px solid #eee;
+        }
+        .table-hover tbody tr:hover td { background-color: rgba(0,0,0,.02); }
+
+        /* Badges */
+        .status-badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #fff;
+        }
+        .status-pending   { background-color: #ffc107; color: #000; }
+        .status-confirmed { background-color: #198754; }
+        .status-rejected  { background-color: #dc3545; }
+
+        .type-badge {
+            background-color: #0dcaf0;
+            color: #fff;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+        }
+
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .trip-title { font-weight: 600; color: #1e293b; display: block; margin-bottom: 0.15rem; }
+        .trip-sub { font-size: 0.75rem; color: #64748b; }
+        
+        .amount-text { font-family: 'Inter', system-ui, sans-serif; font-weight: 700; font-size: 1rem; }
+        .amount-total { font-size: 0.75rem; color: #94a3b8; }
+
+        .blood-badge { font-size: .65rem; padding: .2rem .4rem; border-radius: .3rem; font-weight: 600; }
+
+        .card { border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 0.75rem; }
+        .form-select, .form-control { border-radius: 0.5rem; border-color: #e2e8f0; font-size: 0.875rem; }
+        .form-select:focus, .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
     </style>
 </head>
-<body>
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
-<div class="d-flex">
-    <nav class="sidebar bg-white border-end" id="sidebar"></nav>
-    <main class="main-content flex-fill">
-        <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
-        <div class="page-content">
-            <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div>
-                    <h1 class="page-title">การชำระเงิน / สลิป</h1>
-                    <p class="page-subtitle">ตรวจสอบและยืนยันการชำระเงินของลูกค้า</p>
-                </div>
-                <span class="badge bg-secondary fs-6 px-3" id="countBadge">0</span>
-            </div>
 
-            <!-- Filter + Search -->
-            <div class="card mb-3">
-                <div class="card-body py-2">
-                    <div class="row g-2">
-                        <div class="col-md-3">
-                            <select class="form-select" id="filterStatus" onchange="renderPayments()">
-                                <option value="">-- ทุกสถานะ --</option>
-                                <option value="PENDING">รอตรวจสอบ</option>
-                                <option value="CONFIRMED">ยืนยันแล้ว</option>
-                                <option value="REJECTED">ปฏิเสธ</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                                <input type="text" class="form-control border-start-0" id="searchInput"
-                                    placeholder="ค้นหาชื่อ / เลขบัตร / โทร / ทริป..." oninput="renderPayments()">
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="d-flex">
+        <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+        <main class="main-content flex-fill">
+            <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+            <div class="page-content">
+                <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h1 class="page-title">การชำระเงิน / สลิป</h1>
+                        <p class="page-subtitle">ตรวจสอบและยืนยันการชำระเงินของลูกค้า</p>
+                    </div>
+                    <span class="badge bg-secondary fs-6 px-3" id="countBadge">0</span>
+                </div>
+
+                <!-- Filter + Search -->
+                <div class="card mb-3">
+                    <div class="card-body py-2">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <select class="form-select" id="filterStatus" onchange="renderPayments()">
+                                    <option value="">-- ทุกสถานะ --</option>
+                                    <option value="PENDING">รอตรวจสอบ</option>
+                                    <option value="CONFIRMED">ยืนยันแล้ว</option>
+                                    <option value="REJECTED">ปฏิเสธ</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i
+                                            class="bi bi-search text-muted"></i></span>
+                                    <input type="text" class="form-control border-start-0" id="searchInput"
+                                        placeholder="ค้นหาชื่อ / เลขบัตร / โทร / ทริป..." oninput="renderPayments()">
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Table -->
-            <div class="card">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
+                <!-- Table -->
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead>
                                 <tr>
-                                    <th>ลูกค้า</th>
-                                    <th>ทริป</th>
+                                    <th>ข้อมูลลูกค้า</th>
+                                    <th>ทริป / การจอง</th>
                                     <th>ประเภท</th>
-                                    <th class="text-end">จำนวนที่ชำระ</th>
-                                    <th class="text-end">ยอดจอง</th>
-                                    <th class="text-end">ค้างชำระ</th>
+                                    <th class="text-end">จำนวนจ่าย</th>
+                                    <th class="text-end">ยอดคงค้าง</th>
                                     <th>สถานะ</th>
-                                    <th>วันที่แจ้ง</th>
+                                    <th>แจ้งเมื่อ</th>
                                     <th class="text-center">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody id="paymentsBody">
-                                <tr><td colspan="9" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>
-                            </tbody>
-                        </table>
+                                <tbody id="paymentsBody">
+                                    <tr>
+                                        <td colspan="9" class="text-center py-4 text-muted">กำลังโหลด...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
-</div>
+        </main>
+    </div>
 
-<!-- Slip Modal -->
-<div class="modal fade" id="slipModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">สลิปการโอนเงิน</h5>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
+    <!-- Slip Modal -->
+    <div class="modal fade" id="slipModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">สลิปการโอนเงิน</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center" id="slipContent"></div>
+                <div class="modal-footer justify-content-between" id="slipActions"></div>
             </div>
-            <div class="modal-body text-center" id="slipContent"></div>
-            <div class="modal-footer justify-content-between" id="slipActions"></div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../assets/js/config.js"></script>
-<script src="../../assets/js/auth.js"></script>
-<script src="../../assets/js/apiClient.js"></script>
-<script src="../../assets/js/app.js"></script>
-<script>
-let allPayments = [], insuranceMap = {}, slipModal;
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/apiClient.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        let allPayments = [], insuranceMap = {}, slipModal;
 
-const PAY_BADGE  = { PENDING:'bg-warning text-dark', CONFIRMED:'bg-success', REJECTED:'bg-danger' };
-const PAY_LABEL  = { PENDING:'รอตรวจสอบ', CONFIRMED:'ยืนยันแล้ว', REJECTED:'ปฏิเสธ' };
-const TYPE_LABEL = { DEPOSIT:'มัดจำ', FULL:'เต็มจำนวน' };
-const BLOOD_COLOR= { 'A+':'#dc3545','A-':'#fd7e14','B+':'#0d6efd','B-':'#6610f2','AB+':'#198754','AB-':'#0dcaf0','O+':'#d63384','O-':'#6c757d' };
-const AVATAR_COLORS = ['#0d6efd','#198754','#fd7e14','#dc3545','#6610f2','#0dcaf0','#d63384'];
+        const PAY_BADGE = { PENDING: 'status-pending', CONFIRMED: 'status-confirmed', REJECTED: 'status-rejected' };
+        const PAY_LABEL = { PENDING: 'รอตรวจสอบ', CONFIRMED: 'ยืนยันแล้ว', REJECTED: 'ปฏิเสธ' };
+        const TYPE_LABEL = { DEPOSIT: 'มัดจำ', FULL: 'เต็มจำนวน' };
+        const BLOOD_COLOR = { 'A+': '#dc3545', 'A-': '#fd7e14', 'B+': '#0d6efd', 'B-': '#6610f2', 'AB+': '#198754', 'AB-': '#0dcaf0', 'O+': '#d63384', 'O-': '#6c757d' };
+        const AVATAR_COLORS = ['#0d6efd', '#198754', '#fd7e14', '#dc3545', '#6610f2', '#0dcaf0', '#d63384'];
 
-function avatarColor(name) {
-    let h = 0; for (const c of (name||'')) h = (h * 31 + c.charCodeAt(0)) % AVATAR_COLORS.length;
-    return AVATAR_COLORS[h];
-}
+        function avatarColor(name) {
+            let h = 0; for (const c of (name || '')) h = (h * 31 + c.charCodeAt(0)) % AVATAR_COLORS.length;
+            return AVATAR_COLORS[h];
+        }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await initPage();
-    slipModal = new bootstrap.Modal(document.getElementById('slipModal'));
-    try {
-        const [payments, insuranceForms] = await Promise.all([
-            API.payments.list(),
-            API.insurance.list()
-        ]);
-        allPayments = payments;
-        insuranceMap = {};
-        insuranceForms.forEach(f => {
-            if (!insuranceMap[f.bookingId]) insuranceMap[f.bookingId] = [];
-            insuranceMap[f.bookingId].push(f);
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initPage();
+            slipModal = new bootstrap.Modal(document.getElementById('slipModal'));
+            try {
+                const [payments, insuranceForms] = await Promise.all([
+                    API.payments.list(),
+                    API.insurance.list()
+                ]);
+                allPayments = payments;
+                insuranceMap = {};
+                insuranceForms.forEach(f => {
+                    if (!insuranceMap[f.bookingId]) insuranceMap[f.bookingId] = [];
+                    insuranceMap[f.bookingId].push(f);
+                });
+                renderPayments();
+            } catch (e) {
+                console.error('Initial Load Error:', e);
+                document.getElementById('paymentsBody').innerHTML =
+                    `<tr><td colspan="9" class="text-center py-4 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error: ${e.message}</td></tr>`;
+            }
         });
-        renderPayments();
-    } catch (e) {
-        console.error('Initial Load Error:', e);
-        document.getElementById('paymentsBody').innerHTML = 
-            `<tr><td colspan="9" class="text-center py-4 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error: ${e.message}</td></tr>`;
-    }
-});
 
-function renderPayments() {
-    const status = document.getElementById('filterStatus').value;
-    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+        function renderPayments() {
+            const status = document.getElementById('filterStatus').value;
+            const q = document.getElementById('searchInput').value.toLowerCase().trim();
 
-    let data = allPayments;
-    if (status) data = data.filter(p => p.status === status);
-    if (q) data = data.filter(p => {
-        const forms = insuranceMap[p.bookingId] || [];
-        const inForm = forms.some(f =>
-            `${f.firstName} ${f.lastName}`.toLowerCase().includes(q) ||
-            (f.nationalId || '').includes(q) ||
-            (f.phone || '').includes(q)
-        );
-        return inForm ||
-            (p.booking?.user?.name || '').toLowerCase().includes(q) ||
-            (p.booking?.busRound?.trip?.title || '').toLowerCase().includes(q);
-    });
+            let data = allPayments;
+            if (status) data = data.filter(p => p.status === status);
+            if (q) data = data.filter(p => {
+                const forms = insuranceMap[p.bookingId] || [];
+                const inForm = forms.some(f =>
+                    `${f.firstName} ${f.lastName}`.toLowerCase().includes(q) ||
+                    (f.nationalId || '').includes(q) ||
+                    (f.phone || '').includes(q)
+                );
+                return inForm ||
+                    (p.booking?.user?.name || '').toLowerCase().includes(q) ||
+                    (p.booking?.busRound?.trip?.title || '').toLowerCase().includes(q);
+            });
 
-    document.getElementById('countBadge').textContent = `${data.length} รายการ`;
-    const tbody = document.getElementById('paymentsBody');
+            document.getElementById('countBadge').textContent = `${data.length} รายการ`;
+            const tbody = document.getElementById('paymentsBody');
 
-    if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">ไม่พบข้อมูล</td></tr>';
-        return;
-    }
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">ไม่พบข้อมูล</td></tr>';
+                return;
+            }
 
-    tbody.innerHTML = data.map(p => {
-        const forms = insuranceMap[p.bookingId] || [];
-        const customerCell = buildCustomerCell(p, forms);
-        const tripTitle  = p.booking?.busRound?.trip?.title || '-';
-        const busNum     = p.booking?.busRound?.busNumber;
-        const totalAmt   = p.booking?.totalAmount || 0;
+            tbody.innerHTML = data.map(p => {
+                const forms = insuranceMap[p.bookingId] || [];
+                const customerCell = buildCustomerCell(p, forms);
+                const tripTitle = p.booking?.busRound?.trip?.title || '-';
+                const busNum = p.booking?.busRound?.busNumber;
+                const totalAmt = p.booking?.totalAmount || 0;
 
-        // ยอดที่ชำระแล้วทั้งหมดของ booking นี้ (เฉพาะ CONFIRMED)
-        const paidTotal  = allPayments
-            .filter(x => x.bookingId === p.bookingId && x.status === 'CONFIRMED')
-            .reduce((s, x) => s + x.amount, 0);
-        const remaining  = totalAmt - paidTotal;
+                // ยอดที่ชำระแล้วทั้งหมดของ booking นี้ (เฉพาะ CONFIRMED)
+                const paidTotal = allPayments
+                    .filter(x => x.bookingId === p.bookingId && x.status === 'CONFIRMED')
+                    .reduce((s, x) => s + x.amount, 0);
+                const remaining = totalAmt - paidTotal;
 
-        const remainCell = remaining > 0
-            ? `<span class="fw-semibold text-danger">${formatMoney(remaining)}</span>`
-            : `<span class="fw-semibold text-success"><i class="bi bi-check-circle-fill me-1"></i>ชำระครบ</span>`;
+                const remainCell = remaining > 0
+                    ? `<span class="fw-bold text-danger">${formatMoney(remaining)}</span>`
+                    : `<span class="fw-bold text-success"><i class="bi bi-check-circle-fill me-1"></i>ครบถ้วน</span>`;
 
-        return `<tr>
+                return `<tr>
             <td>${customerCell}</td>
             <td>
-                <div class="fw-semibold small">${tripTitle}</div>
-                ${busNum ? `<div class="text-muted small">รถคันที่ ${busNum}</div>` : ''}
-                <a href="../bookings/view.html?id=${p.bookingId}" class="text-primary small">
-                    <i class="bi bi-ticket-perforated me-1"></i>ดูการจอง
-                </a>
+                <div class="trip-title">${tripTitle}</div>
+                <div class="trip-sub">
+                    <span class="badge bg-light text-muted border-0 p-0 me-2" style="font-weight:400;">
+                       <i class="bi bi-bus-front me-1"></i>คันที่ ${busNum || '-'}
+                    </span>
+                    <a href="../bookings/view.html?id=${p.bookingId}" class="text-primary text-decoration-none">
+                        #${p.bookingId}
+                    </a>
+                </div>
             </td>
-            <td><span class="badge bg-info text-dark">${TYPE_LABEL[p.type] || p.type}</span></td>
-            <td class="text-end fw-bold text-success">${formatMoney(p.amount)}</td>
-            <td class="text-end text-muted small">${totalAmt ? formatMoney(totalAmt) : '-'}</td>
-            <td class="text-end">${totalAmt ? remainCell : '<span class="text-muted">-</span>'}</td>
-            <td><span class="badge ${PAY_BADGE[p.status]}">${PAY_LABEL[p.status]}</span>
-                ${p.confirmedAt ? `<div class="text-muted small">${formatDateThai(p.confirmedAt)}</div>` : ''}
+            <td><span class="type-badge">${TYPE_LABEL[p.type] || p.type}</span></td>
+            <td class="text-end">
+                <div class="amount-text text-primary">${formatMoney(p.amount)}</div>
+                <div class="amount-total">จาก ${formatMoney(totalAmt)}</div>
+            </td>
+            <td class="text-end">${remainCell}</td>
+            <td>
+                <span class="status-badge ${PAY_BADGE[p.status]}">${PAY_LABEL[p.status]}</span>
+                ${p.confirmedAt ? `<div class="text-muted mt-1" style="font-size:0.65rem;">${formatDateThai(p.confirmedAt)}</div>` : ''}
             </td>
             <td class="text-muted small">${formatDateThai(p.createdAt)}</td>
             <td class="text-center">
                 <div class="d-flex gap-1 justify-content-center">
-                    ${p.slipUrl ? `<button class="btn btn-sm btn-outline-primary" onclick="viewSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})" title="ดูสลิป">
+                    ${p.slipUrl ? `<button class="btn btn-sm btn-outline-primary" onclick="viewSlip(${JSON.stringify(p).replace(/"/g, '&quot;')})" title="ดูสลิป">
                         <i class="bi bi-image"></i></button>` : ''}
                     ${p.status === 'PENDING' ? `
                     <button class="btn btn-sm btn-success" onclick="confirmPayment(${p.id},'CONFIRMED')" title="ยืนยัน">
@@ -206,81 +283,83 @@ function renderPayments() {
                 </div>
             </td>
         </tr>`;
-    }).join('');
-}
+            }).join('');
+        }
 
-function buildCustomerCell(p, forms) {
-    // พยายามหาชื่อที่สมบูรณ์ที่สุดจาก Insurance Forms ก่อน
-    let f = forms.find(x => x.firstName || x.lastName);
-    
-    // ถ้าไม่มีชื่อใน Forms เลย หรือไม่มี Forms เลย ให้ใช้ User Data
-    if (!f) {
-        const name = p.booking?.user?.name || '-';
-        const color = avatarColor(name);
+        function buildCustomerCell(p, forms) {
+            // พยายามหาชื่อที่สมบูรณ์ที่สุดจาก Insurance Forms ก่อน
+            let f = forms.find(x => x.firstName || x.lastName);
+
+            // ถ้าไม่มีชื่อใน Forms เลย หรือไม่มี Forms เลย ให้ใช้ User Data
+            if (!f) {
+                const name = p.booking?.user?.name || '-';
+                const color = avatarColor(name);
         const initials = name.split(' ').filter(x => x).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
-        return `<div class="d-flex align-items-center gap-2">
+        return `<div class="d-flex align-items-center gap-3">
             <div class="avatar-circle text-white" style="background:${color}">${initials}</div>
             <div>
-                <div class="fw-semibold">${name}</div>
-                <div class="text-muted small">${p.booking?.user?.phone || ''}</div>
+                <div class="fw-bold text-dark">${name}</div>
+                <div class="text-muted" style="font-size:0.75rem;"><i class="bi bi-phone me-1"></i>${p.booking?.user?.phone || ''}</div>
             </div>
         </div>`;
     }
 
-    // ถ้ามี Insurance Form และมีชื่อ
-    const color = avatarColor(f.firstName || f.lastName || '?');
-    const firstChar = (f.firstName && f.firstName.length > 0) ? f.firstName[0] : '';
-    const lastChar  = (f.lastName && f.lastName.length > 0) ? f.lastName[0] : '';
-    const initials  = (firstChar + lastChar).toUpperCase() || '?';
+        const color = avatarColor(f.firstName || f.lastName || '?');
+        const firstChar = (f.firstName && f.firstName.length > 0) ? f.firstName[0] : '';
+        const lastChar = (f.lastName && f.lastName.length > 0) ? f.lastName[0] : '';
+        const initials = (firstChar + lastChar).toUpperCase() || '?';
 
-    const bloodBadge = f.bloodType
-        ? `<span class="badge blood-badge text-white ms-1" style="background:${BLOOD_COLOR[f.bloodType]||'#aaa'}">${f.bloodType}</span>`
-        : '';
-    const moreCount = forms.length > 1 ? ` <span class="badge bg-secondary ms-1">+${forms.length - 1}</span>` : '';
+        const bloodBadge = f.bloodType
+            ? `<span class="badge blood-badge text-white ms-1" style="background:${BLOOD_COLOR[f.bloodType] || '#aaa'}">${f.bloodType}</span>`
+            : '';
+        const moreCount = forms.length > 1 ? ` <span class="badge bg-secondary ms-1">+${forms.length - 1}</span>` : '';
 
-    return `<div class="d-flex align-items-center gap-2">
+        return `<div class="d-flex align-items-center gap-3">
         <div class="avatar-circle text-white" style="background:${color}">${initials}</div>
         <div>
-            <div class="fw-semibold">${f.namePrefix || ''} ${f.firstName || '-'} ${f.lastName || ''}${bloodBadge}${moreCount}</div>
-            <div class="text-muted small"><code style="font-size:.72rem">${f.nationalId || '-'}</code> · ${f.phone || '-'}</div>
+            <div class="fw-bold text-dark">${f.namePrefix || ''} ${f.firstName || '-'} ${f.lastName || ''}${moreCount}</div>
+            <div class="text-muted" style="font-size:0.75rem;">
+                <i class="bi bi-phone me-1"></i>${f.phone || '-'} ${bloodBadge}
+            </div>
         </div>
     </div>`;
-}
+    }
 
-function viewSlip(p) {
-    document.getElementById('slipContent').innerHTML = `
+        function viewSlip(p) {
+            document.getElementById('slipContent').innerHTML = `
         <img src="${p.slipUrl}" class="img-fluid rounded" style="max-height:400px" alt="สลิป"
              onerror="this.parentElement.innerHTML='<p class=text-muted>ไม่สามารถโหลดรูปได้</p>'">
         <p class="mt-2 text-muted">จำนวน: <strong>${formatMoney(p.amount)} บาท</strong></p>`;
-    document.getElementById('slipActions').innerHTML = p.status === 'PENDING' ? `
+            document.getElementById('slipActions').innerHTML = p.status === 'PENDING' ? `
         <button class="btn btn-success" onclick="confirmPayment(${p.id},'CONFIRMED');bootstrap.Modal.getInstance(document.getElementById('slipModal')).hide()">
             <i class="bi bi-check-lg me-1"></i>ยืนยัน</button>
         <button class="btn btn-danger" onclick="confirmPayment(${p.id},'REJECTED');bootstrap.Modal.getInstance(document.getElementById('slipModal')).hide()">
             <i class="bi bi-x-lg me-1"></i>ปฏิเสธ</button>`
-        : `<button class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>`;
-    slipModal.show();
-}
+                : `<button class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>`;
+            slipModal.show();
+        }
 
-async function confirmPayment(id, status) {
-    const lbl = { CONFIRMED:'ยืนยัน', REJECTED:'ปฏิเสธ' }[status];
-    confirmAction(`ต้องการ${lbl}การชำระเงินนี้?`, async () => {
-        try {
-            await API.payments.confirm(id, status);
-            showToast(`${lbl}สำเร็จ`);
-            const [payments, insuranceForms] = await Promise.all([
-                API.payments.list(),
-                API.insurance.list()
-            ]);
-            allPayments = payments;
-            insuranceMap = {};
-            insuranceForms.forEach(f => {
-                if (!insuranceMap[f.bookingId]) insuranceMap[f.bookingId] = [];
-                insuranceMap[f.bookingId].push(f);
+        async function confirmPayment(id, status) {
+            const lbl = { CONFIRMED: 'ยืนยัน', REJECTED: 'ปฏิเสธ' }[status];
+            confirmAction(`ต้องการ${lbl}การชำระเงินนี้?`, async () => {
+                try {
+                    await API.payments.confirm(id, status);
+                    showToast(`${lbl}สำเร็จ`);
+                    const [payments, insuranceForms] = await Promise.all([
+                        API.payments.list(),
+                        API.insurance.list()
+                    ]);
+                    allPayments = payments;
+                    insuranceMap = {};
+                    insuranceForms.forEach(f => {
+                        if (!insuranceMap[f.bookingId]) insuranceMap[f.bookingId] = [];
+                        insuranceMap[f.bookingId].push(f);
+                    });
+                    renderPayments();
+                } catch (e) { showToast(e.message, 'danger'); }
             });
-            renderPayments();
-        } catch (e) { showToast(e.message, 'danger'); }
-    });
-}
-</script>
+        }
+    </script>
 </body>
+
 </html>
