@@ -107,6 +107,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     sessionToken = new URLSearchParams(location.search).get('token')
                 || localStorage.getItem(SESSION_KEY);
     if (!sessionToken) { showError('ไม่พบ session — กรุณาเริ่มจองใหม่'); return; }
+    
+    // Setup page exit warning and auto-cancel
+    setupPageExitWarning();
 
     try {
         sessionData = await fetchJSON('/booking-sessions/' + sessionToken);
@@ -484,6 +487,63 @@ async function goNext() {
 
 function goBack() {
     window.location.href = '/frontend/pages/bus-rounds/list.html';
+}
+
+// Page exit warning and auto-cancel
+let pageExitTimeout = null;
+
+function setupPageExitWarning() {
+    // Warning when user tries to leave during booking process
+    window.addEventListener('beforeunload', (e) => {
+        if (sessionToken) {
+            e.preventDefault();
+            e.returnValue = 'คุณกำลังอยู่ในระบบการจอง การออกจากหน้านี้จะยกเลิกการจองที่กำลังดำเนินการ คุณต้องการออกหรือไม่?';
+            return e.returnValue;
+        }
+    });
+
+    // Auto-cancel after 3 minutes of inactivity
+    let lastActivity = Date.now();
+    
+    function updateActivity() {
+        lastActivity = Date.now();
+        clearTimeout(pageExitTimeout);
+        scheduleAutoCancel();
+    }
+
+    function scheduleAutoCancel() {
+        pageExitTimeout = setTimeout(() => {
+            if (sessionToken) {
+                console.log('[FORM] Auto-cancelling booking due to inactivity');
+                cancelBooking();
+            }
+        }, 180000); // 3 minutes
+    }
+
+    // Track user activity
+    ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+        document.addEventListener(event, updateActivity, true);
+    });
+
+    // Start tracking
+    scheduleAutoCancel();
+}
+
+async function cancelBooking() {
+    try {
+        if (sessionToken) {
+            await postJSON('/booking-sessions/cancel', {
+                token: sessionToken
+            });
+            console.log('[FORM] Booking cancelled due to inactivity');
+            showToast('⏰ หมดเวลาการจอง การจองถูกยกเลิก กรุณาเริ่มใหม่', 'warning');
+        }
+        sessionToken = null;
+        window.location.href = '/frontend/pages/bus-rounds/list.html';
+    } catch (error) {
+        console.error('[FORM] Error cancelling booking:', error);
+        window.location.href = '/frontend/pages/bus-rounds/list.html';
+    }
 }
 
 // ── API helpers ───────────────────────────────────────────────────────────────
