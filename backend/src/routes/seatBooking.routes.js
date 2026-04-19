@@ -90,7 +90,34 @@ router.post('/hold', async (req, res) => {
 
     const takenSeats = conflicts.map(s => s.seatNumber)
     if (takenSeats.length > 0) {
-      return res.status(409).json({ message: 'ที่นั่งไม่ว่าง', takenSeats })
+      // ตรวจสอบว่ามี hold เก่าของ session เดิมหรือไม่
+      const existingHolds = await prisma.seatBooking.findMany({
+        where: {
+          busRoundId,
+          sessionToken,
+          bookingId: null,
+          holdExpiresAt: { gt: now }
+        }
+      })
+
+      // ถ้ามี hold เก่า ให้ยกเลิกทั้งหมดก่อนสร้างใหม่
+      if (existingHolds.length > 0) {
+        console.log(`[SEAT_BOOKING] Auto-cancelling ${existingHolds.length} existing holds for session ${sessionToken}`)
+        await prisma.seatBooking.deleteMany({
+          where: {
+            busRoundId,
+            sessionToken,
+            bookingId: null
+          }
+        })
+      }
+
+      return res.status(409).json({ 
+        message: 'ที่นั่งไม่ว่าง', 
+        takenSeats,
+        autoCancelled: existingHolds.length > 0 ? existingHolds.length : undefined,
+        sessionToken
+      })
     }
 
     // สร้าง hold ใหม่

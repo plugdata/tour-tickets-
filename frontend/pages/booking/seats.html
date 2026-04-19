@@ -902,7 +902,7 @@ async function goNext() {
     }, 240000); // 4 minutes
 
     // Hold seats (temp lock, 10 min)
-    await apiFetch('/seat-bookings/hold', {
+    const holdResponse = await apiFetch('/seat-bookings/hold', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
@@ -912,13 +912,33 @@ async function goNext() {
       })
     })
 
+    // Handle conflict response
+    if (holdResponse.autoCancelled) {
+      console.log(`[SEATS] Backend auto-cancelled ${holdResponse.autoCancelled} existing holds`);
+      showToast(`🔄 ยกเลิกการจองเก่า ${holdResponse.autoCancelled} รายการ กรุณาเลือกที่นั่งใหม่`, 'info');
+    }
+
     clearAllSeats() // Clear selected seats after booking
     clearInterval(pollInterval)
     clearTimeout(sessionTimeout) // Clear timeout warning
     window.location.href = `/frontend/pages/booking/form.html?token=${sessionToken}`
   } catch (e) {
-    showToast(e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่', 'danger')
-    await pollSeats() // refresh to show any conflicts
+    // Handle 409 Conflict specifically
+    if (e.message && e.message.includes('ที่นั่งไม่ว่าง')) {
+      const conflictData = typeof e.message === 'object' ? e.message : JSON.parse(e.message);
+      if (conflictData.autoCancelled) {
+        console.log(`[SEATS] Backend auto-cancelled ${conflictData.autoCancelled} existing holds`);
+        showToast(`🔄 ยกเลิกการจองเก่า ${conflictData.autoCancelled} รายการ กรุณาเลือกที่นั่งใหม่`, 'info');
+        await pollSeats(); // Refresh to show updated seat status
+        return;
+      }
+      
+      showToast(`⚠️ ที่นั่ง ${conflictData.takenSeats?.join(', ')} ไม่ว่าง`, 'warning');
+      await pollSeats(); // Refresh to show conflicts
+    } else {
+      showToast(e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่', 'danger')
+      await pollSeats() // refresh to show any conflicts
+    }
   }
 }
 
