@@ -426,7 +426,7 @@ let totalSeats    = 9           // overwritten from API
 let sc            = null        // Seatchart instance
 let genderModal
 let pollInterval  = null
-let sessionToken  = localStorage.getItem(SESSION_KEY)
+let sessionToken  = null // Removed localStorage - use session only
 
 // { seatNumber: 'MALE' | 'FEMALE' }  — seats with confirmed gender
 let myGenders    = {}
@@ -491,15 +491,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       const r = await fetch(API_BASE_URL + '/booking-sessions/' + sessionToken)
       if (r.status === 404 || r.status === 410) {
         // token หมดอายุหรือไม่มีใน DB (เช่น หลัง DB reset)
+        console.log('[SEATS] Session token expired/invalid, cleared:', sessionToken);
         sessionToken = null
-        localStorage.removeItem(SESSION_KEY)
       } else if (r.ok) {
         const sess = await r.json()
         if (sess && sess.busRoundId == roundId && Array.isArray(sess.selectedSeats)) {
           sess.selectedSeats.forEach(s => { myGenders[s.seatNumber] = s.gender })
         }
       }
-    } catch { sessionToken = null; localStorage.removeItem(SESSION_KEY) }
+    } catch { 
+      console.log('[SEATS] Session token check failed, cleared:', sessionToken);
+      sessionToken = null; 
+    }
   }
 
   // Load round info first (need price for seatchart init)
@@ -869,7 +872,14 @@ async function goNext() {
       })
     })
     sessionToken = sess.token
-    localStorage.setItem(SESSION_KEY, sessionToken)
+    console.log('[SEATS] Session token created:', sessionToken);
+    console.log('[SEATS] Seat selection audit:', {
+      timestamp: new Date().toISOString(),
+      roundId: roundId,
+      selectedSeats: seatsData,
+      sessionToken: sessionToken,
+      action: 'seat_selection_confirmed'
+    });
 
     // Hold seats (temp lock, 10 min)
     await apiFetch('/seat-bookings/hold', {
