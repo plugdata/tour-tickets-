@@ -317,3 +317,125 @@ git push origin main
 | `/api/trips` | GET/POST/PUT/DELETE | จัดการ Trip |
 | `/api/addons` | GET/POST/PUT/DELETE | จัดการ Addon |
 | `/api/insurance` | GET | ดึงฟอร์มประกัน |
+
+---
+
+## 11. Thai Calendar Integration & Session Management
+
+### **Thai Calendar Feature (2026-04-19)**
+- **Integration**: Replace native date input with Thai Buddhist Era calendar
+- **Year Conversion**: BE display (2569) with AD internal storage (2026)
+- **Fallback**: Graceful degradation to native date input if ThaiCalendar fails
+- **Security**: Remove localStorage caching for sensitive form data
+- **Audit Trail**: Console logging for form data changes
+
+### **Files Modified:**
+- `frontend/assets/js/features/thai-calendar.js` - Core Thai calendar functionality
+- `frontend/pages/booking/form.html` - Thai calendar integration
+- `frontend/assets/js/app.js` - formatDateTime update for consistency
+
+### **Key Features:**
+```javascript
+// Smart year detection
+if (n >= 2400 && n <= 2600) {
+    _adYear = n - 543;  // BE → AD
+} else if (n >= 1900 && n <= 2100) {
+    _adYear = n;        // AD → AD
+}
+
+// Audit logging
+logFormData({
+    timestamp: new Date().toISOString(),
+    sessionToken: sessionToken,
+    seatCount: data.seats?.length || 0,
+    action: 'form_data_collected'
+});
+```
+
+---
+
+## 12. Session Management & Security Enhancements
+
+### **Session Timeout Management**
+- **seats.html**: 5-minute timeout with 4-minute warning
+- **form.html**: 3-minute inactivity auto-cancel
+- **insurance.html**: 3-minute inactivity auto-cancel
+- **Page Exit Warning**: beforeunload event with user confirmation
+
+### **Security Improvements:**
+```javascript
+// Remove localStorage usage
+let sessionToken = null; // Instead of localStorage.getItem()
+
+// Page exit warning
+window.addEventListener('beforeunload', (e) => {
+    if (sessionToken) {
+        e.returnValue = 'คุณกำลังอยู่ในระบบการจอง การออกจากหน้านี้จะยกเลิกการจอง';
+        return e.returnValue;
+    }
+});
+
+// Auto-cancel after inactivity
+setTimeout(() => {
+    if (sessionToken) {
+        cancelBooking();
+    }
+}, 180000); // 3 minutes
+```
+
+### **Activity Tracking:**
+```javascript
+['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+    document.addEventListener(event, updateActivity, true);
+});
+```
+
+---
+
+## 13. Browser Storage Removal
+
+### **localStorage Elimination:**
+- **seats.html**: Remove session token persistence
+- **form.html**: Remove form data caching
+- **insurance.html**: Remove localStorage dependency
+- **Audit Logging**: Replace with console logging
+
+### **Benefits:**
+- **Security**: No sensitive data stored in browser
+- **Privacy**: Data cleared on page close
+- **Compliance**: GDPR-like data minimization
+- **Audit Trail**: All changes logged for admin review
+
+---
+
+## 14. Auto-Cancel & Resource Management
+
+### **Booking Lifecycle:**
+```
+User Selects Seats → 5min hold → Form (3min) → Insurance (3min) → Payment
+     ↓                ↓           ↓              ↓
+  Auto-cancel     Auto-cancel   Auto-cancel    Complete
+```
+
+### **Resource Protection:**
+- **Seat Availability**: Prevent abandoned bookings from blocking seats
+- **Time Limits**: Reasonable timeouts per booking stage
+- **User Feedback**: Clear warnings and notifications
+- **Automatic Cleanup**: API-based booking cancellation
+
+---
+
+## 15. Recent Updates Summary
+
+### **Latest Commits:**
+- `effd92d` - Thai calendar integration and localStorage removal
+- `26f70ed` - Session timeout warning for seats.html
+- `a71be34` - Session timeout warning and auto-refresh
+- `3cf61a6` - Page exit warning and auto-cancel for booking pages
+
+### **Impact:**
+- **User Experience**: Better timeout management and warnings
+- **Security**: No browser storage of sensitive data
+- **Resource Efficiency**: Automatic cleanup of abandoned bookings
+- **Thai Localization**: Proper Buddhist Era calendar support
+- **System Consistency**: Uniform year display across application
