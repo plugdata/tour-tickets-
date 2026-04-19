@@ -427,6 +427,7 @@ let sc            = null        // Seatchart instance
 let genderModal
 let pollInterval  = null
 let sessionToken  = null // Removed localStorage - use session only
+let sessionTimeout = null // Track session timeout warning
 
 // { seatNumber: 'MALE' | 'FEMALE' }  — seats with confirmed gender
 let myGenders    = {}
@@ -704,6 +705,17 @@ async function pollSeats() {
     const apiSeats   = data.seats || {}
     totalSeats       = data.totalSeats || totalSeats
 
+    // Check if session expired and auto-refresh
+    if (sessionToken && data.sessionExpired) {
+      console.log('[SEATS] Session expired, auto-refreshing...');
+      sessionToken = null;
+      myGenders = {};
+      clearTimeout(sessionTimeout); // Clear timeout warning
+      showToast('⏰ หมดเวลาเลือกที่นั่ง กรุณาเลือกใหม่', 'warning');
+      await pollSeats(); // Re-poll with fresh data
+      return;
+    }
+
     const cart     = sc.getCart()
     // getCart() → [{index:{row,column}, label, state, type}, ...]
     const cartNums = cart.map(s => idxToSeat(s.index))
@@ -881,6 +893,14 @@ async function goNext() {
       action: 'seat_selection_confirmed'
     });
 
+    // Set timeout warning (4 minutes = 240 seconds)
+    clearTimeout(sessionTimeout);
+    sessionTimeout = setTimeout(() => {
+      if (sessionToken) {
+        showToast('⏰ เหลือเวลาอีก 1 นาทีสำหรับเลือกที่นั่ง', 'warning');
+      }
+    }, 240000); // 4 minutes
+
     // Hold seats (temp lock, 10 min)
     await apiFetch('/seat-bookings/hold', {
       method:  'POST',
@@ -894,6 +914,7 @@ async function goNext() {
 
     clearAllSeats() // Clear selected seats after booking
     clearInterval(pollInterval)
+    clearTimeout(sessionTimeout) // Clear timeout warning
     window.location.href = `/frontend/pages/booking/form.html?token=${sessionToken}`
   } catch (e) {
     showToast(e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่', 'danger')
