@@ -29,6 +29,7 @@ async function main() {
   await prisma.busRound.deleteMany()
   await prisma.trip.deleteMany()
   await prisma.user.deleteMany()
+  await prisma.bankAccount.deleteMany()
   await prisma.insuranceCondition.deleteMany()
   await prisma.insurancePolicyContent.deleteMany()
   console.log('✅ ล้างข้อมูลเดิมแล้ว')
@@ -41,7 +42,44 @@ async function main() {
     prisma.user.create({ data: { id: 3, username: 'customer1', password: hash, role: 'CUSTOMER', name: 'กมลพร ทองสุข', phone: '0864523187', email: 'kamonporn@email.com' } }),
     prisma.user.create({ data: { id: 4, username: 'customer2', password: hash, role: 'CUSTOMER', name: 'รัฐพล ดำรงค์ธรรม', phone: '0845673219', email: 'ratthaphon@email.com' } }),
   ])
-  console.log(`✅ Users: ${users.length} คน`)
+  console.log(` Users: ${users.length} คน`)
+
+  //  Bank Accounts  ---------------------------------------------------
+  const bankAccounts = await Promise.all([
+    prisma.bankAccount.create({ 
+      data: { 
+        accountNo: '1234567890', 
+        accountName: ' ', 
+        bankName: ' ', 
+        accountType: 'COMPANY',
+        description: ' ',
+        isActive: true 
+      } 
+    }),
+    prisma.bankAccount.create({ 
+      data: { 
+        accountNo: '9876543210', 
+        accountName: ' ', 
+        bankName: ' ', 
+        accountType: 'PERSONAL',
+        description: ' ',
+        imageUrl: '/uploads/bank-accounts/sample-kbank.jpg',
+        isActive: true 
+      } 
+    }),
+    prisma.bankAccount.create({ 
+      data: { 
+        accountNo: '5555666677', 
+        accountName: ' ', 
+        bankName: ' ', 
+        accountType: 'COMPANY',
+        description: ' ',
+        imageUrl: '/uploads/bank-accounts/sample-bbl.jpg',
+        isActive: true 
+      } 
+    }),
+  ])
+  console.log(`  Bank Accounts: ${bankAccounts.length}  `)
 
   // ── Trips ──────────────────────────────────────────────────────────────
   const trips = await Promise.all([
@@ -49,14 +87,15 @@ async function main() {
     prisma.trip.create({ data: { id: 2, title: 'ทริปเชียงใหม่ ดอยอินทนนท์', description: 'สัมผัสธรรมชาติภาคเหนือ ทะเลหมอก ดอกไม้', imageUrl: 'https://picsum.photos/seed/chiangmai/400/300', price: 2800, isActive: true } }),
     prisma.trip.create({ data: { id: 3, title: 'ทริปกาญจนบุรี แม่น้ำแคว', description: 'ล่องแพ น้ำตก ประวัติศาสตร์สงครามโลก', imageUrl: 'https://picsum.photos/seed/kanchan/400/300', price: 1800, isActive: true } }),
   ])
+  console.log(` Trips: ${trips.length} ทริป`)
   console.log(`✅ Trips: ${trips.length} ทริป`)
 
   // ── BusRounds ──────────────────────────────────────────────────────────
   const rounds = await Promise.all([
-    prisma.busRound.create({ data: { id: 1, tripId: 1, busNumber: 1, startPoint: 'กรุงเทพ (อนุสาวรีย์ชัย)', endPoint: 'เกาะสมุย', departDate: new Date('2025-06-15T06:00:00'), totalSeats: 9, bookedSeats: 4, isOpen: true, responsiblePerson: 'นายวิชัย สุขดี', duration: '3 วัน 2 คืน' } }),
-    prisma.busRound.create({ data: { id: 2, tripId: 1, busNumber: 2, startPoint: 'กรุงเทพ (อนุสาวรีย์ชัย)', endPoint: 'เกาะสมุย', departDate: new Date('2025-06-22T06:00:00'), totalSeats: 9, bookedSeats: 5, isOpen: true, responsiblePerson: 'นางสาวพิมพ์ใจ รัตนาภรณ์', duration: '3 วัน 2 คืน' } }),
-    prisma.busRound.create({ data: { id: 3, tripId: 2, busNumber: 1, startPoint: 'กรุงเทพ (หมอชิต)', endPoint: 'เชียงใหม่', departDate: new Date('2025-07-01T20:00:00'), totalSeats: 9, bookedSeats: 3, isOpen: false, responsiblePerson: 'นายสมศักดิ์ ดีงาม', duration: '2 วัน 1 คืน' } }),
-    prisma.busRound.create({ data: { id: 4, tripId: 3, busNumber: 1, startPoint: 'กรุงเทพ (วิคตอเรีย)', endPoint: 'กาญจนบุรี', departDate: new Date('2025-06-28T07:00:00'), totalSeats: 9, bookedSeats: 4, isOpen: true, responsiblePerson: 'นางมาลัย ประเสริฐ', duration: '2 วัน 1 คืน' } }),
+    prisma.busRound.create({ data: { id: 1, tripId: 1, busNumber: 1, startPoint: 'กรุงเทพ (อนุสาวรีย์ชัย)', endPoint: 'เกาะสมุย', departDate: new Date('2025-06-15T06:00:00'), totalSeats: 9, bookedSeats: 4, isOpen: true, responsiblePerson: 'นายวิชัย สุขดี', duration: '3 วัน 2 คืน', pickupPoints: JSON.stringify([{name: 'กรุงเทพ (อนุสาวรีย์ชัย)', price: 0}, {name: 'กรุงเทพ (หมอชิต)', price: 300}, {name: 'กรุงเทพ (วิคตอเรีย)', price: 200}]) } }),
+    prisma.busRound.create({ data: { id: 2, tripId: 1, busNumber: 2, startPoint: 'กรุงเทพ (หมอชิต)', endPoint: 'เกาะสมุย', departDate: new Date('2025-06-22T06:00:00'), totalSeats: 9, bookedSeats: 5, isOpen: true, responsiblePerson: 'นางสาวพิมพ์ใจ รัตนาภรณ์', duration: '3 วัน 2 คืน', pickupPoints: JSON.stringify([{name: 'กรุงเทพ (หมอชิต)', price: 0}, {name: 'กรุงเทพ (วิคตอเรีย)', price: 300}, {name: 'กรุงเทพ (อนุสาวรีย์ชัย)', price: 200}]) } }),
+    prisma.busRound.create({ data: { id: 3, tripId: 2, busNumber: 1, startPoint: 'กรุงเทพ (หมอชิต)', endPoint: 'เชียงใหม่', departDate: new Date('2025-07-01T20:00:00'), totalSeats: 9, bookedSeats: 3, isOpen: false, responsiblePerson: 'นายสมศักดิ์ ดีงาม', duration: '2 วัน 1 คืน', pickupPoints: JSON.stringify([{name: 'กรุงเทพ (หมอชิต)', price: 0}, {name: 'กรุงเทพ (วิคตอเรีย)', price: 250}, {name: 'กรุงเทพ (อนุสาวรีย์ชัย)', price: 150}]) } }),
+    prisma.busRound.create({ data: { id: 4, tripId: 3, busNumber: 1, startPoint: 'กรุงเทพ (วิคตอเรีย)', endPoint: 'กาญจนบุรี', departDate: new Date('2025-06-28T07:00:00'), totalSeats: 9, bookedSeats: 4, isOpen: true, responsiblePerson: 'นางมาลัย ประเสริฐ', duration: '2 วัน 1 คืน', pickupPoints: JSON.stringify([{name: 'กรุงเทพ (วิคตอเรีย)', price: 0}, {name: 'กรุงเทพ (หมอชิต)', price: 200}, {name: 'กรุงเทพ (อนุสาวรีย์ชัย)', price: 100}]) } }),
   ])
   console.log(`✅ BusRounds: ${rounds.length} รอบ`)
 
@@ -188,6 +227,114 @@ async function main() {
   }
   console.log(`✅ InsuranceForms: ${ins.length} รายการ`)
 
+  //  BookingSessions (flow  booking) 
+  const bookingSessions = await Promise.all([
+    //  session 1 -  trip 1 ()  step=5 (completed)
+    prisma.bookingSession.create({ 
+      data: { 
+        id: 1, 
+        token: 'session-samui-001', 
+        busRoundId: 1, 
+        step: 5, 
+        selectedSeats: JSON.stringify([
+          { seatNumber: 2, gender: 'MALE', firstName: '', lastName: '', phone: '0812345678', foodAllergy: '' },
+          { seatNumber: 3, gender: 'FEMALE', firstName: '', lastName: '', phone: '0834567890', foodAllergy: null }
+        ]), 
+        customerData: JSON.stringify({
+          mainName: ' ', 
+          mainPhone: '0812345678', 
+          email: 'somchai@email.com'
+        }), 
+        addonsData: JSON.stringify([
+          { addonId: 1, quantity: 2 },
+          { addonId: 2, quantity: 1 }
+        ]), 
+        bookingId: 1, 
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now 
+      } 
+    }),
+    //  session 2 -  trip 1 ()  step=5 (completed)
+    prisma.bookingSession.create({ 
+      data: { 
+        id: 2, 
+        token: 'session-samui-002', 
+        busRoundId: 1, 
+        step: 5, 
+        selectedSeats: JSON.stringify([
+          { seatNumber: 4, gender: 'MALE', firstName: '', lastName: '', phone: '0876543210', foodAllergy: '' },
+          { seatNumber: 5, gender: 'MALE', firstName: '', lastName: '', phone: '0856789012', foodAllergy: null }
+        ]), 
+        customerData: JSON.stringify({
+          mainName: ' ', 
+          mainPhone: '0876543210', 
+          email: 'thanakorn@email.com'
+        }), 
+        addonsData: JSON.stringify([
+          { addonId: 5, quantity: 2 }
+        ]), 
+        bookingId: 2, 
+        expiresAt: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000) // 8 days from now 
+      } 
+    }),
+    //  session 3 -  trip 2 ()  step=3 (insurance)
+    prisma.bookingSession.create({ 
+      data: { 
+        id: 3, 
+        token: 'session-chiangmai-001', 
+        busRoundId: 3, 
+        step: 3, 
+        selectedSeats: JSON.stringify([
+          { seatNumber: 2, gender: 'MALE', firstName: '', lastName: '', phone: '0890123456', foodAllergy: null }
+        ]), 
+        customerData: JSON.stringify({
+          mainName: ' ', 
+          mainPhone: '0890123456', 
+          email: 'piya@email.com'
+        }), 
+        addonsData: JSON.stringify([]), 
+        bookingId: null, //  not created yet
+        expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 days from now 
+      } 
+    }),
+    //  session 4 -  trip 4 ()  step=2 (passenger info)
+    prisma.bookingSession.create({ 
+      data: { 
+        id: 4, 
+        token: 'session-kanchan-001', 
+        busRoundId: 4, 
+        step: 2, 
+        selectedSeats: JSON.stringify([
+          { seatNumber: 2, gender: 'FEMALE', firstName: '', lastName: '', phone: '0891234567', foodAllergy: null }
+        ]), 
+        customerData: JSON.stringify({
+          mainName: ' ', 
+          mainPhone: '0891234567', 
+          email: 'wipa@email.com'
+        }), 
+        addonsData: JSON.stringify([]), 
+        bookingId: null, //  not created yet
+        expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) // 5 days from now 
+      } 
+    }),
+    //  session 5 -  trip 1 ()  step=1 (seat selection)
+    prisma.bookingSession.create({ 
+      data: { 
+        id: 5, 
+        token: 'session-samui-003', 
+        busRoundId: 2, 
+        step: 1, 
+        selectedSeats: JSON.stringify([
+          { seatNumber: 7, gender: 'MALE', firstName: '', lastName: '', phone: '0888888888', foodAllergy: null }
+        ]), 
+        customerData: JSON.stringify({}), 
+        addonsData: JSON.stringify([]), 
+        bookingId: null, //  not created yet
+        expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) // 2 days from now 
+      } 
+    }),
+  ])
+  console.log(`✅ BookingSessions: ${bookingSessions.length} รายการ`)
+
   // ── Insurance Policy Content ──
   await prisma.insurancePolicyContent.create({
     data: {
@@ -219,7 +366,7 @@ async function main() {
     ['User', 4], ['Trip', 3], ['BusRound', 4], ['Booking', 8],
     ['Addon', 10], ['BookingAddon', 5], ['Payment', 6],
     ['Content', 3], ['Expense', 10], ['SeatBooking', 16], ['InsuranceForm', 16],
-    ['InsuranceCondition', 3],
+    ['InsuranceCondition', 3], ['BookingSession', 5],
   ]
   for (const [tbl, val] of seqs) {
     await prisma.$executeRawUnsafe(

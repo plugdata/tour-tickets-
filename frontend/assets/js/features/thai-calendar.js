@@ -10,10 +10,26 @@ const ThaiCalendar = {
      * @param {Object} options   - Flatpickr options (onChange, enableTime, etc.)
      * @returns {Object}         - Flatpickr instance
      */
-    init: async function (selector, options = {}) {
+    init: async function (selectorOrElement, options = {}) {
+        console.log('ThaiCalendar.init called with:', selectorOrElement);
         await this._loadFlatpickr();
-        const input = document.querySelector(selector);
-        if (!input) return;
+        
+        // Handle both selector string and DOM element
+        let input;
+        if (typeof selectorOrElement === 'string') {
+            input = document.querySelector(selectorOrElement);
+            if (!input) {
+                console.error('ThaiCalendar: Element not found for selector:', selectorOrElement);
+                return;
+            }
+        } else if (selectorOrElement instanceof HTMLElement) {
+            input = selectorOrElement;
+        } else {
+            console.error('ThaiCalendar: Invalid parameter, expected selector string or HTMLElement');
+            return;
+        }
+        
+        console.log('ThaiCalendar: Element found, initializing flatpickr');
 
         const self = this;
         return flatpickr(input, {
@@ -25,12 +41,18 @@ const ThaiCalendar = {
             disableMobile: true,
 
             onChange: (selectedDates, dateStr, ins) => {
-                self._updateAltInput(ins);
+                // setTimeout(0): รอให้ flatpickr อัปเดต altInput ตาม altFormat เสร็จก่อน
+                // แล้วค่อย override ด้วยปี ค.ศ. ของเรา
+                setTimeout(() => self._updateAltInput(ins), 0);
                 if (options.onChange) options.onChange(dateStr, selectedDates, ins);
+            },
+            onValueUpdate: (sd, ds, ins) => {
+                // Catch ทุก event ที่ flatpickr update ค่า (รวม manual input)
+                setTimeout(() => self._updateAltInput(ins), 0);
             },
             onReady: (sd, ds, ins) => {
                 self._patchYearInput(ins);
-                self._updateAltInput(ins);
+                setTimeout(() => self._updateAltInput(ins), 0);
                 if (options.onReady) options.onReady(sd, ds, ins);
             },
             onOpen: (sd, ds, ins) => {
@@ -65,9 +87,26 @@ const ThaiCalendar = {
             set: (v) => {
                 let n = parseInt(v);
                 if (!isNaN(n)) {
-                    // If someone types a BE year (≥2500), convert back to AD
-                    _adYear = n >= 2500 ? n - 543 : n;
-                    proto.set.call(yearInput, String(_adYear + 543)); // Show BE in UI
+                    console.log('ThaiCalendar: Year input value:', v, 'parsed:', n);
+                    
+                    // Handle Thai year conversion
+                    if (n >= 2400 && n <= 2600) {
+                        // Likely Thai BE year, convert to AD
+                        _adYear = n - 543;
+                        console.log('ThaiCalendar: Converting BE year', n, 'to AD year', _adYear);
+                    } else if (n >= 1900 && n <= 2100) {
+                        // Likely AD year, keep as is
+                        _adYear = n;
+                        console.log('ThaiCalendar: Keeping AD year', n);
+                    } else {
+                        // For other values, assume AD if <2500, BE if >=2500
+                        _adYear = n >= 2500 ? n - 543 : n;
+                        console.log('ThaiCalendar: Fallback conversion for year', n, 'to AD year', _adYear);
+                    }
+                    
+                    const displayYear = _adYear + 543;
+                    proto.set.call(yearInput, String(displayYear)); // Show BE in UI
+                    console.log('ThaiCalendar: Displaying BE year', displayYear);
                 }
             }
         });
@@ -77,18 +116,20 @@ const ThaiCalendar = {
     },
 
     /**
-     * Update the altInput display to show BE year and Thai month name
+     * Update the altInput display: วันที่ภาษาไทย + ปี ค.ศ. (AD)
+     * เช่น "17 เมษายน 2026"  (ไม่ใช่ 2569)
+     * ปฏิทิน popup header ยังคงแสดง พ.ศ. ตามปกติ ผ่าน _patchYearInput
      */
     _updateAltInput: function (ins) {
         if (!ins.altInput || !ins.selectedDates.length) return;
         const date    = ins.selectedDates[0];
         const day     = date.getDate();
         const month   = ins.l10n.months.longhand[date.getMonth()];
-        const beYear  = date.getFullYear() + 543;
+        const adYear  = date.getFullYear();          // ค.ศ. เสมอ เช่น 2026
         const timeStr = ins.config.enableTime
             ? ` ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')} น.`
             : '';
-        ins.altInput.value = `${day} ${month} ${beYear}${timeStr}`;
+        ins.altInput.value = `${day} ${month} ${adYear}${timeStr}`;
     },
 
     /**
@@ -125,8 +166,12 @@ const ThaiCalendar = {
     // ─── Private helpers ─────────────────────────────────────────────────────
 
     _loadFlatpickr: function () {
+        console.log('ThaiCalendar._loadFlatpickr called');
         return new Promise((resolve) => {
-            if (window.flatpickr && flatpickr.l10ns && flatpickr.l10ns.th) return resolve();
+            if (window.flatpickr && flatpickr.l10ns && flatpickr.l10ns.th) {
+                console.log('ThaiCalendar: flatpickr and Thai locale already loaded');
+                return resolve();
+            }
 
             if (!document.querySelector('link[href*="flatpickr"]')) {
                 const link = document.createElement('link');
@@ -144,10 +189,19 @@ const ThaiCalendar = {
             }
 
             const loadCore = () => {
-                if (window.flatpickr) { this._loadLocale(resolve); return; }
+                console.log('ThaiCalendar: Loading flatpickr core...');
+                if (window.flatpickr) { 
+                    console.log('ThaiCalendar: flatpickr core already loaded, loading locale');
+                    this._loadLocale(resolve); 
+                    return; 
+                }
                 const s = document.createElement('script');
                 s.src    = 'https://cdn.jsdelivr.net/npm/flatpickr';
-                s.onload = () => this._loadLocale(resolve);
+                s.onload = () => {
+                    console.log('ThaiCalendar: flatpickr core loaded, loading locale');
+                    this._loadLocale(resolve);
+                };
+                s.onerror = () => console.error('ThaiCalendar: Failed to load flatpickr core');
                 document.head.appendChild(s);
             };
             loadCore();
@@ -155,10 +209,38 @@ const ThaiCalendar = {
     },
 
     _loadLocale: function (callback) {
-        if (flatpickr.l10ns && flatpickr.l10ns.th) return callback();
+        console.log('ThaiCalendar._loadLocale called');
+        if (flatpickr.l10ns && flatpickr.l10ns.th) {
+            console.log('ThaiCalendar: Thai locale already loaded');
+            return callback();
+        }
+        console.log('ThaiCalendar: Loading Thai locale...');
         const s  = document.createElement('script');
         s.src    = 'https://npmcdn.com/flatpickr/dist/l10n/th.js';
-        s.onload = callback;
+        s.onload = () => {
+            console.log('ThaiCalendar: Thai locale loaded successfully');
+            callback();
+        };
+        s.onerror = () => console.error('ThaiCalendar: Failed to load Thai locale');
         document.head.appendChild(s);
+    },
+
+    /**
+     * Process birthdate from Thai calendar input to ISO format
+     * @param {string} dateStr - Date string from input (YYYY-MM-DD)
+     * @returns {string|null} ISO date string or null
+     */
+    processBirthdate: function(dateStr) {
+        if (!dateStr) return null;
+        
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return null;
+            
+            return date.toISOString();
+        } catch (error) {
+            console.error('Error processing birthdate:', error);
+            return null;
+        }
     }
 };

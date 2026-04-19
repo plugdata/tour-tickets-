@@ -30,6 +30,20 @@ enum Role {
   CUSTOMER
 }
 
+// ===== BANK ACCOUNT =====
+model BankAccount {
+  id          Int      @id @default(autoincrement())
+  accountNo   String   @unique
+  accountName String
+  bankName    String
+  accountType String   // 'COMPANY' or 'PERSONAL'
+  imageUrl    String?
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // ===== TRIP =====
 model Trip {
   id          Int      @id @default(autoincrement())

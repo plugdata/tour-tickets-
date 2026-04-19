@@ -806,8 +806,22 @@ function updateSummary() {
     <div class="d-flex flex-wrap gap-2 mb-3">${chips}</div>
     <div class="d-flex justify-content-between align-items-center pt-2 border-top">
       <span class="text-muted small">${count} ที่นั่ง × ${price.toLocaleString('th-TH')} บาท</span>
-      <span class="fw-bold text-primary">${(price*count).toLocaleString('th-TH')} บาท</span>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-danger" onclick="clearAllSeats()" title=" ">
+          <i class="bi bi-x-circle me-1"></i> 
+        </button>
+        <span class="fw-bold text-primary">${(price*count).toLocaleString('th-TH')} บาท</span>
+      </div>
     </div>`
+}
+
+function clearAllSeats() {
+  Object.keys(myGenders).forEach(n => {
+    const idx = seatToIdx(Number(n))
+    sc.setSeat(idx, { state: 'available', type: 'economy', label: String(n) })
+    delete myGenders[n]
+  })
+  updateSummary()
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -826,7 +840,20 @@ async function goNext() {
 
   const missingGender = seatsData.filter(s => !s.gender)
   if (missingGender.length) {
-    showToast('กรุณาระบุเพศให้ครบทุกที่นั่ง', 'warning'); return
+    // Auto-trigger gender modal for first missing seat
+    const firstMissing = missingGender[0]
+    const idx = seatToIdx(firstMissing.seatNumber)
+    
+    pendingIdx = idx
+    pickedGender = null
+    document.getElementById('genderSeatNum').textContent = ` ${firstMissing.seatNumber}`
+    document.getElementById('cardMale').className = 'gender-card'
+    document.getElementById('cardFemale').className = 'gender-card'
+    document.getElementById('btnConfirmGender').disabled = true
+    genderModal.show()
+    
+    const seatNumbers = missingGender.map(s => ` ${s.seatNumber}`).join(', ')
+    showToast(`  ${seatNumbers}`, 'warning'); return
   }
 
   try {
@@ -855,6 +882,7 @@ async function goNext() {
       })
     })
 
+    clearAllSeats() // Clear selected seats after booking
     clearInterval(pollInterval)
     window.location.href = `/frontend/pages/booking/form.html?token=${sessionToken}`
   } catch (e) {

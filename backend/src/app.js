@@ -45,5 +45,6 @@ app.use('/api/insurance', require('./routes/insurance.routes'))
 app.use('/api/seat-bookings', require('./routes/seatBooking.routes'))
 app.use('/api/booking-sessions', require('./routes/bookingSession.routes'))
 app.use('/api/uploads', require('./routes/upload.routes'))
+app.use('/api/bank-accounts', require('./routes/bank-account.routes'))
 
 module.exports = app

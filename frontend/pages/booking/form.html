@@ -53,13 +53,6 @@
 
     <div id="mainContent" class="d-none">
 
-        <!-- Cache notice -->
-        <div id="cacheNotice" class="cache-notice mb-3 d-none">
-            <i class="bi bi-clock-history me-1"></i>
-            พบข้อมูลที่กรอกค้างไว้ — <a href="#" onclick="restoreCache();return false" class="fw-semibold">กู้คืนข้อมูล</a>
-            <a href="#" onclick="clearCache();return false" class="ms-2 text-muted">ลบ</a>
-        </div>
-
         <form id="passengerForm" novalidate>
 
             <!-- Per-seat passenger forms -->
@@ -90,65 +83,26 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/features/thai-calendar.js"></script>
 <script>
 // ── Constants ────────────────────────────────────────────────────────────────
 const SESSION_KEY   = 'bk_session_token';
-const PROFILE_CACHE = 'bk_profile_draft';
-const CACHE_TTL_MS  = 7 * 24 * 60 * 60 * 1000; // 1 week
 
 let sessionToken = null;
 let sessionData  = null;
 let roundData    = null;
 
-// ── Cache helpers (localStorage, 1-week TTL) ─────────────────────────────────
-function saveProfileCache(data) {
-    try {
-        localStorage.setItem(PROFILE_CACHE, JSON.stringify({ expiry: Date.now() + CACHE_TTL_MS, data }));
-    } catch(e) {}
-}
-function loadProfileCache() {
-    try {
-        const raw = localStorage.getItem(PROFILE_CACHE);
-        if (!raw) return null;
-        const { expiry, data } = JSON.parse(raw);
-        if (Date.now() > expiry) { localStorage.removeItem(PROFILE_CACHE); return null; }
-        return data;
-    } catch { return null; }
-}
-function clearCache() {
-    localStorage.removeItem(PROFILE_CACHE);
-    document.getElementById('cacheNotice').classList.add('d-none');
-    showToast('ลบข้อมูลสำรองแล้ว', 'info');
-}
-
-// ── Auto-save form data to cache on input ─────────────────────────────────────
-function attachAutoSave() {
-    document.getElementById('passengerForm').addEventListener('input', () => {
-        saveProfileCache(collectData());
+// Log form data changes for audit trail 
+function logFormData(data) {
+    console.log('[FORM DATA LOG]', {
+        timestamp: new Date().toISOString(),
+        sessionToken: sessionToken,
+        seatCount: data.seats?.length || 0,
+        action: 'form_data_collected'
     });
 }
 
-// ── Restore cache into form ───────────────────────────────────────────────────
-function restoreCache() {
-    const cache = loadProfileCache();
-    if (!cache) return;
-    // Restore per-seat
-    (cache.seats || []).forEach(s => {
-        const sel = v => document.querySelector(`[data-seat="${s.seatNumber}"].${v}`);
-        if (sel('passenger-prefix'))    sel('passenger-prefix').value    = s.namePrefix || '';
-        if (sel('passenger-firstname')) sel('passenger-firstname').value = s.firstName  || '';
-        if (sel('passenger-lastname'))  sel('passenger-lastname').value  = s.lastName   || '';
-        if (sel('passenger-phone'))     sel('passenger-phone').value     = s.phone      || '';
-        if (sel('passenger-nationalid'))sel('passenger-nationalid').value= s.nationalId || '';
-        if (sel('passenger-birthdate')) sel('passenger-birthdate').value = s.birthDate  ? s.birthDate.substring(0,10) : '';
-        if (sel('passenger-bloodtype')) sel('passenger-bloodtype').value = s.bloodType  || '';
-        if (sel('passenger-allergy'))   sel('passenger-allergy').value   = s.foodAllergy|| '';
-    });
-    document.getElementById('cacheNotice').classList.add('d-none');
-    showToast('กู้คืนข้อมูลสำเร็จ', 'success');
-}
-
-// ── Init ─────────────────────────────────────────────────────────────────────
+// ── Init ─────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
     sessionToken = new URLSearchParams(location.search).get('token')
                 || localStorage.getItem(SESSION_KEY);
@@ -158,20 +112,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         sessionData = await fetchJSON('/booking-sessions/' + sessionToken);
         if (!sessionData) { showError('Session หมดอายุ'); return; }
 
-        const all = await fetchJSON('/bus-rounds');
-        roundData = all.find(r => r.id == sessionData.busRoundId);
+        const rounds = await fetchJSON('/bus-rounds');
+        roundData = rounds.find(r => r.id == sessionData.busRoundId);
+        if (!roundData) { showError('ไม่พบข้อมูลรอบรถ'); return; }
 
+        // Render forms
         renderForms();
-        prefillFromSession();
-        attachAutoSave();
-
-        // Check for saved cache
-        if (loadProfileCache()) {
-            document.getElementById('cacheNotice').classList.remove('d-none');
-        }
-
-        document.getElementById('hdrSub').textContent =
-            roundData ? `${roundData.trip?.title} · ${roundData.startPoint} → ${roundData.endPoint}` : '';
+        
+        // Initialize Thai calendar for birthdate inputs
+        initializeThaiCalendar();
+        
+        // Add pickup change listeners
+        document.querySelectorAll('.passenger-pickup').forEach(select => {
+            select.addEventListener('change', updateSummary);
+        });
 
         document.getElementById('loadingState').classList.add('d-none');
         document.getElementById('mainContent').classList.remove('d-none');
@@ -179,6 +133,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         showError(e.message);
     }
 });
+
+//  Render pickup options
+function renderPickupOptions() {
+    let points = roundData?.pickupPoints || [];
+    
+    // Handle JSON string from API
+    if (typeof points === 'string') {
+        try {
+            points = JSON.parse(points || '[]');
+        } catch (e) {
+            points = [];
+        }
+    }
+    
+    // Handle new structure with price
+    if (points.length > 0 && typeof points[0] === 'object') {
+        return points.map(p => `<option value="${p.name}">${p.name} ${p.price > 0 ? `(+${p.price}  )` : ''}</option>`).join('');
+    }
+    // Fallback for old string array
+    return points.map(p => `<option value="${p}">${p}</option>`).join('');
+}
+
+//  Render dropoff options 
+function renderDropoffOptions() {
+    // Use only endPoint since dropoffPoints field doesn't exist in schema
+    const endPoint = roundData?.endPoint || '';
+    return `<option value="${endPoint}">${endPoint}</option>`;
+}
 
 // ── Render per-seat forms ────────────────────────────────────────────────────
 function renderForms() {
@@ -236,10 +218,11 @@ function renderForms() {
                             value="${s.nationalId || ''}">
                     </div>
                     <div class="col-6 col-md-4">
-                        <label class="form-label small">วันเดือนปีเกิด <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control form-control-sm passenger-birthdate"
-                            data-seat="${sn}" required
-                            value="${s.birthDate ? s.birthDate.substring(0,10) : ''}">
+                        <label class="form-label small"> <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm passenger-birthdate"
+                            data-seat="${sn}" required readonly
+                            value="${s.birthDate ? s.birthDate.substring(0,10) : ''}"
+                            placeholder=" ">
                     </div>
                     <div class="col-6 col-md-3">
                         <label class="form-label small">หมู่เลือด <span class="text-danger">*</span></label>
@@ -264,26 +247,21 @@ function renderForms() {
                             data-seat="${sn}" placeholder="เช่น แพ้กุ้ง, ทานมังสวิรัติ"
                             value="${s.foodAllergy || ''}">
                     </div>
+                    <!-- Row 4: pickup point (mandatory) -->
+                    <div class="col-12">
+                        <label class="form-label small">จุดรับ <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm passenger-pickup" data-seat="${sn}" required>
+                            <option value="">-</option>
+                            ${renderPickupOptions()}
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>`;
     }).join('');
 
-    // Booking summary
-    const price = roundData?.trip?.price || 0;
-    const total = seats.length * price;
-    document.getElementById('bookingSummary').innerHTML = `
-        <div class="row g-1 small">
-            <div class="col-6 text-muted">จำนวนที่นั่ง</div>
-            <div class="col-6 text-end fw-semibold">${seats.length} ที่นั่ง</div>
-            <div class="col-6 text-muted">ราคา/คน</div>
-            <div class="col-6 text-end">${Number(price).toLocaleString('th-TH')} บาท</div>
-            <div class="col-12"><hr class="my-1"></div>
-            <div class="col-6 fw-bold">รวมค่าที่นั่ง</div>
-            <div class="col-6 text-end fw-bold text-primary">${Number(total).toLocaleString('th-TH')} บาท</div>
-        </div>
-        <p class="text-muted small mb-0 mt-2"><i class="bi bi-info-circle me-1"></i>ยังไม่รวมอุปกรณ์เช่าเสริม</p>
-    `;
+    // Update booking summary
+    updateSummary();
 }
 
 // ── Prefill from session ─────────────────────────────────────────────────────
@@ -312,13 +290,107 @@ function collectData() {
             passengerName: [firstName, lastName].filter(Boolean).join(' '),
             phone:         g('passenger-phone'),
             nationalId:    g('passenger-nationalid'),
-            birthDate:     g('passenger-birthdate') ? new Date(g('passenger-birthdate')).toISOString() : null,
+            birthDate:     g('passenger-birthdate') ? 
+                (typeof ThaiCalendar !== 'undefined' && ThaiCalendar.processBirthdate 
+                    ? ThaiCalendar.processBirthdate(g('passenger-birthdate'))
+                    : new Date(g('passenger-birthdate')).toISOString()) 
+                : null,
             bloodType:     g('passenger-bloodtype'),
             foodAllergy:   g('passenger-allergy'),
+            pickupPoint:   g('passenger-pickup') || null,
+            pickupPrice: (() => {
+                const selected = g('passenger-pickup');
+                let points = roundData?.pickupPoints || [];
+                
+                // Handle JSON string from API
+                if (typeof points === 'string') {
+                    try {
+                        points = JSON.parse(points || '[]');
+                    } catch (e) {
+                        points = [];
+                    }
+                }
+                
+                if (points.length > 0 && typeof points[0] === 'object') {
+                    const pickup = points.find(p => p.name === selected);
+                    return pickup ? pickup.price : 0;
+                }
+                return 0;
+            })(),
         };
     });
 
     return { seats };
+}
+
+// ── Update booking summary ───────────────────────────────────────────────────
+function updateSummary() {
+    const seats = (sessionData.selectedSeats || []).map(s => {
+        const g = n => document.querySelector(`.${n}[data-seat="${s.seatNumber}"]`)?.value?.trim() || '';
+        const firstName  = g('passenger-firstname');
+        const lastName   = g('passenger-lastname');
+        return {
+            seatNumber:   s.seatNumber,
+            gender:       s.gender,
+            namePrefix:   g('passenger-prefix'),
+            firstName,
+            lastName,
+            passengerName: [firstName, lastName].filter(Boolean).join(' '),
+            phone:         g('passenger-phone'),
+            nationalId:    g('passenger-nationalid'),
+            birthDate:     g('passenger-birthdate') ? 
+                (typeof ThaiCalendar !== 'undefined' && ThaiCalendar.processBirthdate 
+                    ? ThaiCalendar.processBirthdate(g('passenger-birthdate'))
+                    : new Date(g('passenger-birthdate')).toISOString()) 
+                : null,
+            bloodType:     g('passenger-bloodtype'),
+            foodAllergy:   g('passenger-allergy'),
+            pickupPoint:   g('passenger-pickup') || null,
+            pickupPrice: (() => {
+                const selected = g('passenger-pickup');
+                let points = roundData?.pickupPoints || [];
+                
+                // Handle JSON string from API
+                if (typeof points === 'string') {
+                    try {
+                        points = JSON.parse(points || '[]');
+                    } catch (e) {
+                        points = [];
+                    }
+                }
+                
+                if (points.length > 0 && typeof points[0] === 'object') {
+                    const pickup = points.find(p => p.name === selected);
+                    return pickup ? pickup.price : 0;
+                }
+                return 0;
+            })(),
+        };
+    });
+
+    // Booking summary
+    const price = roundData?.trip?.price || 0;
+    const seatTotal = seats.length * price;
+    const pickupTotal = seats.reduce((sum, seat) => sum + (seat.pickupPrice || 0), 0);
+    const total = seatTotal + pickupTotal;
+    document.getElementById('bookingSummary').innerHTML = `
+        <div class="row g-1 small">
+            <div class="col-6 text-muted">จำนวนที่นั่ง</div>
+            <div class="col-6 text-end fw-semibold">${seats.length} ที่นั่ง</div>
+            <div class="col-6 text-muted">ราคา/คน</div>
+            <div class="col-6 text-end">${Number(price).toLocaleString('th-TH')} บาท</div>
+            <div class="col-6 text-muted">รวมค่าที่นั่ง</div>
+            <div class="col-6 text-end fw-semibold">${Number(seatTotal).toLocaleString('th-TH')} บาท</div>
+            ${pickupTotal > 0 ? `
+                <div class="col-6 text-muted">ค่าจุดรับรถเพิ่ม</div>
+                <div class="col-6 text-end fw-semibold">${Number(pickupTotal).toLocaleString('th-TH')} บาท</div>
+            ` : ''}
+            <div class="col-12"><hr class="my-1"></div>
+            <div class="col-6 fw-bold">รวมทั้งหมด</div>
+            <div class="col-6 text-end fw-bold text-primary">${Number(total).toLocaleString('th-TH')} บาท</div>
+        </div>
+        <p class="text-muted small mb-0 mt-2"><i class="bi bi-info-circle me-1"></i>ยังไม่รวมอุปกรณ์เช่าเสริม</p>
+    `;
 }
 
 // ── Validate ─────────────────────────────────────────────────────────────────
@@ -334,13 +406,54 @@ function validate({ seats }) {
             return `กรุณาเลือกหมู่เลือด ที่นั่ง ${s.seatNumber}`;
         if (!s.namePrefix)
             return `กรุณาเลือกคำนำหน้า ที่นั่ง ${s.seatNumber}`;
+        if (!s.pickupPoint)
+            return `กรุณาเลือกจุดรับ ที่นั่ง ${s.seatNumber}`;
     }
     return null;
 }
 
-function focus(id) { setTimeout(() => document.getElementById(id)?.focus(), 50); }
+//  Initialize Thai Calendar for birthdate inputs
+function initializeThaiCalendar() {
+    try {
+        console.log('Initializing Thai Calendar for birthdate inputs...');
+        const inputs = document.querySelectorAll('.passenger-birthdate');
+        console.log('Found', inputs.length, 'birthdate inputs');
+        
+        inputs.forEach((input, index) => {
+            console.log(`Initializing input ${index + 1}:`, input);
+            
+            if (typeof ThaiCalendar !== 'undefined' && ThaiCalendar.init) {
+                ThaiCalendar.init(input, {
+                    dateFormat: 'Y-m-d',
+                    maxDate: 'today',
+                    onChange: (dateStr) => {
+                        console.log('ThaiCalendar date changed:', dateStr);
+                        // Trigger auto-save when date changes
+                        const event = new Event('input', { bubbles: true });
+                        input.dispatchEvent(event);
+                    }
+                });
+                console.log(`ThaiCalendar initialized for input ${index + 1}`);
+            } else {
+                console.warn('ThaiCalendar not available, falling back to native date input');
+                // Fallback to native date input
+                input.type = 'date';
+                input.removeAttribute('readonly');
+                input.max = new Date().toISOString().split('T')[0];
+            }
+        });
+    } catch (error) {
+        console.error('Error initializing Thai Calendar:', error);
+        // Fallback to native date inputs
+        document.querySelectorAll('.passenger-birthdate').forEach(input => {
+            input.type = 'date';
+            input.removeAttribute('readonly');
+            input.max = new Date().toISOString().split('T')[0];
+        });
+    }
+}
 
-// ── Navigate ─────────────────────────────────────────────────────────────────
+//  Navigate 
 async function goNext() {
     const formData = collectData();
     const err = validate(formData);
@@ -348,11 +461,11 @@ async function goNext() {
 
     const btn = document.getElementById('btnNext');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>  1...';
 
     try {
-        // Save to cache (1 week)
-        saveProfileCache(formData);
+        // Log form data for audit trail
+        logFormData(formData);
 
         // Save to session
         await postJSON('/booking-sessions', {
@@ -363,9 +476,9 @@ async function goNext() {
 
         window.location.href = `/frontend/pages/booking/insurance.html?token=${sessionToken}`;
     } catch (e) {
-        showToast(e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่', 'danger');
+        showToast(e.message || ' ', 'danger');
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-shield-check me-1"></i>ถัดไป: บันทึกประกัน';
+        btn.innerHTML = '<i class="bi bi-shield-check me-1"></i> : ';
     }
 }
 

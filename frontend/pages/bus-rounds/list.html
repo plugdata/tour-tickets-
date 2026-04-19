@@ -277,11 +277,12 @@ function renderRounds(resetPage = true) {
     if (startQ || endQ) {
         data = ThaiCalendar.filterByDateRange(data, 'departDate', startQ, endQ);
     }
-    if (q) data = data.filter(r =>
-        (r.startPoint || '').toLowerCase().includes(q) ||
-        (r.endPoint || '').toLowerCase().includes(q) ||
-        (r.pickupPoints || []).some(p => p.name.toLowerCase().includes(q))
-    );
+    if (q) data = data.filter(r => {
+        const pickupPoints = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
+        return (r.startPoint || '').toLowerCase().includes(q) ||
+               (r.endPoint || '').toLowerCase().includes(q) ||
+               pickupPoints.some(p => p.name.toLowerCase().includes(q));
+    });
 
     filteredData = data;
     const grid = document.getElementById('roundsGrid');
@@ -310,13 +311,16 @@ function renderRounds(resetPage = true) {
                     <div class="mb-1 text-primary small fw-bold">
                         <i class="bi bi-geo-alt-fill me-1"></i>${r.startPoint} 
                     </div>
-                    ${r.pickupPoints && r.pickupPoints.length > 1 ? `
-                        <div class="mb-2 ps-2 border-start text-muted" style="font-size: 0.75rem; margin-left: 0.35rem;">
-                            ${r.pickupPoints.slice(1).map(p => `
-                                <div class="mb-1"><i class="bi bi-plus-circle me-1" style="font-size:0.6rem"></i>${p.name} ${p.price > 0 ? `<span class="text-success fw-bold">+${p.price}</span>` : ''}</div>
-                            `).join('')}
-                        </div>
-                    ` : ''}
+                    ${(() => {
+        const pickupPoints = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
+        return pickupPoints.length > 1 ? `
+            <div class="mb-2 ps-2 border-start text-muted" style="font-size: 0.75rem; margin-left: 0.35rem;">
+                ${pickupPoints.slice(1).map(p => `
+                    <div class="mb-1"><i class="bi bi-plus-circle me-1" style="font-size:0.6rem"></i>${p.name} ${p.price > 0 ? `<span class="text-success fw-bold">+${p.price}</span>` : ''}</div>
+                `).join('')}
+            </div>
+        ` : '';
+    })()}
                     <div class="mb-2 text-muted small"><i class="bi bi-arrow-right-short me-1"></i>ถึง: ${r.endPoint}</div>
                     <div class="mb-2 text-muted small"><i class="bi bi-calendar me-1"></i>${formatDateTime(r.departDate)}</div>
                     ${r.extraPrice > 0 ? `<div class="mb-2 text-success small fw-semibold"><i class="bi bi-plus-circle me-1"></i>ราคาเริ่มต้นเพิ่ม: +${formatMoney(r.extraPrice)}</div>` : ''}
@@ -430,7 +434,7 @@ function editRound(r) {
 
     // Load Pickups
     document.getElementById('pickupList').innerHTML = '';
-    const points = r.pickupPoints || [{ name: r.startPoint, price: r.extraPrice }];
+    const points = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || [{ name: r.startPoint, price: r.extraPrice }]);
     points.forEach(p => addPickupRow(p.name, p.price));
 
     roundModal.show();

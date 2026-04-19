@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> manage  -  </title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background: #f8f9fa; }
+        .card { border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card-header { background: linear-gradient(135deg, #0d6efd, #6610f2); color: white; }
+        .bank-card {
+            border: 1px solid #dee2e6; border-radius: 12px; padding: 1.5rem;
+            background: white; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .bank-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .bank-logo {
+            width: 60px; height: 60px; object-fit: cover; border-radius: 8px;
+            background: #f8f9fa; border: 2px solid #dee2e6;
+        }
+        .account-type-company { background: #e8f5e8; color: #2d6a2d; }
+        .account-type-personal { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/frontend/pages/admin/index.html">
+                <i class="bi bi-shield-check me-2"></i>
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/frontend/pages/admin/index.html">
+                    <i class="bi bi-house me-1"></i> 
+                </a>
+                <a class="nav-link" href="/frontend/pages/admin/bank-accounts.html">
+                    <i class="bi bi-bank me-1"></i> 
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-bank me-2"></i> </h5>
+                        <button class="btn btn-light btn-sm" onclick="showAddModal()">
+                            <i class="bi bi-plus-circle me-1"></i> 
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- Search and Filter -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" class="form-control" id="searchInput" placeholder=" ...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="typeFilter">
+                                    <option value=""> </option>
+                                    <option value="COMPANY"> </option>
+                                    <option value="PERSONAL"> </option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="statusFilter">
+                                    <option value=""> </option>
+                                    <option value="true"> </option>
+                                    <option value="false"> </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Bank Accounts List -->
+                        <div id="bankAccountsList" class="row g-3">
+                            <!-- Cards will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i></h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="small text-muted">
+                            <p class="mb-2"><strong> :</strong></p>
+                            <ul class="mb-0">
+                                <li> </li>
+                                <li> </li>
+                                <li> </li>
+                                <li> </li>
+                                <li> </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i></h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="fw-bold text-primary" id="totalCount">0</div>
+                                <div class="small text-muted"> </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="fw-bold text-success" id="activeCount">0</div>
+                                <div class="small text-muted"> </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal fade" id="bankAccountModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle"> </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="bankAccountForm">
+                        <input type="hidden" id="accountId">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label"> <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="accountNo" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label"> <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="accountName" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label"> <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="bankName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label"> <span class="text-danger">*</span></label>
+                                <select class="form-select" id="accountType" required>
+                                    <option value=""> </option>
+                                    <option value="COMPANY"> </option>
+                                    <option value="PERSONAL"> </option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <label class="form-label"></label>
+                            <div id="imageUploadContainer"></div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <label class="form-label"></label>
+                            <textarea class="form-control" id="description" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" id="isActive" checked>
+                            <label class="form-check-label" for="isActive"> </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"> </button>
+                    <button type="button" class="btn btn-primary" onclick="saveBankAccount()">
+                        <i class="bi bi-save me-1"></i> 
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/features/file-upload.js"></script>
+    <script>
+        let bankAccounts = [];
+        let currentEditId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadBankAccounts();
+            setupEventListeners();
+            setupImageUpload();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', filterAccounts);
+            document.getElementById('typeFilter').addEventListener('change', filterAccounts);
+            document.getElementById('statusFilter').addEventListener('change', filterAccounts);
+        }
+
+        function setupImageUpload() {
+            FileUpload.init('#imageUploadContainer', {
+                targetInputId: 'imageUrl',
+                btnText: ' ',
+                btnIcon: 'bi-image',
+                multiple: false
+            });
+        }
+
+        async function loadBankAccounts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/bank-accounts`);
+                bankAccounts = await response.json();
+                renderBankAccounts();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading bank accounts:', error);
+                showToast(' ', 'danger');
+            }
+        }
+
+        function renderBankAccounts() {
+            const container = document.getElementById('bankAccountsList');
+            
+            if (bankAccounts.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center py-4">
+                        <i class="bi bi-bank text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2"> </p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = bankAccounts.map(account => `
+                <div class="col-md-6">
+                    <div class="bank-card">
+                        <div class="d-flex align-items-start gap-3">
+                            <div>
+                                ${account.imageUrl 
+                                    ? `<img src="${API_BASE_URL}${account.imageUrl}" class="bank-logo" alt="${account.bankName}">`
+                                    : `<div class="bank-logo d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-bank text-muted fs-4"></i>
+                                      </div>`
+                                }
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <div class="fw-bold">${account.bankName}</div>
+                                        <div class="small text-muted">${account.accountType === 'COMPANY' ? '' : ''}</div>
+                                    </div>
+                                    <span class="badge ${account.accountType === 'COMPANY' ? 'account-type-company' : 'account-type-personal'}">
+                                        ${account.accountType === 'COMPANY' ? '' : ''}
+                                    </span>
+                                </div>
+                                
+                                <div class="small mb-2">
+                                    <div><strong>:</strong> ${account.accountNo}</div>
+                                    <div><strong>:</strong> ${account.accountName}</div>
+                                    ${account.description ? `<div class="text-muted mt-1">${account.description}</div>` : ''}
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editAccount(${account.id})">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteAccount(${account.id})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterAccounts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            const filtered = bankAccounts.filter(account => {
+                const matchesSearch = !searchTerm || 
+                    account.bankName.toLowerCase().includes(searchTerm) ||
+                    account.accountName.toLowerCase().includes(searchTerm) ||
+                    account.accountNo.toLowerCase().includes(searchTerm);
+                
+                const matchesType = !typeFilter || account.accountType === typeFilter;
+                const matchesStatus = !statusFilter || account.isActive.toString() === statusFilter;
+
+                return matchesSearch && matchesType && matchesStatus;
+            });
+
+            const container = document.getElementById('bankAccountsList');
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center py-4">
+                        <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2"> </p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Temporarily replace bankAccounts for rendering
+            const originalAccounts = bankAccounts;
+            bankAccounts = filtered;
+            renderBankAccounts();
+            bankAccounts = originalAccounts;
+        }
+
+        function updateStats() {
+            document.getElementById('totalCount').textContent = bankAccounts.length;
+            document.getElementById('activeCount').textContent = bankAccounts.filter(a => a.isActive).length;
+        }
+
+        function showAddModal() {
+            currentEditId = null;
+            document.getElementById('modalTitle').textContent = ' ';
+            document.getElementById('bankAccountForm').reset();
+            document.getElementById('isActive').checked = true;
+            FileUpload.clearPending('imageUrl');
+            new bootstrap.Modal(document.getElementById('bankAccountModal')).show();
+        }
+
+        function editAccount(id) {
+            const account = bankAccounts.find(a => a.id === id);
+            if (!account) return;
+
+            currentEditId = id;
+            document.getElementById('modalTitle').textContent = ' ';
+            
+            document.getElementById('accountNo').value = account.accountNo;
+            document.getElementById('accountName').value = account.accountName;
+            document.getElementById('bankName').value = account.bankName;
+            document.getElementById('accountType').value = account.accountType;
+            document.getElementById('description').value = account.description || '';
+            document.getElementById('isActive').checked = account.isActive;
+
+            // Set image if exists
+            if (account.imageUrl) {
+                document.getElementById('imageUrl').value = account.imageUrl;
+                document.getElementById('imageUrl_preview').innerHTML = `
+                    <div class="position-relative d-inline-block">
+                        <img src="${API_BASE_URL}${account.imageUrl}" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="FileUpload.clearPending('imageUrl')">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                `;
+            }
+
+            new bootstrap.Modal(document.getElementById('bankAccountModal')).show();
+        }
+
+        async function saveBankAccount() {
+            const form = document.getElementById('bankAccountForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const formData = {
+                accountNo: document.getElementById('accountNo').value,
+                accountName: document.getElementById('accountName').value,
+                bankName: document.getElementById('bankName').value,
+                accountType: document.getElementById('accountType').value,
+                description: document.getElementById('description').value,
+                isActive: document.getElementById('isActive').checked
+            };
+
+            // Handle image upload
+            const imageUrl = document.getElementById('imageUrl').value;
+            if (imageUrl) {
+                formData.imageUrl = imageUrl;
+            }
+
+            try {
+                const url = currentEditId 
+                    ? `${API_BASE_URL}/bank-accounts/${currentEditId}`
+                    : `${API_BASE_URL}/bank-accounts`;
+                
+                const method = currentEditId ? 'PUT' : 'POST';
+                
+                // Handle file upload separately if needed
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || ' ');
+                }
+
+                await loadBankAccounts();
+                bootstrap.Modal.getInstance(document.getElementById('bankAccountModal')).hide();
+                showToast(currentEditId ? ' ' : ' ', 'success');
+            } catch (error) {
+                console.error('Error saving bank account:', error);
+                showToast(error.message, 'danger');
+            }
+        }
+
+        async function deleteAccount(id) {
+            if (!confirm(' ?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/bank-accounts/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || ' ');
+                }
+
+                await loadBankAccounts();
+                showToast(' ', 'success');
+            } catch (error) {
+                console.error('Error deleting bank account:', error);
+                showToast(error.message, 'danger');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            // Simple toast implementation
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+            toast.style.zIndex = '9999';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -200,11 +200,22 @@
                             </div>
                         </div>
 
+                        <!-- Bank Accounts -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold"> </label>
+                            <div id="bankAccountsList" class="mb-3">
+                                <div class="text-center py-2">
+                                    <div class="spinner-border spinner-border-sm text-primary"></div>
+                                    <div class="small text-muted"> </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Slip upload -->
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">แนบสลิปโอนเงิน</label>
+                            <label class="form-label small fw-semibold">  </label>
                             <input type="file" class="form-control" id="slipFile" accept="image/*">
-                            <div class="form-text">รองรับ JPG, PNG ขนาดไม่เกิน 5MB</div>
+                            <div class="form-text"> JPG, PNG  5MB</div>
                         </div>
 
                         <!-- Total -->
@@ -244,7 +255,7 @@ let roundData = null;
 let addonsList = [];
 let selectedAddons = {};  // { addonId: quantity }
 let payType = 'FULL';
-const DEPOSIT_RATE = 0.3; // มัดจำ 30%
+let DEPOSIT_RATE = 0.3; // มัดจำ 30%
 
 document.addEventListener('DOMContentLoaded', async () => {
     sessionToken = new URLSearchParams(location.search).get('token')
@@ -259,10 +270,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         roundData = all.find(r => r.id == sessionData.busRoundId);
         if (!roundData) { showError('ไม่พบข้อมูลรอบรถ'); return; }
 
+        // Update deposit rate from trip data
+        DEPOSIT_RATE = roundData.trip?.deposit > 0 ? roundData.trip.deposit / 100 : 0.3;
+
         // Load all active addons (shared)
         try {
             addonsList = await fetchAPI('/addons/active');
         } catch (_) { addonsList = []; }
+
+        // Load bank accounts
+        await loadBankAccounts();
 
         renderTicket();
         renderAddons();
@@ -336,15 +353,18 @@ function renderTicket() {
     // Price breakdown
     const pricePerSeat = rd.trip?.price || 0;
     const seatTotal = seats.length * pricePerSeat;
+    const { pickupTotal } = calcTotals();
     document.getElementById('tktPriceBreakdown').innerHTML = `
         <div class="row g-1 small">
             <div class="col-7 text-muted">ค่าที่นั่ง (${seats.length} × ${Number(pricePerSeat).toLocaleString('th-TH')} บาท)</div>
             <div class="col-5 text-end">${Number(seatTotal).toLocaleString('th-TH')} บาท</div>
+            <div class="col-7 text-muted">ค่าจุดรับรถเพิ่ม</div>
+            <div class="col-5 text-end">${Number(pickupTotal).toLocaleString('th-TH')} บาท</div>
             <div class="col-7 text-muted" id="addonTotalLabel">อุปกรณ์เช่า</div>
             <div class="col-5 text-end" id="addonTotalAmt">0 บาท</div>
             <div class="col-12"><hr class="my-1"></div>
             <div class="col-7 fw-bold">รวม</div>
-            <div class="col-5 text-end fw-bold text-primary" id="grandTotal">${Number(seatTotal).toLocaleString('th-TH')} บาท</div>
+            <div class="col-5 text-end fw-bold text-primary" id="grandTotal">${Number((seatTotal + pickupTotal)).toLocaleString('th-TH')} บาท</div>
         </div>
     `;
 }
@@ -381,12 +401,19 @@ function changeAddon(id, delta) {
 function calcTotals() {
     const seats = sessionData.selectedSeats || [];
     const seatTotal = seats.length * (roundData?.trip?.price || 0);
+    
+    // Calculate pickup fees from form data
+    let pickupTotal = 0;
+    for (const seat of seats) {
+        pickupTotal += seat.pickupPrice || 0;
+    }
+    
     let addonTotal = 0;
     for (const [id, qty] of Object.entries(selectedAddons)) {
         const addon = addonsList.find(a => a.id == id);
         if (addon) addonTotal += addon.price * qty;
     }
-    return { seatTotal, addonTotal, grand: seatTotal + addonTotal };
+    return { seatTotal, addonTotal, pickupTotal, grand: seatTotal + addonTotal + pickupTotal };
 }
 
 function updatePayAmounts() {
@@ -424,28 +451,74 @@ async function confirmBooking() {
         const seats = sessionData.selectedSeats || [];
         const cd = sessionData.customerData || {};
 
-        // สร้าง booking (ต้องใช้ auth token ของลูกค้า - ถ้ามี)
-        // ถ้าไม่มี auth จะส่งข้อมูลครบแล้วรอ admin confirm
+        // เตรียมข้อมูล addons
         const addonsPayload = Object.entries(selectedAddons).map(([id, qty]) => ({
             addonId: parseInt(id), quantity: qty
         }));
 
-        // อัปเดต session ด้วยข้อมูล addons
+        // อัปเดต session ด้วยข้อมูล addons ก่อน
         await postAPI('/booking-sessions', {
             token: sessionToken,
             step: 3,
             addonsData: addonsPayload
         });
 
-        showToast('บันทึกการจองแล้ว! Admin จะยืนยันเร็วๆ นี้', 'success');
+        // สร้าง actual booking ผ่าน guest API
+        const bookingResult = await postAPI('/bookings/guest', {
+            sessionToken: sessionToken,
+            paymentType: payType
+        });
 
-        // แสดง banner
-        showConfirmedBanner('รอยืนยัน');
-        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>ส่งข้อมูลแล้ว';
-        btn.className = 'btn btn-secondary w-100 btn-lg';
+        console.log('Booking created:', bookingResult);
+        
+        showToast('สร้างการจองสำเร็จ! รหัสการจอง: #' + bookingResult.booking.id, 'success');
+
+        // Create InsuranceForms for each seat
+        const insuranceForms = []
+        for (const seat of sessionData.selectedSeats) {
+            if (seat.emergencyName && seat.beneficiaryName) {
+                try {
+                    const insuranceForm = await postAPI('/insurance', {
+                        bookingId: bookingResult.booking.id,
+                        seatBookingId: seat.seatNumber, 
+                        beneficiaryName: seat.beneficiaryName,
+                        beneficiaryRelation: seat.beneficiaryRelation || 'SPOUSE',
+                        beneficiaryRelationOther: seat.beneficiaryRelationOther || null,
+                        coverageAmount: 1000000,
+                        consentPolicyRead: seat.consentPolicyRead || false,
+                        consentTermsAccepted: seat.consentTermsAccepted || false,
+                        consent4WD: seat.consent4WD || false,
+                        consentDomesticOnly: seat.consentDomesticOnly || false,
+                        customConditions: seat.customConditions || null,
+                        status: 'SUBMITTED',
+                        submittedAt: new Date()
+                    })
+                    insuranceForms.push(insuranceForm)
+                } catch (e) {
+                    console.error('Failed to create insurance form for seat', seat.seatNumber, e.message)
+                }
+            }
+        }
+
+        // แสดง banner พร้อมเลขที่ booking
+        showConfirmedBanner(bookingResult.booking.id);
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>จองสำเร็จแล้ว';
+        btn.className = 'btn btn-success w-100 btn-lg';
+
+        // อัปเดต sessionData ด้วยข้อมูล booking ใหม่
+        sessionData.bookingId = bookingResult.booking.id;
+        sessionData.step = 5;
+
+        // อาจจะ redirect ไปหน้า status หรือแสดงตั๋ว
+        setTimeout(() => {
+            if (confirm('ต้องการดูตั๋วที่จองแล้วหรือไม่?')) {
+                window.location.href = `/frontend/pages/booking/ticket.html?token=${sessionToken}&bookingId=${bookingResult.booking.id}`;
+            }
+        }, 2000);
 
     } catch (e) {
-        showToast(e.message || 'เกิดข้อผิดพลาด');
+        console.error('Booking error:', e);
+        showToast(e.message || 'เกิดข้อผิดพลาดในการสร้างการจอง', 'danger');
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>ยืนยันการจอง';
     }
@@ -467,11 +540,62 @@ function goBack() {
     window.location.href = `/frontend/pages/booking/insurance.html?token=${sessionToken}`;
 }
 
+async function loadBankAccounts() {
+    try {
+        const response = await fetchAPI('/bank-accounts');
+        const bankAccounts = response;
+        
+        const container = document.getElementById('bankAccountsList');
+        
+        if (bankAccounts.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-warning small">
+                    <i class="bi bi-info-circle me-1"></i> 
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = bankAccounts.map(account => `
+            <div class="border rounded p-3 mb-2">
+                <div class="d-flex align-items-center gap-3">
+                    ${account.imageUrl 
+                        ? `<img src="${API_BASE_URL}${account.imageUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" alt="${account.bankName}">`
+                        : `<div class="d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
+                            <i class="bi bi-bank text-muted"></i>
+                          </div>`
+                    }
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold small">${account.bankName}</div>
+                        <div class="small text-muted">${account.accountName}</div>
+                        <div class="small text-muted">: ${account.accountNo}</div>
+                    </div>
+                    <div>
+                        <span class="badge ${account.accountType === 'COMPANY' ? 'bg-success' : 'bg-warning'}">
+                            ${account.accountType === 'COMPANY' ? '' : ''}
+                        </span>
+                    </div>
+                </div>
+                ${account.description ? `<div class="small text-muted mt-2">${account.description}</div>` : ''}
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading bank accounts:', error);
+        document.getElementById('bankAccountsList').innerHTML = `
+            <div class="alert alert-danger small">
+                <i class="bi bi-exclamation-triangle me-1"></i> 
+            </div>
+        `;
+    }
+}
+
 function showError(msg) {
-    document.getElementById('loadingState').innerHTML =
-        `<i class="bi bi-exclamation-triangle text-danger fs-2"></i>
-         <p class="text-danger mt-2">${msg}</p>
-         <a href="/frontend/pages/trips/list.html" class="btn btn-outline-primary mt-2">กลับหน้าทริป</a>`;
+    document.getElementById('loadingState').innerHTML = `
+        <div class="py-5 text-center">
+            <i class="bi bi-exclamation-triangle text-danger fs-2"></i>
+            <p class="text-danger mt-2">${msg}</p>
+            <a href="/frontend/pages/trips/list.html" class="btn btn-outline-primary mt-2"> </a>
+        </div>`;
 }
 
 function showToast(msg, type = 'warning') {

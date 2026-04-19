@@ -100,8 +100,8 @@ function formatDateTime(d) {
         hour: '2-digit', minute: '2-digit' 
     };
     let str = date.toLocaleString('th-TH', options);
-    // ตรวจสอบว่าปีเป็น ค.ศ. หรือไม่ (ถ้า < 2500 ให้บวก 543)
-    return str.replace(/(\d{4})/, (match) => parseInt(match) < 2500 ? parseInt(match) + 543 : match);
+    // Display AD year (2026) instead of BE year (2569) for consistency
+    return str.replace(/(\d{4})/, (match) => parseInt(match) >= 2500 ? parseInt(match) - 543 : match);
 }
 
 function formatMoney(n) {
