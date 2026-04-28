@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background: #f8f9fa; }
+        body { font-family: 'Sarabun', sans-serif; background: #f0f2f5; color: #1a1a1a; }
         .step-bar { display: flex; gap: 0; }
         .step-item {
             flex: 1; text-align: center; padding: .4rem;
@@ -16,45 +16,64 @@
         }
         .step-item.active { color: #0d6efd; border-color: #0d6efd; font-weight: 600; }
         .step-item.done   { color: #198754; border-color: #198754; }
-        .ticket-card {
-            border: 2px solid #dee2e6; border-radius: 16px;
-            overflow: hidden; background: #fff;
+
+        /* Premium Ticket Style */
+        .ticket-wrapper {
+            background: #fff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            overflow: hidden; border: 1px solid rgba(0,0,0,0.05); margin-bottom: 1.5rem;
         }
-        .ticket-header {
-            background: linear-gradient(135deg, #0d6efd, #6610f2);
-            color: #fff; padding: 1.5rem;
+        .ticket-main { padding: 1.5rem; position: relative; }
+        .x-small { font-size: 0.7rem; }
+        .fw-mono { font-family: monospace; }
+        .ticket-pass {
+            background: #fff; border: 1px solid #e0e0e0; border-radius: 12px;
+            margin-bottom: 1rem; display: flex; flex-direction: row;
+            overflow: hidden; position: relative; min-height: 140px;
         }
-        .ticket-body { padding: 1.25rem; }
-        .ticket-divider {
-            border: none; border-top: 2px dashed #dee2e6;
-            margin: 1rem 0; position: relative;
+        .ticket-pass-info { flex: 1; padding: 1rem; border-right: 2px dashed #eee; }
+        .ticket-pass-qr {
+            width: 120px; padding: 1rem; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; background: #fafafa;
         }
-        .ticket-divider::before,
-        .ticket-divider::after {
-            content: ''; position: absolute; top: -10px;
-            width: 20px; height: 20px; border-radius: 50%;
-            background: #f8f9fa; border: 2px solid #dee2e6;
+        .qr-img { width: 80px; height: 80px; object-fit: contain; }
+        .ticket-side-cut, .ticket-side-cut-bottom {
+            position: absolute; right: 110px; width: 20px; height: 20px;
+            background: #f0f2f5; border-radius: 50%; border: 1px solid #e0e0e0; z-index: 2;
         }
-        .ticket-divider::before { left: -12px; }
-        .ticket-divider::after  { right: -12px; }
-        .seat-chip-m { background:#cfe2ff; color:#084298; border-radius:8px; padding:.3rem .6rem; font-weight:700; }
-        .seat-chip-f { background:#f8d7f0; color:#892b5d; border-radius:8px; padding:.3rem .6rem; font-weight:700; }
+        .ticket-side-cut { top: -10px; }
+        .ticket-side-cut-bottom { bottom: -10px; }
+
+        .seat-chip-m { background:#e7f1ff; color:#0d6efd; border-radius:6px; padding:.2rem .5rem; font-weight:700; font-size: 0.8rem; }
+        .seat-chip-f { background:#fff0f7; color:#d63384; border-radius:6px; padding:.2rem .5rem; font-weight:700; font-size: 0.8rem; }
+        
         .pay-option {
-            border: 2px solid #dee2e6; border-radius: 12px; padding: 1rem;
-            cursor: pointer; transition: all .2s;
+            border: 2px solid #edeff2; border-radius: 12px; padding: 1rem;
+            cursor: pointer; transition: all .2s; background: #fff;
         }
-        .pay-option:hover { border-color: #0d6efd; background: #f0f5ff; }
-        .pay-option.selected { border-color: #0d6efd; background: #e8f0fe; }
-        .qr-placeholder {
-            width: 150px; height: 150px; border: 2px dashed #dee2e6;
-            border-radius: 12px; display: flex; align-items: center;
-            justify-content: center; color: #6c757d; font-size: .85rem;
-            text-align: center;
+        .pay-option:hover { border-color: #0d6efd; background: #f8fbff; }
+        .pay-option.selected { border-color: #0d6efd; background: #f0f7ff; box-shadow: 0 4px 12px rgba(13,110,253,0.1); }
+        
+        .summary-card { background: #fff; border-radius: 16px; border: 1px solid #e0e0e0; padding: 1.25rem; }
+        .price-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .price-row.total {
+            margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;
+            font-weight: 700; font-size: 1.1rem;
         }
+
+        @media (max-width: 576px) {
+            .ticket-pass { flex-direction: column; }
+            .ticket-pass-info { border-right: none; border-bottom: 2px dashed #eee; }
+            .ticket-pass-qr { width: 100%; flex-direction: row; gap: 1rem; height: auto; padding: 0.75rem; }
+            .ticket-side-cut, .ticket-side-cut-bottom { display: none; }
+        }
+
         @media print {
             .no-print { display: none !important; }
-            body { background: #fff; }
+            body { background: #fff; padding: 0; }
+            .container-fluid { padding: 0; }
+            .ticket-wrapper { box-shadow: none; border: 1px solid #000; }
         }
+
     </style>
 </head>
 <body>
@@ -72,11 +91,12 @@
     </div>
 </nav>
 
-<!-- 4-Step bar -->
+<!-- 5-Step bar -->
 <div class="step-bar bg-white border-bottom mb-3 no-print">
-    <div class="step-item done"><i class="bi bi-check2 me-1"></i>เลือกที่นั่ง</div>
+    <div class="step-item done"><i class="bi bi-check2 me-1"></i>ที่นั่ง</div>
     <div class="step-item done"><i class="bi bi-check2 me-1"></i>ข้อมูล</div>
     <div class="step-item done"><i class="bi bi-check2 me-1"></i>ประกัน</div>
+    <div class="step-item done"><i class="bi bi-check2 me-1"></i>อุปกรณ์</div>
     <div class="step-item active"><i class="bi bi-credit-card me-1"></i>ชำระเงิน</div>
 </div>
 
@@ -99,148 +119,149 @@
 
         <div class="row g-3">
 
-            <!-- Ticket -->
+            <!-- Ticket Section -->
             <div class="col-lg-7">
-                <div class="ticket-card mb-3">
-                    <div class="ticket-header">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <i class="bi bi-bus-front fs-4"></i>
+                <div class="ticket-wrapper mb-3">
+                    <!-- Ticket Header -->
+                    <div class="p-4 text-white" style="background: linear-gradient(135deg, #1e293b, #334155);">
+                        <div class="d-flex justify-content-between align-items-start">
                             <div>
-                                <div class="fw-bold fs-5" id="tktTitle">-</div>
-                                <div class="small opacity-75" id="tktRoute">-</div>
+                                <h4 class="fw-bold mb-1" id="tktTitle">-</h4>
+                                <div class="text-white-50 small mb-3"><i class="bi bi-geo-alt me-1"></i><span id="tktRoute">-</span></div>
+                            </div>
+                            <div class="text-end">
+                                <div class="badge bg-primary px-3 py-2" id="tktBus">-</div>
                             </div>
                         </div>
-                        <div class="row g-2 small">
-                            <div class="col-6">
-                                <div class="opacity-75">วันออกเดินทาง</div>
-                                <div class="fw-semibold" id="tktDate">-</div>
+                        <div class="row g-3">
+                            <div class="col-4">
+                                <div class="text-white-50 x-small">DATE</div>
+                                <div class="fw-bold" id="tktDate">-</div>
                             </div>
-                            <div class="col-6">
-                                <div class="opacity-75">เวลา</div>
-                                <div class="fw-semibold" id="tktTime">-</div>
+                            <div class="col-4">
+                                <div class="text-white-50 x-small">TIME</div>
+                                <div class="fw-bold" id="tktTime">-</div>
                             </div>
-                            <div class="col-6">
-                                <div class="opacity-75">รถคันที่</div>
-                                <div class="fw-semibold" id="tktBus">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="opacity-75">ระยะเวลา</div>
-                                <div class="fw-semibold" id="tktDuration">-</div>
+                            <div class="col-4 text-end">
+                                <div class="text-white-50 x-small">DURATION</div>
+                                <div class="fw-bold" id="tktDuration">-</div>
                             </div>
                         </div>
                     </div>
-                    <div class="ticket-body">
-                        <div class="ticket-divider"></div>
 
-                        <!-- Seat list -->
-                        <div class="fw-semibold small mb-2">ที่นั่งผู้โดยสาร</div>
-                        <div id="tktSeats" class="mb-3"></div>
+                    <div class="ticket-main">
+                        <!-- Individual Tickets per Person -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0 d-flex align-items-center">
+                                    <i class="bi bi-person-badge me-2 text-primary"></i>รายละเอียดผู้โดยสารรายบุคคล
+                                </h6>
+                                <span class="badge bg-light text-muted fw-normal" style="font-size: 0.7rem;">แยกตามที่นั่งสำหรับการติดตาม</span>
+                            </div>
+                            <div id="individualTickets">
+                                <!-- Rendered by JS -->
+                            </div>
+                        </div>
 
-                        <div class="ticket-divider"></div>
+                        <!-- Rental Items Section -->
+                        <div id="rentalSection" class="d-none mt-4">
+                            <h6 class="fw-bold mb-3 d-flex align-items-center">
+                                <i class="bi bi-bag-plus me-2 text-success"></i>อุปกรณ์เช่าเพิ่มเติม (รวมกลุ่ม)
+                            </h6>
+                            <div class="border rounded-3 p-3 bg-light">
+                                <div id="rentalList"></div>
+                            </div>
+                        </div>
 
-                        <!-- Booker info -->
-                        <div class="fw-semibold small mb-2">ผู้จอง</div>
-                        <div id="tktBooker" class="small"></div>
-
-                        <div class="ticket-divider"></div>
-
-                        <!-- Price breakdown -->
-                        <div id="tktPriceBreakdown"></div>
-
-                        <!-- Token/Link -->
-                        <div class="mt-3 p-2 bg-light rounded small">
-                            <div class="text-muted mb-1"><i class="bi bi-link-45deg me-1"></i>ลิงก์ตรวจสอบการจอง</div>
-                            <div class="d-flex gap-2 align-items-center">
-                                <code id="tktLink" class="flex-grow-1 text-break" style="font-size:.72rem"></code>
-                                <button class="btn btn-sm btn-outline-secondary flex-shrink-0" onclick="copyLink()">
-                                    <i class="bi bi-copy"></i>
-                                </button>
+                        <!-- Summary Bottom -->
+                        <div class="mt-4 pt-4 border-top">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted small">รหัสอ้างอิงเซสชัน</span>
+                                <span class="fw-mono small text-secondary" id="sessionRef">-</span>
+                            </div>
+                            <div class="p-3 bg-light rounded-3 small">
+                                <div class="text-muted mb-1"><i class="bi bi-link-45deg me-1"></i>ลิงก์สำหรับตรวจสอบสถานะ</div>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <code id="tktLink" class="flex-grow-1 text-break text-primary" style="font-size:.7rem"></code>
+                                    <button class="btn btn-sm btn-outline-secondary flex-shrink-0 border-0" onclick="copyLink()">
+                                        <i class="bi bi-copy"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Payment -->
+
+            <!-- Payment Section -->
             <div class="col-lg-5 no-print">
-                <!-- Addons selection -->
-                <div class="card mb-3" id="addonsCard">
-                    <div class="card-header fw-semibold">
-                        <i class="bi bi-bag-plus me-1 text-warning"></i>อุปกรณ์เช่าเสริม
+                <div class="summary-card shadow-sm sticky-lg-top" style="top: 80px;">
+                    <h5 class="fw-bold mb-4">สรุปค่าใช้จ่ายทั้งหมด</h5>
+                    
+                    <div id="priceBreakdown" class="mb-4">
+                        <!-- Rendered by JS -->
                     </div>
-                    <div class="card-body" id="addonsList">
-                        <div class="text-muted small">กำลังโหลด...</div>
-                    </div>
-                </div>
 
-                <!-- Payment method -->
-                <div class="card mb-3">
-                    <div class="card-header fw-semibold">
-                        <i class="bi bi-cash-coin me-1 text-success"></i>การชำระเงิน
-                    </div>
-                    <div class="card-body">
-                        <!-- Payment type -->
-                        <div class="mb-3">
-                            <div class="small fw-semibold text-muted mb-2">เลือกประเภทการชำระ</div>
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <div class="pay-option" id="payDeposit" onclick="selectPayType('DEPOSIT')">
-                                        <div class="fw-semibold small"><i class="bi bi-cash me-1"></i>มัดจำ</div>
-                                        <div class="text-muted" style="font-size:.75rem">ชำระส่วนหนึ่งก่อน</div>
-                                        <div class="text-warning fw-bold mt-1" id="depositAmt">-</div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-uppercase tracking-wider">ตัวเลือกการชำระเงิน</label>
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <div class="pay-option" id="payDeposit" onclick="selectPayType('DEPOSIT')">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div class="fw-bold"><i class="bi bi-wallet2 me-2 text-primary"></i>ชำระเฉพาะมัดจำ</div>
+                                        <div class="text-primary fw-bold" id="depositAmt">-</div>
                                     </div>
+                                    <div class="text-muted x-small">มัดจำที่นั่ง + ค่าอุปกรณ์เช่าเต็มจำนวน</div>
                                 </div>
-                                <div class="col-6">
-                                    <div class="pay-option selected" id="payFull" onclick="selectPayType('FULL')">
-                                        <div class="fw-semibold small"><i class="bi bi-check-circle me-1 text-success"></i>เต็มจำนวน</div>
-                                        <div class="text-muted" style="font-size:.75rem">ชำระครบทันที</div>
-                                        <div class="text-success fw-bold mt-1" id="fullAmt">-</div>
+                            </div>
+                            <div class="col-12">
+                                <div class="pay-option selected" id="payFull" onclick="selectPayType('FULL')">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div class="fw-bold"><i class="bi bi-cash-coin me-2 text-success"></i>ชำระเต็มจำนวน</div>
+                                        <div class="text-success fw-bold" id="fullAmt">-</div>
                                     </div>
+                                    <div class="text-muted x-small">ชำระยอดรวมทั้งหมดทันที</div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Bank Accounts -->
-                        <div class="mb-3">
-                            <label class="form-label small fw-semibold"> </label>
-                            <div id="bankAccountsList" class="mb-3">
-                                <div class="text-center py-2">
-                                    <div class="spinner-border spinner-border-sm text-primary"></div>
-                                    <div class="small text-muted"> </div>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Bank Accounts -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-uppercase tracking-wider">ช่องทางการระบุโอน</label>
+                        <div id="bankAccountsList" class="mb-3"></div>
+                    </div>
 
-                        <!-- Slip upload -->
-                        <div class="mb-3">
-                            <label class="form-label small fw-semibold">  </label>
-                            <input type="file" class="form-control" id="slipFile" accept="image/*">
-                            <div class="form-text"> JPG, PNG  5MB</div>
-                        </div>
+                    <!-- Slip upload -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-uppercase tracking-wider">อัปโหลดสลิปการโอน</label>
+                        <input type="file" class="form-control form-control-lg" id="slipFile" accept="image/*" style="font-size: 0.9rem;">
+                        <div class="form-text mt-1 x-small text-muted"><i class="bi bi-info-circle"></i> ตรวจสอบยอดเงินให้ตรงกับที่เลือกก่อนโอน</div>
+                    </div>
 
-                        <!-- Total -->
-                        <div class="p-3 bg-light rounded mb-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="fw-semibold">ยอดที่ต้องชำระ</span>
-                                <span class="fw-bold text-primary fs-5" id="payAmt">-</span>
-                            </div>
+                    <!-- Total -->
+                    <div class="p-3 bg-light border border-primary border-opacity-25 rounded-3 mb-4" style="background: rgba(13,110,253,0.03) !important;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-muted small">ยอดชำระตามประเภทที่เลือก</span>
+                            <span class="fw-bold text-primary fs-3" id="payAmt">-</span>
                         </div>
+                    </div>
 
-                        <button class="btn btn-success w-100 btn-lg" id="btnConfirm" onclick="confirmBooking()">
-                            <i class="bi bi-check-circle me-1"></i>ยืนยันการจอง
-                        </button>
-                        <div class="text-muted small text-center mt-2">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Admin จะตรวจสอบสลิปและยืนยันภายใน 24 ชั่วโมง
-                        </div>
-                        <div class="text-center mt-2">
-                            <a href="/frontend/pages/booking/status.html" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-search me-1"></i>ตรวจสอบสถานะการจอง
-                            </a>
-                        </div>
+                    <button class="btn btn-primary w-100 btn-lg py-3 fw-bold rounded-3 shadow-sm mb-3" id="btnConfirm" onclick="confirmBooking()">
+                        ยืนยันการจองและแจ้งโอน
+                    </button>
+
+
+                    
+                    <div class="text-center">
+                        <a href="/frontend/pages/booking/status.html" class="btn btn-link btn-sm text-decoration-none text-muted">
+                            <i class="bi bi-search me-1"></i>เช็คสถานะการจองย้อนหลัง
+                        </a>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
@@ -273,27 +294,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Update deposit rate from trip data
         DEPOSIT_RATE = roundData.trip?.deposit > 0 ? roundData.trip.deposit / 100 : 0.3;
 
-        // Load all active addons (shared)
+    // Load all active addons (shared) – for price calculation only
         try {
             addonsList = await fetchAPI('/addons/active');
         } catch (_) { addonsList = []; }
+
+        // Restore selected addons from session (set in rental.html)
+        if (sessionData.addonsData && Array.isArray(sessionData.addonsData)) {
+            for (const item of sessionData.addonsData) {
+                selectedAddons[item.addonId] = (selectedAddons[item.addonId] || 0) + item.quantity;
+            }
+        }
+
+        // Initialize deposit logic
+        const tripDeposit = roundData.trip?.deposit || 0;
+        // If deposit > 100, assume it's a fixed amount per seat, otherwise %
+        if (tripDeposit > 100) {
+            window._isFixedDeposit = true;
+            window._depositVal = tripDeposit;
+        } else {
+            window._isFixedDeposit = false;
+            window._depositVal = tripDeposit > 0 ? tripDeposit / 100 : 0.3;
+        }
 
         // Load bank accounts
         await loadBankAccounts();
 
         renderTicket();
-        renderAddons();
         updatePayAmounts();
 
-        // ถ้า session มี bookingId แล้ว (resume หลังจองสำเร็จ)
+        document.getElementById('tktLink').textContent = window.location.href;
+
+        // เช็คสถานะหากจองแลัว
         if (sessionData.bookingId) {
-            showConfirmedBanner(sessionData.bookingId);
+            await refreshBookingData();
         }
 
         document.getElementById('loadingState').classList.add('d-none');
         document.getElementById('mainContent').classList.remove('d-none');
-
-        document.getElementById('tktLink').textContent = window.location.href;
     } catch (e) {
         showError(e.message);
     }
@@ -322,81 +360,113 @@ function renderTicket() {
     document.getElementById('tktTitle').textContent  = rd.trip?.title || 'ทริป';
     document.getElementById('tktRoute').textContent  = `${rd.startPoint} → ${rd.endPoint}`;
     const dep = new Date(rd.departDate);
-    document.getElementById('tktDate').textContent = dep.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('tktDate').textContent = dep.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'});
     document.getElementById('tktTime').textContent = dep.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-    document.getElementById('tktBus').textContent  = `คันที่ ${rd.busNumber}`;
+    document.getElementById('tktBus').textContent  = `VAN #${rd.busNumber}`;
     document.getElementById('tktDuration').textContent = rd.duration || '-';
+    document.getElementById('sessionRef').textContent = sessionToken.substring(0, 8).toUpperCase();
 
-    // Seats
+    // Individual Tickets per Person
     const seats = sd.selectedSeats || [];
-    document.getElementById('tktSeats').innerHTML = seats.map(s => {
+    const pricePerSeat = rd.trip?.price || 0;
+    
+    document.getElementById('individualTickets').innerHTML = seats.map((s, idx) => {
         const chipCls = s.gender === 'MALE' ? 'seat-chip-m' : 'seat-chip-f';
-        const genderIcon = s.gender === 'MALE' ? '♂' : '♀';
-        return `<div class="d-flex align-items-center gap-2 mb-2">
-            <span class="${chipCls}">${genderIcon} ที่นั่ง ${s.seatNumber}</span>
-            <div class="small">
-                <div class="fw-semibold">${s.passengerName || '-'}</div>
-                ${s.phone ? `<div class="text-muted">${s.phone}</div>` : ''}
-                ${s.foodAllergy ? `<span class="badge bg-warning text-dark" style="font-size:.7rem">${s.foodAllergy}</span>` : ''}
+        const qrContent = encodeURIComponent(`BOOKING:${sessionData.bookingId || 'PENDING'}|SEAT:${s.seatNumber}`);
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrContent}`;
+        
+        return `
+            <div class="ticket-pass shadow-sm">
+                <div class="ticket-side-cut"></div>
+                <div class="ticket-side-cut-bottom"></div>
+                <div class="ticket-pass-info">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <div class="badge bg-light text-dark mb-1" style="font-size: 0.65rem;">PASSENGER ${idx+1}</div>
+                            <h6 class="fw-bold mb-0">${s.passengerName || 'ไม่ระบุชื่อ'}</h6>
+                            <div class="text-muted x-small">${s.phone || '-'}</div>
+                        </div>
+                        <span class="${chipCls}">ที่นั่ง ${s.seatNumber}</span>
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-6 border-end">
+                            <div class="text-muted x-small">ค่าตั๋วเฉลี่ย</div>
+                            <div class="fw-bold text-primary">${Number(pricePerSeat + (s.pickupPrice || 0)).toLocaleString()}฿</div>
+                        </div>
+                        <div class="col-6 ps-3">
+                            <div class="text-muted x-small">PICKUP</div>
+                            <div class="small fw-semibold text-truncate">${s.pickupPoint || 'จุดจอดหลัก'}</div>
+                        </div>
+                    </div>
+                    ${s.foodAllergy ? `<div class="mt-2 text-danger x-small"><i class="bi bi-exclamation-triangle me-1"></i>แพ้อาหาร: ${s.foodAllergy}</div>` : ''}
+                </div>
+                <div class="ticket-pass-qr">
+                    <img src="${qrUrl}" class="qr-img border p-1 bg-white mb-1" alt="QR">
+                    <div class="text-muted" style="font-size: 0.6rem;">SCAN TRACKING</div>
+                </div>
             </div>
-        </div>`;
+        `;
     }).join('');
 
-    // Booker
-    const cd = sd.customerData || {};
-    document.getElementById('tktBooker').innerHTML = `
-        <div><strong>${cd.mainName || '-'}</strong></div>
-        <div class="text-muted">${cd.mainPhone || ''} ${cd.mainEmail ? '· ' + cd.mainEmail : ''}</div>
-        ${cd.mainNote ? `<div class="text-muted small mt-1"><i class="bi bi-sticky me-1"></i>${cd.mainNote}</div>` : ''}
-    `;
-
-    // Price breakdown
-    const pricePerSeat = rd.trip?.price || 0;
-    const seatTotal = seats.length * pricePerSeat;
-    const { pickupTotal } = calcTotals();
-    document.getElementById('tktPriceBreakdown').innerHTML = `
-        <div class="row g-1 small">
-            <div class="col-7 text-muted">ค่าที่นั่ง (${seats.length} × ${Number(pricePerSeat).toLocaleString('th-TH')} บาท)</div>
-            <div class="col-5 text-end">${Number(seatTotal).toLocaleString('th-TH')} บาท</div>
-            <div class="col-7 text-muted">ค่าจุดรับรถเพิ่ม</div>
-            <div class="col-5 text-end">${Number(pickupTotal).toLocaleString('th-TH')} บาท</div>
-            <div class="col-7 text-muted" id="addonTotalLabel">อุปกรณ์เช่า</div>
-            <div class="col-5 text-end" id="addonTotalAmt">0 บาท</div>
-            <div class="col-12"><hr class="my-1"></div>
-            <div class="col-7 fw-bold">รวม</div>
-            <div class="col-5 text-end fw-bold text-primary" id="grandTotal">${Number((seatTotal + pickupTotal)).toLocaleString('th-TH')} บาท</div>
-        </div>
-    `;
-}
-
-function renderAddons() {
-    const container = document.getElementById('addonsList');
-    if (!addonsList.length) {
-        container.innerHTML = '<p class="text-muted small mb-0">ไม่มีอุปกรณ์เสริมสำหรับทริปนี้</p>';
-        return;
+    // Rental Items Section
+    const addonEntries = Object.entries(selectedAddons);
+    if (addonEntries.length > 0) {
+        document.getElementById('rentalSection').classList.remove('d-none');
+        document.getElementById('rentalList').innerHTML = addonEntries.map(([id, qty]) => {
+            const addon = addonsList.find(a => a.id == id);
+            if (addon && qty > 0) {
+                return `
+                    <div class="d-flex justify-content-between align-items-center mb-2" style="border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">
+                        <div class="small">
+                            <span class="fw-bold">${addon.name}</span>
+                            <span class="text-muted ms-1">(x${qty})</span>
+                        </div>
+                        <div class="fw-bold text-success small">${Number(addon.price * qty).toLocaleString()}฿</div>
+                    </div>
+                `;
+            }
+            return '';
+        }).join('') || '<div class="text-muted small">ไม่มีคนเช่าอุปกรณ์</div>';
+    } else {
+        document.getElementById('rentalSection').classList.add('d-none');
     }
-    container.innerHTML = addonsList.filter(a => a.isActive).map(a => `
-        <div class="d-flex align-items-center justify-content-between mb-2 py-1 border-bottom">
-            <div class="small">
-                <div class="fw-semibold">${a.name}</div>
-                ${a.description ? `<div class="text-muted">${a.description}</div>` : ''}
-                <div class="text-primary">${Number(a.price).toLocaleString('th-TH')} บาท/ชิ้น</div>
-            </div>
-            <div class="d-flex align-items-center gap-1">
-                <button class="btn btn-sm btn-outline-secondary" onclick="changeAddon(${a.id},-1)" style="width:28px;height:28px;padding:0">-</button>
-                <span class="fw-bold small" id="addonQty_${a.id}" style="min-width:20px;text-align:center">${selectedAddons[a.id]||0}</span>
-                <button class="btn btn-sm btn-outline-primary" onclick="changeAddon(${a.id},1)" style="width:28px;height:28px;padding:0">+</button>
-            </div>
-        </div>
-    `).join('');
+
+    // Price Breakdown (Right Sidebar)
+    renderPriceBreakdown();
 }
 
-function changeAddon(id, delta) {
-    selectedAddons[id] = Math.max(0, (selectedAddons[id] || 0) + delta);
-    document.getElementById(`addonQty_${id}`).textContent = selectedAddons[id];
-    if (selectedAddons[id] === 0) delete selectedAddons[id];
-    updatePayAmounts();
+function renderPriceBreakdown() {
+    const { seatTotal, addonTotal, pickupTotal, grand } = calcTotals();
+    const seats = sessionData.selectedSeats || [];
+    const pricePerSeat = roundData.trip?.price || 0;
+    
+    let breakdownHtml = `
+        <div class="price-row">
+            <span class="text-muted">ตั๋วผู้โดยสาร (${seats.length} x ${Number(pricePerSeat).toLocaleString()})</span>
+            <span>${Number(seatTotal).toLocaleString()}฿</span>
+        </div>
+        ${pickupTotal > 0 ? `
+        <div class="price-row">
+            <span class="text-muted">ส่วนต่างจุดรับ-ส่ง</span>
+            <span>${Number(pickupTotal).toLocaleString()}฿</span>
+        </div>` : ''}
+        ${addonTotal > 0 ? `
+        <div class="price-row">
+            <span class="text-muted">อุปกรณ์เช่าทั้งหมด</span>
+            <span>${Number(addonTotal).toLocaleString()}฿</span>
+        </div>` : ''}
+        <div class="price-row total text-primary">
+            <span>ยอดรวมสุทธิ</span>
+            <span>${Number(grand).toLocaleString()}฿</span>
+        </div>
+    `;
+    document.getElementById('priceBreakdown').innerHTML = breakdownHtml;
 }
+
+
+// renderAddons removed – addon selection is handled in rental.html
+
+
 
 function calcTotals() {
     const seats = sessionData.selectedSeats || [];
@@ -417,18 +487,27 @@ function calcTotals() {
 }
 
 function updatePayAmounts() {
-    const { seatTotal, addonTotal, grand } = calcTotals();
-    const deposit = Math.ceil(grand * DEPOSIT_RATE);
+    const { seatTotal, addonTotal, pickupTotal, grand } = calcTotals();
+    const seatsCount = sessionData.selectedSeats?.length || 0;
+    
+    let seatDeposit = 0;
+    if (window._isFixedDeposit) {
+        // Fixed amount per seat
+        seatDeposit = window._depositVal * seatsCount;
+    } else {
+        // Percentage of trip cost (seat + pickup)
+        seatDeposit = Math.ceil((seatTotal + pickupTotal) * (window._depositVal || 0.3));
+    }
 
-    document.getElementById('depositAmt').textContent = `${Number(deposit).toLocaleString('th-TH')} บาท`;
+    //  "มัดจำค่าทริป + อุปกรณ์เต็ม" -> Add full addonTotal into the deposit amount
+    const totalDepositNeeded = seatDeposit + addonTotal;
+
+    document.getElementById('depositAmt').textContent = `${Number(totalDepositNeeded).toLocaleString('th-TH')} บาท`;
     document.getElementById('fullAmt').textContent    = `${Number(grand).toLocaleString('th-TH')} บาท`;
-    document.getElementById('payAmt').textContent     = `${Number(payType === 'DEPOSIT' ? deposit : grand).toLocaleString('th-TH')} บาท`;
+    document.getElementById('payAmt').textContent     = `${Number(payType === 'DEPOSIT' ? totalDepositNeeded : grand).toLocaleString('th-TH')} บาท`;
 
-    // Update addon totals in ticket
-    const addonEl = document.getElementById('addonTotalAmt');
-    if (addonEl) addonEl.textContent = `${Number(addonTotal).toLocaleString('th-TH')} บาท`;
-    const grandEl = document.getElementById('grandTotal');
-    if (grandEl) grandEl.textContent = `${Number(grand).toLocaleString('th-TH')} บาท`;
+    // Update totals in ticket summary
+    renderPriceBreakdown();
 }
 
 function selectPayType(type) {
@@ -440,89 +519,127 @@ function selectPayType(type) {
 
 async function confirmBooking() {
     const btn = document.getElementById('btnConfirm');
+    const slipInput = document.getElementById('slipFile');
+    const hasSlip = slipInput && slipInput.files.length > 0;
+
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังดำเนินการ...';
 
     try {
-        const { grand } = calcTotals();
-        const deposit = Math.ceil(grand * DEPOSIT_RATE);
-        const amount = payType === 'DEPOSIT' ? deposit : grand;
+        let bookingId = sessionData.bookingId;
 
-        const seats = sessionData.selectedSeats || [];
-        const cd = sessionData.customerData || {};
+        // 1. If not booked yet, create booking
+        if (!bookingId) {
+            const addonsPayload = Object.entries(selectedAddons).map(([id, qty]) => ({
+                addonId: parseInt(id), quantity: qty
+            }));
 
-        // เตรียมข้อมูล addons
-        const addonsPayload = Object.entries(selectedAddons).map(([id, qty]) => ({
-            addonId: parseInt(id), quantity: qty
-        }));
+            // Save addons to session
+            await postAPI('/booking-sessions', {
+                token: sessionToken,
+                step: 3,
+                addonsData: addonsPayload
+            });
 
-        // อัปเดต session ด้วยข้อมูล addons ก่อน
-        await postAPI('/booking-sessions', {
-            token: sessionToken,
-            step: 3,
-            addonsData: addonsPayload
-        });
+            // Create booking
+            const bookingResult = await postAPI('/bookings/guest', {
+                sessionToken: sessionToken,
+                paymentType: payType
+            });
+            bookingId = bookingResult.booking.id;
+            sessionData.bookingId = bookingId;
+            sessionData.step = 5;
 
-        // สร้าง actual booking ผ่าน guest API
-        const bookingResult = await postAPI('/bookings/guest', {
-            sessionToken: sessionToken,
-            paymentType: payType
-        });
-
-        console.log('Booking created:', bookingResult);
-        
-        showToast('สร้างการจองสำเร็จ! รหัสการจอง: #' + bookingResult.booking.id, 'success');
-
-        // Create InsuranceForms for each seat
-        const insuranceForms = []
-        for (const seat of sessionData.selectedSeats) {
-            if (seat.emergencyName && seat.beneficiaryName) {
-                try {
-                    const insuranceForm = await postAPI('/insurance', {
-                        bookingId: bookingResult.booking.id,
-                        seatBookingId: seat.seatNumber, 
-                        beneficiaryName: seat.beneficiaryName,
-                        beneficiaryRelation: seat.beneficiaryRelation || 'SPOUSE',
-                        beneficiaryRelationOther: seat.beneficiaryRelationOther || null,
-                        coverageAmount: 1000000,
-                        consentPolicyRead: seat.consentPolicyRead || false,
-                        consentTermsAccepted: seat.consentTermsAccepted || false,
-                        consent4WD: seat.consent4WD || false,
-                        consentDomesticOnly: seat.consentDomesticOnly || false,
-                        customConditions: seat.customConditions || null,
-                        status: 'SUBMITTED',
-                        submittedAt: new Date()
-                    })
-                    insuranceForms.push(insuranceForm)
-                } catch (e) {
-                    console.error('Failed to create insurance form for seat', seat.seatNumber, e.message)
+            // Create insurance
+            for (const seat of sessionData.selectedSeats) {
+                if (seat.emergencyName && seat.beneficiaryName) {
+                    try {
+                        await postAPI('/insurance', {
+                            bookingId: bookingId,
+                            seatBookingId: seat.seatNumber, 
+                            beneficiaryName: seat.beneficiaryName,
+                            beneficiaryRelation: seat.beneficiaryRelation || 'SPOUSE',
+                            coverageAmount: 1000000,
+                            status: 'SUBMITTED'
+                        });
+                    } catch (e) { console.error('Insurance Error:', e.message); }
                 }
             }
+            showConfirmedBanner(bookingId);
         }
 
-        // แสดง banner พร้อมเลขที่ booking
-        showConfirmedBanner(bookingResult.booking.id);
-        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>จองสำเร็จแล้ว';
-        btn.className = 'btn btn-success w-100 btn-lg';
+        // 2. Handle Slip Upload
+        if (hasSlip) {
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังอัปโหลดสลิป...';
+            const formData = new FormData();
+            formData.append('file', slipInput.files[0]);
+            
+            const uploadRes = await fetch(API_BASE_URL + '/uploads', {
+                method: 'POST',
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+            if (!uploadRes.ok) throw new Error(uploadData.message || 'Upload failed');
 
-        // อัปเดต sessionData ด้วยข้อมูล booking ใหม่
-        sessionData.bookingId = bookingResult.booking.id;
-        sessionData.step = 5;
+            // Attach slip to payment
+            await fetch(API_BASE_URL + '/payments/guest/' + sessionToken, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slipUrl: uploadData.url })
+            });
 
-        // อาจจะ redirect ไปหน้า status หรือแสดงตั๋ว
-        setTimeout(() => {
-            if (confirm('ต้องการดูตั๋วที่จองแล้วหรือไม่?')) {
-                window.location.href = `/frontend/pages/booking/ticket.html?token=${sessionToken}&bookingId=${bookingResult.booking.id}`;
-            }
-        }, 2000);
+            showToast('อัปโหลดสลิปเรียบร้อยแล้ว', 'success');
+        }
 
+        // 3. Update UI
+        await refreshBookingData();
+        
     } catch (e) {
         console.error('Booking error:', e);
-        showToast(e.message || 'เกิดข้อผิดพลาดในการสร้างการจอง', 'danger');
+        showToast(e.message || 'เกิดข้อผิดพลาด', 'danger');
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>ยืนยันการจอง';
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>ยืนยันการจองและแจ้งโอน';
     }
 }
+
+async function refreshBookingData() {
+    try {
+        const booking = await fetchAPI('/bookings/guest/' + sessionToken);
+        updateStatusUI(booking);
+    } catch (e) { console.error('Refresh Error:', e.message); }
+}
+
+function updateStatusUI(booking) {
+    const btn = document.getElementById('btnConfirm');
+    const payment = booking.payment;
+    
+    if (!payment || !payment.slipUrl) {
+        btn.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>*** จองแล้ว ยังไม่แนบสลิป ***';
+        btn.className = 'btn btn-warning w-100 btn-lg py-3 fw-bold';
+        btn.disabled = false;
+    } else {
+        // If slip exists, lock the payment selection
+        document.getElementById('payDeposit').onclick = null;
+        document.getElementById('payFull').onclick = null;
+        document.getElementById('payDeposit').style.cursor = 'default';
+        document.getElementById('payFull').style.cursor = 'default';
+        document.getElementById('payDeposit').style.opacity = '0.7';
+        document.getElementById('payFull').style.opacity = '0.7';
+        
+        const slipInput = document.getElementById('slipFile');
+        if (slipInput) slipInput.disabled = true;
+
+        if (payment.type === 'FULL') {
+            btn.innerHTML = '<i class="bi bi-check-all me-1"></i>*** รายการสำเร็จ ***';
+            btn.className = 'btn btn-success w-100 btn-lg py-3 fw-bold';
+        } else {
+            btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>*** มัดจำเรียบร้อย ***';
+            btn.className = 'btn btn-info text-white w-100 btn-lg py-3 fw-bold';
+        }
+        btn.disabled = true;
+    }
+}
+
 
 function showConfirmedBanner(bookingId) {
     const banner = document.getElementById('confirmedBanner');
@@ -556,11 +673,13 @@ async function loadBankAccounts() {
             return;
         }
 
-        container.innerHTML = bankAccounts.map(account => `
+        container.innerHTML = bankAccounts.map(account => {
+            const baseUrl = API_BASE_URL.replace('/api', '');
+            return `
             <div class="border rounded p-3 mb-2">
                 <div class="d-flex align-items-center gap-3">
                     ${account.imageUrl 
-                        ? `<img src="${API_BASE_URL}${account.imageUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" alt="${account.bankName}">`
+                        ? `<img src="${baseUrl}${account.imageUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" alt="${account.bankName}">`
                         : `<div class="d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
                             <i class="bi bi-bank text-muted"></i>
                           </div>`
@@ -570,15 +689,10 @@ async function loadBankAccounts() {
                         <div class="small text-muted">${account.accountName}</div>
                         <div class="small text-muted">: ${account.accountNo}</div>
                     </div>
-                    <div>
-                        <span class="badge ${account.accountType === 'COMPANY' ? 'bg-success' : 'bg-warning'}">
-                            ${account.accountType === 'COMPANY' ? '' : ''}
-                        </span>
-                    </div>
                 </div>
                 ${account.description ? `<div class="small text-muted mt-2">${account.description}</div>` : ''}
             </div>
-        `).join('');
+        `}).join('');
     } catch (error) {
         console.error('Error loading bank accounts:', error);
         document.getElementById('bankAccountsList').innerHTML = `

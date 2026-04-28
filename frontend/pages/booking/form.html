@@ -1,259 +1,355 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ข้อมูลผู้โดยสาร - จองรถตู้</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background: #f8f9fa; }
-        .step-bar { display: flex; }
-        .step-item {
-            flex: 1; text-align: center; padding: .5rem .25rem;
-            font-size: .75rem; color: #6c757d; border-bottom: 3px solid #dee2e6;
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: #f8f9fa;
         }
-        .step-item.active { color: #0d6efd; border-color: #0d6efd; font-weight: 600; }
-        .step-item.done   { color: #198754; border-color: #198754; }
-        .seat-badge-m { background:#0d6efd; color:#fff; border-radius:6px; padding:.25rem .6rem; font-weight:700; font-size:.85rem; }
-        .seat-badge-f { background:#e83e8c; color:#fff; border-radius:6px; padding:.25rem .6rem; font-weight:700; font-size:.85rem; }
-        .passenger-card { border-left: 4px solid #0d6efd; }
-        .cache-notice { background:#fff3cd; border:1px solid #ffc107; border-radius:.375rem; padding:.5rem .75rem; font-size:.8rem; }
+
+        .form-label {
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .step-bar {
+            display: flex;
+        }
+
+        .step-item {
+            flex: 1;
+            text-align: center;
+            padding: .5rem .25rem;
+            font-size: .75rem;
+            color: #6c757d;
+            border-bottom: 3px solid #dee2e6;
+        }
+
+        .step-item.active {
+            color: #0d6efd;
+            border-color: #0d6efd;
+            font-weight: 600;
+        }
+
+        .step-item.done {
+            color: #198754;
+            border-color: #198754;
+        }
+
+        .seat-badge-m {
+            background: #0d6efd;
+            color: #fff;
+            border-radius: 6px;
+            padding: .25rem .6rem;
+            font-weight: 700;
+            font-size: .85rem;
+        }
+
+        .seat-badge-f {
+            background: #e83e8c;
+            color: #fff;
+            border-radius: 6px;
+            padding: .25rem .6rem;
+            font-weight: 700;
+            font-size: .85rem;
+        }
+
+        .passenger-card {
+            border-left: 4px solid #0d6efd;
+        }
+
+        /* ── Thai 3-Dropdown Date Picker ── */
+        .thai-date-picker-container select {
+            font-family: 'Sarabun', sans-serif;
+            font-size: 0.95rem !important;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            background-color: #fff;
+            color: #212529;
+            cursor: pointer;
+            height: 44px !important;
+        }
+
+        /* ปรับมาตรฐานให้ทุก Input เท่ากัน */
+        .form-control,
+        .form-select {
+            height: 44px !important;
+            font-size: 0.95rem !important;
+            border-color: #ced4da;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+        }
+
+        /* สำหรับหน้าจอเล็กมาก ปรับให้ตัวหนังสือเล็กลงนิดหน่อยเพื่อให้ลงบรรทัดเดียวได้ */
+        @media (max-width: 380px) {
+            .thai-date-picker-container select {
+                font-size: 0.85rem !important;
+                padding: 0 2px !important;
+            }
+        }
+
+        .cache-notice {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: .375rem;
+            padding: .5rem .75rem;
+            font-size: .8rem;
+        }
     </style>
 </head>
+
 <body>
 
-<!-- Header -->
-<nav class="navbar navbar-light bg-white border-bottom px-3 py-2 sticky-top shadow-sm">
-    <div class="d-flex align-items-center gap-2 w-100">
-        <button class="btn btn-sm btn-outline-secondary" onclick="goBack()">
-            <i class="bi bi-arrow-left"></i>
-        </button>
-        <div class="flex-grow-1">
-            <div class="fw-semibold" id="hdrTitle">ข้อมูลผู้โดยสาร</div>
-            <div class="text-muted" style="font-size:.78rem" id="hdrSub"></div>
-        </div>
-    </div>
-</nav>
-
-<!-- 4-Step bar -->
-<div class="step-bar bg-white border-bottom mb-3">
-    <div class="step-item done"><i class="bi bi-check2 me-1"></i>เลือกที่นั่ง</div>
-    <div class="step-item active"><i class="bi bi-person-lines-fill me-1"></i>ข้อมูล</div>
-    <div class="step-item"><i class="bi bi-shield-check me-1"></i>ประกัน</div>
-    <div class="step-item"><i class="bi bi-credit-card me-1"></i>ชำระเงิน</div>
-</div>
-
-<div class="container-fluid px-3 pb-5" style="max-width:720px;margin:0 auto">
-    <div id="loadingState" class="text-center py-5">
-        <div class="spinner-border text-primary"></div>
-        <div class="mt-2 text-muted">กำลังโหลด...</div>
-    </div>
-
-    <div id="mainContent" class="d-none">
-
-        <form id="passengerForm" novalidate>
-
-            <!-- Per-seat passenger forms -->
-            <div id="seatForms"></div>
-
-            <!-- Booking summary -->
-            <div class="card mb-3">
-                <div class="card-header fw-semibold"><i class="bi bi-receipt me-1"></i>สรุปการจอง</div>
-                <div class="card-body" id="bookingSummary"></div>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Bottom action -->
-<div class="position-fixed bottom-0 start-0 end-0 bg-white border-top p-3 shadow-lg" style="z-index:100">
-    <div style="max-width:720px;margin:0 auto">
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-secondary" onclick="goBack()">
+    <!-- Header -->
+    <nav class="navbar navbar-light bg-white border-bottom px-3 py-2 sticky-top shadow-sm">
+        <div class="d-flex align-items-center gap-2 w-100">
+            <button class="btn btn-sm btn-outline-secondary" onclick="goBack()">
                 <i class="bi bi-arrow-left"></i>
             </button>
-            <button class="btn btn-primary flex-grow-1" onclick="goNext()" id="btnNext">
-                <i class="bi bi-shield-check me-1"></i>ถัดไป: บันทึกประกัน
-            </button>
+            <div class="flex-grow-1">
+                <div class="fw-semibold" id="hdrTitle">ข้อมูลผู้โดยสาร</div>
+                <div class="text-muted" style="font-size:.78rem" id="hdrSub"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 4-Step bar -->
+    <div class="step-bar bg-white border-bottom mb-3">
+        <div class="step-item done"><i class="bi bi-check2 me-1"></i>เลือกที่นั่ง</div>
+        <div class="step-item active"><i class="bi bi-person-lines-fill me-1"></i>ข้อมูล</div>
+        <div class="step-item"><i class="bi bi-shield-check me-1"></i>ประกัน</div>
+        <div class="step-item"><i class="bi bi-credit-card me-1"></i>ชำระเงิน</div>
+    </div>
+
+    <div class="container-fluid px-3 pb-5" style="max-width:720px;margin:0 auto">
+        <div id="loadingState" class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <div class="mt-2 text-muted">กำลังโหลด...</div>
+        </div>
+
+        <div id="mainContent" class="d-none">
+
+            <form id="passengerForm" novalidate>
+
+                <!-- Per-seat passenger forms -->
+                <div id="seatForms"></div>
+
+                <!-- Booking summary -->
+                <div class="card mb-3">
+                    <div class="card-header fw-semibold"><i class="bi bi-receipt me-1"></i>สรุปการจอง</div>
+                    <div class="card-body" id="bookingSummary"></div>
+                </div>
+            </form>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../assets/js/config.js"></script>
-<script src="../../assets/js/features/thai-calendar.js"></script>
-<script>
-// ── Constants ────────────────────────────────────────────────────────────────
-const SESSION_KEY   = 'bk_session_token';
+    <!-- Bottom action -->
+    <div class="position-fixed bottom-0 start-0 end-0 bg-white border-top p-3 shadow-lg" style="z-index:100">
+        <div style="max-width:720px;margin:0 auto">
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" onclick="goBack()">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+                <button class="btn btn-primary flex-grow-1" onclick="goNext()" id="btnNext">
+                    <i class="bi bi-shield-check me-1"></i>ถัดไป: บันทึกประกัน
+                </button>
+            </div>
+        </div>
+    </div>
 
-let sessionToken = null;
-let sessionData  = null;
-let roundData    = null;
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/features/thai-calendar.js"></script>
+    <script src="../../assets/js/features/thai-dropdown.js"></script>
+    <script>
+        // ── Constants ────────────────────────────────────────────────────────────────
+        const SESSION_KEY = 'bk_session_token';
 
-// Log form data changes for audit trail 
-function logFormData(data) {
-    console.log('[FORM DATA LOG]', {
-        timestamp: new Date().toISOString(),
-        sessionToken: sessionToken,
-        seatCount: data.seats?.length || 0,
-        action: 'form_data_collected'
-    });
-}
+        let sessionToken = null;
+        let sessionData = null;
+        let roundData = null;
 
-// ── Init ─────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-    sessionToken = new URLSearchParams(location.search).get('token')
+        // Log form data changes for audit trail 
+        function logFormData(data) {
+            console.log('[FORM DATA LOG]', {
+                timestamp: new Date().toISOString(),
+                sessionToken: sessionToken,
+                seatCount: data.seats?.length || 0,
+                action: 'form_data_collected'
+            });
+        }
+
+        // ── Init ─────────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            sessionToken = new URLSearchParams(location.search).get('token')
                 || localStorage.getItem(SESSION_KEY);
-    if (!sessionToken) { showError('ไม่พบ session — กรุณาเริ่มจองใหม่'); return; }
-    
-    // Setup page exit warning and auto-cancel
-    setupPageExitWarning();
+            if (!sessionToken) { showError('ไม่พบ session — กรุณาเริ่มจองใหม่'); return; }
 
-    try {
-        sessionData = await fetchJSON('/booking-sessions/' + sessionToken);
-        if (!sessionData) { showError('Session หมดอายุ'); return; }
+            // Setup page exit warning and auto-cancel
+            setupPageExitWarning();
 
-        const rounds = await fetchJSON('/bus-rounds');
-        roundData = rounds.find(r => r.id == sessionData.busRoundId);
-        if (!roundData) { showError('ไม่พบข้อมูลรอบรถ'); return; }
+            try {
+                sessionData = await fetchJSON('/booking-sessions/' + sessionToken);
+                if (!sessionData) { showError('Session หมดอายุ'); return; }
 
-        // Render forms
-        renderForms();
-        
-        // Initialize Thai calendar for birthdate inputs
-        initializeThaiCalendar();
-        
-        // Add pickup change listeners
-        document.querySelectorAll('.passenger-pickup').forEach(select => {
-            select.addEventListener('change', updateSummary);
+                const rounds = await fetchJSON('/bus-rounds');
+                roundData = rounds.find(r => r.id == sessionData.busRoundId);
+                if (!roundData) { showError('ไม่พบข้อมูลรอบรถ'); return; }
+
+                // Render forms
+                renderForms();
+
+                // Initialize Thai calendar for birthdate inputs
+                initializeThaiCalendar();
+
+                // Add pickup change listeners
+                document.querySelectorAll('.passenger-pickup').forEach(select => {
+                    select.addEventListener('change', updateSummary);
+                });
+
+                document.getElementById('loadingState').classList.add('d-none');
+                document.getElementById('mainContent').classList.remove('d-none');
+            } catch (e) {
+                showError(e.message);
+            }
         });
 
-        document.getElementById('loadingState').classList.add('d-none');
-        document.getElementById('mainContent').classList.remove('d-none');
-    } catch (e) {
-        showError(e.message);
-    }
-});
+        //  Render pickup options
+        function renderPickupOptions() {
+            let points = roundData?.pickupPoints || [];
 
-//  Render pickup options
-function renderPickupOptions() {
-    let points = roundData?.pickupPoints || [];
-    
-    // Handle JSON string from API
-    if (typeof points === 'string') {
-        try {
-            points = JSON.parse(points || '[]');
-        } catch (e) {
-            points = [];
+            // Handle JSON string from API
+            if (typeof points === 'string') {
+                try {
+                    points = JSON.parse(points || '[]');
+                } catch (e) {
+                    points = [];
+                }
+            }
+
+            // Handle new structure with price
+            if (points.length > 0 && typeof points[0] === 'object') {
+                return points.map(p => `<option value="${p.name}">${p.name} ${p.price > 0 ? `(+${p.price}  )` : ''}</option>`).join('');
+            }
+            // Fallback for old string array
+            return points.map(p => `<option value="${p}">${p}</option>`).join('');
         }
-    }
-    
-    // Handle new structure with price
-    if (points.length > 0 && typeof points[0] === 'object') {
-        return points.map(p => `<option value="${p.name}">${p.name} ${p.price > 0 ? `(+${p.price}  )` : ''}</option>`).join('');
-    }
-    // Fallback for old string array
-    return points.map(p => `<option value="${p}">${p}</option>`).join('');
-}
 
-//  Render dropoff options 
-function renderDropoffOptions() {
-    // Use only endPoint since dropoffPoints field doesn't exist in schema
-    const endPoint = roundData?.endPoint || '';
-    return `<option value="${endPoint}">${endPoint}</option>`;
-}
+        //  Render dropoff options 
+        function renderDropoffOptions() {
+            // Use only endPoint since dropoffPoints field doesn't exist in schema
+            const endPoint = roundData?.endPoint || '';
+            return `<option value="${endPoint}">${endPoint}</option>`;
+        }
 
-// ── Render per-seat forms ────────────────────────────────────────────────────
-function renderForms() {
-    // deduplicate ตาม seatNumber (ป้องกัน session มี seat ซ้ำ)
-    const seen  = new Set();
-    const seats = (sessionData.selectedSeats || []).filter(s => {
-        if (seen.has(s.seatNumber)) return false;
-        seen.add(s.seatNumber); return true;
-    });
-    const container = document.getElementById('seatForms');
-    container.innerHTML = seats.map((s, i) => {
-        const isMale = s.gender === 'MALE';
-        const badgeCls = isMale ? 'seat-badge-m' : 'seat-badge-f';
-        const genderLabel = isMale ? '♂ ผู้ชาย' : '♀ ผู้หญิง';
-        const sn = s.seatNumber;
-        return `
+        // ── Render per-seat forms ────────────────────────────────────────────────────
+        function renderForms() {
+            // deduplicate ตาม seatNumber (ป้องกัน session มี seat ซ้ำ)
+            const seen = new Set();
+            const seats = (sessionData.selectedSeats || []).filter(s => {
+                if (seen.has(s.seatNumber)) return false;
+                seen.add(s.seatNumber); return true;
+            });
+            const container = document.getElementById('seatForms');
+            container.innerHTML = seats.map((s, i) => {
+                const isMale = s.gender === 'MALE';
+                const badgeCls = isMale ? 'seat-badge-m' : 'seat-badge-f';
+                const genderLabel = isMale ? '♂ ผู้ชาย' : '♀ ผู้หญิง';
+                const sn = s.seatNumber;
+                return `
         <div class="card mb-3 passenger-card">
             <div class="card-header d-flex align-items-center gap-2 py-2">
                 <span class="${badgeCls}">ที่นั่ง ${sn}</span>
                 <span class="small text-muted">${genderLabel}</span>
-                <span class="ms-auto badge bg-light text-muted border">ผู้โดยสาร ${i+1}</span>
+                <span class="ms-auto badge bg-light text-muted border">ผู้โดยสาร ${i + 1}</span>
             </div>
             <div class="card-body">
-                <div class="row g-2">
-                    <!-- Row 1: prefix + first + last -->
+                <div class="row gx-3 gy-3">
+                    <!-- Row 1: prefix + first + last + nickname (Responsive) -->
                     <div class="col-4 col-md-2">
                         <label class="form-label small">คำนำหน้า <span class="text-danger">*</span></label>
-                        <select class="form-select form-select-sm passenger-prefix" data-seat="${sn}" required>
+                        <select class="form-select passenger-prefix" data-seat="${sn}" required>
                             <option value="">-</option>
-                            <option value="นาย">นาย</option>
-                            <option value="นาง">นาง</option>
-                            <option value="นางสาว">นางสาว</option>
-                            <option value="เด็กชาย">เด็กชาย</option>
-                            <option value="เด็กหญิง">เด็กหญิง</option>
+                            <option value="นาย" ${s.namePrefix === 'นาย' ? 'selected' : ''}>นาย</option>
+                            <option value="นาง" ${s.namePrefix === 'นาง' ? 'selected' : ''}>นาง</option>
+                            <option value="นางสาว" ${s.namePrefix === 'นางสาว' ? 'selected' : ''}>นางสาว</option>
+                            <option value="เด็กชาย" ${s.namePrefix === 'เด็กชาย' ? 'selected' : ''}>เด็กชาย</option>
+                            <option value="เด็กหญิง" ${s.namePrefix === 'เด็กหญิง' ? 'selected' : ''}>เด็กหญิง</option>
                         </select>
                     </div>
                     <div class="col-8 col-md-4">
-                        <label class="form-label small">ชื่อ <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm passenger-firstname"
+                        <label class="form-label small">ชื่อจริง <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control passenger-firstname"
                             data-seat="${sn}" required placeholder="ชื่อจริง"
                             value="${s.firstName || s.passengerName?.split(' ')[0] || ''}">
                     </div>
-                    <div class="col-12 col-md-6">
+                    <div class="col-8 col-md-4">
                         <label class="form-label small">นามสกุล <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm passenger-lastname"
+                        <input type="text" class="form-control passenger-lastname"
                             data-seat="${sn}" required placeholder="นามสกุล"
                             value="${s.lastName || s.passengerName?.split(' ').slice(1).join(' ') || ''}">
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <label class="form-label small">ชื่อเล่น <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control passenger-nickname"
+                            data-seat="${sn}" required placeholder="ชื่อเล่น"
+                            value="${s.nickname || ''}">
                     </div>
                     <!-- Row 2: nationalId + birthDate + bloodType -->
                     <div class="col-12 col-md-5">
                         <label class="form-label small">เลขบัตรประชาชน <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm passenger-nationalid"
+                        <input type="text" class="form-control passenger-nationalid"
                             data-seat="${sn}" required maxlength="13" pattern="[0-9]{13}"
                             placeholder="0000000000000" inputmode="numeric"
                             value="${s.nationalId || ''}">
                     </div>
-                    <div class="col-6 col-md-4">
-                        <label class="form-label small"> <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm passenger-birthdate"
+                    <div class="col-12 col-md-7">
+                        <label class="form-label small">วันเกิด (ว/ด/พ.ศ.) <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control passenger-birthdate"
                             data-seat="${sn}" required readonly
-                            value="${s.birthDate ? s.birthDate.substring(0,10) : ''}"
-                            placeholder=" ">
+                            style="display:none !important;"
+                            value="${s.birthDate ? s.birthDate.substring(0, 10) : ''}">
                     </div>
-                    <div class="col-6 col-md-3">
+                    <!-- Row 3: bloodType + phone -->
+                    <div class="col-5 col-md-3">
                         <label class="form-label small">หมู่เลือด <span class="text-danger">*</span></label>
-                        <select class="form-select form-select-sm passenger-bloodtype" data-seat="${sn}" required>
+                        <select class="form-select passenger-bloodtype" data-seat="${sn}" required>
                             <option value="">-</option>
-                            <option ${s.bloodType==='A' ?'selected':''}>A</option>
-                            <option ${s.bloodType==='B' ?'selected':''}>B</option>
-                            <option ${s.bloodType==='AB'?'selected':''}>AB</option>
-                            <option ${s.bloodType==='O' ?'selected':''}>O</option>
+                            <option ${s.bloodType === 'A' ? 'selected' : ''}>A</option>
+                            <option ${s.bloodType === 'B' ? 'selected' : ''}>B</option>
+                            <option ${s.bloodType === 'AB' ? 'selected' : ''}>AB</option>
+                            <option ${s.bloodType === 'O' ? 'selected' : ''}>O</option>
                         </select>
                     </div>
-                    <!-- Row 3: phone + allergy -->
-                    <div class="col-md-5">
-                        <label class="form-label small">เบอร์โทร <span class="text-muted">(ไม่บังคับ)</span></label>
-                        <input type="tel" class="form-control form-control-sm passenger-phone"
-                            data-seat="${sn}" placeholder="08x-xxx-xxxx" inputmode="tel"
+                    <div class="col-7 col-md-4">
+                        <label class="form-label small">เบอร์โทรติดต่อ <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control passenger-phone"
+                            data-seat="${sn}" required placeholder="08x-xxx-xxxx" inputmode="tel"
                             value="${s.phone || ''}">
                     </div>
-                    <div class="col-md-7">
+                    <div class="col-12 col-md-5">
                         <label class="form-label small">แพ้อาหาร / ข้อจำกัด <span class="text-muted">(ไม่บังคับ)</span></label>
-                        <input type="text" class="form-control form-control-sm passenger-allergy"
+                        <input type="text" class="form-control passenger-allergy"
                             data-seat="${sn}" placeholder="เช่น แพ้กุ้ง, ทานมังสวิรัติ"
                             value="${s.foodAllergy || ''}">
                     </div>
                     <!-- Row 4: pickup point (mandatory) -->
                     <div class="col-12">
                         <label class="form-label small">จุดรับ <span class="text-danger">*</span></label>
-                        <select class="form-select form-select-sm passenger-pickup" data-seat="${sn}" required>
+                        <select class="form-select passenger-pickup" data-seat="${sn}" required>
                             <option value="">-</option>
                             ${renderPickupOptions()}
                         </select>
@@ -261,122 +357,124 @@ function renderForms() {
                 </div>
             </div>
         </div>`;
-    }).join('');
+            }).join('');
 
-    // Update booking summary
-    updateSummary();
-}
-
-// ── Prefill from session ─────────────────────────────────────────────────────
-function prefillFromSession() {
-    // Restore per-seat from session
-    (sessionData.selectedSeats || []).forEach(s => {
-        if (s.namePrefix) {
-            const el = document.querySelector(`.passenger-prefix[data-seat="${s.seatNumber}"]`);
-            if (el) el.value = s.namePrefix;
+            // Update booking summary
+            updateSummary();
         }
-    });
-}
 
-// ── Collect form data ────────────────────────────────────────────────────────
-function collectData() {
-    const seats = (sessionData.selectedSeats || []).map(s => {
-        const g = n => document.querySelector(`.${n}[data-seat="${s.seatNumber}"]`)?.value?.trim() || '';
-        const firstName  = g('passenger-firstname');
-        const lastName   = g('passenger-lastname');
-        return {
-            seatNumber:   s.seatNumber,
-            gender:       s.gender,
-            namePrefix:   g('passenger-prefix'),
-            firstName,
-            lastName,
-            passengerName: [firstName, lastName].filter(Boolean).join(' '),
-            phone:         g('passenger-phone'),
-            nationalId:    g('passenger-nationalid'),
-            birthDate:     g('passenger-birthdate') ? 
-                (typeof ThaiCalendar !== 'undefined' && ThaiCalendar.processBirthdate 
-                    ? ThaiCalendar.processBirthdate(g('passenger-birthdate'))
-                    : new Date(g('passenger-birthdate')).toISOString()) 
-                : null,
-            bloodType:     g('passenger-bloodtype'),
-            foodAllergy:   g('passenger-allergy'),
-            pickupPoint:   g('passenger-pickup') || null,
-            pickupPrice: (() => {
-                const selected = g('passenger-pickup');
-                let points = roundData?.pickupPoints || [];
-                
-                // Handle JSON string from API
-                if (typeof points === 'string') {
-                    try {
-                        points = JSON.parse(points || '[]');
-                    } catch (e) {
-                        points = [];
-                    }
+        // ── Prefill from session ─────────────────────────────────────────────────────
+        function prefillFromSession() {
+            // Restore per-seat from session
+            (sessionData.selectedSeats || []).forEach(s => {
+                if (s.namePrefix) {
+                    const el = document.querySelector(`.passenger-prefix[data-seat="${s.seatNumber}"]`);
+                    if (el) el.value = s.namePrefix;
                 }
-                
-                if (points.length > 0 && typeof points[0] === 'object') {
-                    const pickup = points.find(p => p.name === selected);
-                    return pickup ? pickup.price : 0;
-                }
-                return 0;
-            })(),
-        };
-    });
+            });
+        }
 
-    return { seats };
-}
+        // ── Collect form data ────────────────────────────────────────────────────────
+        function collectData() {
+            const seats = (sessionData.selectedSeats || []).map(s => {
+                const g = n => document.querySelector(`.${n}[data-seat="${s.seatNumber}"]`)?.value?.trim() || '';
+                const firstName = g('passenger-firstname');
+                const lastName = g('passenger-lastname');
+                return {
+                    seatNumber: s.seatNumber,
+                    gender: s.gender,
+                    namePrefix: g('passenger-prefix'),
+                    nickname: g('passenger-nickname'),
+                    firstName,
+                    lastName,
+                    passengerName: [firstName, lastName].filter(Boolean).join(' '),
+                    phone: g('passenger-phone'),
+                    nationalId: g('passenger-nationalid'),
+                    birthDate: g('passenger-birthdate') ?
+                        (typeof ThaiCalendar !== 'undefined' && ThaiCalendar.processBirthdate
+                            ? ThaiCalendar.processBirthdate(g('passenger-birthdate'))
+                            : null)
+                        : null,
+                    bloodType: g('passenger-bloodtype'),
+                    foodAllergy: g('passenger-allergy'),
+                    pickupPoint: g('passenger-pickup') || null,
+                    pickupPrice: (() => {
+                        const selected = g('passenger-pickup');
+                        let points = roundData?.pickupPoints || [];
 
-// ── Update booking summary ───────────────────────────────────────────────────
-function updateSummary() {
-    const seats = (sessionData.selectedSeats || []).map(s => {
-        const g = n => document.querySelector(`.${n}[data-seat="${s.seatNumber}"]`)?.value?.trim() || '';
-        const firstName  = g('passenger-firstname');
-        const lastName   = g('passenger-lastname');
-        return {
-            seatNumber:   s.seatNumber,
-            gender:       s.gender,
-            namePrefix:   g('passenger-prefix'),
-            firstName,
-            lastName,
-            passengerName: [firstName, lastName].filter(Boolean).join(' '),
-            phone:         g('passenger-phone'),
-            nationalId:    g('passenger-nationalid'),
-            birthDate:     g('passenger-birthdate') ? 
-                (typeof ThaiCalendar !== 'undefined' && ThaiCalendar.processBirthdate 
-                    ? ThaiCalendar.processBirthdate(g('passenger-birthdate'))
-                    : new Date(g('passenger-birthdate')).toISOString()) 
-                : null,
-            bloodType:     g('passenger-bloodtype'),
-            foodAllergy:   g('passenger-allergy'),
-            pickupPoint:   g('passenger-pickup') || null,
-            pickupPrice: (() => {
-                const selected = g('passenger-pickup');
-                let points = roundData?.pickupPoints || [];
-                
-                // Handle JSON string from API
-                if (typeof points === 'string') {
-                    try {
-                        points = JSON.parse(points || '[]');
-                    } catch (e) {
-                        points = [];
-                    }
-                }
-                
-                if (points.length > 0 && typeof points[0] === 'object') {
-                    const pickup = points.find(p => p.name === selected);
-                    return pickup ? pickup.price : 0;
-                }
-                return 0;
-            })(),
-        };
-    });
+                        // Handle JSON string from API
+                        if (typeof points === 'string') {
+                            try {
+                                points = JSON.parse(points || '[]');
+                            } catch (e) {
+                                points = [];
+                            }
+                        }
 
-    // Booking summary
-    const price = roundData?.trip?.price || 0;
-    const seatTotal = seats.length * price;
-    const pickupTotal = seats.reduce((sum, seat) => sum + (seat.pickupPrice || 0), 0);
-    const total = seatTotal + pickupTotal;
-    document.getElementById('bookingSummary').innerHTML = `
+                        if (points.length > 0 && typeof points[0] === 'object') {
+                            const pickup = points.find(p => p.name === selected);
+                            return pickup ? pickup.price : 0;
+                        }
+                        return 0;
+                    })(),
+                };
+            });
+
+            return { seats };
+        }
+
+        // ── Update booking summary ───────────────────────────────────────────────────
+        function updateSummary() {
+            const seats = (sessionData.selectedSeats || []).map(s => {
+                const g = n => document.querySelector(`.${n}[data-seat="${s.seatNumber}"]`)?.value?.trim() || '';
+                const firstName = g('passenger-firstname');
+                const lastName = g('passenger-lastname');
+                return {
+                    seatNumber: s.seatNumber,
+                    gender: s.gender,
+                    namePrefix: g('passenger-prefix'),
+                    nickname: g('passenger-nickname'),
+                    firstName,
+                    lastName,
+                    passengerName: [firstName, lastName].filter(Boolean).join(' '),
+                    phone: g('passenger-phone'),
+                    nationalId: g('passenger-nationalid'),
+                    birthDate: g('passenger-birthdate') ?
+                        (typeof ThaiCalendar !== 'undefined' && ThaiCalendar.processBirthdate
+                            ? ThaiCalendar.processBirthdate(g('passenger-birthdate'))
+                            : new Date(g('passenger-birthdate')).toISOString())
+                        : null,
+                    bloodType: g('passenger-bloodtype'),
+                    foodAllergy: g('passenger-allergy'),
+                    pickupPoint: g('passenger-pickup') || null,
+                    pickupPrice: (() => {
+                        const selected = g('passenger-pickup');
+                        let points = roundData?.pickupPoints || [];
+
+                        // Handle JSON string from API
+                        if (typeof points === 'string') {
+                            try {
+                                points = JSON.parse(points || '[]');
+                            } catch (e) {
+                                points = [];
+                            }
+                        }
+
+                        if (points.length > 0 && typeof points[0] === 'object') {
+                            const pickup = points.find(p => p.name === selected);
+                            return pickup ? pickup.price : 0;
+                        }
+                        return 0;
+                    })(),
+                };
+            });
+
+            // Booking summary
+            const price = roundData?.trip?.price || 0;
+            const seatTotal = seats.length * price;
+            const pickupTotal = seats.reduce((sum, seat) => sum + (seat.pickupPrice || 0), 0);
+            const total = seatTotal + pickupTotal;
+            document.getElementById('bookingSummary').innerHTML = `
         <div class="row g-1 small">
             <div class="col-6 text-muted">จำนวนที่นั่ง</div>
             <div class="col-6 text-end fw-semibold">${seats.length} ที่นั่ง</div>
@@ -394,193 +492,176 @@ function updateSummary() {
         </div>
         <p class="text-muted small mb-0 mt-2"><i class="bi bi-info-circle me-1"></i>ยังไม่รวมอุปกรณ์เช่าเสริม</p>
     `;
-}
+        }
 
-// ── Validate ─────────────────────────────────────────────────────────────────
-function validate({ seats }) {
-    for (const s of seats) {
-        if (!s.firstName || !s.lastName)
-            return `กรุณากรอกชื่อ-นามสกุล ที่นั่ง ${s.seatNumber}`;
-        if (!s.nationalId || s.nationalId.length !== 13)
-            return `กรุณากรอกเลขบัตรประชาชน 13 หลัก ที่นั่ง ${s.seatNumber}`;
-        if (!s.birthDate)
-            return `กรุณากรอกวันเกิด ที่นั่ง ${s.seatNumber}`;
-        if (!s.bloodType)
-            return `กรุณาเลือกหมู่เลือด ที่นั่ง ${s.seatNumber}`;
-        if (!s.namePrefix)
-            return `กรุณาเลือกคำนำหน้า ที่นั่ง ${s.seatNumber}`;
-        if (!s.pickupPoint)
-            return `กรุณาเลือกจุดรับ ที่นั่ง ${s.seatNumber}`;
-    }
-    return null;
-}
+        // ── Validate ─────────────────────────────────────────────────────────────────
+        function validate({ seats }) {
+            for (const s of seats) {
+                if (!s.namePrefix)
+                    return `กรุณาเลือกคำนำหน้า ที่นั่ง ${s.seatNumber}`;
+                if (!s.nickname)
+                    return `กรุณากรอกชื่อเล่น ที่นั่ง ${s.seatNumber}`;
+                if (!s.firstName || !s.lastName)
+                    return `กรุณากรอกชื่อ-นามสกุล ที่นั่ง ${s.seatNumber}`;
+                if (!s.nationalId || s.nationalId.length !== 13)
+                    return `กรุณากรอกเลขบัตรประชาชน 13 หลัก ที่นั่ง ${s.seatNumber}`;
+                if (!s.birthDate)
+                    return `กรุณากรอกวันเกิด ที่นั่ง ${s.seatNumber}`;
+                if (!s.bloodType)
+                    return `กรุณาเลือกหมู่เลือด ที่นั่ง ${s.seatNumber}`;
+                if (!s.phone || s.phone.length < 9)
+                    return `กรุณากรอกเบอร์โทรติดต่อ ที่นั่ง ${s.seatNumber}`;
+                if (!s.pickupPoint)
+                    return `กรุณาเลือกจุดรับ ที่นั่ง ${s.seatNumber}`;
+            }
+            return null;
+        }
 
-//  Initialize Thai Calendar for birthdate inputs
-function initializeThaiCalendar() {
-    try {
-        console.log('Initializing Thai Calendar for birthdate inputs...');
-        const inputs = document.querySelectorAll('.passenger-birthdate');
-        console.log('Found', inputs.length, 'birthdate inputs');
-        
-        inputs.forEach((input, index) => {
-            console.log(`Initializing input ${index + 1}:`, input);
-            
-            if (typeof ThaiCalendar !== 'undefined' && ThaiCalendar.init) {
-                ThaiCalendar.init(input, {
-                    dateFormat: 'Y-m-d',
-                    maxDate: 'today',
-                    onChange: (dateStr) => {
-                        console.log('ThaiCalendar date changed:', dateStr);
-                        // Trigger auto-save when date changes
-                        const event = new Event('input', { bubbles: true });
-                        input.dispatchEvent(event);
+        //  Initialize Thai Calendar for birthdate inputs
+        function initializeThaiCalendar() {
+            try {
+                document.querySelectorAll('.passenger-birthdate').forEach(input => {
+                    if (typeof ThaiDropdown !== 'undefined' && ThaiDropdown.init) {
+                        ThaiDropdown.init(input, {
+                            maxDate: 'today',
+                            onChange: (dateStr) => {
+                                // Trigger audit log or update summary if needed
+                                console.log('Date updated via ThaiDropdown:', dateStr);
+                            }
+                        });
                     }
                 });
-                console.log(`ThaiCalendar initialized for input ${index + 1}`);
-            } else {
-                console.warn('ThaiCalendar not available, falling back to native date input');
-                // Fallback to native date input
-                input.type = 'date';
-                input.removeAttribute('readonly');
-                input.max = new Date().toISOString().split('T')[0];
+            } catch (error) {
+                console.error('Error initializing Thai Dropdown:', error);
             }
-        });
-    } catch (error) {
-        console.error('Error initializing Thai Calendar:', error);
-        // Fallback to native date inputs
-        document.querySelectorAll('.passenger-birthdate').forEach(input => {
-            input.type = 'date';
-            input.removeAttribute('readonly');
-            input.max = new Date().toISOString().split('T')[0];
-        });
-    }
-}
-
-//  Navigate 
-async function goNext() {
-    const formData = collectData();
-    const err = validate(formData);
-    if (err) { showToast(err, 'warning'); return; }
-
-    const btn = document.getElementById('btnNext');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>  1...';
-
-    try {
-        // Log form data for audit trail
-        logFormData(formData);
-
-        // Save to session
-        await postJSON('/booking-sessions', {
-            token: sessionToken,
-            step: 2,
-            selectedSeats: formData.seats,
-        });
-
-        window.location.href = `/frontend/pages/booking/insurance.html?token=${sessionToken}`;
-    } catch (e) {
-        showToast(e.message || ' ', 'danger');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-shield-check me-1"></i> : ';
-    }
-}
-
-function goBack() {
-    window.location.href = '/frontend/pages/bus-rounds/list.html';
-}
-
-// Page exit warning and auto-cancel
-let pageExitTimeout = null;
-
-function setupPageExitWarning() {
-    // Warning when user tries to leave during booking process
-    window.addEventListener('beforeunload', (e) => {
-        if (sessionToken) {
-            e.preventDefault();
-            e.returnValue = 'คุณกำลังอยู่ในระบบการจอง การออกจากหน้านี้จะยกเลิกการจองที่กำลังดำเนินการ คุณต้องการออกหรือไม่?';
-            return e.returnValue;
         }
-    });
 
-    // Auto-cancel after 3 minutes of inactivity
-    let lastActivity = Date.now();
-    
-    function updateActivity() {
-        lastActivity = Date.now();
-        clearTimeout(pageExitTimeout);
-        scheduleAutoCancel();
-    }
+        //  Navigate 
+        async function goNext() {
+            const formData = collectData();
+            const err = validate(formData);
+            if (err) { showToast(err, 'warning'); return; }
 
-    function scheduleAutoCancel() {
-        pageExitTimeout = setTimeout(() => {
-            if (sessionToken) {
-                console.log('[FORM] Auto-cancelling booking due to inactivity');
-                cancelBooking();
+            const btn = document.getElementById('btnNext');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>  1...';
+
+            try {
+                // Log form data for audit trail
+                logFormData(formData);
+
+                // Save to session
+                await postJSON('/booking-sessions', {
+                    token: sessionToken,
+                    step: 2,
+                    selectedSeats: formData.seats,
+                });
+
+                window.location.href = `/frontend/pages/booking/insurance.html?token=${sessionToken}`;
+            } catch (e) {
+                showToast(e.message || ' ', 'danger');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-shield-check me-1"></i> : ';
             }
-        }, 180000); // 3 minutes
-    }
+        }
 
-    // Track user activity
-    ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
-        document.addEventListener(event, updateActivity, true);
-    });
+        function goBack() {
+            window.location.href = '/frontend/pages/bus-rounds/list.html';
+        }
 
-    // Start tracking
-    scheduleAutoCancel();
-}
+        // Page exit warning and auto-cancel
+        let pageExitTimeout = null;
 
-async function cancelBooking() {
-    try {
-        if (sessionToken) {
-            await postJSON('/booking-sessions/cancel', {
-                token: sessionToken
+        function setupPageExitWarning() {
+            // Warning when user tries to leave during booking process
+            window.addEventListener('beforeunload', (e) => {
+                if (sessionToken) {
+                    e.preventDefault();
+                    e.returnValue = 'คุณกำลังอยู่ในระบบการจอง การออกจากหน้านี้จะยกเลิกการจองที่กำลังดำเนินการ คุณต้องการออกหรือไม่?';
+                    return e.returnValue;
+                }
             });
-            console.log('[FORM] Booking cancelled due to inactivity');
-            showToast('⏰ หมดเวลาการจอง การจองถูกยกเลิก กรุณาเริ่มใหม่', 'warning');
+
+            // Auto-cancel after 3 minutes of inactivity
+            let lastActivity = Date.now();
+
+            function updateActivity() {
+                lastActivity = Date.now();
+                clearTimeout(pageExitTimeout);
+                scheduleAutoCancel();
+            }
+
+            function scheduleAutoCancel() {
+                pageExitTimeout = setTimeout(() => {
+                    if (sessionToken) {
+                        console.log('[FORM] Auto-cancelling booking due to inactivity');
+                        cancelBooking();
+                    }
+                }, 180000); // 3 minutes
+            }
+
+            // Track user activity
+            ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+                document.addEventListener(event, updateActivity, true);
+            });
+
+            // Start tracking
+            scheduleAutoCancel();
         }
-        sessionToken = null;
-        window.location.href = '/frontend/pages/bus-rounds/list.html';
-    } catch (error) {
-        console.error('[FORM] Error cancelling booking:', error);
-        window.location.href = '/frontend/pages/bus-rounds/list.html';
-    }
-}
 
-// ── API helpers ───────────────────────────────────────────────────────────────
-async function fetchJSON(path) {
-    const r = await fetch(API_BASE_URL + path);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();
-}
-async function postJSON(path, body) {
-    const r = await fetch(API_BASE_URL + path, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.message || `HTTP ${r.status}`);
-    return d;
-}
+        async function cancelBooking() {
+            try {
+                if (sessionToken) {
+                    await postJSON('/booking-sessions/cancel', {
+                        token: sessionToken
+                    });
+                    console.log('[FORM] Booking cancelled due to inactivity');
+                    showToast('⏰ หมดเวลาการจอง การจองถูกยกเลิก กรุณาเริ่มใหม่', 'warning');
+                }
+                sessionToken = null;
+                window.location.href = '/frontend/pages/bus-rounds/list.html';
+            } catch (error) {
+                console.error('[FORM] Error cancelling booking:', error);
+                window.location.href = '/frontend/pages/bus-rounds/list.html';
+            }
+        }
 
-function showError(msg) {
-    document.getElementById('loadingState').innerHTML =
-        `<div class="py-5 text-center">
+        // ── API helpers ───────────────────────────────────────────────────────────────
+        async function fetchJSON(path) {
+            const r = await fetch(API_BASE_URL + path);
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+        }
+        async function postJSON(path, body) {
+            const r = await fetch(API_BASE_URL + path, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.message || `HTTP ${r.status}`);
+            return d;
+        }
+
+        function showError(msg) {
+            document.getElementById('loadingState').innerHTML =
+                `<div class="py-5 text-center">
             <i class="bi bi-exclamation-triangle text-danger fs-2"></i>
             <p class="text-danger mt-2">${msg}</p>
             <a href="/frontend/pages/trips/list.html" class="btn btn-outline-primary mt-2">กลับหน้าทริป</a>
         </div>`;
-}
-function showToast(msg, type = 'warning') {
-    let c = document.getElementById('toastC');
-    if (!c) { c = document.createElement('div'); c.id='toastC'; c.className='position-fixed bottom-0 end-0 p-3'; c.style.zIndex=9999; document.body.appendChild(c); }
-    const id = 't'+Date.now();
-    c.insertAdjacentHTML('beforeend', `
+        }
+        function showToast(msg, type = 'warning') {
+            let c = document.getElementById('toastC');
+            if (!c) { c = document.createElement('div'); c.id = 'toastC'; c.className = 'position-fixed bottom-0 end-0 p-3'; c.style.zIndex = 9999; document.body.appendChild(c); }
+            const id = 't' + Date.now();
+            c.insertAdjacentHTML('beforeend', `
         <div id="${id}" class="toast align-items-center text-bg-${type} border-0 show">
             <div class="d-flex"><div class="toast-body">${msg}</div>
             <button class="btn-close btn-close-white me-2 m-auto" onclick="document.getElementById('${id}').remove()"></button>
             </div></div>`);
-    setTimeout(() => document.getElementById(id)?.remove(), 4000);
-}
-</script>
+            setTimeout(() => document.getElementById(id)?.remove(), 4000);
+        }
+    </script>
 </body>
+
 </html>

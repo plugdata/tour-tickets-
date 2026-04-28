@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แกลเลอรี่ - Tour Backoffice</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../assets/css/admin.css" rel="stylesheet">
+  <style>
+    .album-card {
+      border-radius: 14px; overflow: hidden; border: 1px solid #e9ecef;
+      transition: all .2s; cursor: pointer;
+    }
+    .album-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.1); border-color: #198754; }
+    .album-cover {
+      width: 100%; height: 160px; object-fit: cover; background: #f1f3f5;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .album-images-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap:.5rem; }
+    .img-thumb {
+      aspect-ratio:1; border-radius:8px; overflow:hidden; position:relative;
+      cursor:pointer; border:2px solid transparent;
+    }
+    .img-thumb:hover { border-color:#198754; }
+    .img-thumb img { width:100%;height:100%;object-fit:cover; }
+    .img-thumb-del {
+      position:absolute;top:4px;right:4px;background:rgba(220,53,69,.85);
+      color:#fff;border:none;border-radius:50%;width:22px;height:22px;
+      font-size:.7rem;display:none;align-items:center;justify-content:center;cursor:pointer;
+    }
+    .img-thumb:hover .img-thumb-del { display:flex; }
+    .empty-album { border:2px dashed #ced4da;border-radius:8px;padding:1.5rem;text-align:center;color:#adb5bd; }
+  </style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="d-flex">
+  <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+  <main class="main-content flex-fill">
+    <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+    <div class="page-content">
+
+      <!-- ─── VIEW: Album List ─── -->
+      <div id="viewAlbums">
+        <div class="page-header d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="page-title"><i class="bi bi-images me-2 text-success"></i>แกลเลอรี่</h1>
+            <p class="page-subtitle">จัดการอัลบัมรูปภาพและหมวดหมู่</p>
+          </div>
+          <button class="btn btn-success" onclick="openAlbumModal()">
+            <i class="bi bi-plus-lg me-1"></i>สร้างอัลบัม
+          </button>
+        </div>
+
+        <!-- Category filter -->
+        <div class="d-flex gap-2 mb-3 flex-wrap">
+          <button class="btn btn-sm btn-success" onclick="filterCat('')" id="catBtn-">ทั้งหมด</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="filterCat('ทริปในประเทศ')" id="catBtn-ทริปในประเทศ">ทริปในประเทศ</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="filterCat('ทริปต่างประเทศ')" id="catBtn-ทริปต่างประเทศ">ทริปต่างประเทศ</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="filterCat('กิจกรรม')" id="catBtn-กิจกรรม">กิจกรรม</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="filterCat('อาหาร')" id="catBtn-อาหาร">อาหาร</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="filterCat('อื่นๆ')" id="catBtn-อื่นๆ">อื่นๆ</button>
+        </div>
+
+        <div class="row g-3" id="albumsGrid">
+          <div class="col-12 text-center py-5 text-muted">กำลังโหลด...</div>
+        </div>
+      </div>
+
+      <!-- ─── VIEW: Album Detail ─── -->
+      <div id="viewAlbumDetail" class="d-none">
+        <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="backToAlbums()">
+              <i class="bi bi-arrow-left me-1"></i>กลับ
+            </button>
+            <div>
+              <h1 class="page-title mb-0" id="detailTitle">ชื่ออัลบัม</h1>
+              <p class="page-subtitle mb-0" id="detailCategory">-</p>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm" id="btnEditAlbum">
+              <i class="bi bi-pencil me-1"></i>แก้ไขอัลบัม
+            </button>
+            <button class="btn btn-outline-danger btn-sm" id="btnDeleteAlbum">
+              <i class="bi bi-trash me-1"></i>ลบอัลบัม
+            </button>
+            <button class="btn btn-success btn-sm" onclick="openAddImageModal()">
+              <i class="bi bi-plus-lg me-1"></i>เพิ่มรูปภาพ
+            </button>
+          </div>
+        </div>
+        <div class="album-images-grid" id="imagesGrid">
+          <div class="empty-album" style="grid-column:1/-1">
+            <i class="bi bi-image" style="font-size:2.5rem;opacity:.4"></i>
+            <p class="mt-2 mb-0">ยังไม่มีรูปภาพในอัลบัมนี้</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Album Modal (create / edit) -->
+<div class="modal fade" id="albumModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="albumModalTitle">สร้างอัลบัม</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="aId">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">ชื่ออัลบัม <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="aTitle" placeholder="เช่น ทริปเกาะสมุย เม.ย. 2569">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">หมวดหมู่</label>
+            <select class="form-select" id="aCategory">
+              <option value="">-- ไม่ระบุ --</option>
+              <option>ทริปในประเทศ</option>
+              <option>ทริปต่างประเทศ</option>
+              <option>กิจกรรม</option>
+              <option>อาหาร</option>
+              <option>อื่นๆ</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">ลำดับแสดงผล</label>
+            <input type="number" class="form-control" id="aSortOrder" value="99" min="1">
+          </div>
+          <div class="col-12">
+            <label class="form-label">คำอธิบาย</label>
+            <textarea class="form-control" id="aDescription" rows="2" placeholder="อธิบายสั้นๆ..."></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">URL รูปปก (Cover)</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="aCoverUrl" placeholder="https://... หรือ /uploads/...">
+              <button class="btn btn-outline-secondary" type="button" onclick="pickCoverMedia()">
+                <i class="bi bi-folder2-open"></i>
+              </button>
+            </div>
+            <div id="coverPreview" class="mt-2 d-none">
+              <img src="" id="coverPreviewImg" style="height:80px;border-radius:8px;object-fit:cover">
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="aIsActive" checked>
+              <label class="form-check-label">เผยแพร่</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+        <button class="btn btn-success" onclick="saveAlbum()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Images Modal -->
+<div class="modal fade" id="addImgModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>เพิ่มรูปภาพในอัลบัม</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="nav nav-tabs mb-3" id="addImgTabs">
+          <li class="nav-item"><a class="nav-link active" data-atab="url" href="#">URL ตรง</a></li>
+          <li class="nav-item"><a class="nav-link" data-atab="media" href="#">จาก Media Library</a></li>
+          <li class="nav-item"><a class="nav-link" data-atab="upload" href="#">อัปโหลดใหม่</a></li>
+        </ul>
+
+        <!-- URL tab -->
+        <div id="atab-url">
+          <div id="urlRows">
+            <div class="row g-2 align-items-center mb-2 url-row">
+              <div class="col"><input type="text" class="form-control url-input" placeholder="https://... หรือ /uploads/..."></div>
+              <div class="col"><input type="text" class="form-control caption-input" placeholder="คำบรรยาย (ไม่บังคับ)"></div>
+              <div class="col-auto"><button class="btn btn-sm btn-outline-danger" onclick="removeUrlRow(this)"><i class="bi bi-x"></i></button></div>
+            </div>
+          </div>
+          <button class="btn btn-sm btn-outline-success mt-1" onclick="addUrlRow()">
+            <i class="bi bi-plus me-1"></i>เพิ่มแถว
+          </button>
+        </div>
+
+        <!-- Media Library tab -->
+        <div id="atab-media" class="d-none">
+          <div class="row g-2 mb-2">
+            <div class="col">
+              <input type="text" class="form-control form-control-sm" id="mediaPickSearch" placeholder="ค้นหา...">
+            </div>
+          </div>
+          <div class="row g-2" id="mediaPicker" style="max-height:340px;overflow-y:auto">
+            <div class="col-12 text-center py-4 text-muted small">กำลังโหลด...</div>
+          </div>
+        </div>
+
+        <!-- Upload tab -->
+        <div id="atab-upload" class="d-none">
+          <label class="upload-zone d-block" style="cursor:pointer">
+            <input type="file" id="bulkUpload" accept="image/*" multiple style="display:none">
+            <i class="bi bi-cloud-upload" style="font-size:2rem;color:#198754;opacity:.7"></i>
+            <p class="mb-0 mt-2">คลิกเพื่อเลือกรูปภาพ (เลือกหลายไฟล์ได้)</p>
+          </label>
+          <div id="uploadBulkProgress" class="d-none mt-2 small text-muted">กำลังอัปโหลด...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+        <button class="btn btn-success" onclick="confirmAddImages()">เพิ่มรูปภาพ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Media picker for cover (reuse simple modal) -->
+<div class="modal fade" id="coverPickModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">เลือกรูปปก</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-2" id="coverPickGrid">
+          <div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/apiClient.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script>
+const BASE = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL.replace('/api','') : ''
+let albums = []
+let currentAlbumId = null
+let currentAlbum = null
+let selectedMediaUrls = new Set()
+let albumModal, addImgModal, coverPickModal
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await initPage()
+  albumModal    = new bootstrap.Modal(document.getElementById('albumModal'))
+  addImgModal   = new bootstrap.Modal(document.getElementById('addImgModal'))
+  coverPickModal = new bootstrap.Modal(document.getElementById('coverPickModal'))
+
+  loadAlbums()
+
+  // Add image tabs
+  document.querySelectorAll('#addImgTabs .nav-link').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault()
+      document.querySelectorAll('#addImgTabs .nav-link').forEach(l => l.classList.remove('active'))
+      link.classList.add('active')
+      document.querySelectorAll('[id^="atab-"]').forEach(p => p.classList.add('d-none'))
+      const tab = document.getElementById('atab-' + link.dataset.atab)
+      tab.classList.remove('d-none')
+      if (link.dataset.atab === 'media') loadMediaPicker()
+    })
+  })
+
+  // Bulk upload in add image modal
+  document.getElementById('bulkUpload').addEventListener('change', async e => {
+    const files = e.target.files
+    if (!files.length) return
+    const prog = document.getElementById('uploadBulkProgress')
+    prog.classList.remove('d-none'); prog.textContent = 'กำลังอัปโหลด...'
+    const urls = []
+    for (const f of files) {
+      try {
+        const res = await API.uploads.upload(f)
+        urls.push({ url: res.url })
+      } catch(_) {}
+    }
+    prog.textContent = `อัปโหลดสำเร็จ ${urls.length} ไฟล์ — คลิก "เพิ่มรูปภาพ" เพื่อบันทึก`
+    // store for confirmAddImages
+    window._bulkUploaded = urls
+  })
+
+  // Cover url live preview
+  document.getElementById('aCoverUrl').addEventListener('input', e => updateCoverPreview(e.target.value))
+
+  document.getElementById('btnEditAlbum').addEventListener('click', () => {
+    if (!currentAlbum) return
+    openAlbumModal(currentAlbum)
+  })
+  document.getElementById('btnDeleteAlbum').addEventListener('click', async () => {
+    if (!currentAlbum) return
+    if (!confirm(`ลบอัลบัม "${currentAlbum.title}" และรูปทั้งหมด?`)) return
+    try {
+      await API.gallery.albums.delete(currentAlbum.id)
+      showToast('ลบอัลบัมแล้ว')
+      backToAlbums()
+    } catch(e) { showToast('ลบล้มเหลว', 'danger') }
+  })
+
+  // Media pick search
+  document.getElementById('mediaPickSearch').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase()
+    document.querySelectorAll('#mediaPicker .pick-item').forEach(el => {
+      el.style.display = !q || el.dataset.name.includes(q) ? '' : 'none'
+    })
+  })
+})
+
+let currentCatFilter = ''
+function filterCat(cat) {
+  currentCatFilter = cat
+  document.querySelectorAll('[id^="catBtn-"]').forEach(b => {
+    b.className = b.id === 'catBtn-' + cat
+      ? 'btn btn-sm btn-success' : 'btn btn-sm btn-outline-secondary'
+  })
+  renderAlbums()
+}
+
+async function loadAlbums() {
+  try {
+    albums = await API.gallery.albums.list()
+    renderAlbums()
+  } catch(e) {
+    document.getElementById('albumsGrid').innerHTML = `<div class="col-12 text-center py-5 text-danger">โหลดล้มเหลว</div>`
+  }
+}
+
+function renderAlbums() {
+  const list = currentCatFilter ? albums.filter(a => a.category === currentCatFilter) : albums
+  if (!list.length) {
+    document.getElementById('albumsGrid').innerHTML = `<div class="col-12 text-center py-5 text-muted">
+      <i class="bi bi-images" style="font-size:3rem;opacity:.3"></i><p class="mt-2">ยังไม่มีอัลบัม</p></div>`
+    return
+  }
+  document.getElementById('albumsGrid').innerHTML = list.map(a => {
+    const cover = a.coverUrl || (a.images?.[0]?.url) || ''
+    const cnt = a._count?.images ?? 0
+    return `
+    <div class="col-sm-6 col-lg-4 col-xl-3">
+      <div class="album-card card h-100" onclick="openAlbumDetail(${a.id})">
+        ${cover
+          ? `<img src="${BASE}${cover.startsWith('http')?'':cover}" class="album-cover" alt="${a.title}">`
+          : `<div class="album-cover"><i class="bi bi-image" style="font-size:3rem;opacity:.3;color:#999"></i></div>`}
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="mb-1 fw-semibold">${a.title}</h6>
+              <small class="text-muted">${a.category || 'ไม่ระบุหมวด'}</small>
+            </div>
+            <span class="badge bg-success-subtle text-success">${cnt} รูป</span>
+          </div>
+          ${a.description ? `<p class="small text-muted mt-1 mb-0" style="overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${a.description}</p>` : ''}
+          <div class="mt-2">
+            <span class="badge ${a.isActive?'bg-success':'bg-secondary'}">${a.isActive?'เผยแพร่':'ซ่อน'}</span>
+          </div>
+        </div>
+      </div>
+    </div>`
+  }).join('')
+}
+
+async function openAlbumDetail(id) {
+  document.getElementById('viewAlbums').classList.add('d-none')
+  document.getElementById('viewAlbumDetail').classList.remove('d-none')
+  currentAlbumId = id
+  currentAlbum = albums.find(a => a.id === id)
+  if (currentAlbum) {
+    document.getElementById('detailTitle').textContent = currentAlbum.title
+    document.getElementById('detailCategory').textContent = currentAlbum.category || 'ไม่ระบุหมวด'
+  }
+  loadAlbumImages()
+}
+
+function backToAlbums() {
+  document.getElementById('viewAlbumDetail').classList.add('d-none')
+  document.getElementById('viewAlbums').classList.remove('d-none')
+  currentAlbumId = null; currentAlbum = null
+  loadAlbums()
+}
+
+async function loadAlbumImages() {
+  try {
+    const images = await API.gallery.images.list(currentAlbumId)
+    const grid = document.getElementById('imagesGrid')
+    if (!images.length) {
+      grid.innerHTML = `<div class="empty-album" style="grid-column:1/-1">
+        <i class="bi bi-image" style="font-size:2.5rem;opacity:.4"></i>
+        <p class="mt-2 mb-0">ยังไม่มีรูปภาพ คลิก "เพิ่มรูปภาพ"</p></div>`
+      return
+    }
+    grid.innerHTML = images.map(img => `
+      <div class="img-thumb" onclick="">
+        <img src="${BASE}${img.url.startsWith('http')?'':img.url}" alt="${img.caption||''}">
+        ${img.caption ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:.7rem;padding:.25rem .4rem">${img.caption}</div>` : ''}
+        <button class="img-thumb-del" onclick="event.stopPropagation();deleteImage(${img.id})">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>`).join('')
+  } catch(e) { showToast('โหลดรูปล้มเหลว', 'danger') }
+}
+
+async function deleteImage(id) {
+  if (!confirm('ลบรูปนี้?')) return
+  try {
+    await API.gallery.images.delete(id)
+    showToast('ลบรูปแล้ว'); loadAlbumImages()
+  } catch(e) { showToast('ลบล้มเหลว', 'danger') }
+}
+
+// ── Album Modal ───────────────────────────────────────────
+window.openAlbumModal = function(album = null) {
+  document.getElementById('albumModalTitle').textContent = album ? 'แก้ไขอัลบัม' : 'สร้างอัลบัม'
+  document.getElementById('aId').value = album?.id ?? ''
+  document.getElementById('aTitle').value = album?.title ?? ''
+  document.getElementById('aCategory').value = album?.category ?? ''
+  document.getElementById('aSortOrder').value = album?.sortOrder ?? 99
+  document.getElementById('aDescription').value = album?.description ?? ''
+  document.getElementById('aCoverUrl').value = album?.coverUrl ?? ''
+  document.getElementById('aIsActive').checked = album?.isActive ?? true
+  updateCoverPreview(album?.coverUrl ?? '')
+  albumModal.show()
+}
+
+window.saveAlbum = async function() {
+  const id = document.getElementById('aId').value
+  const data = {
+    title: document.getElementById('aTitle').value.trim(),
+    category: document.getElementById('aCategory').value || null,
+    sortOrder: Number(document.getElementById('aSortOrder').value) || 99,
+    description: document.getElementById('aDescription').value.trim() || null,
+    coverUrl: document.getElementById('aCoverUrl').value.trim() || null,
+    isActive: document.getElementById('aIsActive').checked,
+  }
+  if (!data.title) { showToast('กรุณากรอกชื่ออัลบัม', 'warning'); return }
+  try {
+    if (id) {
+      await API.gallery.albums.update(Number(id), data)
+    } else {
+      await API.gallery.albums.create(data)
+    }
+    albumModal.hide(); showToast('บันทึกอัลบัมแล้ว')
+    loadAlbums()
+    if (id && currentAlbum) {
+      currentAlbum = { ...currentAlbum, ...data }
+      document.getElementById('detailTitle').textContent = data.title
+      document.getElementById('detailCategory').textContent = data.category || 'ไม่ระบุหมวด'
+    }
+  } catch(e) { showToast('บันทึกล้มเหลว: ' + e.message, 'danger') }
+}
+
+function updateCoverPreview(url) {
+  const prev = document.getElementById('coverPreview')
+  const img  = document.getElementById('coverPreviewImg')
+  if (url && url.trim()) {
+    const full = url.startsWith('http') ? url : BASE + url
+    img.src = full; prev.classList.remove('d-none')
+  } else {
+    prev.classList.add('d-none')
+  }
+}
+
+window.pickCoverMedia = async function() {
+  document.getElementById('coverPickGrid').innerHTML = '<div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>'
+  coverPickModal.show()
+  try {
+    const uploads = await API.uploads.list()
+    document.getElementById('coverPickGrid').innerHTML = uploads.map(u => `
+      <div class="col-6 col-md-3 col-lg-2">
+        <div class="border rounded overflow-hidden" style="cursor:pointer;aspect-ratio:1"
+             onclick="selectCover('${u.url}')">
+          <img src="${BASE}${u.url}" class="w-100 h-100" style="object-fit:cover" alt="">
+        </div>
+      </div>`).join('')
+  } catch(e) {}
+}
+window.selectCover = function(url) {
+  document.getElementById('aCoverUrl').value = url
+  updateCoverPreview(url)
+  coverPickModal.hide()
+}
+
+// ── Add Images ───────────────────────────────────────────
+window.openAddImageModal = function() {
+  selectedMediaUrls.clear()
+  window._bulkUploaded = []
+  document.getElementById('urlRows').innerHTML = `
+    <div class="row g-2 align-items-center mb-2 url-row">
+      <div class="col"><input type="text" class="form-control url-input" placeholder="https://... หรือ /uploads/..."></div>
+      <div class="col"><input type="text" class="form-control caption-input" placeholder="คำบรรยาย (ไม่บังคับ)"></div>
+      <div class="col-auto"><button class="btn btn-sm btn-outline-danger" onclick="removeUrlRow(this)"><i class="bi bi-x"></i></button></div>
+    </div>`
+  // switch to url tab
+  document.querySelectorAll('#addImgTabs .nav-link').forEach(l => {
+    l.classList.toggle('active', l.dataset.atab === 'url')
+  })
+  document.querySelectorAll('[id^="atab-"]').forEach(p => p.classList.add('d-none'))
+  document.getElementById('atab-url').classList.remove('d-none')
+  addImgModal.show()
+}
+
+window.addUrlRow = function() {
+  document.getElementById('urlRows').insertAdjacentHTML('beforeend', `
+    <div class="row g-2 align-items-center mb-2 url-row">
+      <div class="col"><input type="text" class="form-control url-input" placeholder="https://..."></div>
+      <div class="col"><input type="text" class="form-control caption-input" placeholder="คำบรรยาย"></div>
+      <div class="col-auto"><button class="btn btn-sm btn-outline-danger" onclick="removeUrlRow(this)"><i class="bi bi-x"></i></button></div>
+    </div>`)
+}
+window.removeUrlRow = function(btn) {
+  const row = btn.closest('.url-row')
+  if (document.querySelectorAll('.url-row').length > 1) row.remove()
+}
+
+async function loadMediaPicker() {
+  document.getElementById('mediaPicker').innerHTML = '<div class="col-12 text-center py-4 text-muted small">กำลังโหลด...</div>'
+  try {
+    const uploads = await API.uploads.list()
+    document.getElementById('mediaPicker').innerHTML = uploads.map(u => `
+      <div class="col-4 col-md-3 pick-item" data-name="${u.filename.toLowerCase()}" data-url="${u.url}">
+        <div class="border rounded overflow-hidden position-relative" style="aspect-ratio:1;cursor:pointer"
+             onclick="togglePickMedia(this, '${u.url}')" id="pick-${u.id}">
+          <img src="${BASE}${u.url}" class="w-100 h-100" style="object-fit:cover" alt="">
+          <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+               style="background:rgba(25,135,84,.5);display:none!important" id="pickCheck-${u.id}">
+            <i class="bi bi-check-circle-fill text-white" style="font-size:1.5rem"></i>
+          </div>
+        </div>
+      </div>`).join('')
+  } catch(e) {}
+}
+
+window.togglePickMedia = function(el, url) {
+  const isSelected = selectedMediaUrls.has(url)
+  if (isSelected) {
+    selectedMediaUrls.delete(url)
+    el.style.borderColor = ''; el.querySelector('[id^="pickCheck-"]').style.display = 'none!important'
+    el.querySelector('[id^="pickCheck-"]').style.display = 'none'
+  } else {
+    selectedMediaUrls.add(url)
+    el.style.borderColor = '#198754'; el.querySelector('[id^="pickCheck-"]').style.removeProperty('display')
+  }
+}
+
+window.confirmAddImages = async function() {
+  const activeTab = document.querySelector('#addImgTabs .nav-link.active')?.dataset.atab
+
+  let imgs = []
+  if (activeTab === 'url') {
+    document.querySelectorAll('.url-row').forEach(row => {
+      const url = row.querySelector('.url-input').value.trim()
+      const cap = row.querySelector('.caption-input').value.trim()
+      if (url) imgs.push({ url, caption: cap || null })
+    })
+  } else if (activeTab === 'media') {
+    imgs = [...selectedMediaUrls].map(url => ({ url }))
+  } else if (activeTab === 'upload') {
+    imgs = (window._bulkUploaded || [])
+  }
+
+  if (!imgs.length) { showToast('กรุณาเพิ่มรูปภาพอย่างน้อย 1 รูป', 'warning'); return }
+
+  try {
+    await API.gallery.images.add(currentAlbumId, imgs)
+    addImgModal.hide(); showToast(`เพิ่ม ${imgs.length} รูปแล้ว`)
+    loadAlbumImages()
+  } catch(e) { showToast('บันทึกล้มเหลว: ' + e.message, 'danger') }
+}
+</script>
+</body>
+</html>

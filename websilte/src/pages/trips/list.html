@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BOOKSGUGA — ค้นหาทริป</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/seatchart@0.1.0/dist/seatchart.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/seatchart@0.1.0/dist/seatchart.min.js"></script>
+  <style>
+    :root {
+      --primary:     #00d9b4;
+      --primary-dim: rgba(0,217,180,.12);
+      --dark:        #0f1419;
+      --dark-card:   #1a2232;
+      --dark-card2:  #141b26;
+      --gray:        #a0aec0;
+      --border:      rgba(255,255,255,.07);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Sarabun', sans-serif; color: #fff; }
+
+    /* ── Background ── */
+    .page-bg {
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        linear-gradient(135deg, rgba(0,0,0,.68) 0%, rgba(5,22,16,.78) 60%, rgba(0,0,0,.82) 100%),
+        url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1400&q=80') center/cover no-repeat;
+    }
+
+    /* ── Main 2-column layout ── */
+    .main-layout {
+      position: relative; z-index: 1;
+      display: flex; height: 100vh;
+    }
+
+    /* ════════════════════════════
+       LEFT PANEL
+    ════════════════════════════ */
+    .lp {
+      width: 420px; min-width: 300px; flex-shrink: 0;
+      height: 100vh; display: flex; flex-direction: column;
+      background: rgba(0,0,0,.48);
+      backdrop-filter: blur(18px);
+      border-right: 1px solid rgba(255,255,255,.07);
+    }
+
+    /* Header */
+    .lp-header {
+      padding: .9rem 1.4rem;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      flex-shrink: 0;
+    }
+    .lp-logo { display: flex; align-items: center; gap: .55rem; text-decoration: none; }
+    .lp-logo-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--primary), #00c4a0);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; color: #000;
+    }
+    .lp-logo-text { font-family: 'Kanit', sans-serif; font-weight: 800; font-size: 1.1rem; color: #fff; }
+    .lp-nav { display: flex; gap: .8rem; }
+    .lp-nav a { color: rgba(255,255,255,.55); font-size: .78rem; text-decoration: none; transition: color .2s; }
+    .lp-nav a:hover { color: var(--primary); }
+
+    /* Controls */
+    .lp-controls { padding: .9rem 1.4rem .6rem; flex-shrink: 0; }
+
+    .ctrl-row {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12); border-radius: 11px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .4rem .85rem; margin-bottom: .5rem;
+    }
+    .ctrl-row button {
+      background: none; border: none; color: #fff; font-size: .85rem;
+      padding: .12rem .38rem; border-radius: 6px; transition: background .2s; cursor: pointer;
+    }
+    .ctrl-row button:hover { background: rgba(255,255,255,.15); }
+    .ctrl-label { font-family: 'Kanit', sans-serif; font-weight: 600; font-size: .88rem; color: #fff; flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: .3rem; }
+    .ctrl-select {
+      background: transparent; border: none; color: #fff;
+      font-family: 'Kanit', sans-serif; font-size: .88rem; font-weight: 600;
+      cursor: pointer; -webkit-appearance: none; outline: none;
+    }
+    .ctrl-select option { background: #1e2837; }
+
+    .search-row { display: flex; gap: .45rem; }
+    .search-input {
+      flex: 1; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.14);
+      color: #fff; border-radius: 10px; padding: .5rem .85rem;
+      font-family: 'Sarabun', sans-serif; font-size: .85rem; outline: none; transition: border-color .2s;
+    }
+    .search-input::placeholder { color: rgba(255,255,255,.4); }
+    .search-input:focus { border-color: var(--primary); }
+    .search-btn {
+      background: linear-gradient(135deg, var(--primary), #00c4a0); color: #000;
+      border: none; border-radius: 10px; padding: .5rem .95rem;
+      font-family: 'Kanit', sans-serif; font-weight: 700; font-size: .82rem;
+      cursor: pointer; white-space: nowrap; transition: all .2s;
+    }
+    .search-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(0,217,180,.35); }
+
+    /* List area */
+    .lp-list-header {
+      padding: .4rem 1.4rem .2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .lp-list-label { font-size: .7rem; color: rgba(255,255,255,.3); text-transform: uppercase; letter-spacing: .07em; }
+    .lp-list-count { font-size: .72rem; color: var(--primary); font-weight: 600; }
+
+    .lp-list {
+      flex: 1; overflow-y: auto; padding: .3rem 1rem 1.5rem;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.12) transparent;
+    }
+    .lp-list::-webkit-scrollbar { width: 3px; }
+    .lp-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 2px; }
+
+    /* Section divider */
+    .list-divider {
+      font-size: .67rem; color: rgba(255,255,255,.28); text-transform: uppercase;
+      letter-spacing: .08em; padding: .7rem .4rem .25rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .list-divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.1); }
+
+    /* Round row */
+    .round-row {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .58rem .7rem; border-radius: 11px; margin-bottom: .25rem;
+      cursor: pointer; transition: all .18s;
+      border: 1px solid transparent;
+    }
+    .round-row:hover:not(.is-full) { background: rgba(255,255,255,.07); }
+    .round-row.selected { background: rgba(0,217,180,.1); border-color: rgba(0,217,180,.3); }
+    .round-row.is-full   { opacity: .5; cursor: not-allowed; }
+
+    .round-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; }
+    .dot-ok   { background: var(--primary); box-shadow: 0 0 5px rgba(0,217,180,.6); }
+    .dot-low  { background: #ff9f43; box-shadow: 0 0 5px rgba(255,159,67,.5); }
+    .dot-full { background: #ff4757; }
+
+    .round-info { flex: 1; min-width: 0; }
+    .round-title { font-size: .86rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .round-sub   { font-size: .7rem; color: var(--gray); margin-top: .08rem; display: flex; align-items: center; gap: .35rem; }
+
+    .round-badge {
+      font-size: .7rem; border-radius: 20px; padding: .12rem .55rem; flex-shrink: 0;
+      font-weight: 700; font-family: 'Kanit', sans-serif;
+    }
+    .badge-price { background: rgba(0,217,180,.15); color: var(--primary); border: 1px solid rgba(0,217,180,.3); }
+    .badge-full  { background: rgba(255,71,87,.15);  color: #ff4757;       border: 1px solid rgba(255,71,87,.3); }
+    .badge-low   { background: rgba(255,159,67,.15); color: #ff9f43;       border: 1px solid rgba(255,159,67,.3); }
+
+    /* Skeleton */
+    .skel-row { display: flex; align-items: center; gap: .65rem; padding: .58rem .7rem; border-radius: 11px; margin-bottom: .25rem; }
+    .skel-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.1); flex-shrink: 0; }
+    .skel-line { border-radius: 4px; background: linear-gradient(90deg,rgba(255,255,255,.07) 25%,rgba(255,255,255,.11) 50%,rgba(255,255,255,.07) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* List empty */
+    .list-empty { text-align: center; padding: 2.5rem 1rem; color: var(--gray); }
+    .list-empty i { font-size: 2.2rem; display: block; margin-bottom: .6rem; opacity: .35; }
+    .list-empty p { font-size: .83rem; }
+
+    /* ════════════════════════════
+       RIGHT PANEL
+    ════════════════════════════ */
+    .rp {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem 2.5rem;
+    }
+
+    /* White booking card */
+    .bk-card {
+      width: 100%; max-width: 320px;
+      max-height: calc(100vh - 3rem);
+      background: #fff; border-radius: 28px;
+      box-shadow: 0 32px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.12);
+      overflow-y: auto; overflow-x: hidden; color: #1a2232;
+      font-family: 'Sarabun', sans-serif;
+      display: flex; flex-direction: column;
+      scrollbar-width: none;
+    }
+    .bk-card::-webkit-scrollbar { display: none; }
+
+    /* Card empty state (before selection) */
+    .bk-empty {
+      padding: 3rem 2rem; text-align: center;
+    }
+    .bk-empty-icon {
+      width: 64px; height: 64px; border-radius: 18px;
+      background: linear-gradient(135deg, rgba(0,217,180,.12), rgba(0,217,180,.06));
+      border: 1px solid rgba(0,217,180,.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; color: var(--primary); margin: 0 auto .9rem;
+    }
+    .bk-empty h3 { font-family: 'Kanit', sans-serif; font-size: .95rem; font-weight: 700; color: #1a2232; margin-bottom: .4rem; }
+    .bk-empty p  { font-size: .78rem; color: #64748b; line-height: 1.6; }
+    .bk-empty-hint {
+      margin-top: 1.2rem; font-size: .72rem; color: #94a3b8;
+      display: flex; align-items: center; justify-content: center; gap: .3rem;
+    }
+
+    /* Card header */
+    .bk-header {
+      background: #fff; padding: .9rem 1.2rem .7rem;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex; align-items: flex-start; gap: .7rem;
+    }
+    .bk-back {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: #f1f5f9; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #334155; font-size: .8rem; flex-shrink: 0;
+      transition: background .2s; margin-top: 2px;
+    }
+    .bk-back:hover { background: #e2e8f0; }
+    .bk-header-text { flex: 1; }
+    .bk-header-title { font-family: 'Kanit', sans-serif; font-size: .95rem; font-weight: 700; color: #1a2232; }
+    .bk-header-sub   { font-size: .68rem; color: #64748b; margin-top: .1rem; }
+
+    /* Price info */
+    .bk-price-bar {
+      padding: .55rem 1.2rem;
+      background: #fafcff;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .bk-price-left  { font-size: .7rem; color: #64748b; }
+    .bk-price-main  { font-family: 'Kanit', sans-serif; font-size: 1.25rem; font-weight: 800; color: #00d9b4; }
+    .bk-price-dep   { font-size: .66rem; color: #94a3b8; }
+
+    /* Seat area */
+    .bk-seat-area { padding: .8rem 1rem; flex: 1; }
+
+    /* Staff / Driver row */
+    .seat-staff-row {
+      display: flex; justify-content: space-between; margin-bottom: .6rem; gap: .4rem;
+    }
+    .seat-staff-box, .seat-driver-box {
+      flex: 1; border-radius: 12px; background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: .1rem; padding: .5rem .3rem;
+      font-size: .62rem; color: #94a3b8; font-weight: 600;
+    }
+    .seat-staff-box i, .seat-driver-box i { font-size: 1.3rem; }
+
+    /* Seat grid */
+    .seat-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: .45rem;
+    }
+    .seat-box {
+      border-radius: 10px; border: 1.5px solid #e2e8f0;
+      background: #fff; padding: .35rem .2rem;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: .08rem; font-size: .6rem; color: #94a3b8; font-weight: 600;
+      aspect-ratio: 1; position: relative;
+    }
+    .seat-box i { font-size: 1rem; }
+    .seat-box.s-avail { background: #fff;    border-color: #e2e8f0; color: #94a3b8; }
+    .seat-box.s-fem   { background: #fff0f3; border-color: #fca5a5; color: #ef4444; }
+    .seat-box.s-mal   { background: #eff6ff; border-color: #93c5fd; color: #3b82f6; }
+    .seat-box.s-hold  { background: #fefce8; border-color: #fde047; color: #ca8a04; }
+    .seat-box.s-more  { background: #f8fafc; border-color: #e2e8f0; color: #94a3b8; font-size: .75rem; }
+
+    /* Legend */
+    .seat-legend {
+      display: flex; flex-wrap: wrap; gap: .35rem .7rem;
+      padding: .4rem 1rem .5rem;
+    }
+    .legend-item { display: flex; align-items: center; gap: .28rem; font-size: .65rem; color: #64748b; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 3px; }
+    .ld-avail { background: #e2e8f0; }
+    .ld-fem   { background: #fca5a5; }
+    .ld-mal   { background: #93c5fd; }
+    .ld-hold  { background: #fde047; }
+
+    /* Footer */
+    .bk-footer {
+      padding: .8rem 1.2rem; background: #fff;
+      border-top: 1px solid #f1f5f9;
+    }
+    .bk-footer-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: .55rem;
+    }
+    .bk-meta-date  { font-size: .75rem; color: #64748b; }
+    .bk-meta-seats { font-size: .78rem; font-weight: 700; }
+    .bk-meta-seats.ok   { color: #00d9b4; }
+    .bk-meta-seats.low  { color: #f59e0b; }
+    .bk-meta-seats.full { color: #ef4444; }
+
+    .bk-bar { height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin-bottom: .7rem; }
+    .bk-bar-fill { height: 100%; border-radius: 2px; transition: width .5s; }
+    .bk-bar-fill.ok   { background: #00d9b4; }
+    .bk-bar-fill.low  { background: #f59e0b; }
+    .bk-bar-fill.full { background: #ef4444; }
+
+    .bk-btn-book {
+      width: 100%; padding: .7rem; border-radius: 13px; border: none;
+      background: linear-gradient(135deg, #00d9b4, #00c4a0); color: #000;
+      font-family: 'Kanit', sans-serif; font-weight: 800; font-size: .92rem;
+      cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: .45rem;
+    }
+    .bk-btn-book:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,217,180,.4); }
+    .bk-btn-book:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ════════════════════════════
+       MOBILE: Bottom Sheet Modal
+    ════════════════════════════ */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,.7); backdrop-filter: blur(4px);
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-sheet {
+      width: 100%; max-width: 520px; max-height: 92vh;
+      background: #141b26; border-radius: 24px 24px 0 0;
+      overflow-y: auto;
+      transform: translateY(100%); transition: transform .35s cubic-bezier(.22,.61,.36,1);
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.1) transparent;
+    }
+    .modal-overlay.open .modal-sheet { transform: translateY(0); }
+    .modal-handle { text-align: center; padding: .7rem 0 0; }
+    .modal-handle::before { content: ''; display: inline-block; width: 40px; height: 4px; background: rgba(255,255,255,.2); border-radius: 2px; }
+
+    .modal-hero { position: relative; height: 220px; overflow: hidden; background: linear-gradient(135deg,#1a2232,#252e3f); }
+    .modal-hero img { width: 100%; height: 100%; object-fit: cover; }
+    .modal-hero-grad { position: absolute; inset: 0; background: linear-gradient(to bottom,rgba(0,0,0,.1) 0%,rgba(15,20,25,.92) 100%); }
+    .modal-hero-close {
+      position: absolute; top: 1rem; right: 1rem; z-index: 2;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(0,0,0,.5); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.2); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; cursor: pointer;
+    }
+    .modal-content { padding: 1.4rem 1.4rem 2rem; }
+    .modal-loc-badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      font-size: .76rem; border-radius: 20px; padding: .18rem .65rem; margin-bottom: .6rem;
+    }
+    .modal-title { font-family: 'Kanit', sans-serif; font-size: 1.45rem; font-weight: 800; margin-bottom: 1rem; }
+    .modal-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin-bottom: 1.2rem; }
+    .modal-info-box { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 13px; padding: .8rem .9rem; }
+    .modal-info-box i { color: var(--primary); margin-bottom: .15rem; display: block; }
+    .modal-info-box small { font-size: .68rem; color: var(--gray); display: block; }
+    .modal-info-box strong { font-size: .9rem; font-weight: 700; }
+    .modal-info-box.price strong { color: var(--primary); font-size: 1.1rem; }
+
+    .modal-rounds-box { background: rgba(0,217,180,.06); border: 1px solid rgba(0,217,180,.2); border-radius: 13px; padding: .85rem 1rem; margin-bottom: 1.1rem; }
+    .modal-rounds-title { font-size: .82rem; font-weight: 700; color: var(--primary); margin-bottom: .65rem; display: flex; align-items: center; gap: .4rem; }
+    .modal-round-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .5rem .6rem; border-radius: 9px;
+      border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03);
+      margin-bottom: .4rem; cursor: pointer; transition: all .2s;
+    }
+    .modal-round-item:last-child { margin-bottom: 0; }
+    .modal-round-item:hover:not(.mfull) { border-color: rgba(0,217,180,.4); background: rgba(0,217,180,.07); }
+    .modal-round-item.mselected { border-color: var(--primary); background: rgba(0,217,180,.12); }
+    .modal-round-item.mfull { opacity: .5; cursor: not-allowed; }
+    .mseats-bar { height: 4px; width: 60px; background: rgba(255,255,255,.1); border-radius: 2px; overflow: hidden; margin-top: 3px; }
+    .mseats-fill { height: 100%; border-radius: 2px; }
+    .fill-g { background: var(--primary); }
+    .fill-y { background: #ff9f43; }
+    .fill-r { background: #ff4757; }
+
+    .modal-desc { font-size: .86rem; color: var(--gray); line-height: 1.75; margin-bottom: 1.1rem; }
+    .modal-btn-book {
+      width: 100%; padding: .82rem; border-radius: 13px; margin-bottom: .65rem;
+      background: linear-gradient(135deg,var(--primary),#00c4a0); border: none; color: #000;
+      font-family: 'Kanit', sans-serif; font-weight: 800; font-size: 1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .5rem;
+    }
+    .modal-btn-book:disabled { background: #2d3748; color: var(--gray); cursor: not-allowed; }
+    .modal-btn-doc {
+      width: 100%; padding: .75rem; border-radius: 13px; margin-bottom: 1rem;
+      background: none; border: 1.5px solid rgba(0,217,180,.4); color: var(--primary);
+      font-family: 'Kanit', sans-serif; font-weight: 600; font-size: .9rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .5rem;
+    }
+    .modal-share-row { display: flex; gap: .6rem; }
+    .share-btn { flex: 1; padding: .6rem; border-radius: 11px; border: none; font-family: 'Kanit', sans-serif; font-weight: 700; font-size: .85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .4rem; }
+    .share-line { background: #00b900; color: #fff; }
+    .share-fb   { background: #1877f2; color: #fff; }
+
+    /* Responsive */
+    @media (max-width: 767px) {
+      html, body { overflow: auto; height: auto; }
+      .main-layout { flex-direction: column; height: auto; min-height: 100vh; }
+      .lp { width: 100%; height: auto; min-height: 100vh; }
+      .rp { display: none; }
+    }
+    @media (min-width: 768px) {
+      .modal-overlay { display: none !important; }
+      .m-seat-overlay { display: none !important; }
+    }
+
+    /* ══════════════════════════════════════
+       VAN SHELL + SEATCHART (shared desktop/mobile)
+    ══════════════════════════════════════ */
+    .van-shell {
+      max-width: 260px; margin: 0 auto;
+      background: #fff; border: 2.5px solid #495057;
+      border-radius: 22px 22px 14px 14px; padding: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.12);
+    }
+    .van-windshield { height: 8px; background: linear-gradient(90deg,#6c757d,#adb5bd 50%,#6c757d); border-radius: 5px; opacity:.4; margin-bottom:8px; }
+    .van-front { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px; padding-bottom:8px; border-bottom:2px dashed #e9ecef; }
+    .van-static-seat { display:flex; flex-direction:column; align-items:center; justify-content:center; height:60px; border-radius:9px; border:2px solid #dee2e6; background:#f1f3f5; color:#868e96; font-size:.65rem; font-weight:600; gap:2px; }
+    .van-static-seat i { font-size:1.2rem; }
+    .van-divider { border-bottom:2px dashed #e9ecef; margin:2px 0 6px; }
+
+    /* seatchart overrides — desktop (#bk-sc-wrap) */
+    #bk-sc-wrap .sc-main-container  { display:block !important; }
+    #bk-sc-wrap .sc-right-container { display:none  !important; }
+    #bk-sc-wrap .sc-legend          { display:none  !important; }
+    #bk-sc-wrap .sc-front           { display:none  !important; }
+    #bk-sc-wrap .sc-indexer         { display:none  !important; }
+    #bk-sc-wrap .sc-seat { width:58px !important; height:58px !important; border-radius:9px !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:2px !important; font-family:'Sarabun',sans-serif !important; font-size:.72rem !important; font-weight:700 !important; transition:transform .15s,box-shadow .15s !important; cursor:pointer !important; border:2px solid #ced4da !important; }
+    #bk-sc-wrap .sc-seat:hover:not(.sc-seat-reserved):not(.sc-seat-disabled) { transform:translateY(-2px) scale(1.04) !important; box-shadow:0 5px 14px rgba(0,0,0,.15) !important; }
+    #bk-sc-wrap .sc-seat-row { gap:6px !important; margin-bottom:6px !important; }
+    #bk-sc-wrap .sc-seats-container { gap:0 !important; padding:3px !important; }
+    #bk-sc-wrap .sc-seat-available { background:#f8f9fa !important; border-color:#ced4da !important; color:#6c757d !important; }
+    #bk-sc-wrap .sc-seat-available::before { content:'○'; font-size:.8rem; opacity:.5; }
+    #bk-sc-wrap .sc-seat-disabled { background:#f1f3f5 !important; border-color:#dee2e6 !important; color:#adb5bd !important; cursor:default !important; opacity:.6 !important; }
+    #bk-sc-wrap .sc-seat-selected.seat-male    { background:linear-gradient(135deg,#dbeafe,#bfdbfe) !important; border-color:#3b82f6 !important; color:#1e40af !important; box-shadow:0 0 0 3px rgba(59,130,246,.3) !important; animation:pulse-male 1.2s ease-in-out infinite !important; }
+    #bk-sc-wrap .sc-seat-selected.seat-male::before    { content:'♂'; font-size:1.1rem; display:block; }
+    #bk-sc-wrap .sc-seat-selected.seat-female  { background:linear-gradient(135deg,#fce7f3,#fbcfe8) !important; border-color:#ec4899 !important; color:#9d174d !important; box-shadow:0 0 0 3px rgba(236,72,153,.3) !important; animation:pulse-female 1.2s ease-in-out infinite !important; }
+    #bk-sc-wrap .sc-seat-selected.seat-female::before  { content:'♀'; font-size:1.1rem; display:block; }
+    #bk-sc-wrap .sc-seat-reserved.seat-male    { background:linear-gradient(135deg,#eff6ff,#dbeafe) !important; border-color:#93c5fd !important; color:#1d4ed8 !important; cursor:not-allowed !important; }
+    #bk-sc-wrap .sc-seat-reserved.seat-male::before    { content:'♂'; font-size:1rem; display:block; }
+    #bk-sc-wrap .sc-seat-reserved.seat-female  { background:linear-gradient(135deg,#fdf2f8,#fce7f3) !important; border-color:#f9a8d4 !important; color:#be185d !important; cursor:not-allowed !important; }
+    #bk-sc-wrap .sc-seat-reserved.seat-female::before  { content:'♀'; font-size:1rem; display:block; }
+
+    /* seatchart overrides — mobile (#mob-sc-wrap) */
+    #mob-sc-wrap .sc-main-container  { display:block !important; }
+    #mob-sc-wrap .sc-right-container { display:none  !important; }
+    #mob-sc-wrap .sc-legend          { display:none  !important; }
+    #mob-sc-wrap .sc-front           { display:none  !important; }
+    #mob-sc-wrap .sc-indexer         { display:none  !important; }
+    #mob-sc-wrap .sc-seat { width:64px !important; height:64px !important; border-radius:10px !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:2px !important; font-family:'Sarabun',sans-serif !important; font-size:.75rem !important; font-weight:700 !important; transition:transform .15s,box-shadow .15s !important; cursor:pointer !important; border:2px solid #ced4da !important; }
+    #mob-sc-wrap .sc-seat:hover:not(.sc-seat-reserved):not(.sc-seat-disabled) { transform:translateY(-2px) scale(1.04) !important; box-shadow:0 5px 14px rgba(0,0,0,.15) !important; }
+    #mob-sc-wrap .sc-seat-row { gap:8px !important; margin-bottom:8px !important; }
+    #mob-sc-wrap .sc-seats-container { gap:0 !important; padding:4px !important; }
+    #mob-sc-wrap .sc-seat-available { background:#f8f9fa !important; border-color:#ced4da !important; color:#6c757d !important; }
+    #mob-sc-wrap .sc-seat-available::before { content:'○'; font-size:.8rem; opacity:.5; }
+    #mob-sc-wrap .sc-seat-disabled { background:#f1f3f5 !important; border-color:#dee2e6 !important; color:#adb5bd !important; cursor:default !important; opacity:.6 !important; }
+    #mob-sc-wrap .sc-seat-selected.seat-male    { background:linear-gradient(135deg,#dbeafe,#bfdbfe) !important; border-color:#3b82f6 !important; color:#1e40af !important; box-shadow:0 0 0 3px rgba(59,130,246,.3) !important; animation:pulse-male 1.2s ease-in-out infinite !important; }
+    #mob-sc-wrap .sc-seat-selected.seat-male::before    { content:'♂'; font-size:1.2rem; display:block; }
+    #mob-sc-wrap .sc-seat-selected.seat-female  { background:linear-gradient(135deg,#fce7f3,#fbcfe8) !important; border-color:#ec4899 !important; color:#9d174d !important; box-shadow:0 0 0 3px rgba(236,72,153,.3) !important; animation:pulse-female 1.2s ease-in-out infinite !important; }
+    #mob-sc-wrap .sc-seat-selected.seat-female::before  { content:'♀'; font-size:1.2rem; display:block; }
+    #mob-sc-wrap .sc-seat-reserved.seat-male    { background:linear-gradient(135deg,#eff6ff,#dbeafe) !important; border-color:#93c5fd !important; color:#1d4ed8 !important; cursor:not-allowed !important; }
+    #mob-sc-wrap .sc-seat-reserved.seat-male::before    { content:'♂'; font-size:1.1rem; display:block; }
+    #mob-sc-wrap .sc-seat-reserved.seat-female  { background:linear-gradient(135deg,#fdf2f8,#fce7f3) !important; border-color:#f9a8d4 !important; color:#be185d !important; cursor:not-allowed !important; }
+    #mob-sc-wrap .sc-seat-reserved.seat-female::before  { content:'♀'; font-size:1.1rem; display:block; }
+
+    @keyframes pulse-male   { 0%,100%{box-shadow:0 0 0 3px rgba(59,130,246,.3)}  50%{box-shadow:0 0 0 8px rgba(59,130,246,0)} }
+    @keyframes pulse-female { 0%,100%{box-shadow:0 0 0 3px rgba(236,72,153,.3)} 50%{box-shadow:0 0 0 8px rgba(236,72,153,0)} }
+
+    /* rt-bar */
+    .rt-bar { display:flex; align-items:center; gap:6px; font-size:.72rem; color:#6c757d; background:#f8f9fa; border-radius:7px; padding:.35rem .65rem; border:1px solid #e9ecef; margin-bottom:.7rem; }
+    .rt-dot { width:7px; height:7px; border-radius:50%; background:#22c55e; animation:blink 1.2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    /* seat-legend (shared) */
+    .sc-legend-row { display:flex; flex-wrap:wrap; gap:.3rem .7rem; padding:.5rem 0 .3rem; }
+    .sc-legend-item { display:flex; align-items:center; gap:.28rem; font-size:.65rem; color:#64748b; }
+    .sc-legend-dot  { width:9px; height:9px; border-radius:3px; }
+    .ld-avail2 { background:#e2e8f0; }
+    .ld-fem2   { background:#f9a8d4; }
+    .ld-mal2   { background:#93c5fd; }
+
+    /* selected chips (white bg) */
+    .seat-chip-w { display:inline-flex; align-items:center; gap:4px; padding:.22rem .55rem; border-radius:7px; font-size:.78rem; font-weight:600; border:1.5px solid; margin:.15rem; }
+
+    /* action footer in right panel (when seatchart active) */
+    .bk-sc-footer { background:#fff; border-top:1px solid #f1f5f9; padding:.75rem 1.2rem; }
+    .bk-sc-footer-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:.55rem; }
+    .bk-sc-footer-count { font-size:.75rem; color:#64748b; }
+    .bk-sc-footer-price { font-family:'Kanit',sans-serif; font-size:1.1rem; font-weight:800; color:#00d9b4; }
+
+    /* gender cards (light) */
+    .gender-card-l { border:2px solid #dee2e6; border-radius:13px; padding:1rem .5rem; cursor:pointer; text-align:center; transition:all .18s; }
+    .gender-card-l:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.1); }
+    .gender-card-l.sel-male   { border-color:#3b82f6; background:#dbeafe; }
+    .gender-card-l.sel-female { border-color:#ec4899; background:#fce7f3; }
+
+    /* ══ MOBILE SEAT OVERLAY ══ */
+    .m-seat-overlay {
+      position:fixed; inset:0; z-index:1500;
+      background:#f0f2f5; display:flex; flex-direction:column;
+      transform:translateY(100%); transition:transform .35s cubic-bezier(.22,.61,.36,1);
+    }
+    .m-seat-overlay.open { transform:translateY(0); }
+    .m-seat-hdr {
+      background:#fff; border-bottom:1px solid #dee2e6;
+      padding:.7rem 1rem; display:flex; align-items:center; gap:.7rem; flex-shrink:0;
+    }
+    .m-seat-hdr-back { width:32px; height:32px; border-radius:50%; background:#f1f5f9; border:none; display:flex; align-items:center; justify-content:center; font-size:.85rem; cursor:pointer; }
+    .m-seat-hdr-info { flex:1; min-width:0; }
+    .m-seat-hdr-title { font-weight:700; font-size:.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#1a2232; }
+    .m-seat-hdr-sub   { font-size:.68rem; color:#64748b; }
+    .m-step-bar { display:flex; background:#fff; border-bottom:1px solid #dee2e6; flex-shrink:0; }
+    .m-step-item { flex:1; text-align:center; padding:.4rem .25rem; font-size:.7rem; color:#adb5bd; border-bottom:3px solid transparent; }
+    .m-step-item.act { color:#0d6efd; border-color:#0d6efd; font-weight:600; }
+    .m-seat-body { flex:1; overflow-y:auto; padding:1rem; }
+    .m-seat-ftr {
+      background:#fff; border-top:1px solid #dee2e6;
+      padding:.65rem 1rem; flex-shrink:0;
+      display:flex; align-items:center; gap:.75rem;
+    }
+    .m-seat-ftr-info { flex:1; }
+    .m-seat-ftr-label { font-size:.66rem; color:#6c757d; }
+    .m-seat-ftr-val   { font-weight:700; font-size:1rem; color:#1a2232; }
+    .m-seat-ftr-price { text-align:right; }
+    .m-seat-ftr-plabel { font-size:.66rem; color:#6c757d; }
+    .m-seat-ftr-pval   { font-family:'Kanit',sans-serif; font-weight:800; font-size:1.1rem; color:#00d9b4; }
+    .m-seat-ftr-btn {
+      padding:.6rem 1.1rem; border-radius:11px;
+      background:linear-gradient(135deg,#00d9b4,#00c4a0); border:none; color:#000;
+      font-family:'Kanit',sans-serif; font-weight:800; font-size:.88rem; cursor:pointer; white-space:nowrap;
+    }
+    .m-seat-ftr-btn:disabled { background:#e2e8f0; color:#94a3b8; cursor:not-allowed; }
+  </style>
+</head>
+<body>
+
+<div class="page-bg"></div>
+
+<div class="main-layout">
+
+  <!-- ══════════ LEFT PANEL ══════════ -->
+  <div class="lp">
+
+    <!-- Logo & nav -->
+    <div class="lp-header">
+      <a href="/" class="lp-logo">
+        <div class="lp-logo-icon"><i class="bi bi-compass-fill"></i></div>
+        <span class="lp-logo-text">BOOKSGUGA</span>
+      </a>
+      <div class="lp-nav">
+        <a href="/contents"><i class="bi bi-newspaper me-1"></i>บทความ</a>
+        <a href="/"><i class="bi bi-house me-1"></i>หน้าแรก</a>
+      </div>
+    </div>
+
+    <!-- Controls: year / month / search -->
+    <div class="lp-controls">
+      <!-- Year -->
+      <div class="ctrl-row">
+        <button onclick="changeYear(-1)"><i class="bi bi-chevron-left"></i></button>
+        <span class="ctrl-label" id="yearDisplay">2026</span>
+        <button onclick="changeYear(1)"><i class="bi bi-chevron-right"></i></button>
+      </div>
+      <!-- Month -->
+      <div class="ctrl-row">
+        <button onclick="changeMonth(-1)"><i class="bi bi-chevron-left"></i></button>
+        <span class="ctrl-label">
+          <select id="monthSelect" class="ctrl-select" onchange="onMonthChange()"></select>
+          <i class="bi bi-chevron-down" style="font-size:.65rem;opacity:.55"></i>
+        </span>
+        <button onclick="changeMonth(1)"><i class="bi bi-chevron-right"></i></button>
+      </div>
+      <!-- Search -->
+      <div class="search-row">
+        <input id="searchInput" class="search-input" type="text" placeholder="ค้นหาทริป หรือ อย่างอื่น...">
+        <button class="search-btn" onclick="doSearch()">ค้นหา</button>
+      </div>
+    </div>
+
+    <!-- List header -->
+    <div class="lp-list-header">
+      <span class="lp-list-label" id="listLabel">รอบออกเดินทาง</span>
+      <span class="lp-list-count" id="listCount"></span>
+    </div>
+
+    <!-- Round rows -->
+    <div class="lp-list" id="roundList"></div>
+
+  </div>
+
+  <!-- ══════════ RIGHT PANEL ══════════ -->
+  <div class="rp">
+    <div class="bk-card" id="bkCard">
+      <!-- Default empty state -->
+      <div class="bk-empty" id="bkEmpty">
+        <div class="bk-empty-icon"><i class="bi bi-compass-fill"></i></div>
+        <h3>เลือกทริปที่คุณสนใจ</h3>
+        <p>เลือกรอบออกเดินทางจากรายการด้านซ้าย<br>เพื่อดูข้อมูลและจองที่นั่ง</p>
+        <div class="bk-empty-hint">
+          <i class="bi bi-arrow-left"></i> คลิกเลือกรอบจากรายการ
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════ MOBILE MODAL (bottom sheet) ══════════ -->
+<div id="mobileModal" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-sheet" id="modalSheet">
+    <div class="modal-handle"></div>
+    <div id="mHero" class="modal-hero"></div>
+    <div class="modal-content">
+      <div id="mBadge"></div>
+      <h2 class="modal-title" id="mTitle"></h2>
+      <div class="modal-info-grid" id="mInfo"></div>
+      <div id="mRounds"></div>
+      <p class="modal-desc" id="mDesc" style="display:none"></p>
+      <button class="modal-btn-book" id="mBtnBook" onclick="mGoBook()" disabled>
+        <i class="bi bi-ticket-perforated"></i>จองทริป
+      </button>
+      <button class="modal-btn-doc" id="mBtnDoc" style="display:none">
+        <i class="bi bi-file-earmark-text"></i>ดูรายละเอียด
+      </button>
+      <div class="modal-share-row">
+        <button class="share-btn share-line" onclick="shareL()"><i class="bi bi-chat-fill"></i>LINE</button>
+        <button class="share-btn share-fb"   onclick="shareFb()"><i class="bi bi-facebook"></i>Facebook</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MOBILE SEAT OVERLAY ══════════ -->
+<div id="mSeatOverlay" class="m-seat-overlay">
+  <div class="m-seat-hdr">
+    <button class="m-seat-hdr-back" onclick="closeMobSeat()"><i class="bi bi-chevron-left"></i></button>
+    <div class="m-seat-hdr-info">
+      <div class="m-seat-hdr-title" id="mobSeatTitle">เลือกที่นั่ง</div>
+      <div class="m-seat-hdr-sub"   id="mobSeatSub"></div>
+    </div>
+    <span id="mobSeatBadge"></span>
+  </div>
+  <div class="m-step-bar">
+    <div class="m-step-item act"><i class="bi bi-grid-3x3-gap me-1"></i>เลือกที่นั่ง</div>
+    <div class="m-step-item"><i class="bi bi-person-lines-fill me-1"></i>ข้อมูลผู้โดยสาร</div>
+    <div class="m-step-item"><i class="bi bi-credit-card me-1"></i>ชำระเงิน</div>
+  </div>
+  <div class="m-seat-body">
+    <!-- RT bar -->
+    <div class="rt-bar mb-3">
+      <div class="rt-dot"></div><span>Live</span>
+      <span class="ms-auto fw-semibold" style="color:#1a2232" id="mobLastUpdate">–</span>
+    </div>
+    <!-- Van shell -->
+    <div class="van-shell">
+      <div class="van-windshield"></div>
+      <div class="van-front">
+        <div class="van-static-seat"><i class="bi bi-person-badge"></i>Staff</div>
+        <div class="van-static-seat"><i class="bi bi-person-workspace"></i>Driver</div>
+      </div>
+      <div class="van-divider"></div>
+      <div id="mob-sc-wrap"><div id="mob-seatchart"></div></div>
+    </div>
+    <!-- Legend -->
+    <div class="sc-legend-row mt-3">
+      <div class="sc-legend-item"><div class="sc-legend-dot ld-avail2"></div>ว่าง</div>
+      <div class="sc-legend-item"><div class="sc-legend-dot ld-fem2"></div>♀ หญิง</div>
+      <div class="sc-legend-item"><div class="sc-legend-dot ld-mal2"></div>♂ ชาย</div>
+    </div>
+    <!-- Selected seats -->
+    <div id="mobSelectedInfo" class="mt-3 pt-3" style="border-top:1px solid #e2e8f0">
+      <p style="color:#6c757d;font-size:.83rem"><i class="bi bi-hand-index me-1"></i>คลิกที่นั่งในแผนผังเพื่อเลือก</p>
+    </div>
+  </div>
+  <div class="m-seat-ftr">
+    <div class="m-seat-ftr-info">
+      <div class="m-seat-ftr-label">ที่นั่งที่เลือก</div>
+      <div class="m-seat-ftr-val" id="mobSelCount">0 ที่นั่ง</div>
+    </div>
+    <div class="m-seat-ftr-price">
+      <div class="m-seat-ftr-plabel">ยอดรวม</div>
+      <div class="m-seat-ftr-pval" id="mobTotalPrice">0 บาท</div>
+    </div>
+    <button class="m-seat-ftr-btn" id="mobBtnNext" disabled onclick="goNext('mob')">
+      ถัดไป <i class="bi bi-arrow-right"></i>
+    </button>
+  </div>
+</div>
+
+<!-- GENDER MODAL (shared desktop+mobile) -->
+<div class="modal fade" id="genderModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h6 class="modal-title fw-bold" style="font-family:'Sarabun',sans-serif">
+          เลือกเพศสำหรับที่นั่ง
+          <span id="genderSeatNum" class="badge bg-secondary ms-1 fw-normal"></span>
+        </h6>
+        <button class="btn-close btn-sm" onclick="cancelGender()"></button>
+      </div>
+      <div class="modal-body px-4 pt-2 pb-3">
+        <p class="text-muted small mb-3">ระบุเพศเพื่อจัดที่นั่งให้เหมาะสม</p>
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="gender-card-l" id="cardMale" onclick="pickGender('MALE')">
+              <i class="bi bi-gender-male text-primary" style="font-size:2.2rem"></i>
+              <div class="fw-semibold mt-2" style="font-family:'Sarabun',sans-serif">ผู้ชาย</div>
+              <small class="text-muted">Male</small>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="gender-card-l" id="cardFemale" onclick="pickGender('FEMALE')">
+              <i class="bi bi-gender-female" style="font-size:2.2rem;color:#ec4899"></i>
+              <div class="fw-semibold mt-2" style="font-family:'Sarabun',sans-serif">ผู้หญิง</div>
+              <small class="text-muted">Female</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 px-4 pb-4 pt-0 gap-2">
+        <button class="btn btn-light btn-sm flex-fill" onclick="cancelGender()">ยกเลิก</button>
+        <button class="btn btn-primary btn-sm flex-fill" id="btnConfirmGender" onclick="confirmGender()" disabled>
+          <i class="bi bi-check-lg me-1"></i>ยืนยัน
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toastC" class="position-fixed bottom-0 end-0 p-3" style="z-index:9999"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/src/assets/js/config.js"></script>
+<script type="module">
+import { apiFetch } from '/src/api/config.js'
+
+const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม']
+const ROWS_LABEL = 'ABCDEFGHIJKLMNOP'.split('')
+
+// ── state ────────────────────────────────────────────────
+const now = new Date()
+let curYear  = now.getFullYear()
+let curMonth = now.getMonth()
+let allRounds  = []
+let tripCache  = new Map()
+let selectedRound = null
+let mSelectedRoundId = null
+let mCurrentTrip = null
+
+// ── month select ─────────────────────────────────────────
+const monthSel = document.getElementById('monthSelect')
+MONTHS_TH.forEach((m, i) => {
+  const o = document.createElement('option')
+  o.value = i; o.textContent = m; monthSel.appendChild(o)
+})
+
+function updateDisplay() {
+  document.getElementById('yearDisplay').textContent = curYear
+  monthSel.value = curMonth
+}
+
+window.changeYear  = d => { curYear += d; updateDisplay(); loadData() }
+window.changeMonth = d => {
+  curMonth += d
+  if (curMonth < 0)  { curMonth = 11; curYear-- }
+  if (curMonth > 11) { curMonth = 0;  curYear++ }
+  updateDisplay(); loadData()
+}
+window.onMonthChange = () => { curMonth = +monthSel.value; updateDisplay(); loadData() }
+updateDisplay()
+
+// ── load data ─────────────────────────────────────────────
+async function loadData(search = '') {
+  showSkeletons()
+  selectedRound = null
+  resetBookingCard()
+
+  try {
+    let rounds, trips
+    if (search) {
+      // Search by trip name
+      trips  = await apiFetch(`/trips?search=${encodeURIComponent(search)}&active=true`)
+      const tripIds = trips.map(t => t.id)
+      if (!tripIds.length) { allRounds = []; renderList([]); return }
+
+      // Fetch rounds for those trips this month
+      rounds = await apiFetch(`/bus-rounds?month=${curMonth}&year=${curYear}`)
+      rounds = rounds.filter(r => tripIds.includes(r.tripId))
+
+      // Cache trips
+      for (const t of trips) tripCache.set(t.id, t)
+
+      document.getElementById('listLabel').textContent = `ผลการค้นหา "${search}"`
+    } else {
+      [rounds, trips] = await Promise.all([
+        apiFetch(`/bus-rounds?month=${curMonth}&year=${curYear}`),
+        apiFetch('/trips?active=true'),
+      ])
+      for (const t of trips) tripCache.set(t.id, t)
+      document.getElementById('listLabel').textContent = `รอบออกเดินทาง ${MONTHS_TH[curMonth]} ${curYear}`
+    }
+
+    // Sort by departDate
+    rounds.sort((a, b) => new Date(a.departDate) - new Date(b.departDate))
+    allRounds = rounds
+    renderList(rounds)
+  } catch(e) {
+    document.getElementById('roundList').innerHTML =
+      '<div class="list-empty"><i class="bi bi-exclamation-circle"></i><p>โหลดข้อมูลไม่ได้</p></div>'
+  }
+}
+
+// ── render round list ─────────────────────────────────────
+function renderList(rounds) {
+  const el = document.getElementById('roundList')
+  document.getElementById('listCount').textContent = rounds.length ? `${rounds.length} รอบ` : ''
+
+  if (!rounds.length) {
+    el.innerHTML = `<div class="list-empty">
+      <i class="bi bi-calendar-x"></i>
+      <p>ไม่มีรอบออกเดินทาง<br>ในเดือน${MONTHS_TH[curMonth]} ${curYear}</p>
+    </div>`
+    return
+  }
+
+  // Group by trip
+  const grouped = new Map()
+  for (const r of rounds) {
+    const trip = tripCache.get(r.tripId)
+    const key  = r.tripId
+    if (!grouped.has(key)) grouped.set(key, { trip, rounds: [] })
+    grouped.get(key).rounds.push(r)
+  }
+
+  let html = ''
+  for (const [tripId, { trip, rounds: tRounds }] of grouped) {
+    const tripTitle = trip?.title || `ทริป #${tripId}`
+    const isIntl    = trip?.tripType === 'INTERNATIONAL'
+
+    // Section header for each trip
+    html += `<div class="list-divider">
+      <span style="color:${isIntl?'#ff9f43':'var(--primary)'}">
+        <i class="bi bi-${isIntl?'globe':'flag-fill'} me-1"></i>${tripTitle}
+      </span>
+    </div>`
+
+    for (const r of tRounds) {
+      const left   = r.totalSeats - r.bookedSeats
+      const pct    = Math.round(r.bookedSeats / r.totalSeats * 100)
+      const full   = left <= 0 || !r.isOpen
+      const isLow  = !full && pct >= 60
+      const dotCls = full ? 'dot-full' : isLow ? 'dot-low' : 'dot-ok'
+      const dept   = new Date(r.departDate)
+      const dateStr = dept.toLocaleDateString('th-TH', {day:'numeric', month:'short'})
+      const timeStr = dept.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'})
+      const price  = trip ? Number(trip.price + (r.extraPrice||0)) : 0
+
+      const badgeHtml = full
+        ? `<span class="round-badge badge-full">เสร็จ</span>`
+        : isLow
+          ? `<span class="round-badge badge-low">ใกล้เต็ม</span>`
+          : `<span class="round-badge badge-price">฿${price.toLocaleString()}</span>`
+
+      html += `
+        <div class="round-row${full?' is-full':''}" id="rr-${r.id}" onclick="${full?'':(`selectRound(${r.id})`)}" data-round-id="${r.id}">
+          <div class="round-dot ${dotCls}"></div>
+          <div class="round-info">
+            <div class="round-title">${dateStr} · ${timeStr}</div>
+            <div class="round-sub">
+              <i class="bi bi-geo-alt-fill" style="font-size:.6rem;color:var(--primary)"></i>
+              ${r.startPoint} → ${r.endPoint}
+              ${r.duration ? `· ${r.duration}` : ''}
+            </div>
+          </div>
+          ${badgeHtml}
+        </div>`
+    }
+  }
+
+  el.innerHTML = html
+}
+
+function showSkeletons() {
+  document.getElementById('roundList').innerHTML = Array.from({length: 8}, () => `
+    <div class="skel-row">
+      <div class="skel-dot"></div>
+      <div style="flex:1">
+        <div class="skel-line mb-1" style="height:11px;width:${40+Math.random()*40}%"></div>
+        <div class="skel-line"      style="height:9px; width:${30+Math.random()*30}%"></div>
+      </div>
+      <div class="skel-line" style="height:20px;width:55px;border-radius:20px"></div>
+    </div>`).join('')
+  document.getElementById('listCount').textContent = ''
+}
+
+// ════════════════════════════════════════════════
+// SEATCHART STATE
+// ════════════════════════════════════════════════
+let sc_d = null        // desktop seatchart instance
+let sc_m = null        // mobile  seatchart instance
+let activeScRoundId = null
+let activeScRound   = null
+let activeScTrip    = null
+let myGenders       = {}   // { seatNumber: 'MALE'|'FEMALE' }
+let pendingSeatNum  = null
+let pendingCtx      = null // 'desk' | 'mob'
+let pickedGender    = null
+let suppressCart    = false
+let pollTimer       = null
+let genderModalBS   = null
+
+// ── coordinate helpers (seats 2..N+1, 3 cols) ─────────────
+function seatToIdx(n) { const col = (n-2)%3; const row = Math.floor((n-2)/3); return {row,col,column:col} }
+function idxToSeat(rowOrIdx, maybeCol) {
+  if (typeof rowOrIdx === 'object' && rowOrIdx !== null) {
+    const col = rowOrIdx.col ?? rowOrIdx.column ?? 0; return (rowOrIdx.row*3)+col+2
+  }
+  return (rowOrIdx*3)+(maybeCol??0)+2
+}
+
+// ── select round ─────────────────────────────────────────
+window.selectRound = async function(roundId) {
+  document.querySelectorAll('.round-row').forEach(el => el.classList.remove('selected'))
+  document.getElementById(`rr-${roundId}`)?.classList.add('selected')
+  const round = allRounds.find(r => r.id === roundId)
+  if (!round) return
+  selectedRound = round
+  const trip = tripCache.get(round.tripId)
+
+  if (window.innerWidth < 768) {
+    openMobSeatOverlay(round, trip)
+  } else {
+    initDeskSeatchart(round, trip)
+  }
+}
+
+// ════════════════════════════════════════════════
+// DESKTOP: init seatchart in right panel
+// ════════════════════════════════════════════════
+function initDeskSeatchart(round, trip) {
+  stopPolling()
+  destroySc('desk')
+  myGenders   = {}
+  activeScRoundId = round.id
+  activeScRound   = round
+  activeScTrip    = trip
+  const price  = trip ? Number(trip.price + (round.extraPrice||0)) : 0
+  const deposit = trip?.deposit || 0
+  const dept   = new Date(round.departDate)
+  const dateStr = dept.toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short',year:'numeric'})
+  const timeStr = dept.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})
+  const left   = round.totalSeats - round.bookedSeats
+  const full   = left <= 0 || !round.isOpen
+
+  document.getElementById('bkCard').innerHTML = `
+    <div class="bk-header">
+      <button class="bk-back" onclick="deselectRound()"><i class="bi bi-chevron-left"></i></button>
+      <div class="bk-header-text">
+        <div class="bk-header-title">เลือกที่นั่ง</div>
+        <div class="bk-header-sub">${trip?.title||''} · รถคันที่ ${round.busNumber||1}</div>
+      </div>
+    </div>
+    <div class="bk-price-bar">
+      <div class="bk-price-left">ราคาต่อที่นั่ง</div>
+      <div style="text-align:right">
+        <div class="bk-price-main">฿${price.toLocaleString()}</div>
+        ${deposit?`<div class="bk-price-dep">มัดจำ ฿${Number(deposit).toLocaleString()}/ที่นั่ง</div>`:''}
+      </div>
+    </div>
+    <div style="padding:.6rem 1rem .3rem">
+      <div class="rt-bar"><div class="rt-dot"></div><span>Live</span><span class="ms-auto fw-semibold text-dark" id="deskLastUpdate">–</span></div>
+      <div class="van-shell">
+        <div class="van-windshield"></div>
+        <div class="van-front">
+          <div class="van-static-seat"><i class="bi bi-person-badge"></i>Staff</div>
+          <div class="van-static-seat"><i class="bi bi-person-workspace"></i>Driver</div>
+        </div>
+        <div class="van-divider"></div>
+        <div id="bk-sc-wrap"><div id="bk-seatchart"></div></div>
+      </div>
+      <div class="sc-legend-row">
+        <div class="sc-legend-item"><div class="sc-legend-dot ld-avail2"></div>ว่าง</div>
+        <div class="sc-legend-item"><div class="sc-legend-dot ld-fem2"></div>♀ หญิง</div>
+        <div class="sc-legend-item"><div class="sc-legend-dot ld-mal2"></div>♂ ชาย</div>
+      </div>
+    </div>
+    <div id="deskSelectedInfo" style="padding:.3rem 1rem .5rem;min-height:42px">
+      <p style="color:#6c757d;font-size:.78rem;margin:0"><i class="bi bi-hand-index me-1"></i>คลิกที่นั่งเพื่อเลือก</p>
+    </div>
+    <div class="bk-sc-footer">
+      <div class="bk-sc-footer-row">
+        <span class="bk-sc-footer-count" id="deskSelCount">0 ที่นั่ง</span>
+        <span class="bk-sc-footer-price" id="deskTotal">฿0</span>
+      </div>
+      <button class="bk-btn-book" id="deskBtnNext" disabled onclick="goNext('desk')">
+        <i class="bi bi-ticket-perforated"></i>จองทริปนี้เลย
+      </button>
+    </div>`
+
+  if (full) {
+    document.getElementById('deskBtnNext').textContent = 'ที่นั่งเต็มแล้ว'
+    document.getElementById('deskBtnNext').disabled = true
+    return
+  }
+
+  // init seatchart
+  if (!document.getElementById('bk-seatchart')) return
+  const rows = Math.ceil(round.totalSeats / 3)
+  sc_d = new Seatchart(document.getElementById('bk-seatchart'), {
+    map: {
+      rows, columns: 3,
+      seatLabel: (r, c) => String(idxToSeat(r, c)),
+      rowIndexer: {visible:false}, columnIndexer: {visible:false},
+      seatTypes: {
+        economy: { label:'ว่าง', price, cssClass:'seat-economy', seatRows: Array.from({length:rows},(_,i)=>i) },
+        male:    { label:'ชาย',  price, cssClass:'seat-male',    seats:[] },
+        female:  { label:'หญิง', price, cssClass:'seat-female',  seats:[] }
+      }
+    },
+    cart: {visible:false}, legendVisible:false
+  })
+  sc_d.addEventListener('cartchange', () => onCartChange('desk'))
+
+  // start polling
+  pollSeats('desk')
+  pollTimer = setInterval(() => pollSeats('desk'), 5000)
+}
+
+// ════════════════════════════════════════════════
+// MOBILE: full-screen overlay with seatchart
+// ════════════════════════════════════════════════
+function openMobSeatOverlay(round, trip) {
+  stopPolling()
+  destroySc('mob')
+  myGenders = {}
+  activeScRoundId = round.id
+  activeScRound   = round
+  activeScTrip    = trip
+  const price = trip ? Number(trip.price + (round.extraPrice||0)) : 0
+  const full  = (round.totalSeats - round.bookedSeats) <= 0 || !round.isOpen
+  const dept  = new Date(round.departDate)
+  const dateStr = dept.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'})
+  const timeStr = dept.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})
+
+  document.getElementById('mobSeatTitle').textContent = 'เลือกที่นั่ง'
+  document.getElementById('mobSeatSub').textContent   = `${trip?.title||''} · ${dateStr} · ${timeStr}`
+  document.getElementById('mobSeatBadge').innerHTML   = full
+    ? '<span class="badge bg-danger">เต็มแล้ว</span>'
+    : '<span class="badge bg-success">เปิดจอง</span>'
+  document.getElementById('mobSelCount').textContent  = '0 ที่นั่ง'
+  document.getElementById('mobTotalPrice').textContent = '฿0'
+  document.getElementById('mobBtnNext').disabled       = true
+  document.getElementById('mobSelectedInfo').innerHTML = '<p style="color:#6c757d;font-size:.83rem"><i class="bi bi-hand-index me-1"></i>คลิกที่นั่งในแผนผังเพื่อเลือก</p>'
+
+  document.getElementById('mSeatOverlay').classList.add('open')
+  document.body.style.overflow = 'hidden'
+
+  if (full) return
+
+  // init mob seatchart (need to wait for DOM to be visible)
+  setTimeout(() => {
+    if (!document.getElementById('mob-seatchart')) return
+    const rows = Math.ceil(round.totalSeats / 3)
+    sc_m = new Seatchart(document.getElementById('mob-seatchart'), {
+      map: {
+        rows, columns: 3,
+        seatLabel: (r, c) => String(idxToSeat(r, c)),
+        rowIndexer: {visible:false}, columnIndexer: {visible:false},
+        seatTypes: {
+          economy: { label:'ว่าง', price, cssClass:'seat-economy', seatRows: Array.from({length:rows},(_,i)=>i) },
+          male:    { label:'ชาย',  price, cssClass:'seat-male',    seats:[] },
+          female:  { label:'หญิง', price, cssClass:'seat-female',  seats:[] }
+        }
+      },
+      cart: {visible:false}, legendVisible:false
+    })
+    sc_m.addEventListener('cartchange', () => onCartChange('mob'))
+    pollSeats('mob')
+    pollTimer = setInterval(() => pollSeats('mob'), 5000)
+  }, 120)
+}
+
+window.closeMobSeat = function() {
+  stopPolling()
+  destroySc('mob')
+  myGenders = {}
+  document.getElementById('mSeatOverlay').classList.remove('open')
+  document.body.style.overflow = ''
+}
+
+// ════════════════════════════════════════════════
+// CARTCHANGE HANDLER
+// ════════════════════════════════════════════════
+function onCartChange(ctx) {
+  if (suppressCart) return
+  const sc = ctx === 'desk' ? sc_d : sc_m
+  if (!sc) return
+  const cart     = sc.getCart()
+  const cartNums = cart.map(s => Number(s.label))
+
+  // newly selected
+  const newInfo = cart.find(s => {
+    const n = Number(s.label)
+    return !isNaN(n) && myGenders[n] === undefined && n !== pendingSeatNum
+  })
+  if (newInfo) {
+    if (pendingSeatNum !== null) { if(genderModalBS) genderModalBS.hide(); return }
+    pendingSeatNum = Number(newInfo.label)
+    pendingCtx     = ctx
+    pickedGender   = null
+    document.getElementById('genderSeatNum').textContent = `ที่นั่ง ${pendingSeatNum}`
+    document.getElementById('cardMale').className   = 'gender-card-l'
+    document.getElementById('cardFemale').className = 'gender-card-l'
+    document.getElementById('btnConfirmGender').disabled = true
+    if (!genderModalBS) genderModalBS = new bootstrap.Modal(document.getElementById('genderModal'))
+    genderModalBS.show()
+    return
+  }
+
+  // deselected
+  Object.keys(myGenders).forEach(n => { if (!cartNums.includes(Number(n))) delete myGenders[n] })
+  updateSummary(ctx)
+}
+
+// ════════════════════════════════════════════════
+// GENDER MODAL
+// ════════════════════════════════════════════════
+window.pickGender = function(g) {
+  pickedGender = g
+  document.getElementById('cardMale').className   = `gender-card-l${g==='MALE'?' sel-male':''}`
+  document.getElementById('cardFemale').className = `gender-card-l${g==='FEMALE'?' sel-female':''}`
+  document.getElementById('btnConfirmGender').disabled = false
+}
+
+window.confirmGender = function() {
+  if (!pendingSeatNum || !pickedGender) return
+  const n    = pendingSeatNum
+  const type = pickedGender === 'MALE' ? 'male' : 'female'
+  myGenders[n] = pickedGender
+  const sc = pendingCtx === 'desk' ? sc_d : sc_m
+  if (sc) { suppressCart = true; sc.setSeat(seatToIdx(n), {type, label:String(n)}); suppressCart = false }
+  const ctx = pendingCtx
+  pendingSeatNum = null; pendingCtx = null; pickedGender = null
+  if (genderModalBS) genderModalBS.hide()
+  updateSummary(ctx)
+}
+
+window.cancelGender = function() {
+  if (genderModalBS) genderModalBS.hide()
+}
+
+// hidden.bs.modal → reset pending seat
+document.getElementById('genderModal').addEventListener('hidden.bs.modal', () => {
+  if (pendingSeatNum === null) return
+  const sc = pendingCtx === 'desk' ? sc_d : sc_m
+  if (sc) { suppressCart = true; try { sc.setSeat(seatToIdx(pendingSeatNum), {state:'available',type:'economy',label:String(pendingSeatNum)}) } catch(_){} suppressCart = false }
+  pendingSeatNum = null; pendingCtx = null; pickedGender = null
+  updateSummary('desk'); updateSummary('mob')
+})
+
+// ════════════════════════════════════════════════
+// LIVE POLLING
+// ════════════════════════════════════════════════
+async function pollSeats(ctx) {
+  const sc = ctx === 'desk' ? sc_d : sc_m
+  if (!sc || !activeScRoundId) return
+  try {
+    const data = await apiFetch(`/seat-bookings/round/${activeScRoundId}`)
+    const apiSeats   = data.seats || {}
+    const total      = data.totalSeats || activeScRound?.totalSeats || 9
+    const cart       = sc.getCart()
+    const cartNums   = cart.map(s => Number(s.label))
+
+    suppressCart = true
+    const lastSeat = (activeScTrip?.totalSeats || total) + 1
+    for (let n = 2; n <= lastSeat; n++) {
+      const idx     = seatToIdx(n)
+      const apiInfo = apiSeats[n]
+      if (cartNums.includes(n) || (pendingSeatNum && n === pendingSeatNum)) continue
+      let cur; try { cur = sc.getSeat(idx) } catch(_) { continue }
+      if (!apiInfo || apiInfo.status === 'AVAILABLE') {
+        if (cur.state === 'reserved') sc.setSeat(idx, {state:'available',type:'economy',label:String(n)})
+      } else if (apiInfo.status === 'BOOKED') {
+        const type  = apiInfo.gender === 'MALE' ? 'male' : apiInfo.gender === 'FEMALE' ? 'female' : 'economy'
+        const label = apiInfo.nickname || apiInfo.firstName || (apiInfo.gender==='MALE'?'ชาย':apiInfo.gender==='FEMALE'?'หญิง':String(n))
+        if (cur.state !== 'reserved' || cur.label !== label) sc.setSeat(idx, {state:'reserved',type,label})
+      }
+    }
+    Object.entries(myGenders).forEach(([n, gender]) => {
+      const idx = seatToIdx(Number(n)); let cur; try { cur = sc.getSeat(idx) } catch(_){return}
+      const type = gender === 'MALE' ? 'male' : 'female'
+      if (cur.state !== 'selected') sc.setSeat(idx, {state:'selected',type,label:String(n)})
+      else if (cur.type !== type) sc.setSeat(idx, {type,label:String(n)})
+    })
+    suppressCart = false
+
+    const booked = Object.values(apiSeats).filter(s=>s.status==='BOOKED').length
+    const left   = total - booked
+    const lastUpd = new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'})
+    if (ctx === 'desk' && document.getElementById('deskLastUpdate')) document.getElementById('deskLastUpdate').textContent = lastUpd
+    if (ctx === 'mob'  && document.getElementById('mobLastUpdate'))  document.getElementById('mobLastUpdate').textContent  = lastUpd
+    updateSummary(ctx)
+  } catch(_) { suppressCart = false }
+}
+
+// ════════════════════════════════════════════════
+// SUMMARY
+// ════════════════════════════════════════════════
+function updateSummary(ctx) {
+  const price = Number(activeScTrip?.price || 0) + Number(activeScRound?.extraPrice || 0)
+  const keys  = Object.keys(myGenders)
+  const count = keys.length
+  const total = price * count
+
+  if (ctx === 'desk' || ctx === 'all') {
+    const countEl = document.getElementById('deskSelCount')
+    const totEl   = document.getElementById('deskTotal')
+    const btnEl   = document.getElementById('deskBtnNext')
+    if (countEl) countEl.textContent = `${count} ที่นั่ง`
+    if (totEl)   totEl.textContent   = `฿${total.toLocaleString()}`
+    if (btnEl)   btnEl.disabled = count === 0
+
+    const infoEl = document.getElementById('deskSelectedInfo')
+    if (infoEl) {
+      if (!count) { infoEl.innerHTML = '<p style="color:#6c757d;font-size:.78rem;margin:0"><i class="bi bi-hand-index me-1"></i>คลิกที่นั่งเพื่อเลือก</p>'; return }
+      const chips = keys.map(n => {
+        const g = myGenders[n]; const m = g === 'MALE'
+        return `<span class="seat-chip-w" style="background:${m?'#dbeafe':'#fce7f3'};border-color:${m?'#3b82f6':'#ec4899'};color:${m?'#1e40af':'#9d174d'}">${m?'♂':'♀'} ${n}</span>`
+      }).join('')
+      infoEl.innerHTML = `<div style="margin-bottom:.3rem">${chips}</div><button onclick="clearAllSeats('desk')" style="font-size:.72rem;background:none;border:none;color:#ef4444;cursor:pointer;padding:.1rem .3rem"><i class="bi bi-x-circle me-1"></i>ล้าง</button>`
+    }
+  }
+  if (ctx === 'mob' || ctx === 'all') {
+    const cEl = document.getElementById('mobSelCount')
+    const pEl = document.getElementById('mobTotalPrice')
+    const bEl = document.getElementById('mobBtnNext')
+    if (cEl) cEl.textContent = `${count} ที่นั่ง`
+    if (pEl) pEl.textContent = `฿${total.toLocaleString()}`
+    if (bEl) bEl.disabled = count === 0
+
+    const inEl = document.getElementById('mobSelectedInfo')
+    if (inEl) {
+      if (!count) { inEl.innerHTML = '<p style="color:#6c757d;font-size:.83rem"><i class="bi bi-hand-index me-1"></i>คลิกที่นั่งในแผนผังเพื่อเลือก</p>'; return }
+      const chips = keys.map(n => {
+        const g = myGenders[n]; const m = g === 'MALE'
+        return `<span class="seat-chip-w" style="background:${m?'#dbeafe':'#fce7f3'};border-color:${m?'#3b82f6':'#ec4899'};color:${m?'#1e40af':'#9d174d'}">${m?'♂':'♀'} ที่นั่ง ${n}</span>`
+      }).join('')
+      inEl.innerHTML = `<div style="margin-bottom:.3rem">${chips}</div><button onclick="clearAllSeats('mob')" style="font-size:.72rem;background:none;border:none;color:#ef4444;cursor:pointer"><i class="bi bi-x-circle me-1"></i>ล้างทั้งหมด</button>`
+    }
+  }
+}
+
+window.clearAllSeats = function(ctx) {
+  const sc = ctx === 'desk' ? sc_d : sc_m
+  if (!sc) return
+  suppressCart = true
+  if (pendingSeatNum && pendingCtx === ctx) {
+    try { sc.setSeat(seatToIdx(pendingSeatNum), {state:'available',type:'economy',label:String(pendingSeatNum)}) } catch(_){}
+    pendingSeatNum = null; pendingCtx = null; pickedGender = null
+    if (genderModalBS) genderModalBS.hide()
+  }
+  Object.keys(myGenders).forEach(n => { try { sc.setSeat(seatToIdx(Number(n)), {state:'available',type:'economy',label:String(n)}) } catch(_){} })
+  myGenders = {}
+  suppressCart = false
+  updateSummary(ctx)
+}
+
+// ════════════════════════════════════════════════
+// GO NEXT → booking/form?token
+// ════════════════════════════════════════════════
+window.goNext = async function(ctx) {
+  const sc = ctx === 'desk' ? sc_d : sc_m
+  if (!sc) return
+  const cart     = sc.getCart()
+  const seen     = new Set()
+  const seatsData = cart
+    .map(s => ({ seatNumber: Number(s.label), gender: myGenders[Number(s.label)] || null }))
+    .filter(s => !isNaN(s.seatNumber) && s.seatNumber >= 2 && !seen.has(s.seatNumber) && seen.add(s.seatNumber))
+  const missing = seatsData.filter(s => !s.gender)
+  if (missing.length) {
+    showToast('กรุณาเลือกเพศสำหรับทุกที่นั่ง', 'warning'); return
+  }
+  try {
+    const sess = await apiFetch('/booking-sessions', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ busRoundId: parseInt(activeScRoundId), step: 1, selectedSeats: seatsData })
+    })
+    stopPolling()
+    window.location.href = `/booking/form?token=${sess.token}`
+  } catch(e) {
+    if (e.message?.includes('ที่นั่งไม่ว่าง')) {
+      showToast('ที่นั่งบางที่ไม่ว่าง กรุณาเลือกใหม่', 'warning'); pollSeats(ctx)
+    } else {
+      showToast(e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่', 'danger')
+    }
+  }
+}
+
+// ── helpers ───────────────────────────────────────────────
+function destroySc(ctx) {
+  if (ctx === 'desk' && sc_d) { try { sc_d.removeEventListener('cartchange') } catch(_){} sc_d = null; const el = document.getElementById('bk-seatchart'); if(el) el.innerHTML='' }
+  if (ctx === 'mob'  && sc_m) { try { sc_m.removeEventListener('cartchange') } catch(_){} sc_m = null; const el = document.getElementById('mob-seatchart'); if(el) el.innerHTML='' }
+}
+function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null } }
+
+function resetBookingCard() {
+  stopPolling(); destroySc('desk'); myGenders = {}; activeScRoundId = null; activeScRound = null; activeScTrip = null
+  document.getElementById('bkCard').innerHTML = `
+    <div class="bk-empty" id="bkEmpty">
+      <div class="bk-empty-icon"><i class="bi bi-compass-fill"></i></div>
+      <h3>เลือกทริปที่คุณสนใจ</h3>
+      <p>เลือกรอบออกเดินทางจากรายการด้านซ้าย<br>เพื่อดูข้อมูลและจองที่นั่ง</p>
+      <div class="bk-empty-hint"><i class="bi bi-arrow-left"></i> คลิกเลือกรอบจากรายการ</div>
+    </div>`
+}
+
+window.deselectRound = function() {
+  selectedRound = null
+  document.querySelectorAll('.round-row').forEach(el => el.classList.remove('selected'))
+  resetBookingCard()
+}
+
+function showToast(msg, type='warning') {
+  const id = 't'+Date.now()
+  document.getElementById('toastC').insertAdjacentHTML('beforeend', `
+    <div id="${id}" class="toast align-items-center text-bg-${type} border-0 show rounded-3 mb-2">
+      <div class="d-flex"><div class="toast-body">${msg}</div>
+        <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div></div>`)
+  setTimeout(() => document.getElementById(id)?.remove(), 4000)
+}
+
+window.closeModal = function() {
+  document.getElementById('mobileModal').classList.remove('open')
+  document.body.style.overflow = ''
+}
+
+// swipe down to close
+const sheet = document.getElementById('modalSheet')
+let _sy = 0
+sheet.addEventListener('touchstart', e => { _sy = e.touches[0].clientY })
+sheet.addEventListener('touchend',   e => { if (e.changedTouches[0].clientY - _sy > 80 && sheet.scrollTop === 0) closeModal() })
+
+window.shareL  = () => { const u = encodeURIComponent(location.href); window.open(`https://social-plugins.line.me/lineit/share?url=${u}`, '_blank') }
+window.shareFb = () => { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}`, '_blank') }
+
+// ── Search ────────────────────────────────────────────────
+let timer
+document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch() })
+document.getElementById('searchInput').addEventListener('input', e => {
+  clearTimeout(timer)
+  timer = setTimeout(() => loadData(e.target.value.trim()), 400)
+})
+window.doSearch = () => loadData(document.getElementById('searchInput').value.trim())
+
+// ── Init ──────────────────────────────────────────────────
+const urlParams = new URLSearchParams(location.search)
+if (urlParams.get('tripId')) {
+  loadData().then(() => {
+    const r = allRounds.find(x => x.tripId === Number(urlParams.get('tripId')))
+    if (r) selectRound(r.id)
+  })
+} else {
+  loadData()
+}
+</script>
+</body>
+</html>

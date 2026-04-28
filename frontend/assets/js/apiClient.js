@@ -106,10 +106,47 @@ const API = {
 
     // Contents
     contents: {
-        list: (type)    => api.get(`/contents${type ? '?type=' + type : ''}`),
+        list: (type, extra = {}) => {
+            const p = new URLSearchParams({ all: '1', ...extra })
+            if (type) p.set('type', type)
+            const qs = p.toString()
+            return api.get(`/contents${qs ? '?' + qs : ''}`)
+        },
+        listPublic: (type, extra = {}) => {
+            const p = new URLSearchParams(extra)
+            if (type) p.set('type', type)
+            const qs = p.toString()
+            return api.get(`/contents${qs ? '?' + qs : ''}`)
+        },
+        get: (id)       => api.get(`/contents/${id}`),
         create: (d)     => api.post('/contents', d),
         update: (id, d) => api.put(`/contents/${id}`, d),
         delete: (id)    => api.delete(`/contents/${id}`),
+    },
+
+    // Site Settings
+    settings: {
+        all: ()         => api.get('/settings'),
+        get: (key)      => api.get(`/settings/${key}`),
+        save: (data)    => api.put('/settings', data),
+        saveKey: (k, v) => api.put(`/settings/${k}`, { value: v }),
+    },
+
+    // Gallery
+    gallery: {
+        albums: {
+            list: (q = {})   => api.get('/gallery/albums' + (Object.keys(q).length ? '?' + new URLSearchParams(q) : '')),
+            get: (id)        => api.get(`/gallery/albums/${id}`),
+            create: (d)      => api.post('/gallery/albums', d),
+            update: (id, d)  => api.put(`/gallery/albums/${id}`, d),
+            delete: (id)     => api.delete(`/gallery/albums/${id}`),
+        },
+        images: {
+            list: (albumId)       => api.get(`/gallery/albums/${albumId}/images`),
+            add: (albumId, imgs)  => api.post(`/gallery/albums/${albumId}/images`, imgs),
+            update: (id, d)       => api.put(`/gallery/images/${id}`, d),
+            delete: (id)          => api.delete(`/gallery/images/${id}`),
+        },
     },
 
     // Expenses

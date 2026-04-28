@@ -304,7 +304,7 @@ async function loadMonitor() {
         document.getElementById('checkAllPax').checked = false;
         updateSelectedCount();
         updateTripStrip(round, rows);
-        renderTable(rows);
+        renderTable(rows, round.trip?.deposit || 0);
         renderSeatMap(round);
         renderApproval(bookings, paymentMap);
 
@@ -318,6 +318,12 @@ function updateTripStrip(round, rows = []) {
     document.getElementById('bannerDate').textContent   = formatDateTime(round.departDate);
     document.getElementById('bannerRoute').textContent  = `${round.startPoint} → ${round.endPoint}`;
     document.getElementById('bannerStatus').textContent = round.isOpen ? 'เปิดจอง' : 'ปิดจอง';
+    
+    // Update dynamic deposit header
+    const depHeader = document.getElementById('headerDepositAmount');
+    if (depHeader) {
+        depHeader.textContent = formatMoney(round.trip?.deposit || 0);
+    }
     
     const respEl = document.getElementById('bannerResponsible');
     respEl.innerHTML = round.responsiblePerson ? `<i class="bi bi-person-circle me-1"></i>${round.responsiblePerson}` : '<i class="bi bi-person-circle me-1"></i>ไม่ระบุ';
@@ -358,10 +364,10 @@ function renderKPI(rows) { }
 /* ════════════════════════════════════════════════════════════════
    TAB 1 — ตารางผู้โดยสาร
 ════════════════════════════════════════════════════════════════ */
-function renderTable(rows) {
+function renderTable(rows, requiredDeposit = 0) {
     if (!rows.length) {
         document.getElementById('monitorBody').innerHTML =
-            '<tr><td colspan="25" class="text-center py-5 text-muted">ยังไม่มีการจองในรอบนี้</td></tr>';
+            '<tr><td colspan="26" class="text-center py-5 text-muted">ยังไม่มีการจองในรอบนี้</td></tr>';
         return;
     }
 
@@ -387,9 +393,11 @@ function renderTable(rows) {
         const nick    = f?.nickname   || '-';
         const phone   = f?.phone      || b.user?.phone || '-';
 
-        const has1000   = depositAmt >= 1000
+        const hasDeposit = depositAmt >= requiredDeposit && requiredDeposit > 0
             ? `<i class="bi bi-check-circle-fill text-success"></i>`
-            : `<i class="bi bi-circle text-muted"></i>`;
+            : depositAmt > 0 && depositAmt < requiredDeposit
+                ? `<i class="bi bi-exclamation-circle-fill text-warning" title="มัดจำไม่ครบ"></i>`
+                : `<i class="bi bi-circle text-muted"></i>`;
         const depAmt    = depositAmt > 0
             ? `<span class="paid-partial">${formatMoney(depositAmt)}</span>` : '<span class="text-muted">-</span>';
         const depSlip   = depositPay?.slipRef ? `<code style="font-size:.68rem;">${depositPay.slipRef}</code>` : '<span class="text-muted">-</span>';
@@ -397,8 +405,32 @@ function renderTable(rows) {
             ? `<span class="unpaid">${formatMoney(remaining)}</span>` : `<span class="paid-full">ครบ</span>`;
         const remSlip   = remainPay?.slipRef ? `<code style="font-size:.68rem;">${remainPay.slipRef}</code>` : '<span class="text-muted">-</span>';
 
-        const a1 = addons[0] ? `${addons[0].addon?.name || ''} ×${addons[0].quantity}` : '<span class="text-muted">-</span>';
-        const a2 = addons[1] ? `${addons[1].addon?.name || ''} ×${addons[1].quantity}` : '<span class="text-muted">-</span>';
+        // Only show addon on the first seat of this booking
+        const isFirstSeat = !i || rows[i-1].booking.id !== b.id;
+
+        let addonSum = 0;
+        let a1 = '<span class="text-muted">-</span>', a2 = '<span class="text-muted">-</span>', aTotal = '<span class="text-muted">-</span>';
+
+        if (isFirstSeat) {
+            addons.forEach(a => addonSum += (a.price || 0) * (a.quantity || 1));
+
+            const getAddonText = (a) => {
+                if (!a) return '<span class="text-muted">-</span>';
+                const price = a.price || 0;
+                const qty   = a.quantity || 1;
+                const total = price * qty;
+                return `<strong>${a.addon?.name || ''}</strong><br>
+                        <small class="text-muted" style="font-size:.67rem;">${formatMoney(price)} × ${qty} = ${formatMoney(total)}</small>`;
+            };
+
+            a1 = getAddonText(addons[0]);
+            a2 = getAddonText(addons[1]);
+            if (addons.length > 2) {
+                // Combine remaining into a2 or show a hint
+                a2 += `<br><small class="text-primary">+ อีก ${addons.length - 2} รายการ</small>`;
+            }
+            aTotal = addonSum > 0 ? `<span class="fw-bold text-primary">${formatMoney(addonSum)}</span>` : '<span class="text-muted">-</span>';
+        }
 
         const isCancelled = b.status === 'CANCELLED';
         const isConfirmed = b.status === 'CONFIRMED';
@@ -439,11 +471,13 @@ function renderTable(rows) {
             <td class="text-center">${age}</td><td>${birth}</td>
             <td>${nick}</td><td>${phone}</td>
             <td class="text-center">${policyLabel}</td>
-            <td class="text-center col-div">${has1000}</td>
+            <td class="text-center col-div">${hasDeposit}</td>
             <td class="text-end">${depAmt}</td><td>${depSlip}</td>
             <td class="text-end">${remAmt}</td><td>${remSlip}</td>
             <td class="text-end fw-bold">${formatMoney(b.totalAmount)}</td>
-            <td class="col-div">${a1}</td><td>${a2}</td>
+            <td class="col-div" style="line-height:1.2;">${a1}</td>
+            <td style="line-height:1.2;">${a2}</td>
+            <td class="text-end fw-bold text-primary">${aTotal}</td>
             <td><span class="text-muted">-</span></td>
             <td class="text-center col-div col-link no-print">
                 <a href="../bookings/view.html?id=${b.id}&fromRound=${b.busRoundId}" class="btn btn-sm btn-outline-primary py-0 px-2"
@@ -473,6 +507,7 @@ function renderSeatMap(round) {
         vanData[van][seat] = {
             gender:    row.seat.gender,
             name:      `${row.seat.firstName || ''} ${row.seat.lastName || ''}`.trim() || row.booking.user?.name || '',
+            nickname:  row.seat.nickname,
             cancelled: row.booking.status === 'CANCELLED'
         };
     }
@@ -493,11 +528,11 @@ function renderSeatMap(round) {
             <span class="sc-num">${s}</span></div>`;
         const cls  = info.gender === 'MALE' ? 'male' : info.gender === 'FEMALE' ? 'female' : 'booked';
         const icon = info.gender === 'MALE' ? '♂' : info.gender === 'FEMALE' ? '♀' : '●';
-        const firstName = (info.name || '').split(' ')[0] || '';
+        const displayName = info.nickname || (info.name || '').split(' ')[0] || '';
         return `<div class="sc-cell ${cls}" title="${icon} ${info.name}">
             <span style="font-size:.75rem;line-height:1;">${icon}</span>
             <span class="sc-num">${s}</span>
-            <span class="sc-name">${firstName}</span></div>`;
+            <span class="sc-name">${displayName}</span></div>`;
     };
 
     const vansHtml = vans.map((van, vi) => {
@@ -734,11 +769,16 @@ function buildPassengerExport() {
     const headers = [
         '#','สถานะ','จุดขึ้นรถ','จุดลงรถ','รถ#','นั่ง#',
         'คำนำ','ชื่อ','นามสกุล','เลขบัตร','อายุ','วันเกิด','ชื่อเล่น','โทรศัพท์',
-        'มัดจำ 1K','ยอดมัดจำ','สลิปมัดจำ','ยอดคงเหลือ','สลิปส่วนที่เหลือ','รวม',
-        'ของเช่า 1','ของเช่า 2','สลิปทริป'
+        'มัดจำ','ยอดมัดจำ','สลิปมัดจำ','ยอดคงเหลือ','สลิปส่วนที่เหลือ','รวม',
+        'ของเช่า 1','ของเช่า 2','รวมค่าเช่า','สลิปทริป'
     ];
     const data = currentRows.map((r, i) => {
         const { seat: f, booking: b, depositAmt, remaining, addons } = r;
+
+        const isFirstSeat = !i || currentRows[i-1].booking.id !== b.id;
+        let addonSum = 0;
+        if (isFirstSeat) addons.forEach(a => addonSum += (a.price || 0) * (a.quantity || 1));
+
         return [
             i+1, b.status,
             f?.pickupPoint  || b.busRound?.startPoint || '',
@@ -752,12 +792,13 @@ function buildPassengerExport() {
             f ? formatBirth(f.birthDate) : '',
             f?.nickname    || '',
             f?.phone       || b.user?.phone || '',
-            depositAmt >= 1000 ? 'Y' : 'N',
+            '', // มัดจำ (icon cell)
             depositAmt || 0, '',
             remaining > 0 ? remaining : 0, '',
             b.totalAmount,
-            addons[0] ? `${addons[0].addon?.name || ''} x${addons[0].quantity}` : '',
-            addons[1] ? `${addons[1].addon?.name || ''} x${addons[1].quantity}` : '',
+            addons[0] ? `${addons[0].addon?.name || ''} x${addons[0].quantity} (${(addons[0].price||0)*(addons[0].quantity||1)})` : '',
+            addons[1] ? `${addons[1].addon?.name || ''} x${addons[1].quantity} (${(addons[1].price||0)*(addons[1].quantity||1)})` : '',
+            addonSum || '',
             ''
         ];
     });

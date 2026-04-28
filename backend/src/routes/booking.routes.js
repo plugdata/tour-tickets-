@@ -416,13 +416,26 @@ router.post('/guest', async (req, res) => {
       seatBookings.push(seatBooking)
     }
 
+    // คำนวณยอดมัดจำ
+    let paymentAmount = totalAmount; // Default is FULL
+    if (paymentType === 'DEPOSIT') {
+      const tripDeposit = round.trip.deposit || 0;
+      if (tripDeposit > 100) {
+        // Fixed amount per seat
+        paymentAmount = tripDeposit * selectedSeats.length;
+      } else {
+        // Percentage (default 30% if not set)
+        const depositRate = tripDeposit > 0 ? tripDeposit / 100 : 0.3;
+        paymentAmount = Math.ceil(totalAmount * depositRate);
+      }
+    }
+
     // สร้าง payment record
-    const depositRate = round.trip.deposit > 0 ? round.trip.deposit / 100 : 0.3 //  use Trip.deposit or default 30%
     const payment = await prisma.payment.create({
       data: {
         bookingId: booking.id,
         userId,
-        amount: paymentType === 'DEPOSIT' ? Math.ceil(totalAmount * depositRate) : totalAmount,
+        amount: paymentAmount,
         type: paymentType,
         status: 'PENDING'
       }
@@ -455,5 +468,45 @@ router.post('/guest', async (req, res) => {
     res.status(500).json({ message: e.message })
   }
 })
+
+/**
+ * @swagger
+ * /api/bookings/guest/{sessionToken}:
+ *   get:
+ *     tags: [Bookings]
+ *     summary: Get guest booking details
+ *     parameters:
+ *       - in: path
+ *         name: sessionToken
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: Booking details }
+ */
+router.get('/guest/:sessionToken', async (req, res) => {
+  try {
+    const { sessionToken } = req.params;
+    const session = await prisma.bookingSession.findUnique({
+      where: { token: sessionToken }
+    });
+
+    if (!session || !session.bookingId) {
+      return res.status(404).json({ message: 'No booking found for this session' });
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: session.bookingId },
+      include: {
+        payment: true,
+        bookingAddons: { include: { addon: true } }
+      }
+    });
+
+    res.json(booking);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
 
 module.exports = router

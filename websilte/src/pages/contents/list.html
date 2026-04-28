@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เนื้อหาทั้งหมด — GUGA Travels</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #00d9b4;
+      --dark: #0f1419;
+      --dark-card: #1e2837;
+      --dark-blue: #1a2332;
+      --gray: #a0aec0;
+    }
+    body { font-family:'Sarabun',sans-serif; background:var(--dark); color:#fff; min-height:100vh; }
+    h1,h2,h3,h4,h5,h6 { font-family:'Kanit',sans-serif; }
+
+    /* Navbar */
+    .navbar { background:rgba(15,20,25,.97); border-bottom:1px solid rgba(255,255,255,.06); }
+    .navbar-brand { font-family:'Kanit',sans-serif; font-weight:800; color:#fff !important; }
+    .nav-link { color:var(--gray) !important; }
+    .nav-link:hover, .nav-link.active { color:var(--primary) !important; }
+
+    /* Hero banner */
+    .cms-hero {
+      background:linear-gradient(135deg,#141b26 0%,#0f1419 100%);
+      padding:3rem 0 2rem;
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .cms-hero h1 { font-size:2.2rem; }
+
+    /* Tab filter */
+    .type-tabs { display:flex; gap:.5rem; flex-wrap:wrap; padding:1.5rem 0; }
+    .type-tab {
+      padding:.4rem 1.1rem; border-radius:20px; font-size:.85rem; cursor:pointer;
+      border:1px solid rgba(255,255,255,.12); background:var(--dark-card);
+      color:var(--gray); transition:all .2s;
+    }
+    .type-tab:hover { border-color:var(--primary); color:#fff; }
+    .type-tab.active { background:var(--primary); color:#000; border-color:var(--primary); font-weight:600; }
+
+    /* Content card */
+    .content-card {
+      background:var(--dark-card); border-radius:16px; overflow:hidden;
+      border:1px solid rgba(255,255,255,.06); transition:all .3s; height:100%; cursor:pointer;
+    }
+    .content-card:hover { transform:translateY(-6px); border-color:rgba(0,217,180,.3); box-shadow:0 16px 40px rgba(0,0,0,.4); }
+    .content-card-img { width:100%; height:200px; object-fit:cover; }
+    .content-card-img-placeholder {
+      width:100%; height:200px; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg,#1e2837,#252e3f); font-size:3rem; color:var(--primary);
+    }
+    .content-card-body { padding:1.2rem; }
+    .content-type-badge {
+      display:inline-block; padding:.2rem .7rem; border-radius:20px; font-size:.72rem;
+      font-weight:600; margin-bottom:.6rem;
+    }
+    .badge-TRIP_POST    { background:rgba(0,217,180,.15); color:var(--primary); }
+    .badge-BLOG         { background:rgba(99,179,237,.15); color:#63b3ed; }
+    .badge-ANNOUNCEMENT { background:rgba(246,173,85,.15); color:#f6ad55; }
+    .badge-EXPERIENCE   { background:rgba(154,117,245,.15); color:#9a75f5; }
+    .badge-GALLERY      { background:rgba(237,100,166,.15); color:#ed64a6; }
+    .badge-FAQ          { background:rgba(72,187,120,.15); color:#48bb78; }
+    .badge-SERVICE      { background:rgba(237,137,54,.15); color:#ed8936; }
+    .badge-INQUIRY      { background:rgba(160,174,192,.15); color:var(--gray); }
+    .content-card-title { font-size:1rem; font-weight:600; margin-bottom:.4rem; line-height:1.4; }
+    .content-card-meta  { font-size:.75rem; color:var(--gray); display:flex; gap:.8rem; flex-wrap:wrap; }
+    .content-card-excerpt { font-size:.85rem; color:var(--gray); margin-top:.5rem; line-height:1.6;
+      display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+
+    /* Featured strip */
+    .featured-strip { background:linear-gradient(135deg,rgba(0,217,180,.08),rgba(0,217,180,.03));
+      border:1px solid rgba(0,217,180,.2); border-radius:16px; padding:1.5rem; margin-bottom:2rem; }
+    .featured-strip h5 { color:var(--primary); font-size:1rem; margin-bottom:1rem; }
+
+    /* Inquiry / Contact form */
+    .inquiry-section {
+      background:var(--dark-card); border-radius:20px; padding:2rem;
+      border:1px solid rgba(255,255,255,.06); margin-top:3rem;
+    }
+    .form-control, .form-select {
+      background:#141b26; border:1px solid rgba(255,255,255,.12); color:#fff; border-radius:10px;
+    }
+    .form-control:focus, .form-select:focus {
+      background:#141b26; border-color:var(--primary); color:#fff;
+      box-shadow:0 0 0 3px rgba(0,217,180,.15);
+    }
+    .form-control::placeholder { color:var(--gray); }
+    .btn-primary-guga {
+      background:linear-gradient(135deg,var(--primary),#00c4a0); color:#000; border:none;
+      padding:.7rem 2rem; border-radius:10px; font-weight:700; transition:all .3s;
+    }
+    .btn-primary-guga:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,217,180,.3); }
+
+    /* Skeleton */
+    .skeleton { background:linear-gradient(90deg,#1e2837 25%,#252e3f 50%,#1e2837 75%);
+      background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:8px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Pagination */
+    .page-item .page-link { background:var(--dark-card); border-color:rgba(255,255,255,.1); color:var(--gray); }
+    .page-item.active .page-link { background:var(--primary); border-color:var(--primary); color:#000; }
+    .page-item .page-link:hover { background:rgba(0,217,180,.1); color:var(--primary); }
+
+    /* Search */
+    .search-wrap { position:relative; }
+    .search-wrap .bi-search { position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--gray); }
+    .search-wrap input { padding-left:2.5rem; }
+
+    @media(max-width:576px){
+      .cms-hero h1 { font-size:1.6rem; }
+      .type-tabs { gap:.3rem; }
+      .type-tab { font-size:.78rem; padding:.3rem .8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="/"><i class="bi bi-geo-alt-fill me-2" style="color:var(--primary)"></i>GUGA Travels</a>
+    <div class="d-flex gap-2">
+      <a href="/src/pages/trips/list.html" class="nav-link"><i class="bi bi-map"></i> ทริป</a>
+      <a href="/" class="nav-link">หน้าแรก</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<div class="cms-hero">
+  <div class="container">
+    <div class="d-flex align-items-center gap-3 mb-2">
+      <i class="bi bi-newspaper" style="font-size:2rem;color:var(--primary)"></i>
+      <div>
+        <h1 class="mb-0">เนื้อหา & บทความ</h1>
+        <p class="mb-0" style="color:var(--gray);font-size:.9rem">บทความ · ประกาศ · แชร์ประสบการณ์ · แกลเลอรี่</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container py-3">
+
+  <!-- Search + Filter row -->
+  <div class="d-flex flex-wrap gap-3 align-items-center mb-1">
+    <div class="search-wrap flex-grow-1" style="max-width:340px;">
+      <i class="bi bi-search"></i>
+      <input id="searchInput" type="text" class="form-control" placeholder="ค้นหาบทความ...">
+    </div>
+  </div>
+
+  <!-- Type tabs -->
+  <div class="type-tabs" id="typeTabs">
+    <div class="type-tab active" data-type="">ทั้งหมด</div>
+    <div class="type-tab" data-type="TRIP_POST"><i class="bi bi-journal-bookmark-fill me-1"></i>บทความทริป</div>
+    <div class="type-tab" data-type="ANNOUNCEMENT"><i class="bi bi-megaphone-fill me-1"></i>ประกาศ</div>
+    <div class="type-tab" data-type="EXPERIENCE"><i class="bi bi-stars me-1"></i>แชร์ประสบการณ์</div>
+    <div class="type-tab" data-type="GALLERY"><i class="bi bi-images me-1"></i>แกลเลอรี่</div>
+    <div class="type-tab" data-type="BLOG"><i class="bi bi-rss me-1"></i>บล็อก</div>
+    <div class="type-tab" data-type="FAQ"><i class="bi bi-question-circle-fill me-1"></i>FAQ</div>
+    <div class="type-tab" data-type="SERVICE"><i class="bi bi-briefcase-fill me-1"></i>บริการ</div>
+  </div>
+
+  <!-- Featured strip -->
+  <div class="featured-strip d-none" id="featuredStrip">
+    <h5><i class="bi bi-fire me-2"></i>แนะนำ / ฮอต</h5>
+    <div class="row g-3" id="featuredList"></div>
+  </div>
+
+  <!-- Content grid -->
+  <div id="contentGrid" class="row g-4"></div>
+
+  <!-- Pagination -->
+  <nav class="mt-4 d-flex justify-content-center" id="paginationWrap"></nav>
+
+  <!-- Divider -->
+  <hr style="border-color:rgba(255,255,255,.08);margin:3rem 0 2rem">
+
+  <!-- Inquiry / Contact / Share Section -->
+  <div class="inquiry-section">
+    <h4 class="mb-1"><i class="bi bi-chat-heart-fill me-2" style="color:var(--primary)"></i>ติดต่อสอบถาม / แชร์ประสบการณ์</h4>
+    <p style="color:var(--gray);font-size:.9rem" class="mb-3">มีคำถาม? อยากเล่าประสบการณ์ท่องเที่ยว? ส่งมาได้เลย ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง</p>
+
+    <div id="inquiryForm">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label text-white-50">ชื่อของคุณ</label>
+          <input id="iq-name" type="text" class="form-control" placeholder="ชื่อ-นามสกุล หรือ ชื่อเล่น">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-white-50">ประเภท</label>
+          <select id="iq-type" class="form-select">
+            <option value="INQUIRY">สอบถามข้อมูล</option>
+            <option value="EXPERIENCE">แชร์ประสบการณ์</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label text-white-50">หัวข้อ *</label>
+          <input id="iq-title" type="text" class="form-control" placeholder="ระบุหัวข้อของคุณ">
+        </div>
+        <div class="col-12">
+          <label class="form-label text-white-50">รายละเอียด *</label>
+          <textarea id="iq-body" class="form-control" rows="5" placeholder="เขียนรายละเอียดที่นี่..."></textarea>
+        </div>
+        <div class="col-12">
+          <button class="btn-primary-guga btn" id="btnSubmitInquiry">
+            <i class="bi bi-send-fill me-2"></i>ส่งข้อความ
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="inquirySuccess" class="d-none">
+      <div class="text-center py-4">
+        <i class="bi bi-check-circle-fill" style="font-size:3rem;color:var(--primary)"></i>
+        <h5 class="mt-3">ส่งข้อความเรียบร้อยแล้ว!</h5>
+        <p style="color:var(--gray)">ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง</p>
+        <button class="btn btn-outline-secondary btn-sm" onclick="resetInquiry()">ส่งอีกครั้ง</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Content Detail Modal -->
+<div class="modal fade" id="contentModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="background:#1a2332;color:#fff;border:1px solid rgba(255,255,255,.1)">
+      <div class="modal-header border-0 pb-0">
+        <span id="modalBadge" class="content-type-badge"></span>
+        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <img id="modalImg" src="" alt="" class="w-100 rounded-3 mb-3" style="max-height:340px;object-fit:cover;display:none">
+        <h4 id="modalTitle" style="font-family:Kanit,sans-serif"></h4>
+        <div id="modalMeta" class="mb-3" style="font-size:.8rem;color:var(--gray)"></div>
+        <div id="modalBody" style="line-height:1.8;white-space:pre-wrap"></div>
+        <div id="modalTripLink" class="mt-3 d-none">
+          <a id="modalTripBtn" href="#" class="btn-primary-guga btn btn-sm">
+            <i class="bi bi-map me-2"></i>ดูรายละเอียดทริป
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module">
+import { getContents, submitInquiry, ContentTypeLabel } from '/src/api/content.js'
+
+const PAGE_SIZE = 12
+let allContents = []
+let filtered    = []
+let currentType = ''
+let currentPage = 1
+let searchQ     = ''
+
+const grid        = document.getElementById('contentGrid')
+const pagination  = document.getElementById('paginationWrap')
+const featuredStrip = document.getElementById('featuredStrip')
+const featuredList  = document.getElementById('featuredList')
+const contentModal  = new bootstrap.Modal(document.getElementById('contentModal'))
+
+const typeLabel = ContentTypeLabel
+
+const typeIcon = {
+  TRIP_POST:'journal-bookmark-fill', BLOG:'rss', ANNOUNCEMENT:'megaphone-fill',
+  EXPERIENCE:'stars', GALLERY:'images', FAQ:'question-circle-fill',
+  SERVICE:'briefcase-fill', INQUIRY:'chat-dots-fill', ABOUT:'info-circle-fill',
+}
+
+async function loadAll() {
+  grid.innerHTML = skeletons(8)
+  try {
+    allContents = await getContents()
+    renderFeatured()
+    applyFilter()
+  } catch(e) {
+    grid.innerHTML = `<div class="col-12 text-center py-5" style="color:var(--gray)">
+      <i class="bi bi-wifi-off" style="font-size:2.5rem"></i><p class="mt-2">ไม่สามารถโหลดข้อมูลได้</p></div>`
+  }
+}
+
+function renderFeatured() {
+  const hot = allContents.filter(c => c.isHot || c.isFeatured).slice(0, 4)
+  if (!hot.length) return
+  featuredStrip.classList.remove('d-none')
+  featuredList.innerHTML = hot.map(c => `
+    <div class="col-6 col-md-3">
+      <div class="content-card" onclick="openModal(${c.id})" style="cursor:pointer">
+        ${c.imageUrl
+          ? `<img src="${c.imageUrl}" class="content-card-img" style="height:120px" alt="">`
+          : `<div class="content-card-img-placeholder" style="height:120px"><i class="bi bi-${typeIcon[c.type]||'file-text'}"></i></div>`}
+        <div class="content-card-body" style="padding:.8rem">
+          <div class="content-type-badge badge-${c.type}">${typeLabel[c.type]||c.type}</div>
+          <div class="content-card-title" style="font-size:.88rem">${c.title}</div>
+        </div>
+      </div>
+    </div>`).join('')
+}
+
+function applyFilter() {
+  filtered = allContents.filter(c => {
+    const matchType   = !currentType || c.type === currentType
+    const matchSearch = !searchQ || c.title.toLowerCase().includes(searchQ) || (c.body||'').toLowerCase().includes(searchQ)
+    return matchType && matchSearch
+  })
+  currentPage = 1
+  renderPage()
+}
+
+function renderPage() {
+  const start = (currentPage - 1) * PAGE_SIZE
+  const slice = filtered.slice(start, start + PAGE_SIZE)
+
+  if (!slice.length) {
+    grid.innerHTML = `<div class="col-12 text-center py-5" style="color:var(--gray)">
+      <i class="bi bi-inbox" style="font-size:2.5rem"></i><p class="mt-2">ไม่พบเนื้อหา</p></div>`
+    pagination.innerHTML = ''
+    return
+  }
+
+  grid.innerHTML = slice.map(c => contentCard(c)).join('')
+  renderPagination()
+}
+
+function contentCard(c) {
+  const img = c.imageUrl
+    ? `<img src="${c.imageUrl}" class="content-card-img" alt="${c.title}" loading="lazy">`
+    : `<div class="content-card-img-placeholder"><i class="bi bi-${typeIcon[c.type]||'file-text'}"></i></div>`
+  const date = new Date(c.createdAt).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'})
+  const excerpt = c.body ? c.body.slice(0,120)+'…' : ''
+  return `
+    <div class="col-sm-6 col-lg-4 col-xl-3">
+      <div class="content-card h-100" onclick="openModal(${c.id})">
+        ${img}
+        <div class="content-card-body">
+          <div class="content-type-badge badge-${c.type}">${typeLabel[c.type]||c.type}</div>
+          <div class="content-card-title">${c.title}</div>
+          <div class="content-card-meta">
+            ${c.authorName ? `<span><i class="bi bi-person"></i> ${c.authorName}</span>`:''}
+            <span><i class="bi bi-calendar3"></i> ${date}</span>
+            ${c.trip ? `<span><i class="bi bi-map"></i> ${c.trip.title}</span>`:''}
+          </div>
+          ${excerpt ? `<div class="content-card-excerpt">${excerpt}</div>` : ''}
+        </div>
+      </div>
+    </div>`
+}
+
+function renderPagination() {
+  const pages = Math.ceil(filtered.length / PAGE_SIZE)
+  if (pages <= 1) { pagination.innerHTML = ''; return }
+  const items = Array.from({length:pages},(_,i) => `
+    <li class="page-item ${i+1===currentPage?'active':''}">
+      <button class="page-link" onclick="goPage(${i+1})">${i+1}</button>
+    </li>`).join('')
+  pagination.innerHTML = `<ul class="pagination">${items}</ul>`
+}
+
+function skeletons(n) {
+  return Array.from({length:n},()=>`
+    <div class="col-sm-6 col-lg-4 col-xl-3">
+      <div class="content-card h-100">
+        <div class="skeleton" style="height:200px"></div>
+        <div class="content-card-body">
+          <div class="skeleton mb-2" style="height:18px;width:40%"></div>
+          <div class="skeleton mb-1" style="height:22px;width:80%"></div>
+          <div class="skeleton" style="height:14px;width:60%"></div>
+        </div>
+      </div>
+    </div>`).join('')
+}
+
+// Modal
+window.openModal = function(id) {
+  const c = allContents.find(x => x.id === id)
+  if (!c) return
+  const date = new Date(c.createdAt).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})
+  document.getElementById('modalBadge').className = `content-type-badge badge-${c.type}`
+  document.getElementById('modalBadge').textContent = typeLabel[c.type]||c.type
+  document.getElementById('modalTitle').textContent = c.title
+  document.getElementById('modalMeta').innerHTML = [
+    c.authorName && `<i class="bi bi-person"></i> ${c.authorName}`,
+    `<i class="bi bi-calendar3"></i> ${date}`,
+    c.tags && `<i class="bi bi-tags"></i> ${c.tags}`,
+  ].filter(Boolean).join('  ·  ')
+
+  const img = document.getElementById('modalImg')
+  if (c.imageUrl) { img.src = c.imageUrl; img.style.display = '' }
+  else img.style.display = 'none'
+
+  document.getElementById('modalBody').textContent = c.body||''
+
+  const tripLink = document.getElementById('modalTripLink')
+  if (c.trip) {
+    tripLink.classList.remove('d-none')
+    document.getElementById('modalTripBtn').href = `/src/pages/trips/list.html?tripId=${c.trip.id}`
+  } else {
+    tripLink.classList.add('d-none')
+  }
+  contentModal.show()
+}
+
+window.goPage = function(p) { currentPage = p; renderPage(); window.scrollTo({top:0,behavior:'smooth'}) }
+
+// Tab filter
+document.getElementById('typeTabs').addEventListener('click', e => {
+  const tab = e.target.closest('.type-tab')
+  if (!tab) return
+  document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'))
+  tab.classList.add('active')
+  currentType = tab.dataset.type
+  applyFilter()
+})
+
+// Search
+let searchTimer
+document.getElementById('searchInput').addEventListener('input', e => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    searchQ = e.target.value.toLowerCase().trim()
+    applyFilter()
+  }, 300)
+})
+
+// Inquiry submit
+document.getElementById('btnSubmitInquiry').addEventListener('click', async () => {
+  const title = document.getElementById('iq-title').value.trim()
+  const body  = document.getElementById('iq-body').value.trim()
+  const name  = document.getElementById('iq-name').value.trim()
+  const type  = document.getElementById('iq-type').value
+  if (!title || !body) { alert('กรุณากรอกหัวข้อและรายละเอียด'); return }
+  const btn = document.getElementById('btnSubmitInquiry')
+  btn.disabled = true; btn.textContent = 'กำลังส่ง...'
+  try {
+    await submitInquiry({ title, body, authorName: name||'ไม่ระบุชื่อ', type })
+    document.getElementById('inquiryForm').classList.add('d-none')
+    document.getElementById('inquirySuccess').classList.remove('d-none')
+  } catch(e) {
+    alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    btn.disabled = false; btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>ส่งข้อความ'
+  }
+})
+
+window.resetInquiry = () => {
+  document.getElementById('inquiryForm').classList.remove('d-none')
+  document.getElementById('inquirySuccess').classList.add('d-none')
+  document.getElementById('iq-title').value = ''
+  document.getElementById('iq-body').value  = ''
+}
+
+// Check URL params for pre-filter
+const urlParams = new URLSearchParams(window.location.search)
+if (urlParams.get('type')) {
+  currentType = urlParams.get('type')
+  document.querySelectorAll('.type-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.type === currentType)
+  })
+}
+
+loadAll()
+</script>
+</body>
+</html>

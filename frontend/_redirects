@@ -1,0 +1,17 @@
+# Redirects for Cloudflare Pages
+# Handle routing for multi-page application
+
+# API routes (if needed)
+/api/* https://your-backend-api.com/api/:splat 200
+
+# Page routing
+/booking/* /booking/:splat 200
+/admin/* /admin/:splat 200
+/users/* /users/:splat 200
+/trips/* /trips/:splat 200
+/payments/* /payments/:splat 200
+/insurance/* /insurance/:splat 200
+/reports/* /reports/:splat 200
+
+# Fallback to index for SPA routes
+/* /index.html 200

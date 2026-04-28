@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Library - Tour Backoffice</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../assets/css/admin.css" rel="stylesheet">
+  <style>
+    .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; }
+    .media-card {
+      position: relative; border-radius: 10px; overflow: hidden;
+      aspect-ratio: 1; border: 2px solid transparent; cursor: pointer;
+      transition: all .2s; background: #f1f3f5;
+    }
+    .media-card:hover { border-color: #198754; transform: scale(1.02); }
+    .media-card.selected { border-color: #198754; }
+    .media-card img { width: 100%; height: 100%; object-fit: cover; }
+    .media-card-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,.55);
+      display: none; align-items: center; justify-content: center; gap: .4rem;
+    }
+    .media-card:hover .media-card-overlay { display: flex; }
+    .media-card .media-check {
+      position: absolute; top: 6px; left: 6px;
+      background: #fff; border-radius: 50%; width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; color: #198754; display: none;
+    }
+    .media-card.selected .media-check { display: flex; }
+    .upload-zone {
+      border: 2px dashed #ced4da; border-radius: 12px;
+      padding: 2rem; text-align: center; cursor: pointer;
+      transition: all .2s; background: #f8f9fa;
+    }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: #198754; background: #f0fff4; }
+    .stats-chip {
+      background: #e9f7ef; color: #198754; border-radius: 20px;
+      padding: .25rem .75rem; font-size: .8rem; font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="d-flex">
+  <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+  <main class="main-content flex-fill">
+    <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+    <div class="page-content">
+
+      <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <h1 class="page-title"><i class="bi bi-images me-2 text-success"></i>Media Library</h1>
+          <p class="page-subtitle">จัดการรูปภาพและไฟล์ทั้งหมดในระบบ</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <span class="stats-chip" id="statsChip">0 ไฟล์</span>
+          <button class="btn btn-outline-danger btn-sm d-none" id="btnDeleteSelected">
+            <i class="bi bi-trash me-1"></i>ลบที่เลือก (<span id="selectedCount">0</span>)
+          </button>
+          <label class="btn btn-success" style="cursor:pointer">
+            <i class="bi bi-cloud-upload me-1"></i>อัปโหลดรูปภาพ
+            <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
+          </label>
+        </div>
+      </div>
+
+      <!-- Upload Drop Zone -->
+      <div class="upload-zone mb-4" id="dropZone">
+        <i class="bi bi-cloud-upload" style="font-size:2.5rem;color:#198754;opacity:.7"></i>
+        <p class="mb-1 mt-2 fw-semibold">ลากและวางรูปภาพที่นี่</p>
+        <p class="text-muted small mb-0">หรือคลิกปุ่ม "อัปโหลดรูปภาพ" ด้านบน · รองรับ JPG, PNG, GIF · ไม่เกิน 5MB ต่อไฟล์</p>
+      </div>
+
+      <!-- Upload Progress -->
+      <div id="uploadProgress" class="d-none mb-3">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <div class="spinner-border spinner-border-sm text-success"></div>
+          <span id="uploadStatusText">กำลังอัปโหลด...</span>
+        </div>
+        <div class="progress" style="height:6px">
+          <div class="progress-bar bg-success" id="progressBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Search + Filter -->
+      <div class="d-flex gap-2 mb-3 flex-wrap">
+        <div class="input-group" style="max-width:260px">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" id="searchInput" placeholder="ค้นหาชื่อไฟล์...">
+        </div>
+        <select class="form-select" style="max-width:160px" id="sortSelect">
+          <option value="desc">ใหม่ → เก่า</option>
+          <option value="asc">เก่า → ใหม่</option>
+        </select>
+        <button class="btn btn-outline-secondary btn-sm" id="btnSelectAll">เลือกทั้งหมด</button>
+      </div>
+
+      <!-- Media Grid -->
+      <div class="media-grid" id="mediaGrid">
+        <div style="grid-column:1/-1;text-align:center;padding:3rem;color:#999">กำลังโหลด...</div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Image Detail Modal -->
+<div class="modal fade" id="imgModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title" id="imgModalTitle">รายละเอียดไฟล์</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6 text-center">
+            <img id="imgModalImg" src="" alt="" style="max-width:100%;max-height:320px;border-radius:8px;object-fit:contain">
+          </div>
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">ชื่อไฟล์</label>
+              <p class="text-muted small" id="imgModalFilename">-</p>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">ขนาดไฟล์</label>
+              <p class="text-muted small" id="imgModalSize">-</p>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">วันที่อัปโหลด</label>
+              <p class="text-muted small" id="imgModalDate">-</p>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">URL</label>
+              <div class="input-group">
+                <input type="text" class="form-control form-control-sm" id="imgModalUrl" readonly>
+                <button class="btn btn-outline-success btn-sm" onclick="copyUrl()">
+                  <i class="bi bi-clipboard"></i>
+                </button>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Alt Text</label>
+              <input type="text" class="form-control form-control-sm" id="imgModalAlt" placeholder="คำอธิบายรูป">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-danger" id="btnDeleteImg"><i class="bi bi-trash me-1"></i>ลบ</button>
+        <button class="btn btn-success" id="btnCopyUrl"><i class="bi bi-clipboard me-1"></i>คัดลอก URL</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/apiClient.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script>
+let uploads = []
+let selected = new Set()
+let imgModal
+let currentImg = null
+const BASE = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL.replace('/api', '') : ''
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await initPage()
+  imgModal = new bootstrap.Modal(document.getElementById('imgModal'))
+  loadMedia()
+
+  // File input
+  document.getElementById('fileInput').addEventListener('change', e => uploadFiles(e.target.files))
+
+  // Drag & drop
+  const dz = document.getElementById('dropZone')
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over') })
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'))
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag-over')
+    uploadFiles(e.dataTransfer.files)
+  })
+
+  // Search
+  let t; document.getElementById('searchInput').addEventListener('input', () => { clearTimeout(t); t = setTimeout(renderGrid, 250) })
+  document.getElementById('sortSelect').addEventListener('change', renderGrid)
+
+  // Bulk actions
+  document.getElementById('btnSelectAll').addEventListener('click', () => {
+    const all = uploads.every(u => selected.has(u.id))
+    if (all) selected.clear()
+    else uploads.forEach(u => selected.add(u.id))
+    updateSelected(); renderGrid()
+  })
+  document.getElementById('btnDeleteSelected').addEventListener('click', async () => {
+    if (!confirm(`ลบ ${selected.size} ไฟล์?`)) return
+    for (const id of selected) {
+      const u = uploads.find(x => x.id === id)
+      if (u) { try { await API.uploads.remove(u.url) } catch(_) {} }
+    }
+    selected.clear(); loadMedia()
+  })
+  document.getElementById('btnDeleteImg').addEventListener('click', async () => {
+    if (!currentImg) return
+    if (!confirm('ลบไฟล์นี้?')) return
+    try { await API.uploads.remove(currentImg.url); imgModal.hide(); loadMedia(); showToast('ลบเรียบร้อย') }
+    catch(e) { showToast('ลบล้มเหลว', 'danger') }
+  })
+  document.getElementById('btnCopyUrl').addEventListener('click', copyUrl)
+})
+
+async function loadMedia() {
+  try {
+    uploads = await API.uploads.list()
+    document.getElementById('statsChip').textContent = `${uploads.length} ไฟล์`
+    renderGrid()
+  } catch(e) {
+    document.getElementById('mediaGrid').innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#dc3545">
+      <i class="bi bi-wifi-off" style="font-size:2rem"></i><p class="mt-2">โหลดล้มเหลว</p></div>`
+  }
+}
+
+function renderGrid() {
+  const q = document.getElementById('searchInput').value.toLowerCase()
+  const sort = document.getElementById('sortSelect').value
+  let list = uploads.filter(u => !q || u.filename.toLowerCase().includes(q))
+  if (sort === 'asc') list = list.slice().reverse()
+
+  if (!list.length) {
+    document.getElementById('mediaGrid').innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#999">
+      <i class="bi bi-inbox" style="font-size:3rem;opacity:.3"></i><p class="mt-2">ไม่พบรูปภาพ</p></div>`
+    return
+  }
+  document.getElementById('mediaGrid').innerHTML = list.map(u => `
+    <div class="media-card ${selected.has(u.id)?'selected':''}" onclick="openImg(${u.id})" data-id="${u.id}">
+      <div class="media-check"><i class="bi bi-check-lg"></i></div>
+      <img src="${BASE}${u.url}" alt="${u.filename}" loading="lazy">
+      <div class="media-card-overlay">
+        <button class="btn btn-sm btn-light py-1 px-2" onclick="event.stopPropagation();toggleSelect(${u.id})">
+          <i class="bi bi-${selected.has(u.id)?'dash':'plus'}-circle"></i>
+        </button>
+        <button class="btn btn-sm btn-light py-1 px-2" onclick="event.stopPropagation();copyUrlDirect('${BASE}${u.url}')">
+          <i class="bi bi-clipboard"></i>
+        </button>
+      </div>
+    </div>`).join('')
+}
+
+function toggleSelect(id) {
+  if (selected.has(id)) selected.delete(id); else selected.add(id)
+  updateSelected(); renderGrid()
+}
+function updateSelected() {
+  const btn = document.getElementById('btnDeleteSelected')
+  document.getElementById('selectedCount').textContent = selected.size
+  btn.classList.toggle('d-none', selected.size === 0)
+}
+
+function openImg(id) {
+  currentImg = uploads.find(u => u.id === id)
+  if (!currentImg) return
+  document.getElementById('imgModalTitle').textContent = currentImg.filename
+  document.getElementById('imgModalImg').src = BASE + currentImg.url
+  document.getElementById('imgModalFilename').textContent = currentImg.filename
+  document.getElementById('imgModalSize').textContent = currentImg.size ? formatSize(currentImg.size) : '-'
+  document.getElementById('imgModalDate').textContent = new Date(currentImg.createdAt).toLocaleString('th-TH')
+  document.getElementById('imgModalUrl').value = BASE + currentImg.url
+  imgModal.show()
+}
+
+function copyUrl() {
+  const url = document.getElementById('imgModalUrl').value
+  navigator.clipboard.writeText(url).then(() => showToast('คัดลอก URL แล้ว'))
+}
+function copyUrlDirect(url) {
+  navigator.clipboard.writeText(url).then(() => showToast('คัดลอก URL แล้ว'))
+}
+
+async function uploadFiles(files) {
+  if (!files.length) return
+  const prog = document.getElementById('uploadProgress')
+  const bar  = document.getElementById('progressBar')
+  const txt  = document.getElementById('uploadStatusText')
+  prog.classList.remove('d-none')
+  let done = 0
+  for (const file of files) {
+    txt.textContent = `กำลังอัปโหลด: ${file.name}`
+    try {
+      await API.uploads.upload(file)
+    } catch(e) {
+      showToast(`อัปโหลด ${file.name} ล้มเหลว`, 'danger')
+    }
+    done++
+    bar.style.width = Math.round((done / files.length) * 100) + '%'
+  }
+  prog.classList.add('d-none')
+  bar.style.width = '0%'
+  showToast(`อัปโหลดสำเร็จ ${done} ไฟล์`)
+  loadMedia()
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB'
+  return (bytes/1024/1024).toFixed(1) + ' MB'
+}
+</script>
+</body>
+</html>

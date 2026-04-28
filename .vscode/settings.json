@@ -1,0 +1,723 @@
+{
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "*/.agent/workflows/*.json"
+            ],
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "workflow": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "version": {
+                                "type": "string"
+                            },
+                            "nodes": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "config": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "graph_explorer": {
+                        "type": "object",
+                        "properties": {
+                            "layout": {
+                                "type": "string"
+                            },
+                            "nodes": {
+                                "type": "object"
+                            },
+                            "edges": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "recommendations": [
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-eslint"
+    ],
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "flowVisualization": {
+        "database_tables": {
+            "users": {
+                "columns": [
+                    "id",
+                    "email",
+                    "password",
+                    "name",
+                    "phone",
+                    "role",
+                    "created_at",
+                    "updated_at"
+                ],
+                "primary_key": "id",
+                "indexes": [
+                    "email",
+                    "phone"
+                ]
+            },
+            "events": {
+                "columns": [
+                    "id",
+                    "title",
+                    "description",
+                    "date",
+                    "time",
+                    "location",
+                    "status",
+                    "created_at",
+                    "updated_at"
+                ],
+                "primary_key": "id",
+                "indexes": [
+                    "date",
+                    "status"
+                ]
+            },
+            "seats": {
+                "columns": [
+                    "id",
+                    "event_id",
+                    "seat_number",
+                    "row",
+                    "section",
+                    "price",
+                    "status",
+                    "created_at",
+                    "updated_at"
+                ],
+                "primary_key": "id",
+                "indexes": [
+                    "event_id",
+                    "status",
+                    "seat_number"
+                ]
+            },
+            "bookings": {
+                "columns": [
+                    "id",
+                    "user_id",
+                    "event_id",
+                    "seat_id",
+                    "booking_reference",
+                    "status",
+                    "payment_status",
+                    "total_amount",
+                    "created_at",
+                    "updated_at"
+                ],
+                "primary_key": "id",
+                "indexes": [
+                    "user_id",
+                    "event_id",
+                    "seat_id",
+                    "booking_reference"
+                ]
+            },
+            "payments": {
+                "columns": [
+                    "id",
+                    "booking_id",
+                    "amount",
+                    "payment_method",
+                    "transaction_id",
+                    "status",
+                    "created_at",
+                    "updated_at"
+                ],
+                "primary_key": "id",
+                "indexes": [
+                    "booking_id",
+                    "transaction_id"
+                ]
+            },
+            "event_categories": {
+                "columns": [
+                    "id",
+                    "name",
+                    "description",
+                    "created_at"
+                ],
+                "primary_key": "id",
+                "indexes": [
+                    "name"
+                ]
+            }
+        },
+        "api_endpoints": {
+            "/api/auth/login": {
+                "method": "POST",
+                "description": "User authentication",
+                "data_extraction": {
+                    "from_table": "users",
+                    "extracts": [
+                        "id",
+                        "email",
+                        "name",
+                        "role",
+                        "phone"
+                    ],
+                    "conditions": [
+                        "email",
+                        "password"
+                    ],
+                    "returns": "user_profile + authentication_token"
+                },
+                "database_operations": [
+                    {
+                        "table": "users",
+                        "operation": "SELECT",
+                        "columns": [
+                            "id",
+                            "email",
+                            "password",
+                            "name",
+                            "role",
+                            "phone"
+                        ],
+                        "conditions": {
+                            "email": "input.email",
+                            "password": "hashed_input.password"
+                        },
+                        "purpose": "Verify user credentials and return profile"
+                    }
+                ],
+                "flow": [
+                    "client_request",
+                    "validate_input_format",
+                    "hash_password",
+                    "db_query_user_by_email",
+                    "verify_password_match",
+                    "generate_jwt_token",
+                    "log_authentication",
+                    "response_with_user_data"
+                ]
+            },
+            "/api/bookings": {
+                "method": "POST",
+                "description": "Create new booking",
+                "data_extraction": {
+                    "from_tables": [
+                        "seats",
+                        "events",
+                        "users"
+                    ],
+                    "extracts": {
+                        "seats": [
+                            "seat_number",
+                            "row",
+                            "section",
+                            "price"
+                        ],
+                        "events": [
+                            "title",
+                            "date",
+                            "time",
+                            "location"
+                        ],
+                        "users": [
+                            "name",
+                            "email"
+                        ]
+                    },
+                    "conditions": [
+                        "seat_id",
+                        "event_id",
+                        "user_id"
+                    ],
+                    "returns": "complete_booking_details_with_confirmation"
+                },
+                "database_operations": [
+                    {
+                        "table": "seats",
+                        "operation": "SELECT",
+                        "columns": [
+                            "id",
+                            "seat_number",
+                            "row",
+                            "section",
+                            "price",
+                            "status"
+                        ],
+                        "conditions": {
+                            "id": "input.seat_id",
+                            "status": "available"
+                        },
+                        "purpose": "Check seat availability and get seat details"
+                    },
+                    {
+                        "table": "events",
+                        "operation": "SELECT",
+                        "columns": [
+                            "id",
+                            "title",
+                            "date",
+                            "time",
+                            "location"
+                        ],
+                        "conditions": {
+                            "id": "input.event_id",
+                            "status": "active"
+                        },
+                        "purpose": "Verify event exists and is active"
+                    },
+                    {
+                        "table": "users",
+                        "operation": "SELECT",
+                        "columns": [
+                            "id",
+                            "name",
+                            "email"
+                        ],
+                        "conditions": {
+                            "id": "input.user_id"
+                        },
+                        "purpose": "Verify user exists"
+                    },
+                    {
+                        "table": "bookings",
+                        "operation": "INSERT",
+                        "data": {
+                            "user_id": "input.user_id",
+                            "event_id": "input.event_id",
+                            "seat_id": "input.seat_id",
+                            "booking_reference": "generated_reference",
+                            "status": "pending",
+                            "total_amount": "seat.price"
+                        },
+                        "purpose": "Create booking record"
+                    },
+                    {
+                        "table": "seats",
+                        "operation": "UPDATE",
+                        "conditions": {
+                            "id": "input.seat_id"
+                        },
+                        "data": {
+                            "status": "booked"
+                        },
+                        "purpose": "Update seat status to booked"
+                    }
+                ],
+                "flow": [
+                    "client_request",
+                    "validate_booking_input",
+                    "check_seat_availability",
+                    "verify_event_active",
+                    "verify_user_exists",
+                    "calculate_total_price",
+                    "generate_booking_reference",
+                    "create_booking_transaction",
+                    "update_seat_status",
+                    "send_email_confirmation",
+                    "response_with_booking_details"
+                ]
+            },
+            "/api/events": {
+                "method": "GET",
+                "description": "Get available events",
+                "data_extraction": {
+                    "from_tables": [
+                        "events",
+                        "seats"
+                    ],
+                    "extracts": {
+                        "events": [
+                            "id",
+                            "title",
+                            "description",
+                            "date",
+                            "time",
+                            "location",
+                            "status"
+                        ],
+                        "seats": [
+                            "COUNT(id) as available_seats"
+                        ]
+                    },
+                    "conditions": [
+                        "events.status = 'active'",
+                        "events.date >= CURRENT_DATE"
+                    ],
+                    "joins": "LEFT JOIN seats ON events.id = seats.event_id AND seats.status = 'available'",
+                    "group_by": "events.id",
+                    "returns": "events_list_with_available_seat_count"
+                },
+                "database_operations": [
+                    {
+                        "table": "events",
+                        "operation": "SELECT",
+                        "columns": [
+                            "id",
+                            "title",
+                            "description",
+                            "date",
+                            "time",
+                            "location",
+                            "status"
+                        ],
+                        "conditions": {
+                            "status": "active",
+                            "date": {
+                                "operator": ">=",
+                                "value": "CURRENT_DATE"
+                            }
+                        },
+                        "purpose": "Fetch active and upcoming events"
+                    },
+                    {
+                        "table": "seats",
+                        "operation": "SELECT",
+                        "columns": [
+                            "event_id",
+                            "COUNT(id) as available_seats"
+                        ],
+                        "conditions": {
+                            "status": "available"
+                        },
+                        "group_by": [
+                            "event_id"
+                        ],
+                        "purpose": "Count available seats per event"
+                    }
+                ],
+                "flow": [
+                    "client_request",
+                    "validate_query_parameters",
+                    "db_query_active_events",
+                    "count_available_seats_per_event",
+                    "merge_events_with_seat_counts",
+                    "apply_filters_and_pagination",
+                    "format_response",
+                    "response_events_list"
+                ]
+            },
+            "/api/users/profile": {
+                "method": "GET",
+                "description": "Get user profile with booking history",
+                "data_extraction": {
+                    "from_tables": [
+                        "users",
+                        "bookings",
+                        "events",
+                        "seats"
+                    ],
+                    "extracts": {
+                        "users": [
+                            "id",
+                            "name",
+                            "email",
+                            "phone",
+                            "role",
+                            "created_at"
+                        ],
+                        "bookings": [
+                            "id",
+                            "booking_reference",
+                            "status",
+                            "payment_status",
+                            "total_amount",
+                            "created_at"
+                        ],
+                        "events": [
+                            "title",
+                            "date",
+                            "time",
+                            "location"
+                        ],
+                        "seats": [
+                            "seat_number",
+                            "row",
+                            "section"
+                        ]
+                    },
+                    "conditions": [
+                        "users.id = :user_id"
+                    ],
+                    "joins": [
+                        "LEFT JOIN bookings ON users.id = bookings.user_id",
+                        "LEFT JOIN events ON bookings.event_id = events.id",
+                        "LEFT JOIN seats ON bookings.seat_id = seats.id"
+                    ],
+                    "returns": "user_profile_with_complete_booking_history"
+                },
+                "database_operations": [
+                    {
+                        "table": "users",
+                        "operation": "SELECT",
+                        "columns": [
+                            "id",
+                            "name",
+                            "email",
+                            "phone",
+                            "role",
+                            "created_at"
+                        ],
+                        "conditions": {
+                            "id": "authenticated_user_id"
+                        },
+                        "purpose": "Fetch user profile information"
+                    },
+                    {
+                        "table": "bookings",
+                        "operation": "SELECT",
+                        "columns": [
+                            "id",
+                            "booking_reference",
+                            "status",
+                            "payment_status",
+                            "total_amount",
+                            "created_at",
+                            "event_id",
+                            "seat_id"
+                        ],
+                        "conditions": {
+                            "user_id": "authenticated_user_id"
+                        },
+                        "order_by": "created_at DESC",
+                        "purpose": "Fetch user booking history"
+                    },
+                    {
+                        "table": "events",
+                        "operation": "SELECT",
+                        "columns": [
+                            "id",
+                            "title",
+                            "date",
+                            "time",
+                            "location"
+                        ],
+                        "conditions": {
+                            "id": "IN (bookings.event_id)"
+                        },
+                        "purpose": "Fetch event details for bookings"
+                    },
+                    {
+                        "table": "seats",
+                        "operation": "SELECT",
+                        "columns": [
+                            "id",
+                            "seat_number",
+                            "row",
+                            "section"
+                        ],
+                        "conditions": {
+                            "id": "IN (bookings.seat_id)"
+                        },
+                        "purpose": "Fetch seat details for bookings"
+                    }
+                ],
+                "flow": [
+                    "authenticate_jwt_token",
+                    "validate_user_id",
+                    "db_query_user_profile",
+                    "db_query_booking_history",
+                    "db_query_event_details_for_bookings",
+                    "db_query_seat_details_for_bookings",
+                    "merge_all_user_data",
+                    "format_profile_response",
+                    "response_user_profile_with_history"
+                ]
+            },
+            "/api/seats/availability": {
+                "method": "GET",
+                "description": "Get seat availability for specific event",
+                "data_extraction": {
+                    "from_table": "seats",
+                    "extracts": [
+                        "id",
+                        "seat_number",
+                        "row",
+                        "section",
+                        "price",
+                        "status"
+                    ],
+                    "conditions": [
+                        "event_id",
+                        "status"
+                    ],
+                    "returns": "all_seats_with_availability_status"
+                },
+                "database_operations": [
+                    {
+                        "table": "seats",
+                        "operation": "SELECT",
+                        "columns": [
+                            "id",
+                            "seat_number",
+                            "row",
+                            "section",
+                            "price",
+                            "status"
+                        ],
+                        "conditions": {
+                            "event_id": "query.event_id"
+                        },
+                        "order_by": [
+                            "row",
+                            "seat_number"
+                        ],
+                        "purpose": "Get all seats for event with availability"
+                    }
+                ],
+                "flow": [
+                    "client_request",
+                    "validate_event_id",
+                    "db_query_seats_by_event",
+                    "group_seats_by_availability",
+                    "format_seat_map_response",
+                    "response_seat_availability"
+                ]
+            }
+        },
+        "database_relationships": {
+            "users": {
+                "primary_key": "id",
+                "relationships": {
+                    "bookings": {
+                        "type": "one_to_many",
+                        "foreign_key": "user_id",
+                        "description": "User can have multiple bookings"
+                    }
+                }
+            },
+            "events": {
+                "primary_key": "id",
+                "relationships": {
+                    "bookings": {
+                        "type": "one_to_many",
+                        "foreign_key": "event_id",
+                        "description": "Event can have multiple bookings"
+                    },
+                    "seats": {
+                        "type": "one_to_many",
+                        "foreign_key": "event_id",
+                        "description": "Event has multiple seats"
+                    }
+                }
+            },
+            "bookings": {
+                "primary_key": "id",
+                "relationships": {
+                    "users": {
+                        "type": "many_to_one",
+                        "foreign_key": "user_id",
+                        "description": "Booking belongs to one user"
+                    },
+                    "events": {
+                        "type": "many_to_one",
+                        "foreign_key": "event_id",
+                        "description": "Booking belongs to one event"
+                    },
+                    "seats": {
+                        "type": "many_to_one",
+                        "foreign_key": "seat_id",
+                        "description": "Booking belongs to one seat"
+                    },
+                    "payments": {
+                        "type": "one_to_many",
+                        "foreign_key": "booking_id",
+                        "description": "Booking can have multiple payment attempts"
+                    }
+                }
+            },
+            "seats": {
+                "primary_key": "id",
+                "relationships": {
+                    "events": {
+                        "type": "many_to_one",
+                        "foreign_key": "event_id",
+                        "description": "Seat belongs to one event"
+                    },
+                    "bookings": {
+                        "type": "one_to_many",
+                        "foreign_key": "seat_id",
+                        "description": "Seat can have multiple bookings (over time)"
+                    }
+                }
+            },
+            "payments": {
+                "primary_key": "id",
+                "relationships": {
+                    "bookings": {
+                        "type": "many_to_one",
+                        "foreign_key": "booking_id",
+                        "description": "Payment belongs to one booking"
+                    }
+                }
+            }
+        },
+        "graph_styling": {
+            "nodes": {
+                "api_endpoint": {
+                    "color": "#4CAF50",
+                    "shape": "circle",
+                    "icon": "api"
+                },
+                "database": {
+                    "color": "#2196F3",
+                    "shape": "cylinder",
+                    "icon": "database"
+                },
+                "validation": {
+                    "color": "#FF9800",
+                    "shape": "diamond",
+                    "icon": "validate"
+                },
+                "transaction": {
+                    "color": "#9C27B0",
+                    "shape": "rectangle",
+                    "icon": "transaction"
+                },
+                "response": {
+                    "color": "#607D8B",
+                    "shape": "square",
+                    "icon": "response"
+                }
+            },
+            "edges": {
+                "data_flow": {
+                    "color": "#666",
+                    "width": 2,
+                    "style": "solid"
+                },
+                "error_flow": {
+                    "color": "#F44336",
+                    "width": 2,
+                    "style": "dashed"
+                },
+                "conditional": {
+                    "color": "#FF9800",
+                    "width": 2,
+                    "style": "dotted"
+                }
+            }
+        }
+    }
+}

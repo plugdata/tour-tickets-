@@ -19,14 +19,19 @@ const { authenticate, authorize } = require('../middleware/auth')
  *       200: { description: List of trips }
  */
 router.get('/', async (req, res) => {
-  const { search } = req.query;
-  const where = search ? {
-    title: { contains: search, mode: 'insensitive' }
-  } : {};
-  const trips = await prisma.trip.findMany({ 
+  const { search, type, hot, country, active } = req.query
+  const where = {}
+
+  if (search)  where.title    = { contains: search, mode: 'insensitive' }
+  if (type)    where.tripType = type                         // DOMESTIC | INTERNATIONAL
+  if (hot === 'true') where.isHot = true
+  if (country) where.country  = { contains: country, mode: 'insensitive' }
+  if (active === 'true') where.isActive = true
+
+  const trips = await prisma.trip.findMany({
     where,
-    include: { addons: true },
-    orderBy: { createdAt: 'desc' }
+    include: { addons: true, busRounds: { select: { id: true, departDate: true, duration: true, totalSeats: true, bookedSeats: true, isOpen: true } } },
+    orderBy: [{ hotOrder: 'asc' }, { createdAt: 'desc' }],
   })
   res.json(trips)
 })

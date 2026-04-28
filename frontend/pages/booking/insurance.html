@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
         body { font-family:'Sarabun',sans-serif; background:#f8f9fa; }
         .step-bar { display:flex; }
@@ -19,6 +20,25 @@
         .consent-item.checked { background:#f0fff4; border-color:#198754; }
         .consent-item.error   { background:#fff5f5; border-color:#dc3545; }
         .coverage-badge { background:linear-gradient(135deg,#6f42c1,#0d6efd); color:#fff; border-radius:.5rem; padding:.5rem 1rem; display:inline-flex; align-items:center; gap:.5rem; }
+        .form-label {
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #495057;
+        }
+        .form-control, .form-select {
+            height: 44px !important;
+            font-size: 0.95rem !important;
+            border-color: #ced4da;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #6f42c1;
+            box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.1);
+        }
+        .swal-font-th { font-family:'Sarabun',sans-serif !important; }
+        .swal2-popup { font-family:'Sarabun',sans-serif !important; }
+        .swal2-title { font-family:'Sarabun',sans-serif !important; }
+        .swal2-html-container { font-family:'Sarabun',sans-serif !important; }
+        .swal-btn-confirm, .swal-btn-cancel { font-family:'Sarabun',sans-serif !important; border-radius:10px !important; font-weight:600 !important; font-size:.92rem !important; }
     </style>
 </head>
 <body>
@@ -40,11 +60,12 @@
     </div>
 </nav>
 
-<!-- 4-Step bar -->
+<!-- 5-Step bar -->
 <div class="step-bar bg-white border-bottom mb-3">
-    <div class="step-item done"><i class="bi bi-check2 me-1"></i>เลือกที่นั่ง</div>
+    <div class="step-item done"><i class="bi bi-check2 me-1"></i>ที่นั่ง</div>
     <div class="step-item done"><i class="bi bi-check2 me-1"></i>ข้อมูล</div>
     <div class="step-item active"><i class="bi bi-shield-check me-1"></i>ประกัน</div>
+    <div class="step-item"><i class="bi bi-bag-plus me-1"></i>อุปกรณ์</div>
     <div class="step-item"><i class="bi bi-credit-card me-1"></i>ชำระเงิน</div>
 </div>
 
@@ -110,13 +131,16 @@
                 <i class="bi bi-arrow-left"></i>
             </button>
             <button class="btn btn-success flex-grow-1" onclick="goNext()" id="btnNext">
-                <i class="bi bi-credit-card me-1"></i>ถัดไป: ชำระเงิน
+                <i class="bi bi-bag-plus me-1"></i>ถัดไป: เลือกอุปกรณ์เช่า
             </button>
         </div>
     </div>
 </div>
 
+
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <script src="../../assets/js/config.js"></script>
 <script>
 const SESSION_KEY = 'bk_session_token';
@@ -199,18 +223,18 @@ function renderInsuranceForms() {
                 ${s.bloodType ? `<span class="badge bg-light text-dark border ms-auto">หมู่เลือด ${s.bloodType}</span>` : ''}
             </div>
             <div class="card-body">
-                <div class="row g-2">
+                <div class="row gx-3 gy-3">
                     <!-- Emergency contact -->
                     <div class="col-12"><div class="small fw-semibold text-muted mb-1"><i class="bi bi-telephone-fill me-1 text-danger"></i>บุคคลติดต่อกรณีฉุกเฉิน</div></div>
                     <div class="col-md-7">
                         <label class="form-label small">ชื่อ-นามสกุล <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm ins-emergency-name"
+                        <input type="text" class="form-control ins-emergency-name"
                             data-seat="${sn}" required placeholder="เช่น นาง สมหญิง ใจดี"
                             value="${s.emergencyName || ''}">
                     </div>
                     <div class="col-md-5">
                         <label class="form-label small">เบอร์โทร <span class="text-danger">*</span></label>
-                        <input type="tel" class="form-control form-control-sm ins-emergency-phone"
+                        <input type="tel" class="form-control ins-emergency-phone"
                             data-seat="${sn}" required placeholder="08x-xxx-xxxx" inputmode="tel"
                             value="${s.emergencyPhone || ''}">
                     </div>
@@ -218,13 +242,13 @@ function renderInsuranceForms() {
                     <div class="col-12 mt-1"><div class="small fw-semibold text-muted mb-1"><i class="bi bi-person-heart me-1 text-purple"></i>ผู้รับประโยชน์</div></div>
                     <div class="col-md-7">
                         <label class="form-label small">ชื่อ-นามสกุลผู้รับประโยชน์ <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm ins-beneficiary-name"
+                        <input type="text" class="form-control ins-beneficiary-name"
                             data-seat="${sn}" required placeholder="คำนำหน้า + ชื่อ + นามสกุล"
                             value="${s.beneficiaryName || ''}">
                     </div>
                     <div class="col-md-5">
                         <label class="form-label small">ความสัมพันธ์ <span class="text-danger">*</span></label>
-                        <select class="form-select form-select-sm ins-beneficiary-rel" data-seat="${sn}" required onchange="toggleOtherRel(this,${sn})">
+                        <select class="form-select ins-beneficiary-rel" data-seat="${sn}" required onchange="toggleOtherRel(this,${sn})">
                             <option value="">เลือก</option>
                             <option value="LEGAL_HEIR" ${s.beneficiaryRelation==='LEGAL_HEIR'?'selected':''}>ทายาทตามกฎหมาย</option>
                             <option value="SPOUSE"     ${s.beneficiaryRelation==='SPOUSE'?'selected':''}>คู่สมรส</option>
@@ -324,9 +348,21 @@ function validate() {
 }
 
 // ── Navigate ─────────────────────────────────────────────────────────────────
+let _insuranceSaved = false;
+
 async function goNext() {
     const err = validate();
-    if (err) { showToast(err, 'warning'); return; }
+    if (err) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'ข้อมูลไม่ครบถ้วน',
+            text: err,
+            confirmButtonText: 'รับทราบ',
+            confirmButtonColor: '#2563eb',
+            customClass: { popup: 'swal-font-th' },
+        });
+        return;
+    }
 
     const btn = document.getElementById('btnNext');
     btn.disabled = true;
@@ -336,25 +372,64 @@ async function goNext() {
         const insData  = collectInsuranceData();
         const consents = collectConsents();
 
-        // Merge insurance fields back into selectedSeats
         const mergedSeats = (sessionData.selectedSeats || []).map(s => {
             const ins = insData.find(i => i.seatNumber === s.seatNumber) || {};
             return { ...s, ...ins, ...consents };
         });
 
-        // Update session step 3 + merged seat data
         await postJSON('/booking-sessions', {
-            token: sessionToken,
-            step: 3,
-            selectedSeats: mergedSeats,
+            token: sessionToken, step: 3, selectedSeats: mergedSeats,
         });
 
-        window.location.href = `/frontend/pages/booking/ticket.html?token=${sessionToken}`;
-    } catch (e) {
-        showToast(e.message || 'เกิดข้อผิดพลาด', 'danger');
+        _insuranceSaved = true;
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-credit-card me-1"></i>ถัดไป: ชำระเงิน';
+        btn.innerHTML = '<i class="bi bi-bag-plus me-1"></i>ถัดไป: เลือกอุปกรณ์เช่า';
+
+        // ── SweetAlert2 rental popup ──
+        Swal.fire({
+            html: `
+            <div style="font-family:'Sarabun',sans-serif">
+                <div style="background:linear-gradient(135deg,#2563eb,#7c3aed);
+                            margin:-1.25em -1.25em 1.25em; padding:2rem 1.5rem 1.5rem;
+                            border-radius:.5rem .5rem 0 0; color:#fff; text-align:center">
+                    <div style="font-size:3rem;margin-bottom:.4rem">🎿</div>
+                    <div style="font-size:1.15rem;font-weight:700">มีอุปกรณ์ให้เช่าพร้อมทริป!</div>
+                    <div style="font-size:.82rem;opacity:.85;margin-top:.25rem">เพิ่มสีสันให้การเดินทางด้วยอุปกรณ์คุณภาพ</div>
+                </div>
+                <p style="color:#475569;font-size:.88rem;margin-bottom:1.1rem">
+                    ต้องการเพิ่ม <strong>อุปกรณ์เช่า</strong> ให้ผู้โดยสารในกลุ่มหรือไม่?<br>
+                    <span style="font-size:.77rem;color:#94a3b8">สามารถเลือกแยกตามแต่ละคนได้เลย</span>
+                </p>
+            </div>`,
+            showCancelButton: true,
+            confirmButtonText: '<i class="bi bi-bag-plus me-1"></i>ต้องการ!',
+            cancelButtonText:  '<i class="bi bi-x-circle me-1"></i>ไม่ต้องการ',
+            confirmButtonColor: '#f97316',
+            cancelButtonColor:  '#6c757d',
+            showCloseButton: true,
+            customClass: { popup: 'swal-font-th', confirmButton: 'swal-btn-confirm', cancelButton: 'swal-btn-cancel' },
+            reverseButtons: true,
+            width: '380px',
+        }).then(r => {
+            if (r.isConfirmed) {
+                window.location.href = `/frontend/pages/booking/rental.html?token=${sessionToken}`;
+            } else if (r.dismiss === Swal.DismissReason.cancel) {
+                window.location.href = `/frontend/pages/booking/ticket.html?token=${sessionToken}`;
+            }
+        });
+
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: e.message || 'ไม่สามารถบันทึกได้', confirmButtonText: 'ตกลง', confirmButtonColor: '#2563eb' });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-bag-plus me-1"></i>ถัดไป: เลือกอุปกรณ์เช่า';
     }
+}
+
+function goRental() {
+    window.location.href = `/frontend/pages/booking/rental.html?token=${sessionToken}`;
+}
+function skipRental() {
+    window.location.href = `/frontend/pages/booking/ticket.html?token=${sessionToken}`;
 }
 
 function goBack() {
@@ -367,7 +442,7 @@ let pageExitTimeout = null;
 function setupPageExitWarning() {
     // Warning when user tries to leave during booking process
     window.addEventListener('beforeunload', (e) => {
-        if (sessionToken) {
+        if (sessionToken && !_insuranceSaved) {
             e.preventDefault();
             e.returnValue = 'คุณกำลังอยู่ในระบบการจอง การออกจากหน้านี้จะยกเลิกการจองที่กำลังดำเนินการ คุณต้องการออกหรือไม่?';
             return e.returnValue;
@@ -404,14 +479,19 @@ function setupPageExitWarning() {
 async function cancelBooking() {
     try {
         if (sessionToken) {
-            await postJSON('/booking-sessions/cancel', {
-                token: sessionToken
-            });
-            console.log('[INSURANCE] Booking cancelled due to inactivity');
-            showToast('⏰ หมดเวลาการจอง การจองถูกยกเลิก กรุณาเริ่มใหม่', 'warning');
+            await postJSON('/booking-sessions/cancel', { token: sessionToken });
         }
         sessionToken = null;
-        window.location.href = '/frontend/pages/bus-rounds/list.html';
+        Swal.fire({
+            icon: 'warning',
+            title: '⏰ หมดเวลาการจอง',
+            text: 'การจองถูกยกเลิกเนื่องจากไม่มีการใช้งาน กรุณาเริ่มใหม่',
+            confirmButtonText: 'รับทราบ',
+            confirmButtonColor: '#f97316',
+            allowOutsideClick: false,
+        }).then(() => {
+            window.location.href = '/frontend/pages/bus-rounds/list.html';
+        });
     } catch (error) {
         console.error('[INSURANCE] Error cancelling booking:', error);
         window.location.href = '/frontend/pages/bus-rounds/list.html';
@@ -445,16 +525,18 @@ function showError(msg) {
             <a href="/frontend/pages/trips/list.html" class="btn btn-outline-primary">กลับหน้าทริป</a>
         </div>`;
 }
-function showToast(msg, type='warning') {
-    let c = document.getElementById('toastC');
-    if (!c) { c=document.createElement('div'); c.id='toastC'; c.className='position-fixed bottom-0 end-0 p-3'; c.style.zIndex=9999; document.body.appendChild(c); }
-    const id='t'+Date.now();
-    c.insertAdjacentHTML('beforeend',`
-        <div id="${id}" class="toast align-items-center text-bg-${type} border-0 show">
-            <div class="d-flex"><div class="toast-body">${msg}</div>
-            <button class="btn-close btn-close-white me-2 m-auto" onclick="document.getElementById('${id}').remove()"></button>
-            </div></div>`);
-    setTimeout(()=>document.getElementById(id)?.remove(),4000);
+function showToast(msg, type = 'warning') {
+    const iconMap = { warning: 'warning', danger: 'error', success: 'success', info: 'info' };
+    Swal.fire({
+        toast: true,
+        position: 'bottom-end',
+        icon: iconMap[type] || 'warning',
+        title: msg,
+        showConfirmButton: false,
+        timer: 3500,
+        timerProgressBar: true,
+        customClass: { popup: 'swal-font-th' },
+    });
 }
 </script>
 </body>

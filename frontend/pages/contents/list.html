@@ -21,23 +21,47 @@
             </div>
 
             <!-- Tabs -->
-            <ul class="nav nav-tabs mb-3">
-                <li class="nav-item"><a class="nav-link active" href="#" onclick="filterType('');return false;">ทั้งหมด</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType('TRIP_POST');return false;">โพสต์ทริป</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType('BLOG');return false;">บล็อก</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType('FAQ');return false;">FAQ</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType('ABOUT');return false;">เกี่ยวกับเรา</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType('SERVICE');return false;">บริการอื่นๆ</a></li>
+            <ul class="nav nav-tabs mb-3 flex-nowrap overflow-auto">
+                <li class="nav-item"><a class="nav-link active" href="#" onclick="filterType(this,'');return false;">ทั้งหมด</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType(this,'TRIP_POST');return false;"><i class="bi bi-journal-bookmark-fill me-1"></i>โพสต์ทริป</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType(this,'BLOG');return false;"><i class="bi bi-rss me-1"></i>บล็อก</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType(this,'ANNOUNCEMENT');return false;"><i class="bi bi-megaphone-fill me-1"></i>ประกาศ</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType(this,'FAQ');return false;"><i class="bi bi-question-circle-fill me-1"></i>FAQ</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType(this,'EXPERIENCE');return false;"><i class="bi bi-stars me-1"></i>ประสบการณ์</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType(this,'INQUIRY');return false;"><i class="bi bi-chat-dots me-1"></i>สอบถาม</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType(this,'ABOUT');return false;">เกี่ยวกับเรา</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="filterType(this,'SERVICE');return false;">บริการ</a></li>
             </ul>
 
             <div class="card">
                 <div class="card-body p-0">
+                    <!-- Search bar above table -->
+                    <div class="p-3 border-bottom d-flex gap-2">
+                        <div class="input-group" style="max-width:280px">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="searchInput" placeholder="ค้นหาหัวข้อ...">
+                        </div>
+                        <select class="form-select" style="max-width:160px" id="statusFilter">
+                            <option value="">สถานะทั้งหมด</option>
+                            <option value="true">เผยแพร่แล้ว</option>
+                            <option value="false">ซ่อน</option>
+                        </select>
+                    </div>
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
-                            <tr><th>#</th><th>ประเภท</th><th>หัวข้อ</th><th>ทริป</th><th>สถานะ</th><th>วันที่</th><th>จัดการ</th></tr>
+                            <tr>
+                                <th>#</th>
+                                <th>ประเภท</th>
+                                <th>หัวข้อ</th>
+                                <th>ทริป</th>
+                                <th>Hot/Featured</th>
+                                <th>สถานะ</th>
+                                <th>วันที่</th>
+                                <th>จัดการ</th>
+                            </tr>
                         </thead>
                         <tbody id="contentsBody">
-                            <tr><td colspan="7" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>
+                            <tr><td colspan="8" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -57,15 +81,25 @@
             <div class="modal-body">
                 <form id="contentForm">
                     <input type="hidden" id="contentId">
+                    <ul class="nav nav-tabs mb-3" id="formTabs">
+                        <li class="nav-item"><a class="nav-link active" data-ftab="main" href="#">ข้อมูลหลัก</a></li>
+                        <li class="nav-item"><a class="nav-link" data-ftab="media" href="#">รูป / วิดีโอ</a></li>
+                        <li class="nav-item"><a class="nav-link" data-ftab="flags" href="#">ตัวเลือก</a></li>
+                    </ul>
+                    <!-- Main tab -->
+                    <div id="ftab-main">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">ประเภท <span class="text-danger">*</span></label>
                             <select class="form-select" id="fType" required>
                                 <option value="TRIP_POST">โพสต์ทริป</option>
                                 <option value="BLOG">บล็อก</option>
-                                <option value="FAQ">FAQ</option>
+                                <option value="ANNOUNCEMENT">ประกาศ</option>
+                                <option value="FAQ">คำถามที่พบบ่อย (FAQ)</option>
+                                        <option value="EXPERIENCE">แชร์ประสบการณ์</option>
                                 <option value="ABOUT">เกี่ยวกับเรา</option>
                                 <option value="SERVICE">บริการอื่นๆ</option>
+                                <option value="INQUIRY">สอบถาม/ติดต่อ</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -78,28 +112,65 @@
                             <label class="form-label">หัวข้อ <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="fTitle" required>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tags (คั่นด้วย ,)</label>
+                            <input type="text" class="form-control" id="fTags" placeholder="ทริป, เกาะสมุย, ธรรมชาติ">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ชื่อผู้เขียน</label>
+                            <input type="text" class="form-control" id="fAuthor" placeholder="Admin หรือ ชื่อผู้เขียน">
+                        </div>
                         <div class="col-12">
                             <label class="form-label">เนื้อหา</label>
-                            <textarea class="form-control" id="fBody" rows="5"></textarea>
+                            <textarea class="form-control" id="fBody" rows="6"></textarea>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">URL รูปภาพ</label>
-                            <input type="text" class="form-control" id="fImage">
+                    </div>
+                    </div>
+                    <!-- Media tab -->
+                    <div id="ftab-media" class="d-none">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">URL รูปภาพหลัก</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="fImage" placeholder="https://... หรือ /uploads/...">
+                                <button class="btn btn-outline-secondary" type="button" onclick="openMediaPickForContent()">
+                                    <i class="bi bi-folder2-open"></i>
+                                </button>
+                            </div>
+                            <div id="fImagePreview" class="mt-2"></div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <label class="form-label">URL วิดีโอ</label>
-                            <input type="text" class="form-control" id="fVideo">
+                            <input type="text" class="form-control" id="fVideo" placeholder="https://youtube.com/...">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">ลิงก์</label>
-                            <input type="text" class="form-control" id="fLink">
+                        <div class="col-12">
+                            <label class="form-label">ลิงก์ภายนอก</label>
+                            <input type="text" class="form-control" id="fLink" placeholder="https://...">
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-check form-switch mt-4">
+                    </div>
+                    </div>
+                    <!-- Flags tab -->
+                    <div id="ftab-flags" class="d-none">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="fActive" checked>
-                                <label class="form-check-label">เผยแพร่</label>
+                                <label class="form-check-label fw-semibold">เผยแพร่</label>
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="fFeatured">
+                                <label class="form-check-label">Featured (แนะนำ)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="fHot">
+                                <label class="form-check-label">Hot (ฮอต)</label>
+                            </div>
+                        </div>
+                    </div>
                     </div>
                 </form>
             </div>
@@ -117,73 +188,210 @@
 <script src="../../assets/js/apiClient.js"></script>
 <script src="../../assets/js/app.js"></script>
 <script>
-let modal, currentType = '';
-const typeLabel = { TRIP_POST:'โพสต์ทริป', BLOG:'บล็อก', FAQ:'FAQ', ABOUT:'เกี่ยวกับเรา', SERVICE:'บริการ' };
-const typeBadge = { TRIP_POST:'primary', BLOG:'info', FAQ:'warning', ABOUT:'secondary', SERVICE:'success' };
+const BASE = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL.replace('/api','') : ''
+let modal, mediaPickModal, currentType = '', allContents = []
+
+const typeLabel = {
+  TRIP_POST:'โพสต์ทริป', BLOG:'บล็อก', FAQ:'FAQ', ABOUT:'เกี่ยวกับเรา',
+  SERVICE:'บริการ', ANNOUNCEMENT:'ประกาศ', GALLERY:'Gallery', EXPERIENCE:'ประสบการณ์', INQUIRY:'สอบถาม'
+}
+const typeBadge = {
+  TRIP_POST:'primary', BLOG:'info', FAQ:'warning', ABOUT:'secondary',
+  SERVICE:'success', ANNOUNCEMENT:'danger', GALLERY:'purple', EXPERIENCE:'pink', INQUIRY:'dark'
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await initPage();
-    modal = new bootstrap.Modal(document.getElementById('contentModal'));
-    const trips = await API.trips.list();
-    document.getElementById('fTripId').insertAdjacentHTML('beforeend', trips.map(t => `<option value="${t.id}">${t.title}</option>`).join(''));
-    loadContents();
-});
+    await initPage()
+    modal = new bootstrap.Modal(document.getElementById('contentModal'))
 
-function filterType(type) {
-    currentType = type;
-    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-    event.target.classList.add('active');
-    loadContents();
+    // Load trips for dropdown
+    try {
+        const trips = await API.trips.list()
+        document.getElementById('fTripId').insertAdjacentHTML('beforeend',
+            trips.map(t => `<option value="${t.id}">${t.title}</option>`).join(''))
+    } catch(_) {}
+
+    loadContents()
+
+    // Form tabs
+    document.querySelectorAll('#formTabs .nav-link').forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault()
+            document.querySelectorAll('#formTabs .nav-link').forEach(l => l.classList.remove('active'))
+            link.classList.add('active')
+            document.querySelectorAll('[id^="ftab-"]').forEach(p => p.classList.add('d-none'))
+            document.getElementById('ftab-' + link.dataset.ftab).classList.remove('d-none')
+        })
+    })
+
+    // Image preview live
+    document.getElementById('fImage').addEventListener('input', e => updateImagePreview(e.target.value))
+
+    // Search + status filter
+    let t
+    document.getElementById('searchInput').addEventListener('input', () => { clearTimeout(t); t = setTimeout(renderTable, 250) })
+    document.getElementById('statusFilter').addEventListener('change', renderTable)
+})
+
+function filterType(el, type) {
+    currentType = type
+    document.querySelectorAll('.nav-tabs .nav-link').forEach(l => l.classList.remove('active'))
+    el.classList.add('active')
+    loadContents()
 }
 
 async function loadContents() {
     try {
-        const data = await API.contents.list(currentType);
-        const tbody = document.getElementById('contentsBody');
-        if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">ไม่พบเนื้อหา</td></tr>'; return; }
-        tbody.innerHTML = data.map((c, i) => `
-            <tr>
-                <td>${i+1}</td>
-                <td><span class="badge bg-${typeBadge[c.type]}">${typeLabel[c.type]}</span></td>
-                <td><strong>${c.title}</strong></td>
-                <td>${c.trip?.title || '-'}</td>
-                <td><span class="badge ${c.isActive ? 'bg-success' : 'bg-secondary'}">${c.isActive ? 'เผยแพร่' : 'ซ่อน'}</span></td>
-                <td>${formatDateThai(c.createdAt)}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editContent(${JSON.stringify(c).replace(/"/g,'&quot;')})"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteContent(${c.id})"><i class="bi bi-trash"></i></button>
-                </td>
-            </tr>`).join('');
-    } catch (e) { showToast('โหลดล้มเหลว', 'danger'); }
+        allContents = await API.contents.list(currentType)
+        renderTable()
+    } catch (e) { showToast('โหลดล้มเหลว', 'danger') }
 }
 
-function openModal() { document.getElementById('contentForm').reset(); document.getElementById('contentId').value = ''; document.getElementById('fActive').checked = true; modal.show(); }
+function renderTable() {
+    const q      = document.getElementById('searchInput').value.toLowerCase()
+    const status = document.getElementById('statusFilter').value
+    let list = allContents.filter(c => {
+        const matchQ = !q || c.title.toLowerCase().includes(q) || (c.body||'').toLowerCase().includes(q)
+        const matchS = !status || String(c.isActive) === status
+        return matchQ && matchS
+    })
+
+    const tbody = document.getElementById('contentsBody')
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">ไม่พบเนื้อหา</td></tr>'; return }
+    tbody.innerHTML = list.map((c, i) => `
+        <tr>
+            <td>${i+1}</td>
+            <td><span class="badge bg-${typeBadge[c.type]||'secondary'}" style="${c.type==='GALLERY'?'background:#9b59b6!important':c.type==='EXPERIENCE'?'background:#e91e8c!important':''}">${typeLabel[c.type]||c.type}</span></td>
+            <td>
+                <strong>${c.title}</strong>
+                ${c.tags ? `<br><small class="text-muted">${c.tags}</small>` : ''}
+            </td>
+            <td>${c.trip?.title || '-'}</td>
+            <td>
+                ${c.isHot ? '<span class="badge bg-danger me-1">Hot</span>':''}
+                ${c.isFeatured ? '<span class="badge bg-warning text-dark">Featured</span>':''}
+                ${!c.isHot && !c.isFeatured ? '<span class="text-muted">-</span>' : ''}
+            </td>
+            <td><span class="badge ${c.isActive ? 'bg-success' : 'bg-secondary'}">${c.isActive ? 'เผยแพร่' : 'ซ่อน'}</span></td>
+            <td class="text-nowrap">${formatDateThai(c.createdAt)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editContent(${JSON.stringify(c).replace(/"/g,'&quot;')})"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteContent(${c.id})"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>`).join('')
+}
+
+function openModal() {
+    document.getElementById('contentForm').reset()
+    document.getElementById('contentId').value = ''
+    document.getElementById('fActive').checked = true
+    document.getElementById('fFeatured').checked = false
+    document.getElementById('fHot').checked = false
+    document.getElementById('fImagePreview').innerHTML = ''
+    // Reset to main tab
+    document.querySelectorAll('#formTabs .nav-link').forEach(l => {
+        l.classList.toggle('active', l.dataset.ftab === 'main')
+    })
+    document.querySelectorAll('[id^="ftab-"]').forEach(p => p.classList.toggle('d-none', p.id !== 'ftab-main'))
+    modal.show()
+}
+
 function editContent(c) {
-    document.getElementById('contentId').value = c.id;
-    document.getElementById('fType').value = c.type;
-    document.getElementById('fTripId').value = c.tripId || '';
-    document.getElementById('fTitle').value = c.title;
-    document.getElementById('fBody').value = c.body || '';
-    document.getElementById('fImage').value = c.imageUrl || '';
-    document.getElementById('fVideo').value = c.videoUrl || '';
-    document.getElementById('fLink').value = c.linkUrl || '';
-    document.getElementById('fActive').checked = c.isActive;
-    modal.show();
+    document.getElementById('contentId').value = c.id
+    document.getElementById('fType').value = c.type
+    document.getElementById('fTripId').value = c.tripId || ''
+    document.getElementById('fTitle').value = c.title
+    document.getElementById('fBody').value = c.body || ''
+    document.getElementById('fTags').value = c.tags || ''
+    document.getElementById('fAuthor').value = c.authorName || ''
+    document.getElementById('fImage').value = c.imageUrl || ''
+    document.getElementById('fVideo').value = c.videoUrl || ''
+    document.getElementById('fLink').value = c.linkUrl || ''
+    document.getElementById('fActive').checked = c.isActive
+    document.getElementById('fFeatured').checked = c.isFeatured || false
+    document.getElementById('fHot').checked = c.isHot || false
+    updateImagePreview(c.imageUrl || '')
+    // Reset tabs
+    document.querySelectorAll('#formTabs .nav-link').forEach(l => l.classList.toggle('active', l.dataset.ftab === 'main'))
+    document.querySelectorAll('[id^="ftab-"]').forEach(p => p.classList.toggle('d-none', p.id !== 'ftab-main'))
+    modal.show()
 }
+
 async function saveContent() {
-    const id = document.getElementById('contentId').value;
-    const tid = document.getElementById('fTripId').value;
-    const data = { type: document.getElementById('fType').value, tripId: tid ? parseInt(tid) : null, title: document.getElementById('fTitle').value, body: document.getElementById('fBody').value, imageUrl: document.getElementById('fImage').value, videoUrl: document.getElementById('fVideo').value, linkUrl: document.getElementById('fLink').value, isActive: document.getElementById('fActive').checked };
+    const id  = document.getElementById('contentId').value
+    const tid = document.getElementById('fTripId').value
+    const data = {
+        type:       document.getElementById('fType').value,
+        tripId:     tid ? parseInt(tid) : null,
+        title:      document.getElementById('fTitle').value,
+        body:       document.getElementById('fBody').value,
+        tags:       document.getElementById('fTags').value || null,
+        authorName: document.getElementById('fAuthor').value || null,
+        imageUrl:   document.getElementById('fImage').value || null,
+        videoUrl:   document.getElementById('fVideo').value || null,
+        linkUrl:    document.getElementById('fLink').value || null,
+        isActive:   document.getElementById('fActive').checked,
+        isFeatured: document.getElementById('fFeatured').checked,
+        isHot:      document.getElementById('fHot').checked,
+    }
+    if (!data.title) { showToast('กรุณากรอกหัวข้อ', 'warning'); return }
     try {
-        if (id) await API.contents.update(id, data); else await API.contents.create(data);
-        modal.hide(); showToast('บันทึกสำเร็จ'); loadContents();
-    } catch (e) { showToast(e.message, 'danger'); }
+        if (id) await API.contents.update(id, data)
+        else    await API.contents.create(data)
+        modal.hide(); showToast('บันทึกสำเร็จ'); loadContents()
+    } catch (e) { showToast(e.message, 'danger') }
 }
+
 async function deleteContent(id) {
     confirmAction('ต้องการลบเนื้อหานี้?', async () => {
-        try { await API.contents.delete(id); showToast('ลบสำเร็จ'); loadContents(); }
-        catch (e) { showToast(e.message, 'danger'); }
-    });
+        try { await API.contents.delete(id); showToast('ลบสำเร็จ'); loadContents() }
+        catch (e) { showToast(e.message, 'danger') }
+    })
+}
+
+function updateImagePreview(url) {
+    const prev = document.getElementById('fImagePreview')
+    if (url && url.trim()) {
+        const full = url.startsWith('http') ? url : BASE + url
+        prev.innerHTML = `<img src="${full}" style="max-height:100px;border-radius:8px;margin-top:.5rem" alt="">`
+    } else {
+        prev.innerHTML = ''
+    }
+}
+
+window.openMediaPickForContent = async function() {
+    if (!mediaPickModal) {
+        document.body.insertAdjacentHTML('beforeend', `
+        <div class="modal fade" id="contentMediaPick" tabindex="-1">
+          <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+              <div class="modal-header"><h5 class="modal-title">เลือกรูปภาพ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+              <div class="modal-body">
+                <div class="row g-2" id="cmpGrid">
+                  <div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`)
+        mediaPickModal = new bootstrap.Modal(document.getElementById('contentMediaPick'))
+    }
+    document.getElementById('cmpGrid').innerHTML = '<div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>'
+    mediaPickModal.show()
+    const uploads = await API.uploads.list()
+    document.getElementById('cmpGrid').innerHTML = uploads.map(u => `
+        <div class="col-6 col-md-3 col-lg-2">
+          <div class="border rounded overflow-hidden" style="cursor:pointer;aspect-ratio:1"
+               onclick="selectContentMedia('${u.url}')">
+            <img src="${BASE}${u.url}" class="w-100 h-100" style="object-fit:cover" alt="">
+          </div>
+        </div>`).join('')
+}
+window.selectContentMedia = function(url) {
+    document.getElementById('fImage').value = url
+    updateImagePreview(url)
+    if (mediaPickModal) mediaPickModal.hide()
 }
 </script>
 </body>

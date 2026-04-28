@@ -71,27 +71,61 @@ router.post('/', authenticate, async (req, res) => {
 
 /**
  * @swagger
- * /api/payments/{id}/confirm:
+ * /api/payments/guest/{sessionToken}:
  *   patch:
  *     tags: [Payments]
- *     summary: Confirm payment (Admin)
- *     security: [{ bearerAuth: [] }]
+ *     summary: Update payment slip for guest
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: sessionToken
  *         required: true
- *         schema: { type: integer }
+ *         schema: { type: string }
  *     requestBody:
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [slipUrl]
  *             properties:
- *               status: { type: string, enum: [CONFIRMED, REJECTED] }
+ *               slipUrl: { type: string }
  *     responses:
  *       200: { description: Updated }
  */
+router.patch('/guest/:sessionToken', async (req, res) => {
+  const { sessionToken } = req.params;
+  const { slipUrl } = req.body;
+
+  try {
+    const session = await prisma.bookingSession.findUnique({
+      where: { token: sessionToken }
+    });
+
+    if (!session || !session.bookingId) {
+      return res.status(404).json({ message: 'Valid booking session not found' });
+    }
+
+    const payment = await prisma.payment.findFirst({
+      where: { bookingId: session.bookingId }
+    });
+
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment record not found' });
+    }
+
+    const updatedPayment = await prisma.payment.update({
+      where: { id: payment.id },
+      data: { slipUrl, status: 'PENDING' }
+    });
+
+    res.json(updatedPayment);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
 router.patch('/:id/confirm', authenticate, authorize('ADMIN'), async (req, res) => {
+
   const { status } = req.body
   const payment = await prisma.payment.update({
     where: { id: Number(req.params.id) },

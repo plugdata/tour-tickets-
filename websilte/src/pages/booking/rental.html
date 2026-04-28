@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เลือกอุปกรณ์เช่า - จองรถตู้</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        :root {
+            /* โทนสีใหม่ สบายตา สไตล์แอปเดินทางชั้นนำ */
+            --primary: #006ce4;
+            /* Blue เหมือน Agoda/Booking */
+            --primary-dark: #003580;
+            --primary-light: #f0f6ff;
+            --surface: #ffffff;
+            --bg: #f5f7fa;
+            --border: #d1d5db;
+            --text-main: #1a1a1a;
+            --text-muted: #4b5563;
+            --success: #008009;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Step bar (Clean look) ── */
+        .step-bar {
+            display: flex;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .step-item {
+            flex: 1;
+            text-align: center;
+            padding: .6rem .2rem;
+            font-size: .75rem;
+            color: var(--text-muted);
+            border-bottom: 3px solid #e5e7eb;
+        }
+
+        .step-item.active {
+            color: var(--primary);
+            border-color: var(--primary);
+            font-weight: 700;
+        }
+
+        .step-item.done {
+            color: var(--success);
+            border-color: var(--success);
+        }
+
+        /* ── Passenger card (Soft & Clear) ── */
+        .pax-card {
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .pax-header {
+            background: #fff;
+            border-bottom: 1px solid #f1f5f9;
+            padding: .85rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .pax-header.female {
+            border-left: 5px solid #ec4899;
+        }
+
+        .pax-header:not(.female) {
+            border-left: 5px solid var(--primary);
+        }
+
+        .pax-name {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .pax-seat-badge {
+            background: #f1f5f9;
+            color: var(--text-muted);
+            border-radius: 6px;
+            font-size: .75rem;
+            padding: .15rem .5rem;
+            font-weight: 600;
+        }
+
+        .pax-body {
+            padding: 1rem 1.25rem;
+            background: #fff;
+        }
+
+        /* ── Status badge ── */
+        .status-badge {
+            font-size: .72rem;
+            padding: .25rem .75rem;
+            border-radius: 50px;
+            font-weight: 700;
+            border: 1px solid transparent;
+        }
+
+        .status-none {
+            background: #f9fafb;
+            color: #6b7280;
+            border-color: #e5e7eb;
+        }
+
+        .status-done {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        /* ── Item chips ── */
+        .item-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            background: #fff;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .35rem .6rem;
+            font-size: .85rem;
+            font-weight: 500;
+            margin: 0 .4rem .4rem 0;
+        }
+
+        /* ── Add button (Large for seniors) ── */
+        .btn-add {
+            width: 100%;
+            border: 2px dashed #94a3b8;
+            background: #f8fafc;
+            color: var(--text-muted);
+            border-radius: 10px;
+            padding: .75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+        }
+
+        .btn-add:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .btn-add.has-items {
+            border: 2px solid var(--primary);
+            background: #fff;
+            color: var(--primary);
+        }
+
+        /* ── Summary bar (Solid & Clear) ── */
+        .summary-card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 1.25rem;
+        }
+
+        .s-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: .6rem 0;
+            font-size: .95rem;
+        }
+
+        .s-row+.s-row {
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .grand-bar {
+            background: var(--primary-dark);
+            color: #fff;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: .75rem;
+        }
+
+        /* ── Bottom bar ── */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-top: 1px solid var(--border);
+            padding: .85rem 1rem;
+            z-index: 100;
+        }
+
+        .btn-next {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: .85rem 1.75rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+        }
+
+        /* ── SweetAlert2 Refined (Formal List) ── */
+        .swal-rental-popup {
+            border-radius: 12px !important;
+            width: 95% !important;
+            max-width: 480px !important;
+        }
+
+        .swal-rental-header {
+            padding: 1.5rem 1.5rem 1rem;
+            border-bottom: 2px solid #f1f5f9;
+            text-align: left;
+        }
+
+        .addon-list {
+            display: flex;
+            flex-direction: column;
+            padding: 0.5rem 0;
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+
+        .addon-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.1rem 1.5rem;
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.2s;
+        }
+        .addon-row.selected {
+            background-color: #fafafa;
+            border-left: 4px solid var(--primary);
+        }
+
+        .addon-row-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .addon-row-name { 
+            font-size: 1.05rem; 
+            font-weight: 700; 
+            color: var(--text-main); 
+        }
+        .addon-row-price { 
+            font-size: 0.9rem; 
+            color: var(--text-muted); 
+            font-weight: 500;
+        }
+
+        .addon-row-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .tile-qty-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .tile-qty-btn:active { background: #f3f4f6; }
+        .tile-qty-btn.plus { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        .tile-qty-num { 
+            font-size: 1.15rem; 
+            font-weight: 700; 
+            min-width: 24px; 
+            text-align: center; 
+        }
+
+        .swal-rental-footer {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid #f1f5f9;
+            background: #fcfcfc;
+        }
+
+        /* ── SweetAlert2 Button Actions Layout ── */
+        .swal2-actions {
+            display: flex !important;
+            flex-direction: row-reverse !important; /* ยืนยันอยู่ขวาสำหรับนิ้วโปรง */
+            justify-content: center !important;
+            gap: 12px !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 1.25rem 1.5rem 1.75rem !important;
+            background: #fdfdfd !important;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        .swal-confirm-btn {
+            flex: 1;
+            background: var(--primary) !important;
+            color: #fff !important;
+            border-radius: 10px !important;
+            padding: .85rem !important;
+            font-size: 1.05rem !important;
+            font-weight: 700 !important;
+            border: none !important;
+            box-shadow: 0 4px 6px rgba(0, 108, 228, 0.15) !important;
+        }
+
+        .swal-clear-btn {
+            flex: 1;
+            background: #f1f5f9 !important;
+            color: #475569 !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            padding: .85rem !important;
+            font-size: 1.05rem !important;
+            font-weight: 600 !important;
+            box-shadow: none !important;
+        }
+        
+        .swal-clear-btn:hover {
+            background: #e2e8f0 !important;
+            color: #1e293b !important;
+        }
+
+        /* Override Swal default close button */
+        .swal2-close {
+            color: #94a3b8 !important;
+            font-size: 2rem !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-light bg-white border-bottom px-3 py-2 sticky-top shadow-sm">
+        <div class="d-flex align-items-center gap-2 w-100">
+            <button class="btn btn-sm btn-light border" onclick="goBack()">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <div class="flex-grow-1">
+                <div class="fw-bold" style="font-size:1.05rem">เลือกอุปกรณ์เช่า</div>
+                <div class="text-muted" style="font-size:.73rem" id="hdrSub"></div>
+            </div>
+            <span class="badge bg-light text-primary border"
+                style="font-size:.73rem;padding:.35rem .65rem;border-radius:20px;">
+                <i class="bi bi-bag-check-fill me-1"></i>อุปกรณ์เสริม
+            </span>
+        </div>
+    </nav>
+
+    <!-- Step bar -->
+    <div class="step-bar mb-3">
+        <div class="step-item done">1. ที่นั่ง</div>
+        <div class="step-item done">2. ข้อมูล</div>
+        <div class="step-item done">3. ประกัน</div>
+        <div class="step-item active">4. อุปกรณ์</div>
+        <div class="step-item">5. จ่ายเงิน</div>
+    </div>
+
+    <!-- Container -->
+    <div class="container-fluid px-3 pb-5" style="max-width:680px;margin:0 auto">
+
+        <div id="loadingState" class="text-center py-5">
+            <div class="spinner-border text-primary mb-2"></div>
+            <div>กำลังเตรียมความพร้อม...</div>
+        </div>
+
+        <!-- No addons -->
+        <div id="noAddonsState" class="d-none text-center py-5">
+            <i class="bi bi-bag-x fs-1 text-muted d-block mb-2"></i>
+            <div class="fw-bold mb-1">ไม่มีอุปกรณ์สำหรับทริปนี้</div>
+            <button class="btn btn-primary rounded-pill px-5 mt-3" onclick="goNext()">
+                ไปหน้าชำระเงิน <i class="bi bi-chevron-right ms-1"></i>
+            </button>
+        </div>
+
+        <!-- Main -->
+        <div id="mainContent" class="d-none">
+
+            <div class="alert alert-light border shadow-sm mb-4 py-2" style="font-size:.9rem;border-radius:10px">
+                <i class="bi bi-info-circle-fill text-primary me-2"></i>
+                คุณสามารถเลือกเช่าอุปกรณ์เสริมแยกสำหรับผู้โดยสารแต่ละท่านได้
+            </div>
+
+            <!-- Passenger cards -->
+            <div id="passengerCards"></div>
+
+            <!-- Summary -->
+            <div class="summary-card mb-5">
+                <div class="fw-bold mb-3"
+                    style="font-size:1.1rem; border-bottom: 2px solid #f1f5f9; padding-bottom:.5rem;">
+                    <i class="bi bi-list-check me-2 text-primary"></i>สรุปรายการที่เลือก
+                </div>
+                <div id="summaryRows"></div>
+                <div class="grand-bar">
+                    <span class="fw-bold" style="font-size:1.05rem">ยอดรวมอุปกรณ์ทั้งกลุ่ม</span>
+                    <span style="font-size:1.4rem;font-weight:800" id="grandTotal">฿0</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="bottom-bar" id="bottomBar" style="display:none">
+        <div style="max-width:680px;margin:0 auto">
+            <div class="d-flex gap-2">
+                <button class="btn btn-light border px-3" style="border-radius:10px" onclick="goBack()">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="btn-next shadow-sm" onclick="goNext()" id="btnNext">
+                    ชำระเงิน <i class="bi bi-chevron-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script src="/src/assets/js/config.js"></script>
+    <script>
+        /* ── Config ── */
+        const SESSION_KEY = 'bk_session_token';
+
+        /* ── State ── */
+        let sessionToken, sessionData, roundData, addonsList = [];
+        let selectedAddons = {};
+
+        /* ── Init ── */
+        document.addEventListener('DOMContentLoaded', async () => {
+            sessionToken = new URLSearchParams(location.search).get('token') || localStorage.getItem(SESSION_KEY);
+            if (!sessionToken) { showError('ไม่พบข้อมูลการจอง'); return; }
+
+            try {
+                sessionData = await fetchJSON('/booking-sessions/' + sessionToken);
+                if (!sessionData) { showError('Session หมดอายุ'); return; }
+
+                const all = await fetchJSON('/bus-rounds');
+                roundData = all.find(r => r.id == sessionData.busRoundId);
+                if (roundData) {
+                    document.getElementById('hdrSub').textContent = `${roundData.trip?.title} | ${roundData.startPoint} → ${roundData.endPoint}`;
+                }
+
+                addonsList = await fetchJSON('/addons/active').catch(() => []);
+                if (sessionData.perSeatAddons) selectedAddons = sessionData.perSeatAddons;
+
+                document.getElementById('loadingState').classList.add('d-none');
+                if (!addonsList.filter(a => a.isActive).length) {
+                    document.getElementById('noAddonsState').classList.remove('d-none');
+                    return;
+                }
+
+                buildPassengerCards();
+                renderSummary();
+                document.getElementById('mainContent').classList.remove('d-none');
+                document.getElementById('bottomBar').style.display = 'block';
+            } catch (e) { showError(e.message); }
+        });
+
+        //  Reset button state on pageshow (handles back navigation from cache)
+        window.addEventListener('pageshow', (event) => {
+            const btnNext = document.getElementById('btnNext');
+            if (btnNext) {
+                btnNext.disabled = false;
+                btnNext.innerHTML = 'ชำระเงิน <i class="bi bi-chevron-right ms-1"></i>';
+                btnNext.classList.remove('btn-success');
+                btnNext.style.background = ''; // Reset custom success background
+            }
+        });
+
+        function buildPassengerCards() {
+            const seats = sessionData.selectedSeats || [];
+            const container = document.getElementById('passengerCards');
+
+            container.innerHTML = seats.map((s, idx) => {
+                const isMale = s.gender === 'MALE';
+                const displayName = [s.namePrefix, s.firstName, s.lastName].filter(Boolean).join(' ') || s.passengerName || `ผู้โดยสาร ${idx + 1}`;
+                const sn = String(s.seatNumber);
+                if (!selectedAddons[sn]) selectedAddons[sn] = {};
+
+                return `
+        <div class="pax-card">
+            <div class="pax-header ${!isMale ? 'female' : ''}">
+                <div>
+                    <div class="pax-name">${displayName}</div>
+                    <span class="pax-seat-badge">ที่นั่ง ${sn}</span>
+                </div>
+                <span id="badge_${sn}" class="status-badge status-none">ยังไม่เลือก</span>
+            </div>
+            <div class="pax-body">
+                <div class="mb-3" id="chips_${sn}"></div>
+                <button class="btn-add" id="addbtn_${sn}" onclick="openAddonPicker('${sn}')">
+                    <i class="bi bi-plus-circle"></i> เลือกอุปกรณ์สำหรับท่านนี้
+                </button>
+            </div>
+        </div>`;
+            }).join('');
+
+            seats.forEach(s => updatePassengerCard(String(s.seatNumber)));
+        }
+
+        function openAddonPicker(sn) {
+            const seat = (sessionData.selectedSeats || []).find(s => String(s.seatNumber) === String(sn));
+            const displayName = seat ? ([seat.namePrefix, seat.firstName, seat.lastName].filter(Boolean).join(' ') || seat.passengerName) : `ที่นั่ง ${sn}`;
+
+            const activeAddons = addonsList.filter(a => a.isActive);
+            const workQty = {};
+            const cur = selectedAddons[sn] || {};
+            activeAddons.forEach(a => workQty[a.id] = cur[a.id] || 0);
+
+            const calcTotal = () => activeAddons.reduce((s, a) => s + a.price * (workQty[a.id] || 0), 0);
+
+            const buildList = () => activeAddons.map(a => {
+                const qty = workQty[a.id] || 0;
+                return `
+        <div class="addon-row ${qty > 0 ? 'selected' : ''}" id="row_${a.id}">
+            <div class="addon-row-info">
+                <span class="addon-row-name">${a.name}</span>
+                <span class="addon-row-price">ค่าเช่า ฿${Number(a.price).toLocaleString()} / ชิ้น</span>
+            </div>
+            <div class="addon-row-controls">
+                <button class="tile-qty-btn minus" onclick="tileQty(${a.id}, -1)">−</button>
+                <span class="tile-qty-num" id="tqty_${a.id}">${qty}</span>
+                <button class="tile-qty-btn plus"  onclick="tileQty(${a.id}, +1)">+</button>
+            </div>
+        </div>`;
+            }).join('');
+
+            window._workQty = workQty;
+            window.tileQty = (id, delta) => {
+                window._workQty[id] = Math.max(0, (window._workQty[id] || 0) + delta);
+                const q = window._workQty[id];
+                const row = document.getElementById(`row_${id}`);
+                if (row) row.classList.toggle('selected', q > 0);
+                document.getElementById(`tqty_${id}`).textContent = q;
+                const total = activeAddons.reduce((s, a) => s + a.price * (window._workQty[a.id] || 0), 0);
+                document.getElementById('swal_total').textContent = `฿${Number(total).toLocaleString()}`;
+            };
+
+            window.clearAllItems = () => {
+                activeAddons.forEach(a => {
+                    window._workQty[a.id] = 0;
+                    const row = document.getElementById(`row_${a.id}`);
+                    if (row) row.classList.remove('selected');
+                    const qtyEl = document.getElementById(`tqty_${a.id}`);
+                    if (qtyEl) qtyEl.textContent = '0';
+                });
+                document.getElementById('swal_total').textContent = '฿0';
+            };
+
+            Swal.fire({
+                html: `
+        <div class="swal-rental-header">
+            <div class="fw-bold text-dark" style="font-size:1.2rem">${displayName}</div>
+            <div class="text-muted small">โปรดเลือกจำนวนอุปกรณ์ที่ท่านต้องการเช่า</div>
+        </div>
+        <div class="addon-list">${buildList()}</div>
+        <div class="swal-rental-footer">
+            <div class="fw-bold" style="font-size:1.15rem; color:#1e293b">
+                ยอดรวมท่านนี้: <span id="swal_total" class="text-primary" style="font-size:1.3rem">฿0</span>
+            </div>
+        </div>`,
+                confirmButtonText: 'ยืนยันรายการ',
+                showDenyButton: true,
+                denyButtonText: 'ล้างข้อมูล',
+                customClass: { 
+                    popup: 'swal-rental-popup', 
+                    confirmButton: 'swal-confirm-btn',
+                    denyButton: 'swal-clear-btn'
+                },
+                showCloseButton: true,
+                buttonsStyling: false,
+                didOpen: () => window.tileQty(activeAddons[0].id, 0),
+                preConfirm: () => ({ ...window._workQty }),
+            }).then(result => {
+                if (result.isDenied) {
+                    window.clearAllItems();
+                    selectedAddons[sn] = {};
+                    updatePassengerCard(sn);
+                    renderSummary();
+                    // อาจจะไม่ต้องปิด pop หรือเปิดใหม่เพื่อให้เลือกต่อได้
+                    return; 
+                }
+                if (!result.isConfirmed) return;
+                selectedAddons[sn] = {};
+                Object.entries(result.value).forEach(([id, qty]) => { if (qty > 0) selectedAddons[sn][id] = qty; });
+                updatePassengerCard(sn);
+                renderSummary();
+            });
+        }
+
+        function updatePassengerCard(sn) {
+            const items = selectedAddons[sn] || {};
+            const chipsEl = document.getElementById(`chips_${sn}`);
+            const badgeEl = document.getElementById(`badge_${sn}`);
+            const btnEl = document.getElementById(`addbtn_${sn}`);
+            const entries = Object.entries(items);
+            const total = calcSeatTotal(sn);
+
+            if (!entries.length) {
+                chipsEl.innerHTML = '';
+                badgeEl.textContent = 'ยังไม่เลือก';
+                badgeEl.className = 'status-badge status-none';
+                btnEl.className = 'btn-add';
+                btnEl.innerHTML = '<i class="bi bi-plus-circle"></i> เลือกอุปกรณ์สำหรับท่านนี้';
+            } else {
+                chipsEl.innerHTML = entries.map(([id, qty]) => {
+                    const a = addonsList.find(x => x.id == id);
+                    return a ? `<span class="item-chip">${a.name} (x${qty})</span>` : '';
+                }).join('');
+                badgeEl.textContent = `฿${Number(total).toLocaleString()}`;
+                badgeEl.className = 'status-badge status-done';
+                btnEl.className = 'btn-add has-items';
+                btnEl.innerHTML = 'แก้ไขรายการ';
+            }
+        }
+
+        function calcSeatTotal(sn) {
+            return Object.entries(selectedAddons[sn] || {}).reduce((s, [id, qty]) => s + ((addonsList.find(x => x.id == id)?.price || 0) * qty), 0);
+        }
+
+        function renderSummary() {
+            const seats = sessionData.selectedSeats || [];
+            let grand = 0;
+            const html = seats.map(s => {
+                const sn = String(s.seatNumber);
+                const name = [s.namePrefix, s.firstName, s.lastName].filter(Boolean).join(' ') || 'ผู้โดยสาร';
+                const items = selectedAddons[sn] || {};
+                const total = calcSeatTotal(sn);
+                grand += total;
+                if (!Object.keys(items).length) return `<div class="s-row"><div class="fw-bold">${name}</div><div class="text-muted">ไม่ได้เลือก</div></div>`;
+                const desc = Object.entries(items).map(([id, q]) => `${addonsList.find(x => x.id == id)?.name} (x${q})`).join(', ');
+                return `<div class="s-row"><div><div class="fw-bold">${name}</div><div class="text-muted small">${desc}</div></div><div class="fw-bold text-primary">฿${Number(total).toLocaleString()}</div></div>`;
+            }).join('');
+            document.getElementById('summaryRows').innerHTML = html;
+            document.getElementById('grandTotal').textContent = `฿${Number(grand).toLocaleString()}`;
+        }
+
+        async function goNext() {
+            const btn = document.getElementById('btnNext');
+            const originalHTML = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังบันทึก...';
+            
+            try {
+                const flat = [];
+                Object.entries(selectedAddons).forEach(([sn, items]) => {
+                    Object.entries(items).forEach(([id, qty]) => {
+                        if (qty > 0) {
+                            flat.push({ addonId: parseInt(id), quantity: qty, seatNumber: sn });
+                        }
+                    });
+                });
+
+                const res = await postJSON('/booking-sessions', { 
+                    token: sessionToken, 
+                    step: 4, 
+                    addonsData: flat, 
+                    perSeatAddons: selectedAddons 
+                });
+
+                if (res.error) throw new Error(res.message || 'บันทึกไม่สำเร็จ');
+
+                // แสดง Popup ตรงกลางจอ (สวยงามสำหรับมือถือ)
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'บันทึกสำเร็จ',
+                    text: 'เตรียมพร้อมสำหรับการชำระเงิน',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    position: 'center',
+                    customClass: { popup: 'swal-rental-popup' }
+                });
+
+                window.location.href = `/booking/ticket?token=${sessionToken}`;
+
+            } catch (e) {
+                console.error('[RENTAL] Save error:', e);
+                Swal.fire({ 
+                    icon: 'error', 
+                    title: 'ขออภัย', 
+                    text: e.message || 'ระบบขัดข้องกรุณาลองใหม่', 
+                    confirmButtonColor: '#006ce4' 
+                });
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        }
+        function goBack() { window.location.href = `/booking/insurance?token=${sessionToken}`; }
+        async function fetchJSON(p) { const r = await fetch(API_BASE_URL + p); if (!r.ok) throw new Error('Error'); return r.json(); }
+        async function postJSON(p, b) { const r = await fetch(API_BASE_URL + p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }); return r.json(); }
+        function showError(m) { document.getElementById('loadingState').innerHTML = `<div class="py-5"><i class="bi bi-exclamation-circle text-danger fs-1"></i><p class="mt-3">${m}</p><a href="/trips" class="btn btn-outline-primary">กลับสู่หน้าหลัก</a></div>`; }
+    </script>
+    <script type="module" src="/src/pages/booking/booking-entry.js"></script>
+</body>
+
+</html>

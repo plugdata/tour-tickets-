@@ -54,6 +54,10 @@ model Trip {
   deposit     Float    @default(0)
   docUrl      String?
   isActive    Boolean  @default(true)
+  tripType    String   @default("DOMESTIC")  // DOMESTIC | INTERNATIONAL
+  country     String?
+  isHot       Boolean  @default(false)
+  hotOrder    Int      @default(99)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -165,18 +169,22 @@ enum PaymentStatus {
 
 // ===== CONTENT (โพสต์/เนื้อหาเว็บ) =====
 model Content {
-  id        Int         @id @default(autoincrement())
-  tripId    Int?
-  trip      Trip?       @relation(fields: [tripId], references: [id])
-  type      ContentType
-  title     String
-  body      String?
-  imageUrl  String?
-  videoUrl  String?
-  linkUrl   String?
-  isActive  Boolean     @default(true)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id         Int         @id @default(autoincrement())
+  tripId     Int?
+  trip       Trip?       @relation(fields: [tripId], references: [id])
+  type       ContentType
+  title      String
+  body       String?
+  imageUrl   String?
+  videoUrl   String?
+  linkUrl    String?
+  authorName String?
+  tags       String?
+  isFeatured Boolean     @default(false)
+  isHot      Boolean     @default(false)
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 }
 
 enum ContentType {
@@ -185,6 +193,10 @@ enum ContentType {
   FAQ
   ABOUT
   SERVICE
+  ANNOUNCEMENT
+  EXPERIENCE
+  GALLERY
+  INQUIRY
 }
 
 // ===== EXPENSE (บันทึกค่าใช้จ่าย) =====
@@ -325,6 +337,40 @@ model Upload {
   url       String
   fileType  String?
   size      Int?
+  folder    String?  @default("general")
+  altText   String?
   createdAt DateTime @default(now())
+}
+
+// ===== SITE SETTING (ตั้งค่าเว็บไซต์ — key/value store) =====
+model SiteSetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String?
+  updatedAt DateTime @updatedAt
+}
+
+// ===== GALLERY ALBUM (แกลเลอรี่) =====
+model GalleryAlbum {
+  id          Int            @id @default(autoincrement())
+  title       String
+  description String?
+  coverUrl    String?
+  category    String?
+  sortOrder   Int            @default(99)
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  images      GalleryImage[]
+}
+
+model GalleryImage {
+  id        Int          @id @default(autoincrement())
+  albumId   Int
+  album     GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String?
+  sortOrder Int          @default(99)
+  createdAt DateTime     @default(now())
 }
 

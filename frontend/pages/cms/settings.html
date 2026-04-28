@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตั้งค่าเว็บไซต์ - Tour Backoffice</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../assets/css/admin.css" rel="stylesheet">
+  <style>
+    .settings-tab-icon { font-size: 1.1rem; }
+    .nav-tabs .nav-link { color: #555; font-size: .9rem; }
+    .nav-tabs .nav-link.active { font-weight: 600; color: #198754; }
+    .section-label {
+      font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+      font-weight: 700; color: #198754; margin-bottom: .75rem; margin-top: 1.5rem;
+    }
+    .section-label:first-child { margin-top: 0; }
+    .preview-box {
+      background: #f8f9fa; border: 1px dashed #ccc; border-radius: 8px;
+      padding: .5rem .75rem; font-size: .8rem; color: #666; min-height: 36px;
+    }
+    .color-dot { width:18px;height:18px;border-radius:50%;display:inline-block;border:1px solid #ccc; }
+  </style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="d-flex">
+  <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+  <main class="main-content flex-fill">
+    <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+    <div class="page-content">
+
+      <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="page-title"><i class="bi bi-sliders me-2 text-success"></i>ตั้งค่าเว็บไซต์</h1>
+          <p class="page-subtitle">จัดการข้อมูลทั่วไป SEO โซเชียล ติดต่อ และปรับแต่งหน้าเว็บ</p>
+        </div>
+        <button class="btn btn-success px-4" id="btnSaveAll">
+          <i class="bi bi-check-lg me-1"></i>บันทึกทั้งหมด
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <ul class="nav nav-tabs mb-4" id="settingsTabs">
+        <li class="nav-item"><a class="nav-link active" data-tab="general" href="#">
+          <i class="bi bi-globe2 me-1 settings-tab-icon"></i>ทั่วไป</a></li>
+        <li class="nav-item"><a class="nav-link" data-tab="seo" href="#">
+          <i class="bi bi-search me-1 settings-tab-icon"></i>SEO</a></li>
+        <li class="nav-item"><a class="nav-link" data-tab="social" href="#">
+          <i class="bi bi-share me-1 settings-tab-icon"></i>โซเชียล & ติดต่อ</a></li>
+        <li class="nav-item"><a class="nav-link" data-tab="hero" href="#">
+          <i class="bi bi-layout-wtf me-1 settings-tab-icon"></i>หน้าแรก</a></li>
+        <li class="nav-item"><a class="nav-link" data-tab="notify" href="#">
+          <i class="bi bi-bell me-1 settings-tab-icon"></i>แจ้งเตือน</a></li>
+        <li class="nav-item"><a class="nav-link" data-tab="cookie" href="#">
+          <i class="bi bi-shield-check me-1 settings-tab-icon"></i>Cookie</a></li>
+      </ul>
+
+      <!-- ─── Tab: ทั่วไป ─── -->
+      <div id="tab-general" class="tab-pane">
+        <div class="row g-4">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-body">
+                <p class="section-label"><i class="bi bi-info-circle me-1"></i>ข้อมูลพื้นฐาน</p>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">ชื่อเว็บไซต์ <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="s_site_name" placeholder="GUGA Travels">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Tagline / สโลแกน</label>
+                    <input type="text" class="form-control" id="s_site_tagline" placeholder="GROW UP GO ANYWHERE">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">คำอธิบายเว็บไซต์</label>
+                    <textarea class="form-control" id="s_site_description" rows="2" placeholder="บริการจัดทริปท่องเที่ยว..."></textarea>
+                  </div>
+                </div>
+
+                <p class="section-label"><i class="bi bi-image me-1"></i>โลโก้ & Favicon</p>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">URL โลโก้</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="s_site_logo_url" placeholder="https://...">
+                      <button class="btn btn-outline-secondary" type="button" onclick="pickMedia('s_site_logo_url')">
+                        <i class="bi bi-folder2-open"></i>
+                      </button>
+                    </div>
+                    <div id="prev_logo" class="preview-box mt-1"></div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">URL Favicon (.ico / .png)</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="s_site_favicon_url" placeholder="https://...">
+                      <button class="btn btn-outline-secondary" type="button" onclick="pickMedia('s_site_favicon_url')">
+                        <i class="bi bi-folder2-open"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-body">
+                <p class="section-label">ตัวอย่างโลโก้</p>
+                <div class="text-center py-3">
+                  <img id="logoPreviewImg" src="" alt="" style="max-height:80px;max-width:100%;display:none">
+                  <div id="logoPlaceholder" class="text-muted">
+                    <i class="bi bi-image" style="font-size:3rem;opacity:.3"></i>
+                    <p class="small mb-0">ยังไม่มีโลโก้</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Tab: SEO ─── -->
+      <div id="tab-seo" class="tab-pane d-none">
+        <div class="card">
+          <div class="card-body">
+            <p class="section-label"><i class="bi bi-search me-1"></i>SEO Meta Tags</p>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">SEO Title (ชื่อที่แสดงบน Google)</label>
+                <input type="text" class="form-control" id="s_seo_title" placeholder="GUGA Travels — ทริปท่องเที่ยว เดินป่า">
+                <div class="form-text">แนะนำ 50-60 ตัวอักษร</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Meta Description</label>
+                <textarea class="form-control" id="s_seo_description" rows="2" placeholder="จองทริปท่องเที่ยวกับ GUGA Travels..."></textarea>
+                <div class="form-text">แนะนำ 150-160 ตัวอักษร</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Keywords (คั่นด้วย ,)</label>
+                <input type="text" class="form-control" id="s_seo_keywords" placeholder="ทริป,ท่องเที่ยว,เดินป่า,ทัวร์">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Open Graph Image URL (รูปแชร์โซเชียล)</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="s_seo_og_image" placeholder="https://...">
+                  <button class="btn btn-outline-secondary" type="button" onclick="pickMedia('s_seo_og_image')">
+                    <i class="bi bi-folder2-open"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <p class="section-label mt-4"><i class="bi bi-graph-up me-1"></i>Analytics</p>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Google Tag Manager ID</label>
+                <input type="text" class="form-control" id="s_analytics_gtm" placeholder="GTM-XXXXXXX">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Google Analytics 4 Measurement ID</label>
+                <input type="text" class="form-control" id="s_analytics_ga4" placeholder="G-XXXXXXXXXX">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Tab: โซเชียล & ติดต่อ ─── -->
+      <div id="tab-social" class="tab-pane d-none">
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="card h-100">
+              <div class="card-body">
+                <p class="section-label"><i class="bi bi-share me-1"></i>โซเชียลมีเดีย</p>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label"><i class="bi bi-facebook text-primary me-1"></i>Facebook URL</label>
+                    <input type="url" class="form-control" id="s_social_facebook" placeholder="https://facebook.com/...">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label"><i class="bi bi-line text-success me-1"></i>LINE OA ID</label>
+                    <input type="text" class="form-control" id="s_social_line_oa" placeholder="@guga">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label"><i class="bi bi-instagram text-danger me-1"></i>Instagram URL</label>
+                    <input type="url" class="form-control" id="s_social_instagram" placeholder="https://instagram.com/...">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label"><i class="bi bi-tiktok me-1"></i>TikTok URL</label>
+                    <input type="url" class="form-control" id="s_social_tiktok" placeholder="https://tiktok.com/@...">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label"><i class="bi bi-youtube text-danger me-1"></i>YouTube URL</label>
+                    <input type="url" class="form-control" id="s_social_youtube" placeholder="https://youtube.com/...">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card h-100">
+              <div class="card-body">
+                <p class="section-label"><i class="bi bi-telephone me-1"></i>ข้อมูลติดต่อ</p>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label">เบอร์โทรศัพท์</label>
+                    <input type="text" class="form-control" id="s_contact_phone" placeholder="0xx-xxx-xxxx">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">อีเมล</label>
+                    <input type="email" class="form-control" id="s_contact_email" placeholder="contact@guga.travel">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">ที่อยู่</label>
+                    <textarea class="form-control" id="s_contact_address" rows="2" placeholder="123 ถนน... กรุงเทพฯ"></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">เวลาทำการ</label>
+                    <input type="text" class="form-control" id="s_contact_hours" placeholder="จ-ศ 09:00-18:00">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Google Maps Embed URL</label>
+                    <input type="text" class="form-control" id="s_contact_map_embed" placeholder="https://maps.google.com/maps?...">
+                    <div class="form-text">วาง URL จาก Google Maps → Share → Embed a map</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Tab: หน้าแรก ─── -->
+      <div id="tab-hero" class="tab-pane d-none">
+        <div class="row g-4">
+          <div class="col-lg-7">
+            <div class="card">
+              <div class="card-body">
+                <p class="section-label"><i class="bi bi-display me-1"></i>Hero Section (ภาพหลักหน้าแรก)</p>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label">ข้อความหลัก (H1)</label>
+                    <input type="text" class="form-control" id="s_hero_title" placeholder="โตละ...จะไปไหนก็ได้">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">ข้อความรอง</label>
+                    <textarea class="form-control" id="s_hero_subtitle" rows="2" placeholder="Grow up, Go anywhere..."></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">รูปภาพ Background</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="s_hero_bg_url" placeholder="https://...">
+                      <button class="btn btn-outline-secondary" type="button" onclick="pickMedia('s_hero_bg_url')">
+                        <i class="bi bi-folder2-open"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <p class="section-label mt-3"><i class="bi bi-megaphone me-1"></i>Announcement Bar (แถบประกาศ)</p>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label">ข้อความประกาศ</label>
+                    <input type="text" class="form-control" id="s_announcement_text" placeholder="โปรโมชันพิเศษ! จองทริปเกาะสมุย...">
+                  </div>
+                  <div class="col-12">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="s_announcement_active">
+                      <label class="form-check-label">เปิดใช้งาน Announcement Bar</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-5">
+            <div class="card">
+              <div class="card-body">
+                <p class="section-label">ตัวอย่าง Hero</p>
+                <div id="heroPreview" style="border-radius:12px;overflow:hidden;min-height:180px;background:#1a1a2e;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:1.5rem;text-align:center;position:relative;">
+                  <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);border-radius:12px;" id="heroBgOverlay"></div>
+                  <div style="position:relative;z-index:1;color:#fff">
+                    <h5 id="prevHeroTitle" style="font-weight:700">โตละ...จะไปไหนก็ได้</h5>
+                    <p id="prevHeroSub" class="small mb-0" style="opacity:.85">Grow up, Go anywhere</p>
+                  </div>
+                </div>
+                <div class="mt-2 small text-muted">แสดงตัวอย่างเมื่อกรอกข้อมูลด้านซ้าย</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Tab: แจ้งเตือน ─── -->
+      <div id="tab-notify" class="tab-pane d-none">
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="card">
+              <div class="card-body">
+                <p class="section-label"><i class="bi bi-envelope me-1"></i>Email แจ้งเตือน</p>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label">รับแจ้งเตือนที่อีเมล</label>
+                    <input type="email" class="form-control" id="s_email_notify_to" placeholder="admin@guga.travel">
+                    <div class="form-text">อีเมลที่จะรับแจ้งเตือนเมื่อมีการจองหรือสอบถาม</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card">
+              <div class="card-body">
+                <p class="section-label"><i class="bi bi-chat-dots me-1"></i>LINE Notify</p>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label">LINE Notify Token</label>
+                    <input type="text" class="form-control" id="s_line_notify_token" placeholder="xxxxxxxxxxxxxxxxxxxx">
+                    <div class="form-text">
+                      ได้จาก <a href="https://notify-bot.line.me/th/" target="_blank">notify-bot.line.me</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Tab: Cookie ─── -->
+      <div id="tab-cookie" class="tab-pane d-none">
+        <div class="card">
+          <div class="card-body" style="max-width:700px">
+            <p class="section-label"><i class="bi bi-shield-check me-1"></i>นโยบายคุกกี้ (Cookie Policy)</p>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">ข้อความแสดงบน Cookie Banner</label>
+                <textarea class="form-control" id="s_cookie_policy_text" rows="4"
+                  placeholder="เว็บไซต์นี้ใช้คุกกี้เพื่อนำเสนอประสบการณ์ที่ดีที่สุดให้กับคุณ..."></textarea>
+                <div class="form-text">ข้อความที่แสดงใน Cookie Notice bar ที่ด้านล่างเว็บไซต์</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </main>
+</div>
+
+<!-- Media Picker Modal -->
+<div class="modal fade" id="mediaPickerModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-images me-2"></i>เลือกรูปภาพจาก Media Library</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-2" id="mediaPickerGrid">
+          <div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/apiClient.js"></script>
+<script src="../../assets/js/app.js"></script>
+<script>
+let currentPickTarget = null
+let mediaPicker
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await initPage()
+  mediaPicker = new bootstrap.Modal(document.getElementById('mediaPickerModal'))
+  loadSettings()
+
+  // Tab navigation
+  document.querySelectorAll('#settingsTabs .nav-link').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault()
+      document.querySelectorAll('#settingsTabs .nav-link').forEach(l => l.classList.remove('active'))
+      link.classList.add('active')
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('d-none'))
+      document.getElementById('tab-' + link.dataset.tab).classList.remove('d-none')
+    })
+  })
+
+  // Live hero preview
+  document.getElementById('s_hero_title').addEventListener('input', e => {
+    document.getElementById('prevHeroTitle').textContent = e.target.value || 'ข้อความหลัก'
+  })
+  document.getElementById('s_hero_subtitle').addEventListener('input', e => {
+    document.getElementById('prevHeroSub').textContent = e.target.value || 'ข้อความรอง'
+  })
+  document.getElementById('s_hero_bg_url').addEventListener('input', e => {
+    const url = e.target.value.trim()
+    const box = document.getElementById('heroPreview')
+    box.style.backgroundImage = url ? `url('${url}')` : ''
+    box.style.backgroundSize = 'cover'
+    box.style.backgroundPosition = 'center'
+  })
+
+  // Live logo preview
+  document.getElementById('s_site_logo_url').addEventListener('input', e => updateLogoPreview(e.target.value))
+
+  document.getElementById('btnSaveAll').addEventListener('click', saveAll)
+})
+
+async function loadSettings() {
+  try {
+    const s = await API.settings.all()
+    const fields = [
+      's_site_name','s_site_tagline','s_site_description','s_site_logo_url','s_site_favicon_url',
+      's_seo_title','s_seo_description','s_seo_keywords','s_seo_og_image',
+      's_analytics_gtm','s_analytics_ga4',
+      's_social_facebook','s_social_line_oa','s_social_instagram','s_social_tiktok','s_social_youtube',
+      's_contact_phone','s_contact_email','s_contact_address','s_contact_hours','s_contact_map_embed',
+      's_hero_title','s_hero_subtitle','s_hero_bg_url',
+      's_announcement_text',
+      's_email_notify_to','s_line_notify_token','s_cookie_policy_text',
+    ]
+    fields.forEach(fid => {
+      const key = fid.replace('s_', '')
+      const el = document.getElementById(fid)
+      if (!el) return
+      el.value = s[key] ?? ''
+    })
+    // Checkbox
+    const cb = document.getElementById('s_announcement_active')
+    if (cb) cb.checked = (s['announcement_active'] === 'true')
+
+    updateLogoPreview(s.site_logo_url)
+    if (s.hero_title) document.getElementById('prevHeroTitle').textContent = s.hero_title
+    if (s.hero_subtitle) document.getElementById('prevHeroSub').textContent = s.hero_subtitle
+    if (s.hero_bg_url) {
+      const box = document.getElementById('heroPreview')
+      box.style.backgroundImage = `url('${s.hero_bg_url}')`
+      box.style.backgroundSize = 'cover'; box.style.backgroundPosition = 'center'
+    }
+  } catch (e) {
+    showToast('โหลดการตั้งค่าล้มเหลว', 'danger')
+  }
+}
+
+function updateLogoPreview(url) {
+  const img = document.getElementById('logoPreviewImg')
+  const ph  = document.getElementById('logoPlaceholder')
+  if (url && url.trim()) {
+    img.src = url.trim(); img.style.display = ''; ph.style.display = 'none'
+  } else {
+    img.style.display = 'none'; ph.style.display = ''
+  }
+}
+
+async function saveAll() {
+  const data = {}
+  const fields = [
+    's_site_name','s_site_tagline','s_site_description','s_site_logo_url','s_site_favicon_url',
+    's_seo_title','s_seo_description','s_seo_keywords','s_seo_og_image',
+    's_analytics_gtm','s_analytics_ga4',
+    's_social_facebook','s_social_line_oa','s_social_instagram','s_social_tiktok','s_social_youtube',
+    's_contact_phone','s_contact_email','s_contact_address','s_contact_hours','s_contact_map_embed',
+    's_hero_title','s_hero_subtitle','s_hero_bg_url',
+    's_announcement_text',
+    's_email_notify_to','s_line_notify_token','s_cookie_policy_text',
+  ]
+  fields.forEach(fid => {
+    const key = fid.replace('s_', '')
+    const el = document.getElementById(fid)
+    if (el) data[key] = el.value
+  })
+  const cb = document.getElementById('s_announcement_active')
+  if (cb) data['announcement_active'] = cb.checked ? 'true' : 'false'
+
+  const btn = document.getElementById('btnSaveAll')
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก...'
+  try {
+    await API.settings.save(data)
+    showToast('บันทึกการตั้งค่าเรียบร้อยแล้ว')
+  } catch (e) {
+    showToast('บันทึกล้มเหลว: ' + e.message, 'danger')
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>บันทึกทั้งหมด'
+  }
+}
+
+// Media Picker
+window.pickMedia = async function(targetId) {
+  currentPickTarget = targetId
+  document.getElementById('mediaPickerGrid').innerHTML = '<div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>'
+  mediaPicker.show()
+  try {
+    const uploads = await API.uploads.list()
+    const grid = document.getElementById('mediaPickerGrid')
+    if (!uploads.length) { grid.innerHTML = '<div class="col-12 text-center py-4 text-muted">ยังไม่มีรูปภาพ</div>'; return }
+    grid.innerHTML = uploads.map(u => `
+      <div class="col-6 col-md-3 col-lg-2">
+        <div class="border rounded overflow-hidden" style="cursor:pointer;aspect-ratio:1" onclick="selectMedia('${u.url}')">
+          <img src="${API_BASE_URL.replace('/api','')}${u.url}" class="w-100 h-100" style="object-fit:cover" alt="">
+        </div>
+      </div>`).join('')
+  } catch (e) {
+    document.getElementById('mediaPickerGrid').innerHTML = '<div class="col-12 text-center py-4 text-danger">โหลดล้มเหลว</div>'
+  }
+}
+
+window.selectMedia = function(url) {
+  if (!currentPickTarget) return
+  const el = document.getElementById(currentPickTarget)
+  if (el) { el.value = url; el.dispatchEvent(new Event('input')) }
+  mediaPicker.hide()
+}
+</script>
+</body>
+</html>

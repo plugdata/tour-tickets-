@@ -20,7 +20,21 @@ const { authenticate, authorize } = require('../middleware/auth')
  */
 router.get('/', async (req, res) => {
   try {
+    const { tripId, month, year } = req.query
+    const where = {}
+
+    if (tripId) where.tripId = Number(tripId)
+
+    if (month !== undefined && year !== undefined) {
+      const m = Number(month) // 0-based (JS convention)
+      const y = Number(year)
+      const from = new Date(y, m, 1)
+      const to   = new Date(y, m + 1, 1)
+      where.departDate = { gte: from, lt: to }
+    }
+
     const rounds = await prisma.busRound.findMany({
+      where,
       include: {
         trip: true,
         _count: {
@@ -34,9 +48,8 @@ router.get('/', async (req, res) => {
           }
         }
       },
-      orderBy: { updatedAt: 'desc' }
+      orderBy: { departDate: 'asc' }
     })
-    // Override cached bookedSeats with real-time count from SeatBooking
     const result = rounds.map(({ _count, ...r }) => ({
       ...r,
       bookedSeats: _count.seatBookings
