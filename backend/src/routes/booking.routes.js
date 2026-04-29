@@ -84,6 +84,9 @@ router.get('/my', authenticate, async (req, res) => {
 router.post('/', authenticate, async (req, res) => {
   try {
     const { busRoundId, seats, foodAllergy, addons = [], bookingType } = req.body
+    if (!seats || seats < 1) {
+      return res.status(400).json({ message: 'Number of seats must be greater than 0' })
+    }
     const round = await prisma.busRound.findUnique({
       where: { id: busRoundId },
       include: { trip: true }

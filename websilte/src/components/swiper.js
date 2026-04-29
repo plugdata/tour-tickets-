@@ -1,5 +1,9 @@
+let fireSwiper, domesticSwiper, internationalSwiper
+
 export function initSwipers() {
-  new Swiper('.fire-swiper', {
+  // Fire Swiper Ticker
+  if (fireSwiper) fireSwiper.destroy(true, true)
+  fireSwiper = new Swiper('.fire-swiper', {
     slidesPerView: 'auto',
     spaceBetween: 16,
     loop: true,
@@ -12,33 +16,41 @@ export function initSwipers() {
     grabCursor: true,
   })
 
-  new Swiper('.domestic-swiper', {
-    slidesPerView: 1,
-    spaceBetween: 20,
+  // Domestic Swiper
+  if (domesticSwiper) domesticSwiper.destroy(true, true)
+  domesticSwiper = new Swiper('.domestic-swiper', {
+    slidesPerView: 'auto',
+    spaceBetween: 16,
+    freeMode: true,
+    grabCursor: true,
     navigation: {
       nextEl: '.domestic-swiper .swiper-button-next',
       prevEl: '.domestic-swiper .swiper-button-prev',
     },
     pagination: { el: '.domestic-swiper .swiper-pagination', clickable: true },
     breakpoints: {
-      640: { slidesPerView: 2 },
-      1024: { slidesPerView: 3 },
-      1400: { slidesPerView: 4 },
+      0: { spaceBetween: 12 },
+      640: { spaceBetween: 16 },
+      1024: { spaceBetween: 20 }
     }
   })
 
-  new Swiper('.international-swiper', {
-    slidesPerView: 1,
-    spaceBetween: 20,
+  // International Swiper
+  if (internationalSwiper) internationalSwiper.destroy(true, true)
+  internationalSwiper = new Swiper('.international-swiper', {
+    slidesPerView: 'auto',
+    spaceBetween: 16,
+    freeMode: true,
+    grabCursor: true,
     navigation: {
       nextEl: '.international-swiper .swiper-button-next',
       prevEl: '.international-swiper .swiper-button-prev',
     },
     pagination: { el: '.international-swiper .swiper-pagination', clickable: true },
     breakpoints: {
-      640: { slidesPerView: 2 },
-      1024: { slidesPerView: 3 },
-      1400: { slidesPerView: 4 },
+      0: { spaceBetween: 12 },
+      640: { spaceBetween: 16 },
+      1024: { spaceBetween: 20 }
     }
   })
 }

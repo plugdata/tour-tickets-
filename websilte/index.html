@@ -1,457 +1,1131 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="จองทริปท่องเที่ยวกับ GUGA Travels">
-    <title>GUGA Travels</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="จองทริปท่องเที่ยวกับ GUGA Travels">
+  <title>GUGA Travels</title>
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
 
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-    <!-- Swiper CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+  <!-- Swiper CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 
-    <style>
-      /* ── Announcement Bar ── */
-      .announcement-bar {
-        background: linear-gradient(90deg, #00d9b4, #00c4a0);
-        color: #000;
-        font-family: 'Sarabun', sans-serif;
-        font-size: .88rem;
-        font-weight: 600;
-        padding: .5rem 0;
-        position: relative;
-        z-index: 1100;
+  <style>
+    /* ── Announcement Bar ── */
+    .announcement-bar {
+      background: linear-gradient(90deg, #00d9b4, #00c4a0);
+      color: #000;
+      font-family: 'Sarabun', sans-serif;
+      font-size: .88rem;
+      font-weight: 600;
+      padding: .5rem 0;
+      position: relative;
+      z-index: 1100;
+      transition: all 0.3s ease-in-out;
+      max-height: 100px;
+      opacity: 1;
+      overflow: hidden;
+    }
+
+    .announcement-bar.hide-bar {
+      max-height: 0;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ── Gallery ── */
+    .gallery-card {
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .gallery-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, .4);
+    }
+
+    .gallery-thumb {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1;
+      background: var(--card-bg);
+      overflow: hidden;
+    }
+
+    .gallery-thumb-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      color: rgba(255, 255, 255, .2);
+      font-size: 2.5rem;
+    }
+
+    .gallery-thumb-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 217, 180, .35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+
+    .gallery-card:hover .gallery-thumb-overlay {
+      opacity: 1;
+    }
+
+    .gallery-info {
+      padding: .6rem .4rem .2rem;
+    }
+
+    .gallery-title {
+      font-size: .88rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 0;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+    }
+
+    /* ── Contact ── */
+    .contact-section {
+      background: var(--darker-blue);
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: .75rem;
+      margin-bottom: 1rem;
+    }
+
+    .contact-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: rgba(0, 217, 180, .12);
+      color: var(--primary-green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1rem;
+    }
+
+    .contact-label {
+      font-size: .72rem;
+      color: var(--text-gray);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .contact-value {
+      font-size: .9rem;
+      color: #fff;
+      margin: 0;
+    }
+
+    /* ── Album Modal overlay ── */
+    .album-lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .9);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .album-lightbox-inner {
+      background: #1a2332;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    .album-lightbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: .5rem;
+      margin-top: 1rem;
+    }
+
+    .album-lightbox-grid img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: zoom-in;
+    }
+
+    /* ── Home Trip Cards (ht-*) ── */
+    .ht-section {
+      padding: 50px 0 22px !important; /* เพิ่มระยะห่างรวมขึ้นอีก 20px ให้ดูโปร่งตาขึ้น (บน +10, ล่าง +10) */
+    }
+
+    .ht-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .ht-title {
+      font-family: 'Kanit', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 0;
+    }
+
+    .ht-sub {
+      color: var(--text-gray);
+      font-size: .88rem;
+      margin: .2rem 0 0;
+    }
+
+    .ht-view-all {
+      color: var(--primary-green);
+      font-size: .85rem;
+      text-decoration: none;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      transition: gap .2s;
+    }
+
+    .ht-view-all:hover {
+      gap: .6rem;
+      color: var(--primary-green);
+    }
+
+    /* Card */
+    .ht-card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .05);
+      transition: all .3s ease;
+      cursor: pointer;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ht-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(0, 217, 180, .4);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, .55);
+    }
+
+    .ht-img-wrap {
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .ht-img {
+      width: 100%;
+      height: 175px;
+      object-fit: cover;
+      display: block;
+      transition: transform .4s ease;
+    }
+
+    .ht-card:hover .ht-img {
+      transform: scale(1.05);
+    }
+
+    .ht-img-placeholder {
+      width: 100%;
+      height: 175px;
+      background: linear-gradient(135deg, #1e2837, #252e3f);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: rgba(0, 217, 180, .3);
+    }
+
+    /* Badges on image */
+    .ht-badges {
+      position: absolute;
+      top: .7rem;
+      left: .7rem;
+      right: .7rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .ht-badge-loc {
+      background: rgba(0, 0, 0, .65);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      font-size: .8rem;
+      font-weight: 600;
+      padding: .3rem .8rem;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      max-width: 75%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ht-badge-hot {
+      background: linear-gradient(135deg, #ff4500, #ff8557);
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      padding: .3rem .8rem;
+      border-radius: 20px;
+      box-shadow: 0 0 12px rgba(255, 69, 0, .5);
+      animation: fire-pulse 2s ease-in-out infinite;
+    }
+
+    /* Seats progress bar on image bottom */
+    .ht-seats-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: .5rem .8rem .4rem;
+      background: linear-gradient(to top, rgba(0, 0, 0, .75) 0%, transparent 100%);
+    }
+
+    .ht-seats-text {
+      font-size: .65rem;
+      color: rgba(255, 255, 255, .8);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: .25rem;
+    }
+
+    .ht-seats-bar {
+      height: 3px;
+      background: rgba(255, 255, 255, .2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .ht-seats-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .5s;
+    }
+
+    .ht-seats-fill.ok {
+      background: var(--primary-green);
+    }
+
+    .ht-seats-fill.low {
+      background: #f6c90e;
+    }
+
+    .ht-seats-fill.full {
+      background: #e74c3c;
+    }
+
+    /* Card body */
+    .ht-body {
+      padding: .9rem 1rem 1rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ht-card-title {
+      font-family: 'Kanit', sans-serif;
+      font-size: 1.12rem;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 0 .5rem;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .ht-card-desc {
+      font-size: .92rem;
+      color: var(--text-gray);
+      line-height: 1.5;
+      margin-bottom: .8rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .ht-card-meta {
+      font-size: .85rem;
+      color: var(--text-gray);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin-bottom: .7rem;
+    }
+
+    .ht-card-meta i {
+      color: var(--primary-green);
+    }
+
+    .ht-card-footer {
+      margin-top: auto;
+      display: flex;
+      align-items: center; /* กึ่งกลางแนวตั้ง */
+      justify-content: space-between;
+      gap: .5rem;
+      padding-top: .4rem;
+    }
+
+    .ht-price {
+      font-family: 'Kanit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--primary-green);
+      line-height: 1;
+    }
+
+    .ht-price small {
+      font-size: .8rem;
+      font-weight: 400;
+      color: var(--text-gray);
+    }
+
+    .ht-btn-book {
+      background: rgba(0, 217, 180, .1);
+      color: var(--primary-green);
+      border: 1px solid rgba(0, 217, 180, .3);
+      border-radius: 9px;
+      padding: .45rem 1rem;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+      font-family: 'Sarabun', sans-serif;
+    }
+
+    .ht-btn-book:hover {
+      background: rgba(0, 217, 180, .22);
+      border-color: var(--primary-green);
+    }
+
+    /* Sidebar layout: 180px label column + swiper area */
+    .ht-section-layout {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+    }
+
+    .ht-sidebar {
+      width: 180px;
+      flex-shrink: 0;
+      padding-top: .25rem;
+      padding-right: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .ht-sidebar .ht-title {
+      font-size: 1.35rem;
+    }
+
+    .ht-sidebar .ht-view-all {
+      font-size: .8rem;
+      margin-top: .5rem;
+    }
+
+    .ht-swiper-area {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    /* Swiper override for trip rows */
+    .ht-swiper {
+      padding: 0 0 2.5rem !important;
+      overflow: hidden !important;
+      /* เปลี่ยนจาก visible เป็น hidden เพื่อให้ตัดขอบที่ container */
+    }
+
+    .ht-swiper .swiper-slide {
+      width: 280px !important;
+      height: auto;
+    }
+
+    .ht-swiper .swiper-button-next,
+    .ht-swiper .swiper-button-prev {
+      top: 50%;
+      transform: translateY(-50%) translateY(-20px); /* ขยับขึ้นจากกึ่งกลางเล็กน้อยเพื่อให้สมดุลกับ pagination ด้านล่าง */
+      color: var(--primary-green) !important;
+      background: rgba(15, 20, 25, .88);
+      backdrop-filter: blur(12px);
+      width: 48px !important;
+      height: 48px !important;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 217, 180, .4);
+    }
+
+    .ht-swiper .swiper-button-next:after,
+    .ht-swiper .swiper-button-prev:after {
+      font-size: 18px !important;
+      font-weight: 900;
+    }
+
+    .ht-swiper .swiper-pagination-bullet {
+      background: rgba(255, 255, 255, .3) !important;
+    }
+
+    .ht-swiper .swiper-pagination-bullet-active {
+      background: var(--primary-green) !important;
+    }
+
+    /* Skeleton shimmer */
+    .ht-skeleton {
+      background: linear-gradient(90deg, #1e2837 25%, #252e3f 50%, #1e2837 75%);
+      background-size: 200% 100%;
+      animation: htShimmer 1.5s infinite;
+      border-radius: 8px;
+    }
+
+    @keyframes htShimmer {
+      0% {
+        background-position: 200% 0
       }
 
-      /* ── Gallery ── */
-      .gallery-card {
-        border-radius: 12px;
-        overflow: hidden;
-        transition: transform .2s, box-shadow .2s;
+      100% {
+        background-position: -200% 0
       }
-      .gallery-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.4); }
-      .gallery-thumb {
-        position: relative;
-        width: 100%;
-        aspect-ratio: 1;
-        background: var(--card-bg);
-        overflow: hidden;
-      }
-      .gallery-thumb-placeholder {
-        display: flex; align-items: center; justify-content: center;
-        width: 100%; height: 100%;
-        color: rgba(255,255,255,.2); font-size: 2.5rem;
-      }
-      .gallery-thumb-overlay {
-        position: absolute; inset: 0;
-        background: rgba(0,217,180,.35);
-        display: flex; align-items: center; justify-content: center;
-        color: #fff; opacity: 0; transition: opacity .2s;
-      }
-      .gallery-card:hover .gallery-thumb-overlay { opacity: 1; }
-      .gallery-info { padding: .6rem .4rem .2rem; }
-      .gallery-title { font-size: .88rem; font-weight: 600; color: #fff; margin: 0; overflow: hidden;
-        display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+    }
 
-      /* ── Contact ── */
-      .contact-section { background: var(--darker-blue); }
-      .contact-item { display: flex; align-items: flex-start; gap: .75rem; margin-bottom: 1rem; }
-      .contact-icon {
-        width: 36px; height: 36px; border-radius: 8px;
-        background: rgba(0,217,180,.12); color: var(--primary-green);
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0; font-size: 1rem;
+    @media(max-width:640px) {
+      .ht-swiper .swiper-slide {
+        width: 220px !important;
       }
-      .contact-label { font-size: .72rem; color: var(--text-gray); text-transform: uppercase; letter-spacing: .06em; }
-      .contact-value { font-size: .9rem; color: #fff; margin: 0; }
 
-      /* ── Album Modal overlay ── */
-      .album-lightbox {
-        position: fixed; inset: 0; background: rgba(0,0,0,.9);
-        z-index: 9999; display: flex; align-items: center; justify-content: center;
-        padding: 1rem;
-      }
-      .album-lightbox-inner {
-        background: #1a2332; border-radius: 16px; width: 100%; max-width: 900px;
-        max-height: 90vh; overflow-y: auto; padding: 1.5rem;
-      }
-      .album-lightbox-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: .5rem; margin-top: 1rem;
-      }
-      .album-lightbox-grid img {
-        width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: zoom-in;
-      }
-      /* ── Home Trip Cards (ht-*) ── */
-      .ht-section { padding: 4rem 0 3rem; }
-      .ht-header {
-        display: flex; align-items: flex-end; justify-content: space-between;
-        margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap;
-      }
-      .ht-title { font-family:'Kanit',sans-serif; font-size:1.75rem; font-weight:800; color:#fff; margin:0; }
-      .ht-sub { color:var(--text-gray); font-size:.88rem; margin:.2rem 0 0; }
-      .ht-view-all {
-        color:var(--primary-green); font-size:.85rem; text-decoration:none; white-space:nowrap;
-        display:flex; align-items:center; gap:.3rem; transition:gap .2s;
-      }
-      .ht-view-all:hover { gap:.6rem; color:var(--primary-green); }
-
-      /* Card */
-      .ht-card {
-        background:var(--card-bg); border-radius:18px; overflow:hidden;
-        border:1px solid rgba(255,255,255,.05); transition:all .3s ease;
-        cursor:pointer; height:100%; display:flex; flex-direction:column;
-      }
-      .ht-card:hover {
-        transform:translateY(-8px);
-        border-color:rgba(0,217,180,.4);
-        box-shadow:0 20px 48px rgba(0,0,0,.55);
-      }
-      .ht-img-wrap { position:relative; overflow:hidden; flex-shrink:0; }
-      .ht-img { width:100%; height:190px; object-fit:cover; display:block; transition:transform .4s ease; }
-      .ht-card:hover .ht-img { transform:scale(1.05); }
+      .ht-img,
       .ht-img-placeholder {
-        width:100%; height:190px;
-        background:linear-gradient(135deg,#1e2837,#252e3f);
-        display:flex; align-items:center; justify-content:center;
-        font-size:3rem; color:rgba(0,217,180,.3);
+        height: 140px;
       }
 
-      /* Badges on image */
-      .ht-badges { position:absolute; top:.7rem; left:.7rem; right:.7rem; display:flex; justify-content:space-between; align-items:flex-start; }
-      .ht-badge-loc {
-        background:rgba(0,0,0,.6); backdrop-filter:blur(8px);
-        color:#fff; font-size:.68rem; font-weight:600;
-        padding:.22rem .65rem; border-radius:20px;
-        display:flex; align-items:center; gap:.25rem; max-width:65%;
-        overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-      }
-      .ht-badge-hot {
-        background:linear-gradient(135deg,#ff4500,#ff8557);
-        color:#fff; font-size:.65rem; font-weight:700;
-        padding:.22rem .65rem; border-radius:20px;
-        box-shadow:0 0 12px rgba(255,69,0,.5);
-        animation:fire-pulse 2s ease-in-out infinite;
-      }
-
-      /* Seats progress bar on image bottom */
       .ht-seats-overlay {
-        position:absolute; bottom:0; left:0; right:0;
-        padding:.5rem .8rem .4rem;
-        background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 100%);
+        display: none;
       }
-      .ht-seats-text { font-size:.65rem; color:rgba(255,255,255,.8); display:flex; justify-content:space-between; margin-bottom:.25rem; }
-      .ht-seats-bar { height:3px; background:rgba(255,255,255,.2); border-radius:2px; overflow:hidden; }
-      .ht-seats-fill { height:100%; border-radius:2px; transition:width .5s; }
-      .ht-seats-fill.ok  { background:var(--primary-green); }
-      .ht-seats-fill.low { background:#f6c90e; }
-      .ht-seats-fill.full{ background:#e74c3c; }
+    }
 
-      /* Card body */
-      .ht-body { padding:.9rem 1rem 1rem; flex:1; display:flex; flex-direction:column; }
-      .ht-card-title {
-        font-family:'Kanit',sans-serif; font-size:.97rem; font-weight:700; color:#fff;
-        margin:0 0 .3rem; line-height:1.35;
-        display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-      }
-      .ht-card-desc {
-        font-size:.76rem; color:var(--text-gray); line-height:1.55; margin-bottom:.6rem;
-        display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-      }
-      .ht-card-meta {
-        font-size:.72rem; color:var(--text-gray);
-        display:flex; align-items:center; gap:.5rem; margin-bottom:.55rem;
-      }
-      .ht-card-meta i { color:var(--primary-green); }
-      .ht-card-footer { margin-top:auto; display:flex; align-items:flex-end; justify-content:space-between; gap:.5rem; }
-      .ht-price { font-family:'Kanit',sans-serif; font-size:1.3rem; font-weight:800; color:var(--primary-green); line-height:1.1; }
-      .ht-price small { font-size:.68rem; font-weight:400; color:var(--text-gray); }
-      .ht-btn-book {
-        background:rgba(0,217,180,.1); color:var(--primary-green);
-        border:1px solid rgba(0,217,180,.3); border-radius:9px;
-        padding:.3rem .8rem; font-size:.76rem; font-weight:600;
-        cursor:pointer; transition:all .2s; white-space:nowrap;
-        font-family:'Sarabun',sans-serif;
-      }
-      .ht-btn-book:hover { background:rgba(0,217,180,.22); border-color:var(--primary-green); }
+    /* ── Trip Detail Modal (td-*) ── */
+    .td-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0, 0, 0, .72);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
 
-      /* Swiper override for trip rows */
-      .ht-swiper { padding:0 0 2.5rem !important; overflow:visible !important; }
-      .ht-swiper .swiper-slide { width:270px !important; height:auto; }
-      .ht-swiper .swiper-button-next,
-      .ht-swiper .swiper-button-prev {
-        top:calc(190px / 2); color:var(--primary-green) !important;
-        background:rgba(15,20,25,.85); backdrop-filter:blur(8px);
-        width:38px !important; height:38px !important; border-radius:50%;
-        border:1px solid rgba(0,217,180,.3);
-      }
-      .ht-swiper .swiper-button-next:after,
-      .ht-swiper .swiper-button-prev:after { font-size:14px !important; font-weight:900; }
-      .ht-swiper .swiper-pagination-bullet { background:rgba(255,255,255,.3) !important; }
-      .ht-swiper .swiper-pagination-bullet-active { background:var(--primary-green) !important; }
+    .td-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
 
-      /* Skeleton shimmer */
-      .ht-skeleton {
-        background:linear-gradient(90deg,#1e2837 25%,#252e3f 50%,#1e2837 75%);
-        background-size:200% 100%; animation:htShimmer 1.5s infinite; border-radius:8px;
-      }
-      @keyframes htShimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .td-sheet {
+      width: 100%;
+      max-width: 520px;
+      max-height: 92vh;
+      background: #141b26;
+      border-radius: 24px 24px 0 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      transform: translateY(100%);
+      transition: transform .35s cubic-bezier(.22, .61, .36, 1);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, .1) transparent;
+    }
 
-      @media(max-width:640px){
-        .ht-swiper .swiper-slide { width:230px !important; }
-        .ht-img,.ht-img-placeholder { height:160px; }
-        .ht-seats-overlay { display:none; }
-      }
+    .td-overlay.open .td-sheet {
+      transform: translateY(0);
+    }
 
-      /* ── Trip Detail Modal (td-*) ── */
-      .td-overlay {
-        position:fixed; inset:0; z-index:2000;
-        background:rgba(0,0,0,.72); backdrop-filter:blur(5px);
-        display:flex; align-items:flex-end; justify-content:center;
-        opacity:0; pointer-events:none; transition:opacity .3s;
-      }
-      .td-overlay.open { opacity:1; pointer-events:all; }
-      .td-sheet {
-        width:100%; max-width:520px; max-height:92vh;
-        background:#141b26; border-radius:24px 24px 0 0;
-        overflow-y:auto; overflow-x:hidden;
-        transform:translateY(100%); transition:transform .35s cubic-bezier(.22,.61,.36,1);
-        scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.1) transparent;
-      }
-      .td-overlay.open .td-sheet { transform:translateY(0); }
-      .td-sheet::-webkit-scrollbar { width:3px; }
-      .td-sheet::-webkit-scrollbar-thumb { background:rgba(255,255,255,.15); border-radius:2px; }
-      .td-handle { text-align:center; padding:.7rem 0 0; }
-      .td-handle::before { content:''; display:inline-block; width:40px; height:4px; background:rgba(255,255,255,.2); border-radius:2px; }
-      .td-hero { position:relative; height:230px; overflow:hidden; background:linear-gradient(135deg,#1a2232,#252e3f); }
-      .td-hero img { width:100%; height:100%; object-fit:cover; }
-      .td-hero-grad { position:absolute; inset:0; background:linear-gradient(to bottom,rgba(0,0,0,.1) 0%,rgba(15,20,25,.92) 100%); }
-      .td-close {
-        position:absolute; top:1rem; right:1rem; z-index:2;
-        width:36px; height:36px; border-radius:50%;
-        background:rgba(0,0,0,.55); backdrop-filter:blur(8px);
-        border:1px solid rgba(255,255,255,.2); color:#fff;
-        display:flex; align-items:center; justify-content:center;
-        font-size:1.1rem; cursor:pointer; transition:background .2s;
-      }
-      .td-close:hover { background:rgba(255,255,255,.15); }
-      .td-hero-empty {
-        width:100%; height:100%; display:flex; align-items:center; justify-content:center;
-        font-size:4rem; color:rgba(0,217,180,.3);
-      }
-      .td-content { padding:1.4rem 1.4rem 2rem; }
-      .td-badge {
-        display:inline-flex; align-items:center; gap:.35rem;
-        font-size:.78rem; border-radius:20px; padding:.2rem .7rem; margin-bottom:.6rem;
-      }
-      .td-badge.domestic { color:#00d9b4; background:rgba(0,217,180,.1); border:1px solid rgba(0,217,180,.25); }
-      .td-badge.intl { color:#ff9f43; background:rgba(255,159,67,.1); border:1px solid rgba(255,159,67,.25); }
-      .td-title { font-family:'Kanit',sans-serif; font-size:1.5rem; font-weight:800; line-height:1.25; color:#fff; margin-bottom:1.1rem; }
-      .td-info-row { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-bottom:1.3rem; }
-      .td-info-card {
-        background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
-        border-radius:13px; padding:.85rem 1rem;
-        display:flex; flex-direction:column; gap:.2rem;
-      }
-      .td-info-card i { font-size:1rem; color:#00d9b4; margin-bottom:.1rem; }
-      .td-info-card small { font-size:.7rem; color:#a0aec0; }
-      .td-info-card strong { font-size:.95rem; font-weight:700; }
-      .td-info-card.price strong { color:#00d9b4; font-size:1.15rem; }
-      /* Rounds */
-      .td-rounds-box {
-        background:rgba(0,217,180,.06); border:1px solid rgba(0,217,180,.2);
-        border-radius:13px; padding:.9rem 1rem; margin-bottom:1.2rem;
-      }
-      .td-rounds-title { font-size:.85rem; font-weight:700; color:#00d9b4; display:flex; align-items:center; gap:.4rem; margin-bottom:.7rem; }
-      .td-round-item {
-        display:flex; align-items:center; justify-content:space-between;
-        gap:.7rem; padding:.5rem .65rem; border-radius:9px;
-        border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03);
-        margin-bottom:.45rem; cursor:pointer; transition:all .2s;
-      }
-      .td-round-item:last-child { margin-bottom:0; }
-      .td-round-item:hover:not(.full) { border-color:rgba(0,217,180,.4); background:rgba(0,217,180,.07); }
-      .td-round-item.selected { border-color:#00d9b4; background:rgba(0,217,180,.12); }
-      .td-round-item.full { opacity:.5; cursor:not-allowed; }
-      .td-round-date { font-size:.82rem; font-weight:600; color:#fff; }
-      .td-round-meta { font-size:.72rem; color:#a0aec0; }
-      .td-seats-bar { height:4px; width:65px; background:rgba(255,255,255,.1); border-radius:2px; overflow:hidden; margin-top:3px; }
-      .td-seats-fill { height:100%; border-radius:2px; transition:width .5s; }
-      .td-seats-ok { background:#00d9b4; }
-      .td-seats-low { background:#ff9f43; }
-      .td-seats-full { background:#ff4757; }
-      .td-full-tag { font-size:.68rem; background:#ff4757; color:#fff; border-radius:8px; padding:.1rem .45rem; }
-      /* Desc */
-      .td-desc { font-size:.88rem; color:#a0aec0; line-height:1.75; margin-bottom:1.2rem; }
-      /* Summary */
-      .td-summary {
-        background:rgba(0,217,180,.06); border:1px solid rgba(0,217,180,.18);
-        border-radius:13px; padding:.9rem 1rem; margin-bottom:1.3rem;
-      }
-      .td-summary-title { font-size:.82rem; font-weight:700; color:#00d9b4; margin-bottom:.6rem; }
-      .td-summary-item { display:flex; align-items:flex-start; gap:.55rem; font-size:.82rem; margin-bottom:.4rem; color:#fff; }
-      .td-summary-item i { color:#00d9b4; margin-top:.15rem; flex-shrink:0; }
-      /* Buttons */
-      .td-btn-outline {
-        width:100%; padding:.8rem; border-radius:13px; margin-bottom:.6rem;
-        background:none; border:1.5px solid rgba(0,217,180,.5); color:#00d9b4;
-        font-family:'Kanit',sans-serif; font-weight:600; font-size:.95rem;
-        cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:.5rem;
-      }
-      .td-btn-outline:hover { background:rgba(0,217,180,.08); border-color:#00d9b4; }
-      .td-btn-primary {
-        width:100%; padding:.85rem; border-radius:13px; margin-bottom:1.1rem;
-        background:linear-gradient(135deg,#00d9b4,#00c4a0); border:none; color:#000;
-        font-family:'Kanit',sans-serif; font-weight:800; font-size:1.05rem;
-        cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:.5rem;
-      }
-      .td-btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,217,180,.4); }
-      .td-btn-primary:disabled { background:#2d3748; color:#a0aec0; cursor:not-allowed; transform:none; box-shadow:none; }
-      .td-share-row { display:flex; gap:.6rem; margin-bottom:1rem; }
-      .td-share-btn {
-        flex:1; padding:.6rem; border-radius:11px; border:none;
-        font-family:'Kanit',sans-serif; font-weight:700; font-size:.85rem;
-        cursor:pointer; display:flex; align-items:center; justify-content:center; gap:.4rem;
-        transition:transform .2s, box-shadow .2s;
-      }
-      .td-share-btn:hover { transform:translateY(-2px); }
-      .td-btn-line { background:#00b900; color:#fff; }
-      .td-btn-line:hover { box-shadow:0 5px 16px rgba(0,185,0,.4); }
-      .td-btn-fb { background:#1877f2; color:#fff; }
-      .td-btn-fb:hover { box-shadow:0 5px 16px rgba(24,119,242,.4); }
-      .td-trips-link {
-        display:flex; align-items:center; justify-content:center;
-        color:rgba(255,255,255,.4); font-size:.82rem; text-decoration:none;
-        padding:.5rem; transition:color .2s;
-      }
-      .td-trips-link:hover { color:#00d9b4; }
-    </style>
+    .td-sheet::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .td-sheet::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, .15);
+      border-radius: 2px;
+    }
+
+    .td-handle {
+      text-align: center;
+      padding: .7rem 0 0;
+    }
+
+    .td-handle::before {
+      content: '';
+      display: inline-block;
+      width: 40px;
+      height: 4px;
+      background: rgba(255, 255, 255, .2);
+      border-radius: 2px;
+    }
+
+    .td-hero {
+      position: relative;
+      height: 230px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #1a2232, #252e3f);
+    }
+
+    .td-hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .td-hero-grad {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, .1) 0%, rgba(15, 20, 25, .92) 100%);
+    }
+
+    .td-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      z-index: 2;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, .55);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, .2);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .td-close:hover {
+      background: rgba(255, 255, 255, .15);
+    }
+
+    .td-hero-empty {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      color: rgba(0, 217, 180, .3);
+    }
+
+    .td-content {
+      padding: 1.4rem 1.4rem 2rem;
+    }
+
+    .td-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      font-size: .78rem;
+      border-radius: 20px;
+      padding: .2rem .7rem;
+      margin-bottom: .6rem;
+    }
+
+    .td-badge.domestic {
+      color: #00d9b4;
+      background: rgba(0, 217, 180, .1);
+      border: 1px solid rgba(0, 217, 180, .25);
+    }
+
+    .td-badge.intl {
+      color: #ff9f43;
+      background: rgba(255, 159, 67, .1);
+      border: 1px solid rgba(255, 159, 67, .25);
+    }
+
+    .td-title {
+      font-family: 'Kanit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      line-height: 1.25;
+      color: #fff;
+      margin-bottom: 1.1rem;
+    }
+
+    .td-info-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+      margin-bottom: 1.3rem;
+    }
+
+    .td-info-card {
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 13px;
+      padding: .85rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .2rem;
+    }
+
+    .td-info-card i {
+      font-size: 1rem;
+      color: #00d9b4;
+      margin-bottom: .1rem;
+    }
+
+    .td-info-card small {
+      font-size: .7rem;
+      color: #a0aec0;
+    }
+
+    .td-info-card strong {
+      font-size: .95rem;
+      font-weight: 700;
+    }
+
+    .td-info-card.price strong {
+      color: #00d9b4;
+      font-size: 1.15rem;
+    }
+
+    /* Rounds */
+    .td-rounds-box {
+      background: rgba(0, 217, 180, .06);
+      border: 1px solid rgba(0, 217, 180, .2);
+      border-radius: 13px;
+      padding: .9rem 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .td-rounds-title {
+      font-size: .85rem;
+      font-weight: 700;
+      color: #00d9b4;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      margin-bottom: .7rem;
+    }
+
+    .td-round-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .7rem;
+      padding: .5rem .65rem;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .03);
+      margin-bottom: .45rem;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .td-round-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .td-round-item:hover:not(.full) {
+      border-color: rgba(0, 217, 180, .4);
+      background: rgba(0, 217, 180, .07);
+    }
+
+    .td-round-item.selected {
+      border-color: #00d9b4;
+      background: rgba(0, 217, 180, .12);
+    }
+
+    .td-round-item.full {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .td-round-date {
+      font-size: .82rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .td-round-meta {
+      font-size: .72rem;
+      color: #a0aec0;
+    }
+
+    .td-seats-bar {
+      height: 4px;
+      width: 65px;
+      background: rgba(255, 255, 255, .1);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 3px;
+    }
+
+    .td-seats-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .5s;
+    }
+
+    .td-seats-ok {
+      background: #00d9b4;
+    }
+
+    .td-seats-low {
+      background: #ff9f43;
+    }
+
+    .td-seats-full {
+      background: #ff4757;
+    }
+
+    .td-full-tag {
+      font-size: .68rem;
+      background: #ff4757;
+      color: #fff;
+      border-radius: 8px;
+      padding: .1rem .45rem;
+    }
+
+    /* Desc */
+    .td-desc {
+      font-size: .88rem;
+      color: #a0aec0;
+      line-height: 1.75;
+      margin-bottom: 1.2rem;
+    }
+
+    /* Summary */
+    .td-summary {
+      background: rgba(0, 217, 180, .06);
+      border: 1px solid rgba(0, 217, 180, .18);
+      border-radius: 13px;
+      padding: .9rem 1rem;
+      margin-bottom: 1.3rem;
+    }
+
+    .td-summary-title {
+      font-size: .82rem;
+      font-weight: 700;
+      color: #00d9b4;
+      margin-bottom: .6rem;
+    }
+
+    .td-summary-item {
+      display: flex;
+      align-items: flex-start;
+      gap: .55rem;
+      font-size: .82rem;
+      margin-bottom: .4rem;
+      color: #fff;
+    }
+
+    .td-summary-item i {
+      color: #00d9b4;
+      margin-top: .15rem;
+      flex-shrink: 0;
+    }
+
+    /* Buttons */
+    .td-btn-outline {
+      width: 100%;
+      padding: .8rem;
+      border-radius: 13px;
+      margin-bottom: .6rem;
+      background: none;
+      border: 1.5px solid rgba(0, 217, 180, .5);
+      color: #00d9b4;
+      font-family: 'Kanit', sans-serif;
+      font-weight: 600;
+      font-size: .95rem;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+    }
+
+    .td-btn-outline:hover {
+      background: rgba(0, 217, 180, .08);
+      border-color: #00d9b4;
+    }
+
+    .td-btn-primary {
+      width: 100%;
+      padding: .85rem;
+      border-radius: 13px;
+      margin-bottom: 1.1rem;
+      background: linear-gradient(135deg, #00d9b4, #00c4a0);
+      border: none;
+      color: #000;
+      font-family: 'Kanit', sans-serif;
+      font-weight: 800;
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+    }
+
+    .td-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 217, 180, .4);
+    }
+
+    .td-btn-primary:disabled {
+      background: #2d3748;
+      color: #a0aec0;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .td-share-row {
+      display: flex;
+      gap: .6rem;
+      margin-bottom: 1rem;
+    }
+
+    .td-share-btn {
+      flex: 1;
+      padding: .6rem;
+      border-radius: 11px;
+      border: none;
+      font-family: 'Kanit', sans-serif;
+      font-weight: 700;
+      font-size: .85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .4rem;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .td-share-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .td-btn-line {
+      background: #00b900;
+      color: #fff;
+    }
+
+    .td-btn-line:hover {
+      box-shadow: 0 5px 16px rgba(0, 185, 0, .4);
+    }
+
+    .td-btn-fb {
+      background: #1877f2;
+      color: #fff;
+    }
+
+    .td-btn-fb:hover {
+      box-shadow: 0 5px 16px rgba(24, 119, 242, .4);
+    }
+
+    .td-trips-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, .4);
+      font-size: .82rem;
+      text-decoration: none;
+      padding: .5rem;
+      transition: color .2s;
+    }
+
+    .td-trips-link:hover {
+      color: #00d9b4;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- ── Announcement Bar (injected by loader if active) ── -->
-<div id="announcementBar" style="display:none" class="announcement-bar">
-  <div class="container d-flex align-items-center justify-content-between gap-2">
-    <span><i class="bi bi-megaphone-fill me-2"></i><span id="announcementText"></span></span>
-    <button onclick="this.parentElement.parentElement.style.display='none'"
-      style="background:none;border:none;color:inherit;font-size:1rem;opacity:.7;cursor:pointer">
-      <i class="bi bi-x-lg"></i></button>
-  </div>
-</div>
 
-<!-- ── Navbar ── -->
-<nav class="navbar navbar-expand-lg fixed-top">
-    <div class="container">
+  <!-- ── Header ── -->
+  <header class="fixed-top">
+    <!-- ── Navbar ── -->
+    <nav class="navbar navbar-expand-lg">
+      <div class="container">
         <a class="navbar-brand" href="/">
-            <div class="logo-icon"><i class="bi bi-geo-alt"></i></div>
-            <span>GUGA Travels</span>
+          <div class="logo-icon"><i class="bi bi-geo-alt"></i></div>
+          <span>GUGA Travels</span>
         </a>
         <div class="d-flex align-items-center gap-2">
-            <a href="/trips" class="btn btn-login d-none d-md-inline-flex">
-                <i class="bi bi-map me-1"></i> ทริป
-            </a>
-            <button class="btn-search d-md-none" style="background:none;border:none;color:white;font-size:1.2rem">
-                <i class="bi bi-search"></i>
-            </button>
-            <a href="/trips" class="btn btn-register">จองทริป</a>
+          <a href="/" class="nav-btn-home">
+            <span data-i18n="nav_home">หน้าแรก</span>
+          </a>
+          <div class="nav-sep"></div>
+          <button class="nav-btn-circle">
+            <i class="bi bi-search"></i>
+          </button>
+          <button id="langBtn" class="nav-btn-lang">
+            <i class="bi bi-globe"></i> EN
+          </button>
+          <a href="/trips" class="nav-btn-book" data-i18n="nav_book">จองทริป</a>
         </div>
-    </div>
-</nav>
+      </div>
+    </nav>
 
-<!-- ── Hero Section ── -->
-<section class="hero-section" id="heroSection">
+    <!-- ── Announcement Bar (injected by loader if active) ── -->
+    <div id="announcementBar" style="display:none" class="announcement-bar">
+      <div class="container d-flex align-items-center justify-content-between gap-2">
+        <span><i class="bi bi-megaphone-fill me-2"></i><span id="announcementText"></span></span>
+        <button onclick="this.parentElement.parentElement.style.display='none'"
+          style="background:none;border:none;color:inherit;font-size:1rem;opacity:.7;cursor:pointer">
+          <i class="bi bi-x-lg"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Hero Section ── -->
+  <section class="hero-section" id="heroSection">
     <div class="hero-content">
-        <h1 id="heroTitle">โตละ...จะไปไหนก็ได้</h1>
-        <p class="hero-subtitle" id="heroSubtitle">
-            Grow up, Go anywhere — เปิดโลกกว้าง สัมผัสธรรมชาติ เติมประสบการณ์ใหม่ กับทีมงานมืออาชีพที่ดูแลคุณตลอดการเดินทาง
-        </p>
-        <a href="/trips" class="btn-hero">
-            เช็คทริปและจองทริป <i class="bi bi-arrow-right"></i>
-        </a>
-        <div class="location-badge">
-            <i class="bi bi-newspaper"></i>
-            <a href="/trips" style="color:inherit;text-decoration:none" id="heroBadgeLink">บทความ & ประกาศ</a>
-        </div>
+      <h1 id="heroTitle" data-i18n-dyn
+          data-th="โตละ...จะไปไหนก็ได้"
+          data-en="Grow Up, Go Anywhere">โตละ...จะไปไหนก็ได้</h1>
+      <p class="hero-subtitle" id="heroSubtitle" data-i18n-dyn
+          data-th="Grow up, Go anywhere — เปิดโลกกว้าง สัมผัสธรรมชาติ เติมประสบการณ์ใหม่ กับทีมงานมืออาชีพที่ดูแลคุณตลอดการเดินทาง"
+          data-en="Grow up, Go anywhere — Explore the world, embrace nature, create new experiences with a professional team that cares for you throughout your journey.">
+        Grow up, Go anywhere — เปิดโลกกว้าง สัมผัสธรรมชาติ เติมประสบการณ์ใหม่ กับทีมงานมืออาชีพที่ดูแลคุณตลอดการเดินทาง
+      </p>
+      <a href="/trips" class="btn-hero">
+        <span data-i18n="hero_btn">เช็คทริปและจองทริป</span> <i class="bi bi-arrow-right"></i>
+      </a>
+      <!--      <div class="location-badge">
+        <i class="bi bi-newspaper"></i>
+        <a href="/trips" style="color:inherit;text-decoration:none" id="heroBadgeLink">บทความ & ประกาศ</a>
+      </div> -->
     </div>
-</section>
+  </section>
 
-<!-- ── Fire Section — Hot Content Ticker ── -->
-<div class="fire-section-wrapper">
-    <div class="container">
+  <!-- ── Fire Section — Hot Content Ticker ── -->
+  <div class="fire-section-wrapper">
+    <div class="container fire-section-layout">
+      <div class="fire-sidebar">
         <div class="fire-header">
-            <span class="fire-badge"><i class="bi bi-fire"></i> ทริปฮอต</span>
-            <span class="fire-subtitle">อัปเดตทริปล่าสุด — จองก่อนได้ก่อน!</span>
+          <span class="fire-badge"><i class="bi bi-fire"></i> <span data-i18n="fire_hot">ทริปฮอต</span></span>
+          <span class="fire-subtitle" data-i18n="fire_subtitle">อัปเดตทริปล่าสุด — จองก่อนได้ก่อน!</span>
         </div>
-    </div>
-    <div class="fire-ticker-wrap">
-        <div class="swiper fire-swiper">
+      </div>
+      <div class="fire-ticker-area">
+        <div class="fire-ticker-wrap">
+          <div class="swiper fire-swiper">
             <div class="swiper-wrapper">
-                <!-- Skeleton slides ── replaced by loader -->
-                <div class="swiper-slide fire-slide">
-                    <div class="fire-card" style="--bg:url('https://images.unsplash.com/photo-1528181304800-259b08848526?w=600&h=400&fit=crop')">
-                        <div class="fire-card-overlay">
-                            <div class="fire-card-tag"><i class="bi bi-geo-alt-fill"></i> กำลังโหลด...</div>
-                            <div class="fire-card-body"><div class="fire-card-title">—</div></div>
-                        </div>
+              <!-- Skeleton slides ── replaced by loader -->
+              <div class="swiper-slide fire-slide">
+                <div class="fire-card"
+                  style="--bg:url('https://images.unsplash.com/photo-1528181304800-259b08848526?w=600&h=400&fit=crop')">
+                  <div class="fire-card-overlay">
+                    <div class="fire-card-tag"><i class="bi bi-geo-alt-fill"></i> กำลังโหลด...</div>
+                    <div class="fire-card-body">
+                      <div class="fire-card-title">—</div>
                     </div>
+                  </div>
                 </div>
+              </div>
             </div>
+          </div>
         </div>
-    </div>
-</div>
-
-<!-- ── ทริปในประเทศ ── -->
-<section class="section ht-section" id="domesticSection">
-  <div class="container">
-    <div class="ht-header">
-      <div>
-        <h2 class="ht-title">ทริปในประเทศ</h2>
-        <p class="ht-sub">สัมผัสธรรมชาติที่ยอดเยี่ยมรอบตัวคุณ</p>
       </div>
-      <a href="/trips" class="ht-view-all">ดูทริปทั้งหมด <i class="bi bi-arrow-right"></i></a>
-    </div>
-    <div class="swiper ht-swiper domestic-swiper">
-      <div class="swiper-wrapper" id="domesticWrapper"></div>
-      <div class="swiper-button-next"></div>
-      <div class="swiper-button-prev"></div>
-      <div class="swiper-pagination"></div>
     </div>
   </div>
-</section>
 
-<!-- ── ทริปต่างประเทศ ── -->
-<section class="section ht-section section-alt" id="intlSection">
-  <div class="container">
-    <div class="ht-header">
-      <div>
-        <h2 class="ht-title">ทริปต่างประเทศ</h2>
-        <p class="ht-sub">ก้าวข้ามพรมแดน สู่จุดหมายที่ดีที่สุด</p>
+  <!-- ── ทริปในประเทศ ── -->
+  <section class="section ht-section" id="domesticSection">
+    <div class="container">
+      <div class="ht-header">
+        <div>
+          <h2 class="ht-title" data-i18n="domestic_title">ทริปในประเทศ</h2>
+          <p class="ht-sub" data-i18n="domestic_subtitle">สัมผัสธรรมชาติที่ยอดเยี่ยมรอบตัวคุณ</p>
+        </div>
+        <a href="/trips" class="ht-view-all"><span data-i18n="view_all_trips">ดูทริปทั้งหมด</span> <i class="bi bi-arrow-right"></i></a>
       </div>
-      <a href="/trips" class="ht-view-all">ดูทริปทั้งหมด <i class="bi bi-arrow-right"></i></a>
+      <div class="swiper ht-swiper domestic-swiper">
+        <div class="swiper-wrapper" id="domesticWrapper"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-pagination"></div>
+      </div>
     </div>
-    <div class="swiper ht-swiper international-swiper">
-      <div class="swiper-wrapper" id="intlWrapper"></div>
-      <div class="swiper-button-next"></div>
-      <div class="swiper-button-prev"></div>
-      <div class="swiper-pagination"></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- ── Why Choose Us ── commented out per design decision -->
-<!--
+  <!-- ── ทริปต่างประเทศ ── -->
+  <section class="section ht-section" id="intlSection">
+    <div class="container">
+      <div class="ht-header">
+        <div>
+          <h2 class="ht-title" data-i18n="intl_title">ทริปต่างประเทศ</h2>
+          <p class="ht-sub" data-i18n="intl_subtitle">ก้าวข้ามพรมแดน สู่จุดหมายที่ดีที่สุด</p>
+        </div>
+        <a href="/trips" class="ht-view-all"><span data-i18n="view_all_trips">ดูทริปทั้งหมด</span> <i class="bi bi-arrow-right"></i></a>
+      </div>
+      <div class="swiper ht-swiper international-swiper">
+        <div class="swiper-wrapper" id="intlWrapper"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-pagination"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Why Choose Us ── commented out per design decision -->
+  <!--
 <section class="section">...Why Choose Us content...</section>
 -->
-<!--
+  <!--
 <section class="section">
     <div class="container">
         <div class="row g-4">
@@ -472,252 +1146,269 @@
 </section>
 -->
 
-<!-- ── Blog / Inspiration ── -->
-<section class="section section-alt">
+  <!-- ── Blog / Inspiration ── -->
+  <section class="section section-alt">
     <div class="container">
-        <h2 class="section-title">ภาพความประทับใจ</h2>
-        <p class="section-subtitle">บันทึกความทรงจำและรอยยิ้มจากการเดินทาง</p>
-        <div class="row g-4" id="blogGrid">
-            <!-- Placeholder ── replaced by loader -->
-            <div class="col-lg-6">
-                <div class="blog-card">
-                    <div class="blog-image-container">
-                        <img src="https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=800&h=500&fit=crop" alt="" class="blog-image">
-                        <div class="blog-overlay">
-                            <span class="blog-category"><i class="bi bi-tag"></i> Lifestyle</span>
-                            <h4 class="blog-title">บทความท่องเที่ยว</h4>
-                        </div>
-                    </div>
-                </div>
+      <h2 class="section-title" data-i18n="blog_title">ภาพความประทับใจ</h2>
+      <p class="section-subtitle" data-i18n="blog_subtitle">บันทึกความทรงจำและรอยยิ้มจากการเดินทาง</p>
+      <div class="row g-4" id="blogGrid">
+        <!-- Placeholder ── replaced by loader -->
+        <div class="col-lg-6">
+          <div class="blog-card">
+            <div class="blog-image-container">
+              <img src="https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=800&h=500&fit=crop" alt=""
+                class="blog-image">
+              <div class="blog-overlay">
+                <span class="blog-category"><i class="bi bi-tag"></i> Lifestyle</span>
+                <h4 class="blog-title">บทความท่องเที่ยว</h4>
+              </div>
             </div>
-            <div class="col-lg-6">
-                <div class="blog-card">
-                    <div class="blog-image-container">
-                        <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=500&fit=crop" alt="" class="blog-image">
-                        <div class="blog-overlay">
-                            <span class="blog-category"><i class="bi bi-tag"></i> Travel</span>
-                            <h4 class="blog-title">ประสบการณ์การเดินทาง</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
-    </div>
-</section>
-
-<!-- ── Gallery Section ── -->
-<section class="section" id="gallerySection">
-    <div class="container">
-        <h2 class="section-title">แกลเลอรี่</h2>
-        <p class="section-subtitle">ภาพสวยๆ จากทริปที่ผ่านมา</p>
-        <div class="row g-3" id="galleryGrid">
-            <div class="col-12 text-center py-4" style="color:var(--text-gray)">
-                <i class="bi bi-images" style="font-size:2.5rem;opacity:.3"></i>
-                <p class="mt-2 small">กำลังโหลดแกลเลอรี่...</p>
+        <div class="col-lg-6">
+          <div class="blog-card">
+            <div class="blog-image-container">
+              <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=500&fit=crop" alt=""
+                class="blog-image">
+              <div class="blog-overlay">
+                <span class="blog-category"><i class="bi bi-tag"></i> Travel</span>
+                <h4 class="blog-title">ประสบการณ์การเดินทาง</h4>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
     </div>
-</section>
+  </section>
 
-<!-- ── Services ── -->
-<section class="section section-alt">
+  <!-- ── Gallery Section ── -->
+  <section class="section" id="gallerySection">
     <div class="container">
-        <h2 class="section-title">บริการอื่นๆ</h2>
-        <p class="section-subtitle">เราพร้อมดูแลคุณตั้งแต่ต้นจนจบการเดินทาง</p>
-        <div class="row g-4">
-            <div class="col-lg-4">
-                <div class="service-card">
-                    <div class="service-icon"><i class="bi bi-people-fill"></i></div>
-                    <h4 class="service-title">รับจัดทริปส่วนตัว</h4>
-                    <p class="service-text">สำหรับกลุ่ม 8-10 คนขึ้นไป สามารถออกแบบโปรแกรมพิเศษตามความต้องการ</p>
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <div class="service-card">
-                    <div class="service-icon"><i class="bi bi-compass"></i></div>
-                    <h4 class="service-title">อุปกรณ์เช่าพร้อม</h4>
-                    <p class="service-text">เต้นท์ ถุงนอน อุปกรณ์เดินป่า แบรนด์ NH, Mobi Garden ราคาเหมาะสม</p>
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <div class="service-card">
-                    <div class="service-icon"><i class="bi bi-building"></i></div>
-                    <h4 class="service-title">จัดทริปองค์กร</h4>
-                    <p class="service-text">บริการจัดทริปสำหรับองค์กร พร้อมกิจกรรม Team Building</p>
-                </div>
-            </div>
+      <h2 class="section-title" data-i18n="gallery_title">แกลเลอรี่</h2>
+      <p class="section-subtitle" data-i18n="gallery_subtitle">ภาพสวยๆ จากทริปที่ผ่านมา</p>
+      <div class="row g-3" id="galleryGrid">
+        <div class="col-12 text-center py-4" style="color:var(--text-gray)">
+          <i class="bi bi-images" style="font-size:2.5rem;opacity:.3"></i>
+          <p class="mt-2 small">กำลังโหลดแกลเลอรี่...</p>
         </div>
+      </div>
     </div>
-</section>
+  </section>
 
-<!-- ── FAQ ── -->
-<section class="section" id="faqWrap">
+  <!-- ── Services ── -->
+  <section class="section section-alt">
     <div class="container">
-        <h2 class="section-title">คำถามที่พบบ่อย</h2>
-        <p class="section-subtitle">ข้อสงสัยเกี่ยวกับการเดินทาง เรามีคำตอบ</p>
-        <div class="faq-section" id="faqSection">
-            <!-- Loaded from API or fallback below -->
-            <div class="faq-item">
-                <div class="faq-question">
-                    <h5>ไม่เคยมีประสบการณ์เดินป่ามาก่อน สามารถร่วมทริปได้ไหม?</h5>
-                    <i class="bi bi-chevron-down faq-icon"></i>
-                </div>
-                <div class="faq-answer">
-                    <div class="faq-answer-content">ได้เลยครับ! ทริปของเรามี guide มืออาชีพคอยดูแลและให้คำแนะนำตลอดการเดินทาง เหมาะสำหรับทั้งมือใหม่และผู้มีประสบการณ์</div>
-                </div>
-            </div>
-            <div class="faq-item">
-                <div class="faq-question">
-                    <h5>สามารถจองได้อย่างไร?</h5>
-                    <i class="bi bi-chevron-down faq-icon"></i>
-                </div>
-                <div class="faq-answer">
-                    <div class="faq-answer-content">สามารถจองได้ผ่านเว็บไซต์ หรือติดต่อทาง LINE Official Account ทีมงานพร้อมให้คำปรึกษา</div>
-                </div>
-            </div>
-            <div class="faq-item">
-                <div class="faq-question">
-                    <h5>มีช่องทางการชำระเงินอะไรบ้าง?</h5>
-                    <i class="bi bi-chevron-down faq-icon"></i>
-                </div>
-                <div class="faq-answer">
-                    <div class="faq-answer-content">รับชำระผ่านการโอนเงิน, พร้อมเพย์, บัตรเครดิต และชำระเงินสดที่สำนักงาน</div>
-                </div>
-            </div>
+      <h2 class="section-title" data-i18n="svc_title">บริการอื่นๆ</h2>
+      <p class="section-subtitle" data-i18n="svc_subtitle">เราพร้อมดูแลคุณตั้งแต่ต้นจนจบการเดินทาง</p>
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="service-card">
+            <div class="service-icon"><i class="bi bi-people-fill"></i></div>
+            <h4 class="service-title" data-i18n="svc1_title">รับจัดทริปส่วนตัว</h4>
+            <p class="service-text" data-i18n="svc1_text">สำหรับกลุ่ม 8-10 คนขึ้นไป สามารถออกแบบโปรแกรมพิเศษตามความต้องการ</p>
+          </div>
         </div>
+        <div class="col-lg-4">
+          <div class="service-card">
+            <div class="service-icon"><i class="bi bi-compass"></i></div>
+            <h4 class="service-title" data-i18n="svc2_title">อุปกรณ์เช่าพร้อม</h4>
+            <p class="service-text" data-i18n="svc2_text">เต้นท์ ถุงนอน อุปกรณ์เดินป่า แบรนด์ NH, Mobi Garden ราคาเหมาะสม</p>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="service-card">
+            <div class="service-icon"><i class="bi bi-building"></i></div>
+            <h4 class="service-title" data-i18n="svc3_title">จัดทริปองค์กร</h4>
+            <p class="service-text" data-i18n="svc3_text">บริการจัดทริปสำหรับองค์กร พร้อมกิจกรรม Team Building</p>
+          </div>
+        </div>
+      </div>
     </div>
-</section>
+  </section>
 
-<!-- ── Contact ── -->
-<section class="section section-alt contact-section" id="contactSection">
+  <!-- ── FAQ ── -->
+  <section class="section" id="faqWrap">
     <div class="container">
-        <h2 class="section-title">ติดต่อเรา</h2>
-        <p class="section-subtitle">พร้อมดูแลคุณตลอด 24 ชั่วโมง</p>
-        <div class="row g-4">
-            <div class="col-lg-5">
-                <div class="contact-item">
-                    <div class="contact-icon"><i class="bi bi-telephone-fill"></i></div>
-                    <div>
-                        <div class="contact-label">โทรศัพท์</div>
-                        <p class="contact-value" id="contactPhone">—</p>
-                    </div>
-                </div>
-                <div class="contact-item">
-                    <div class="contact-icon"><i class="bi bi-envelope-fill"></i></div>
-                    <div>
-                        <div class="contact-label">อีเมล</div>
-                        <p class="contact-value" id="contactEmail">—</p>
-                    </div>
-                </div>
-                <div class="contact-item">
-                    <div class="contact-icon"><i class="bi bi-geo-alt-fill"></i></div>
-                    <div>
-                        <div class="contact-label">ที่อยู่</div>
-                        <p class="contact-value" id="contactAddress">—</p>
-                    </div>
-                </div>
-                <div class="contact-item">
-                    <div class="contact-icon"><i class="bi bi-clock-fill"></i></div>
-                    <div>
-                        <div class="contact-label">เวลาทำการ</div>
-                        <p class="contact-value" id="contactHours">จ-ศ 09:00-18:00</p>
-                    </div>
-                </div>
+      <h2 class="section-title" data-i18n="faq_title">คำถามที่พบบ่อย</h2>
+      <p class="section-subtitle" data-i18n="faq_subtitle">ข้อสงสัยเกี่ยวกับการเดินทาง เรามีคำตอบ</p>
+      <div class="faq-section" id="faqSection">
+        <!-- Loaded from API or fallback below -->
+        <div class="faq-item">
+          <div class="faq-question">
+            <h5 data-i18n="faq1_q">ไม่เคยมีประสบการณ์เดินป่ามาก่อน สามารถร่วมทริปได้ไหม?</h5>
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-content" data-i18n="faq1_a">ได้เลยครับ! ทริปของเรามี guide มืออาชีพคอยดูแลและให้คำแนะนำตลอดการเดินทาง
+              เหมาะสำหรับทั้งมือใหม่และผู้มีประสบการณ์</div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <h5 data-i18n="faq2_q">สามารถจองได้อย่างไร?</h5>
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-content" data-i18n="faq2_a">สามารถจองได้ผ่านเว็บไซต์ หรือติดต่อทาง LINE Official Account
+              ทีมงานพร้อมให้คำปรึกษา</div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <h5 data-i18n="faq3_q">มีช่องทางการชำระเงินอะไรบ้าง?</h5>
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-content" data-i18n="faq3_a">รับชำระผ่านการโอนเงิน, พร้อมเพย์, บัตรเครดิต และชำระเงินสดที่สำนักงาน</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Contact ── -->
+<!--   <section class="section section-alt contact-section" id="contactSection">
+    <div class="container">
+      <h2 class="section-title">ติดต่อเรา</h2>
+      <p class="section-subtitle">พร้อมดูแลคุณตลอด 24 ชั่วโมง</p>
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <div class="contact-item">
+            <div class="contact-icon"><i class="bi bi-telephone-fill"></i></div>
+            <div>
+              <div class="contact-label">โทรศัพท์</div>
+              <p class="contact-value" id="contactPhone">—</p>
             </div>
-            <div class="col-lg-7">
-                <div id="contactMapWrap" style="min-height:200px;background:var(--card-bg);border-radius:12px;
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon"><i class="bi bi-envelope-fill"></i></div>
+            <div>
+              <div class="contact-label">อีเมล</div>
+              <p class="contact-value" id="contactEmail">—</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon"><i class="bi bi-geo-alt-fill"></i></div>
+            <div>
+              <div class="contact-label">ที่อยู่</div>
+              <p class="contact-value" id="contactAddress">—</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon"><i class="bi bi-clock-fill"></i></div>
+            <div>
+              <div class="contact-label">เวลาทำการ</div>
+              <p class="contact-value" id="contactHours">จ-ศ 09:00-18:00</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div id="contactMapWrap" style="min-height:200px;background:var(--card-bg);border-radius:12px;
                   display:flex;align-items:center;justify-content:center;color:var(--text-gray)">
-                    <div class="text-center"><i class="bi bi-map" style="font-size:3rem;opacity:.3"></i>
-                    <p class="mt-2 small">ตั้งค่าแผนที่ใน Settings</p></div>
-                </div>
+            <div class="text-center"><i class="bi bi-map" style="font-size:3rem;opacity:.3"></i>
+              <p class="mt-2 small">ตั้งค่าแผนที่ใน Settings</p>
             </div>
+          </div>
         </div>
+      </div>
     </div>
-</section>
+  </section> -->
 
-<!-- ── Social Contact ── -->
-<section class="social-contact">
+  <!-- ── Social Contact ── -->
+  <section class="social-contact">
     <div class="container">
-        <h2 class="section-title">เริ่มต้นการเดินทางของคุณ</h2>
-        <p class="section-subtitle">เลือกช่องทางที่คุณสะดวกเพื่อสอบถามหรือจองบริการกับเรา</p>
-        <div class="social-grid">
-            <a href="#" class="social-item facebook" id="social-facebook" target="_blank" rel="noopener">
-                <i class="bi bi-facebook"></i><div>Facebook</div>
-            </a>
-            <a href="#" class="social-item line" id="social-line" target="_blank" rel="noopener">
-                <i class="bi bi-line"></i><div>LINE</div>
-            </a>
-            <a href="#" class="social-item instagram" id="social-instagram" target="_blank" rel="noopener">
-                <i class="bi bi-instagram"></i><div>Instagram</div>
-            </a>
-            <a href="#" class="social-item tiktok" id="social-tiktok" target="_blank" rel="noopener">
-                <i class="bi bi-tiktok"></i><div>TikTok</div>
-            </a>
-            <a href="#" class="social-item email" id="social-email">
-                <i class="bi bi-envelope"></i><div>Email</div>
-            </a>
-        </div>
+      <h2 class="section-title" data-i18n="social_title">เริ่มต้นการเดินทางของคุณ</h2>
+      <p class="section-subtitle" data-i18n="social_subtitle">เลือกช่องทางที่คุณสะดวกเพื่อสอบถามหรือจองบริการกับเรา</p>
+      <div class="social-grid">
+        <a href="#" class="social-item facebook" id="social-facebook" target="_blank" rel="noopener">
+          <i class="bi bi-facebook"></i>
+          <div>Facebook</div>
+        </a>
+        <a href="#" class="social-item line" id="social-line" target="_blank" rel="noopener">
+          <i class="bi bi-line"></i>
+          <div>LINE</div>
+        </a>
+        <a href="#" class="social-item instagram" id="social-instagram" target="_blank" rel="noopener">
+          <i class="bi bi-instagram"></i>
+          <div>Instagram</div>
+        </a>
+        <a href="#" class="social-item tiktok" id="social-tiktok" target="_blank" rel="noopener">
+          <i class="bi bi-tiktok"></i>
+          <div>TikTok</div>
+        </a>
+        <a href="#" class="social-item email" id="social-email">
+          <i class="bi bi-envelope"></i>
+          <div>Email</div>
+        </a>
+      </div>
     </div>
-</section>
+  </section>
 
-<!-- ── Footer ── -->
-<footer>
+  <!-- ── Footer ── -->
+  <footer>
     <div class="container">
-        <p class="footer-text">© 2026 GUGA Travels. All rights reserved. | Powered by GUGA Travels</p>
+      <p class="footer-text">© 2026 GUGA Travels. All rights reserved. | Powered by GUGA Travels</p>
     </div>
-</footer>
+  </footer>
 
-<!-- ── Cookie Notice ── -->
-<div class="cookie-notice" id="cookieNotice">
+  <!-- ── Cookie Notice ── -->
+  <div class="cookie-notice" id="cookieNotice">
     <i class="bi bi-shield-check cookie-icon"></i>
     <div class="cookie-text">
-        <span id="cookiePolicyText">เว็บไซต์นี้ใช้คุกกี้ (Cookies) เพื่อนำเสนอประสบการณ์การใช้งานที่ดีที่สุดให้กับคุณ</span>
-        <a href="#"> นโยบายความเป็นส่วนตัว</a>
+      <span id="cookiePolicyText" data-i18n="cookie_text">เว็บไซต์นี้ใช้คุกกี้ (Cookies)
+        เพื่อนำเสนอประสบการณ์การใช้งานที่ดีที่สุดให้กับคุณ</span>
+      <a href="#" data-i18n="cookie_policy"> นโยบายความเป็นส่วนตัว</a>
     </div>
-    <button class="btn-cookie">เข้าใจและยอมรับ</button>
-</div>
+    <button class="btn-cookie" data-i18n="cookie_btn">เข้าใจและยอมรับ</button>
+  </div>
 
-<!-- ── Album Lightbox ── -->
-<div id="albumLightbox" class="album-lightbox" style="display:none" onclick="if(event.target===this)closeAlbumModal()">
+  <!-- ── Album Lightbox ── -->
+  <div id="albumLightbox" class="album-lightbox" style="display:none"
+    onclick="if(event.target===this)closeAlbumModal()">
     <div class="album-lightbox-inner">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 id="albumLightboxTitle" style="color:#fff;font-family:Kanit,sans-serif;margin:0"></h5>
-            <button onclick="closeAlbumModal()"
-              style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-        <p id="albumLightboxDesc" style="color:var(--text-gray);font-size:.85rem;margin-top:.25rem"></p>
-        <div class="album-lightbox-grid" id="albumLightboxGrid">
-            <div style="grid-column:1/-1;text-align:center;color:#aaa;padding:2rem">กำลังโหลด...</div>
-        </div>
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 id="albumLightboxTitle" style="color:#fff;font-family:Kanit,sans-serif;margin:0"></h5>
+        <button onclick="closeAlbumModal()"
+          style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <p id="albumLightboxDesc" style="color:var(--text-gray);font-size:.85rem;margin-top:.25rem"></p>
+      <div class="album-lightbox-grid" id="albumLightboxGrid">
+        <div style="grid-column:1/-1;text-align:center;color:#aaa;padding:2rem">กำลังโหลด...</div>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Swiper JS -->
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <!-- Swiper JS -->
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
-<!-- Trip Cards Controller + Detail Modal -->
-<script type="module">
-import { apiFetch } from '/src/api/config.js'
+  <!-- Trip Cards Controller + Detail Modal -->
+  <script type="module">
+    import { apiFetch } from '/src/api/config.js'
 
-const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
-                   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม']
+    const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม']
+    const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December']
 
-// ── shared state ─────────────────────────────────────────
-let homeRoundMap  = new Map()
-let tdSelectedRound = null
-let tdCurrentTrip   = null
+    // Escape text for use inside HTML attributes
+    const esc = s => (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
 
-// ── card HTML ────────────────────────────────────────────
-function htSkeleton(n) {
-  return Array.from({length: n}, () => `
+    // ── shared state ─────────────────────────────────────────
+    let homeRoundMap = new Map()
+    let tdSelectedRound = null
+    let tdCurrentTrip = null
+
+    // ── card HTML ────────────────────────────────────────────
+    function htSkeleton(n) {
+      return Array.from({ length: n }, () => `
     <div class="swiper-slide">
       <div class="ht-card" style="pointer-events:none">
-        <div class="ht-img-placeholder ht-skeleton" style="height:190px;border-radius:0"></div>
+        <div class="ht-img-placeholder ht-skeleton" style="border-radius:0"></div>
         <div class="ht-body">
           <div class="ht-skeleton mb-2" style="height:12px;width:55%"></div>
           <div class="ht-skeleton mb-1" style="height:18px;width:85%"></div>
@@ -726,333 +1417,407 @@ function htSkeleton(n) {
         </div>
       </div>
     </div>`).join('')
-}
+    }
 
-function tripCard(t, rounds) {
-  const next    = rounds.find(r => r.isOpen && (r.totalSeats - r.bookedSeats) > 0) || rounds[0]
-  const seated  = next ? (next.totalSeats - next.bookedSeats) : null
-  const pct     = next ? Math.round(next.bookedSeats / next.totalSeats * 100) : 0
-  const fillCls = pct >= 100 ? 'full' : pct >= 70 ? 'low' : 'ok'
-  const dept    = next
-    ? new Date(next.departDate).toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'2-digit'})
-    : ''
-  return `
+    function tripCard(t, rounds) {
+      const next = rounds.find(r => r.isOpen && (r.totalSeats - r.bookedSeats) > 0) || rounds[0]
+      const seated = next ? (next.totalSeats - next.bookedSeats) : null
+      const pct = next ? Math.round(next.bookedSeats / next.totalSeats * 100) : 0
+      const fillCls = pct >= 100 ? 'full' : pct >= 70 ? 'low' : 'ok'
+
+      // Pre-compute both locale date strings — used for data-en (no API call needed for dates)
+      const deptTH = next
+        ? new Date(next.departDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
+        : ''
+      const deptEN = next
+        ? new Date(next.departDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: '2-digit' })
+        : ''
+
+      const loc = t.country || (t.tripType === 'INTERNATIONAL' ? 'ต่างประเทศ' : 'ไทย')
+      const seatTxt = seated !== null ? `เหลือ ${seated}/${next?.totalSeats}` : ''
+      const mthIdx = new Date().getMonth()
+      const rndsTxt = `${rounds.length} รอบ`
+
+      return `
   <div class="swiper-slide">
     <div class="ht-card" onclick="window.__tdOpen(${t.id})">
       <div class="ht-img-wrap">
         ${t.imageUrl
-          ? `<img src="${t.imageUrl}" class="ht-img" alt="${t.title}" loading="lazy">`
+          ? `<img src="${t.imageUrl}" class="ht-img" alt="${esc(t.title)}" loading="lazy">`
           : `<div class="ht-img-placeholder"><i class="bi bi-map"></i></div>`}
         <div class="ht-badges">
           <span class="ht-badge-loc">
             <i class="bi bi-geo-alt-fill"></i>
-            ${t.country || (t.tripType === 'INTERNATIONAL' ? 'ต่างประเทศ' : 'ไทย')}
+            <span data-i18n-dyn data-th="${esc(loc)}">${loc}</span>
           </span>
           ${t.isHot ? '<span class="ht-badge-hot"><i class="bi bi-fire me-1"></i>HOT</span>' : ''}
         </div>
         ${next ? `
         <div class="ht-seats-overlay">
           <div class="ht-seats-text">
-            <span><i class="bi bi-calendar3" style="margin-right:.3rem"></i>${dept}</span>
-            <span>${seated !== null ? `เหลือ ${seated}/${next.totalSeats}` : ''}</span>
+            <span><i class="bi bi-calendar3" style="margin-right:.3rem"></i>
+              <span data-i18n-dyn data-th="${esc(deptTH)}" data-en="${esc(deptEN)}">${deptTH}</span>
+            </span>
+            <span data-i18n-dyn data-th="${esc(seatTxt)}">${seatTxt}</span>
           </div>
           <div class="ht-seats-bar"><div class="ht-seats-fill ${fillCls}" style="width:${pct}%"></div></div>
         </div>` : ''}
       </div>
       <div class="ht-body">
-        <h3 class="ht-card-title">${t.title}</h3>
-        ${t.description ? `<p class="ht-card-desc">${t.description}</p>` : ''}
-        ${rounds.length ? `<div class="ht-card-meta"><i class="bi bi-calendar3"></i>${rounds.length} รอบ · ${MONTHS_TH[new Date().getMonth()]}</div>` : ''}
+        <h3 class="ht-card-title" data-i18n-dyn data-th="${esc(t.title)}">${t.title}</h3>
+        ${t.description ? `<p class="ht-card-desc" data-i18n-dyn data-th="${esc(t.description)}">${t.description}</p>` : ''}
+        ${rounds.length ? `
+        <div class="ht-card-meta">
+          <i class="bi bi-calendar3"></i>
+          <span data-i18n-dyn data-th="${esc(rndsTxt)}">${rndsTxt}</span>
+          · <span data-i18n-dyn data-th="${MONTHS_TH[mthIdx]}" data-en="${MONTHS_EN[mthIdx]}">${MONTHS_TH[mthIdx]}</span>
+        </div>` : ''}
         <div class="ht-card-footer">
-          <div class="ht-price">฿${Number(t.price).toLocaleString()}<small> / คน</small></div>
+          <div class="ht-price">฿${Number(t.price).toLocaleString()}<small data-i18n="per_person"> / คน</small></div>
           <button class="ht-btn-book" onclick="event.stopPropagation();window.__tdOpen(${t.id})">
-            <i class="bi bi-info-circle me-1"></i>รายละเอียด
+            <i class="bi bi-info-circle me-1"></i><span data-i18n="view_detail">รายละเอียด</span>
           </button>
         </div>
       </div>
     </div>
   </div>`
-}
-
-// ── Swiper ───────────────────────────────────────────────
-let swiperDomestic, swiperIntl
-function initSwiper(sel) {
-  return new Swiper(sel, {
-    slidesPerView: 'auto', spaceBetween: 16, freeMode: true, grabCursor: true,
-    navigation: { nextEl: sel + ' .swiper-button-next', prevEl: sel + ' .swiper-button-prev' },
-    pagination: { el: sel + ' .swiper-pagination', clickable: true },
-    breakpoints: { 0:{spaceBetween:12}, 640:{spaceBetween:16}, 1024:{spaceBetween:20} }
-  })
-}
-
-// ── Load data ────────────────────────────────────────────
-async function loadHomeTripRows() {
-  document.getElementById('domesticWrapper').innerHTML = htSkeleton(5)
-  document.getElementById('intlWrapper').innerHTML     = htSkeleton(4)
-  try {
-    const now = new Date()
-    const [domestic, international, rounds] = await Promise.all([
-      apiFetch('/trips?type=DOMESTIC&active=true'),
-      apiFetch('/trips?type=INTERNATIONAL&active=true'),
-      apiFetch(`/bus-rounds?month=${now.getMonth()}&year=${now.getFullYear()}`),
-    ])
-    homeRoundMap = new Map()
-    for (const r of rounds) {
-      if (!homeRoundMap.has(r.tripId)) homeRoundMap.set(r.tripId, [])
-      homeRoundMap.get(r.tripId).push(r)
     }
-    const domEl  = document.getElementById('domesticWrapper')
-    const intlEl = document.getElementById('intlWrapper')
-    domEl.innerHTML  = domestic.length     ? domestic.map(t => tripCard(t, homeRoundMap.get(t.id) || [])).join('') : emptySlide('ยังไม่มีทริปในประเทศ')
-    intlEl.innerHTML = international.length ? international.map(t => tripCard(t, homeRoundMap.get(t.id) || [])).join('') : emptySlide('ยังไม่มีทริปต่างประเทศ')
-    if (swiperDomestic) swiperDomestic.destroy(true, true)
-    if (swiperIntl)     swiperIntl.destroy(true, true)
-    swiperDomestic = initSwiper('.domestic-swiper')
-    swiperIntl     = initSwiper('.international-swiper')
-  } catch(e) { console.error('Trip rows load error:', e) }
-}
 
-function emptySlide(msg) {
-  return `<div class="swiper-slide" style="width:100%">
+    // ── Swiper ───────────────────────────────────────────────
+    let swiperDomestic, swiperIntl
+
+    // ── Load data ────────────────────────────────────────────
+    async function loadHomeTripRows() {
+      document.getElementById('domesticWrapper').innerHTML = htSkeleton(5)
+      document.getElementById('intlWrapper').innerHTML = htSkeleton(4)
+      try {
+        const now = new Date()
+        const [domestic, international, rounds] = await Promise.all([
+          apiFetch('/trips?type=DOMESTIC&active=true'),
+          apiFetch('/trips?type=INTERNATIONAL&active=true'),
+          apiFetch(`/bus-rounds?month=${now.getMonth()}&year=${now.getFullYear()}`),
+        ])
+        homeRoundMap = new Map()
+        for (const r of rounds) {
+          if (!homeRoundMap.has(r.tripId)) homeRoundMap.set(r.tripId, [])
+          homeRoundMap.get(r.tripId).push(r)
+        }
+        const domEl = document.getElementById('domesticWrapper')
+        const intlEl = document.getElementById('intlWrapper')
+        domEl.innerHTML = domestic.length ? domestic.map(t => tripCard(t, homeRoundMap.get(t.id) || [])).join('') : emptySlide('ยังไม่มีทริปในประเทศ')
+        intlEl.innerHTML = international.length ? international.map(t => tripCard(t, homeRoundMap.get(t.id) || [])).join('') : emptySlide('ยังไม่มีทริปต่างประเทศ')
+
+        if (window.__initSwipers) window.__initSwipers()
+        // Apply static i18n keys inside generated cards (per_person, view_detail)
+        window.__applyI18n?.()
+        // If user is already in EN mode, translate dynamic content
+        await window.__translateDynamic?.()
+      } catch (e) { console.error('Trip rows load error:', e) }
+    }
+
+    function emptySlide(msg) {
+      return `<div class="swiper-slide" style="width:100%">
     <div style="text-align:center;padding:3rem;color:var(--text-gray)">
-      <i class="bi bi-map" style="font-size:3rem;opacity:.3;display:block;margin-bottom:.75rem"></i>${msg}
+      <i class="bi bi-map" style="font-size:3rem;opacity:.3;display:block;margin-bottom:.75rem"></i>
+      <span data-i18n-dyn data-th="${esc(msg)}">${msg}</span>
     </div></div>`
-}
+    }
 
-// ── Detail Modal ─────────────────────────────────────────
-async function tdOpen(tripId) {
-  tdSelectedRound = null
-  tdCurrentTrip   = null
+    // ── Detail Modal ─────────────────────────────────────────
+    async function tdOpen(tripId) {
+      tdSelectedRound = null
+      tdCurrentTrip = null
 
-  // loading state
-  const heroEl  = document.getElementById('tdHero')
-  heroEl.innerHTML = `<div class="td-hero-empty"><i class="bi bi-compass-fill"></i></div>`
-  document.getElementById('tdBadge').innerHTML   = ''
-  document.getElementById('tdTitle').textContent = 'กำลังโหลด...'
-  document.getElementById('tdInfo').innerHTML    = ''
-  document.getElementById('tdRounds').innerHTML  = '<div style="padding:1rem;text-align:center;color:#a0aec0"><span class="spinner-border spinner-border-sm"></span></div>'
-  document.getElementById('tdDesc').textContent  = ''
-  document.getElementById('tdSummary').innerHTML = ''
-  document.getElementById('tdBtnBook').disabled  = true
-  document.getElementById('tdBtnDoc').style.display = 'none'
+      const heroEl = document.getElementById('tdHero')
+      heroEl.innerHTML = `<div class="td-hero-empty"><i class="bi bi-compass-fill"></i></div>`
+      document.getElementById('tdBadge').innerHTML = ''
+      document.getElementById('tdTitle').textContent = 'กำลังโหลด...'
+      document.getElementById('tdInfo').innerHTML = ''
+      document.getElementById('tdRounds').innerHTML = '<div style="padding:1rem;text-align:center;color:#a0aec0"><span class="spinner-border spinner-border-sm"></span></div>'
+      document.getElementById('tdDesc').textContent = ''
+      document.getElementById('tdSummary').innerHTML = ''
+      document.getElementById('tdBtnBook').disabled = true
+      document.getElementById('tdBtnDoc').style.display = 'none'
 
-  // open overlay
-  document.getElementById('tripDetailModal').classList.add('open')
-  document.body.style.overflow = 'hidden'
+      document.getElementById('tripDetailModal').classList.add('open')
+      document.body.style.overflow = 'hidden'
 
-  try {
-    const rounds = homeRoundMap.get(tripId)
-      || await apiFetch(`/bus-rounds?tripId=${tripId}&month=${new Date().getMonth()}&year=${new Date().getFullYear()}`).catch(()=>[])
-    const trip = await apiFetch(`/trips/${tripId}`)
-    tdCurrentTrip = trip
+      try {
+        const rounds = homeRoundMap.get(tripId)
+          || await apiFetch(`/bus-rounds?tripId=${tripId}&month=${new Date().getMonth()}&year=${new Date().getFullYear()}`).catch(() => [])
+        const trip = await apiFetch(`/trips/${tripId}`)
+        tdCurrentTrip = trip
 
-    // hero
-    heroEl.innerHTML = trip.imageUrl
-      ? `<img src="${trip.imageUrl}" alt="${trip.title}"><div class="td-hero-grad"></div><button class="td-close" onclick="tdClose()"><i class="bi bi-x"></i></button>`
-      : `<div class="td-hero-empty"><i class="bi bi-map"></i></div><button class="td-close" onclick="tdClose()"><i class="bi bi-x"></i></button>`
+        // hero
+        heroEl.innerHTML = trip.imageUrl
+          ? `<img src="${trip.imageUrl}" alt="${esc(trip.title)}"><div class="td-hero-grad"></div><button class="td-close" onclick="tdClose()"><i class="bi bi-x"></i></button>`
+          : `<div class="td-hero-empty"><i class="bi bi-map"></i></div><button class="td-close" onclick="tdClose()"><i class="bi bi-x"></i></button>`
 
-    // badge
-    const isIntl = trip.tripType === 'INTERNATIONAL'
-    const loc    = trip.country || (isIntl ? 'ต่างประเทศ' : 'ในประเทศ')
-    document.getElementById('tdBadge').innerHTML = `
+        // badge
+        const isIntl = trip.tripType === 'INTERNATIONAL'
+        const loc = trip.country || (isIntl ? 'ต่างประเทศ' : 'ในประเทศ')
+        const locSuffix = isIntl ? '' : ', ไทย'
+        document.getElementById('tdBadge').innerHTML = `
       <span class="td-badge ${isIntl ? 'intl' : 'domestic'}">
-        <i class="bi bi-geo-alt-fill"></i>${loc}${isIntl ? '' : ', ไทย'}
+        <i class="bi bi-geo-alt-fill"></i>
+        <span data-i18n-dyn data-th="${esc(loc + locSuffix)}">${loc}${locSuffix}</span>
       </span>`
 
-    // title
-    document.getElementById('tdTitle').textContent = trip.title
+        // title — mark for dynamic translation
+        const titleEl = document.getElementById('tdTitle')
+        titleEl.textContent = trip.title
+        titleEl.setAttribute('data-i18n-dyn', '')
+        titleEl.setAttribute('data-th', trip.title)
 
-    // info cards
-    const dur = rounds.length && rounds[0].duration ? rounds[0].duration : '-'
-    document.getElementById('tdInfo').innerHTML = `
+        // info cards — static labels use data-i18n; dynamic value (duration) gets data-i18n-dyn
+        const dur = rounds.length && rounds[0].duration ? rounds[0].duration : '-'
+        document.getElementById('tdInfo').innerHTML = `
       <div class="td-info-card">
-        <i class="bi bi-calendar-week"></i><small>ระยะเวลา</small><strong>${dur}</strong>
+        <i class="bi bi-calendar-week"></i>
+        <small data-i18n="modal_duration">ระยะเวลา</small>
+        <strong data-i18n-dyn data-th="${esc(dur)}">${dur}</strong>
       </div>
       <div class="td-info-card price">
-        <i class="bi bi-tag-fill"></i><small>ราคาเริ่มต้น</small><strong>฿${Number(trip.price).toLocaleString()}</strong>
+        <i class="bi bi-tag-fill"></i>
+        <small data-i18n="modal_price_from">ราคาเริ่มต้น</small>
+        <strong>฿${Number(trip.price).toLocaleString()}</strong>
       </div>`
 
-    // rounds
-    tdRenderRounds(rounds)
+        // rounds
+        tdRenderRounds(rounds)
 
-    // desc
-    const descEl = document.getElementById('tdDesc')
-    descEl.textContent   = trip.description || ''
-    descEl.style.display = trip.description ? 'block' : 'none'
+        // desc — mark for dynamic translation
+        const descEl = document.getElementById('tdDesc')
+        if (trip.description) {
+          descEl.textContent = trip.description
+          descEl.setAttribute('data-i18n-dyn', '')
+          descEl.setAttribute('data-th', trip.description)
+          descEl.style.display = 'block'
+        } else {
+          descEl.textContent = ''
+          descEl.removeAttribute('data-i18n-dyn')
+          descEl.style.display = 'none'
+        }
 
-    // summary
-    document.getElementById('tdSummary').innerHTML = `
+        // summary
+        const mthIdx = new Date().getMonth()
+        document.getElementById('tdSummary').innerHTML = `
       <div class="td-summary">
-        <div class="td-summary-title"><i class="bi bi-check-circle-fill me-2"></i>สรุปข้อมูลทริป</div>
-        <div class="td-summary-item"><i class="bi bi-geo-alt"></i><span>${trip.title}</span></div>
-        <div class="td-summary-item"><i class="bi bi-currency-exchange"></i><span>ราคา ฿${Number(trip.price).toLocaleString()} / คน</span></div>
-        ${trip.deposit ? `<div class="td-summary-item"><i class="bi bi-wallet2"></i><span>มัดจำ ฿${Number(trip.deposit).toLocaleString()}</span></div>` : ''}
-        ${rounds.length ? `<div class="td-summary-item"><i class="bi bi-calendar3"></i><span>${rounds.length} รอบ เดือน${MONTHS_TH[new Date().getMonth()]}</span></div>` : ''}
+        <div class="td-summary-title"><i class="bi bi-check-circle-fill me-2"></i>
+          <span data-i18n="modal_summary_title">สรุปข้อมูลทริป</span>
+        </div>
+        <div class="td-summary-item"><i class="bi bi-geo-alt"></i>
+          <span data-i18n-dyn data-th="${esc(trip.title)}">${trip.title}</span>
+        </div>
+        <div class="td-summary-item"><i class="bi bi-currency-exchange"></i>
+          <span>฿${Number(trip.price).toLocaleString()} <span data-i18n="per_person">/ คน</span></span>
+        </div>
+        ${trip.deposit ? `<div class="td-summary-item"><i class="bi bi-wallet2"></i>
+          <span data-i18n-dyn data-th="มัดจำ ฿${Number(trip.deposit).toLocaleString()}">มัดจำ ฿${Number(trip.deposit).toLocaleString()}</span>
+        </div>` : ''}
+        ${rounds.length ? `<div class="td-summary-item"><i class="bi bi-calendar3"></i>
+          <span data-i18n-dyn data-th="${rounds.length} รอบ เดือน${MONTHS_TH[mthIdx]}"
+                data-en="${rounds.length} round(s) · ${MONTHS_EN[mthIdx]}">
+            ${rounds.length} รอบ เดือน${MONTHS_TH[mthIdx]}
+          </span>
+        </div>` : ''}
       </div>`
 
-    // doc button
-    document.getElementById('tdBtnDoc').style.display = trip.docUrl ? 'flex' : 'none'
-    if (trip.docUrl) {
-      document.getElementById('tdBtnDoc').onclick = () => window.open(trip.docUrl, '_blank')
-    }
-  } catch(e) {
-    document.getElementById('tdTitle').textContent = 'โหลดข้อมูลไม่ได้ กรุณาลองใหม่'
-  }
-}
+        // doc button
+        document.getElementById('tdBtnDoc').style.display = trip.docUrl ? 'flex' : 'none'
+        if (trip.docUrl) {
+          document.getElementById('tdBtnDoc').onclick = () => window.open(trip.docUrl, '_blank')
+        }
 
-function tdRenderRounds(rounds) {
-  const el = document.getElementById('tdRounds')
-  if (!rounds.length) {
-    el.innerHTML = `
+        // Apply static i18n keys in modal, then translate dynamic content
+        window.__applyI18n?.()
+        await window.__translateDynamic?.()
+      } catch (e) {
+        document.getElementById('tdTitle').textContent = 'โหลดข้อมูลไม่ได้ กรุณาลองใหม่'
+      }
+    }
+
+    function tdRenderRounds(rounds) {
+      const el = document.getElementById('tdRounds')
+      if (!rounds.length) {
+        el.innerHTML = `
       <div class="td-rounds-box" style="text-align:center;color:#a0aec0">
         <i class="bi bi-calendar-x" style="font-size:1.8rem;display:block;margin-bottom:.5rem"></i>
-        ไม่มีรอบออกเดินทางเดือนนี้<br>
-        <a href="/trips" style="color:#00d9b4;font-size:.82rem">ดูรอบอื่นในหน้าทริปทั้งหมด</a>
+        <span data-i18n-dyn data-th="ไม่มีรอบออกเดินทางเดือนนี้">ไม่มีรอบออกเดินทางเดือนนี้</span><br>
+        <a href="/trips" style="color:#00d9b4;font-size:.82rem"
+           data-i18n-dyn data-th="ดูรอบอื่นในหน้าทริปทั้งหมด">ดูรอบอื่นในหน้าทริปทั้งหมด</a>
       </div>`
-    return
-  }
-  const rows = rounds.map(r => {
-    const d    = new Date(r.departDate)
-    const ds   = d.toLocaleDateString('th-TH', {weekday:'short',day:'numeric',month:'short',year:'numeric'})
-    const ts   = d.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'})
-    const left = r.totalSeats - r.bookedSeats
-    const pct  = Math.round(r.bookedSeats / r.totalSeats * 100)
-    const full = left <= 0 || !r.isOpen
-    const cls  = pct >= 90 ? 'td-seats-full' : pct >= 60 ? 'td-seats-low' : 'td-seats-ok'
-    return `
-      <div class="td-round-item${full?' full':''}" data-rid="${r.id}"
-           onclick="${full?'':(`window.__tdSelectRound(${r.id})`)}">
+        return
+      }
+      const rows = rounds.map(r => {
+        const d = new Date(r.departDate)
+        const dsTH = d.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+        const dsEN = d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+        const tsTH = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+        const tsEN = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        const left = r.totalSeats - r.bookedSeats
+        const pct = Math.round(r.bookedSeats / r.totalSeats * 100)
+        const full = left <= 0 || !r.isOpen
+        const cls = pct >= 90 ? 'td-seats-full' : pct >= 60 ? 'td-seats-low' : 'td-seats-ok'
+        const route = `${r.startPoint} → ${r.endPoint}${r.duration ? ' · ' + r.duration : ''}`
+        return `
+      <div class="td-round-item${full ? ' full' : ''}" data-rid="${r.id}"
+           onclick="${full ? '' : `window.__tdSelectRound(${r.id})`}">
         <div>
-          <div class="td-round-date"><i class="bi bi-calendar3 me-1" style="color:#00d9b4"></i>${ds} · ${ts}</div>
-          <div class="td-round-meta">${r.startPoint} → ${r.endPoint}${r.duration?' · '+r.duration:''}</div>
+          <div class="td-round-date">
+            <i class="bi bi-calendar3 me-1" style="color:#00d9b4"></i>
+            <span data-i18n-dyn data-th="${esc(dsTH)}" data-en="${esc(dsEN)}">${dsTH}</span>
+            · <span data-i18n-dyn data-th="${esc(tsTH)}" data-en="${esc(tsEN)}">${tsTH}</span>
+          </div>
+          <div class="td-round-meta" data-i18n-dyn data-th="${esc(route)}">${route}</div>
         </div>
         <div style="text-align:right">
           ${full
-            ? '<span class="td-full-tag">เต็มแล้ว</span>'
-            : `<div style="font-size:.7rem;color:#a0aec0">เหลือ ${left}/${r.totalSeats}</div>
+            ? `<span class="td-full-tag" data-i18n-dyn data-th="เต็มแล้ว">เต็มแล้ว</span>`
+            : `<div style="font-size:.7rem;color:#a0aec0"
+                  data-i18n-dyn data-th="เหลือ ${left}/${r.totalSeats}">เหลือ ${left}/${r.totalSeats}</div>
                <div class="td-seats-bar"><div class="td-seats-fill ${cls}" style="width:${pct}%"></div></div>`}
         </div>
       </div>`
-  }).join('')
-  el.innerHTML = `
+      }).join('')
+      el.innerHTML = `
     <div class="td-rounds-box">
-      <div class="td-rounds-title"><i class="bi bi-calendar2-week-fill"></i>รอบออกเดินทาง</div>
+      <div class="td-rounds-title">
+        <i class="bi bi-calendar2-week-fill"></i>
+        <span data-i18n-dyn data-th="รอบออกเดินทาง">รอบออกเดินทาง</span>
+      </div>
       ${rows}
-      <div style="font-size:.73rem;color:#a0aec0;margin-top:.5rem"><i class="bi bi-hand-index me-1"></i>เลือกรอบ แล้วกดจองทริป</div>
+      <div style="font-size:.73rem;color:#a0aec0;margin-top:.5rem">
+        <i class="bi bi-hand-index me-1"></i>
+        <span data-i18n-dyn data-th="เลือกรอบ แล้วกดจองทริป">เลือกรอบ แล้วกดจองทริป</span>
+      </div>
     </div>`
-}
-
-window.__tdSelectRound = function(rid) {
-  tdSelectedRound = rid
-  document.querySelectorAll('.td-round-item').forEach(el => el.classList.remove('selected'))
-  document.querySelector(`.td-round-item[data-rid="${rid}"]`)?.classList.add('selected')
-  document.getElementById('tdBtnBook').disabled = false
-}
-
-window.__tdOpen  = tdOpen
-window.tdClose   = function() {
-  document.getElementById('tripDetailModal').classList.remove('open')
-  document.body.style.overflow = ''
-}
-window.tdGoBook  = function() { if (tdSelectedRound) window.location.href = `/booking/seats?roundId=${tdSelectedRound}` }
-window.tdShareLine = function() {
-  const url = encodeURIComponent(location.href)
-  const txt = encodeURIComponent(tdCurrentTrip ? `สนใจทริป: ${tdCurrentTrip.title}` : 'มาเที่ยวด้วยกัน!')
-  window.open(`https://social-plugins.line.me/lineit/share?url=${url}&text=${txt}`, '_blank')
-}
-window.tdShareFb = function() {
-  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}`, '_blank')
-}
-
-// swipe down to close
-const sheet = document.getElementById('tdSheet')
-let _sy = 0
-sheet.addEventListener('touchstart', e => { _sy = e.touches[0].clientY })
-sheet.addEventListener('touchend',   e => { if (e.changedTouches[0].clientY - _sy > 80 && sheet.scrollTop === 0) tdClose() })
-
-// expose + run
-window.__loadHomeTripRows = loadHomeTripRows
-loadHomeTripRows()
-</script>
-
-<!-- Album lightbox handler -->
-<script>
-const API_BASE = '/api'
-
-window.openAlbumModal = async function(albumId) {
-  document.getElementById('albumLightbox').style.display = 'flex'
-  document.getElementById('albumLightboxGrid').innerHTML =
-    '<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:2rem">กำลังโหลด...</div>'
-  try {
-    const res = await fetch(`${API_BASE}/gallery/albums/${albumId}`)
-    const album = await res.json()
-    document.getElementById('albumLightboxTitle').textContent = album.title
-    document.getElementById('albumLightboxDesc').textContent  = album.description || ''
-    const imgs = album.images || []
-    if (!imgs.length) {
-      document.getElementById('albumLightboxGrid').innerHTML =
-        '<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:2rem">ยังไม่มีรูปภาพ</div>'
-      return
     }
-    document.getElementById('albumLightboxGrid').innerHTML = imgs.map(img => {
-      const src = img.url.startsWith('http') ? img.url : img.url
-      return `<div><img src="${src}" alt="${img.caption||''}" loading="lazy"
+
+    window.__tdSelectRound = function (rid) {
+      tdSelectedRound = rid
+      document.querySelectorAll('.td-round-item').forEach(el => el.classList.remove('selected'))
+      document.querySelector(`.td-round-item[data-rid="${rid}"]`)?.classList.add('selected')
+      document.getElementById('tdBtnBook').disabled = false
+    }
+
+    window.__tdOpen = tdOpen
+    window.tdClose = function () {
+      document.getElementById('tripDetailModal').classList.remove('open')
+      document.body.style.overflow = ''
+    }
+    window.tdGoBook = function () { if (tdSelectedRound) window.location.href = `/booking/seats?roundId=${tdSelectedRound}` }
+    window.tdShareLine = function () {
+      const url = encodeURIComponent(location.href)
+      const txt = encodeURIComponent(tdCurrentTrip ? `สนใจทริป: ${tdCurrentTrip.title}` : 'มาเที่ยวด้วยกัน!')
+      window.open(`https://social-plugins.line.me/lineit/share?url=${url}&text=${txt}`, '_blank')
+    }
+    window.tdShareFb = function () {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}`, '_blank')
+    }
+
+    // swipe down to close
+    const sheet = document.getElementById('tdSheet')
+    let _sy = 0
+    sheet.addEventListener('touchstart', e => { _sy = e.touches[0].clientY })
+    sheet.addEventListener('touchend', e => { if (e.changedTouches[0].clientY - _sy > 80 && sheet.scrollTop === 0) tdClose() })
+
+    // ── Announcement Scroll Handler ──
+    window.addEventListener('scroll', () => {
+      const bar = document.getElementById('announcementBar')
+      if (bar) {
+        if (window.scrollY > 60) bar.classList.add('hide-bar')
+        else bar.classList.remove('hide-bar')
+      }
+    })
+
+    window.__loadHomeTripRows = loadHomeTripRows
+    loadHomeTripRows()
+  </script>
+
+  <!-- Album lightbox handler -->
+  <script>
+    const API_BASE = '/api'
+
+    window.openAlbumModal = async function (albumId) {
+      document.getElementById('albumLightbox').style.display = 'flex'
+      document.getElementById('albumLightboxGrid').innerHTML =
+        '<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:2rem">กำลังโหลด...</div>'
+      try {
+        const res = await fetch(`${API_BASE}/gallery/albums/${albumId}`)
+        const album = await res.json()
+        document.getElementById('albumLightboxTitle').textContent = album.title
+        document.getElementById('albumLightboxDesc').textContent = album.description || ''
+        const imgs = album.images || []
+        if (!imgs.length) {
+          document.getElementById('albumLightboxGrid').innerHTML =
+            '<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:2rem">ยังไม่มีรูปภาพ</div>'
+          return
+        }
+        document.getElementById('albumLightboxGrid').innerHTML = imgs.map(img => {
+          const src = img.url.startsWith('http') ? img.url : img.url
+          return `<div><img src="${src}" alt="${img.caption || ''}" loading="lazy"
                onclick="window.open('${src}','_blank')"
                style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:zoom-in">
                ${img.caption ? `<p style="font-size:.72rem;color:#aaa;margin:.3rem 0 0;text-align:center">${img.caption}</p>` : ''}
              </div>`
-    }).join('')
-  } catch(e) {
-    document.getElementById('albumLightboxGrid').innerHTML =
-      '<div style="grid-column:1/-1;text-align:center;color:#f87;padding:2rem">โหลดไม่ได้</div>'
-  }
-}
+        }).join('')
+      } catch (e) {
+        document.getElementById('albumLightboxGrid').innerHTML =
+          '<div style="grid-column:1/-1;text-align:center;color:#f87;padding:2rem">โหลดไม่ได้</div>'
+      }
+    }
 
-window.closeAlbumModal = function() {
-  document.getElementById('albumLightbox').style.display = 'none'
-}
+    window.closeAlbumModal = function () {
+      document.getElementById('albumLightbox').style.display = 'none'
+    }
 
-window.openContentModal = function(id) {
-  // placeholder — เปิดหน้า trips หรือ modal เนื้อหา
-  window.location.href = '/trips'
-}
-</script>
+    window.openContentModal = function (id) {
+      // placeholder — เปิดหน้า trips หรือ modal เนื้อหา
+      window.location.href = '/trips'
+    }
+  </script>
 
-<!-- ── Trip Detail Modal ── -->
-<div id="tripDetailModal" class="td-overlay" onclick="if(event.target===this)tdClose()">
-  <div class="td-sheet" id="tdSheet">
-    <div class="td-handle"></div>
-    <div id="tdHero" class="td-hero"></div>
-    <div class="td-content">
-      <div id="tdBadge"></div>
-      <h2 class="td-title" id="tdTitle">กำลังโหลด...</h2>
-      <div class="td-info-row" id="tdInfo"></div>
-      <div id="tdRounds"></div>
-      <p id="tdDesc" class="td-desc" style="display:none"></p>
-      <div id="tdSummary"></div>
-      <button class="td-btn-outline" id="tdBtnDoc" style="display:none">
-        <i class="bi bi-file-earmark-text"></i>ดูรายละเอียดก่อนจองได้เลย
-      </button>
-      <button class="td-btn-primary" id="tdBtnBook" onclick="tdGoBook()" disabled>
-        <i class="bi bi-ticket-perforated"></i>จองทริป
-      </button>
-      <div style="text-align:center;font-size:.75rem;color:var(--text-gray);margin-bottom:.55rem">แชร์ให้เพื่อน</div>
-      <div class="td-share-row">
-        <button class="td-share-btn td-btn-line" onclick="tdShareLine()"><i class="bi bi-chat-fill"></i>LINE</button>
-        <button class="td-share-btn td-btn-fb"   onclick="tdShareFb()"><i class="bi bi-facebook"></i>Facebook</button>
+  <!-- ── Trip Detail Modal ── -->
+  <div id="tripDetailModal" class="td-overlay" onclick="if(event.target===this)tdClose()">
+    <div class="td-sheet" id="tdSheet">
+      <div class="td-handle"></div>
+      <div id="tdHero" class="td-hero"></div>
+      <div class="td-content">
+        <div id="tdBadge"></div>
+        <h2 class="td-title" id="tdTitle">กำลังโหลด...</h2>
+        <div class="td-info-row" id="tdInfo"></div>
+        <div id="tdRounds"></div>
+        <p id="tdDesc" class="td-desc" style="display:none"></p>
+        <div id="tdSummary"></div>
+        <button class="td-btn-outline" id="tdBtnDoc" style="display:none">
+          <i class="bi bi-file-earmark-text"></i>
+          <span data-i18n="modal_btn_doc">ดูรายละเอียดก่อนจองได้เลย</span>
+        </button>
+        <button class="td-btn-primary" id="tdBtnBook" onclick="tdGoBook()" disabled>
+          <i class="bi bi-ticket-perforated"></i>
+          <span data-i18n="modal_btn_book">จองทริป</span>
+        </button>
+        <div style="text-align:center;font-size:.75rem;color:var(--text-gray);margin-bottom:.55rem"
+             data-i18n="modal_share_label">แชร์ให้เพื่อน</div>
+        <div class="td-share-row">
+          <button class="td-share-btn td-btn-line" onclick="tdShareLine()"><i class="bi bi-chat-fill"></i>LINE</button>
+          <button class="td-share-btn td-btn-fb" onclick="tdShareFb()"><i class="bi bi-facebook"></i>Facebook</button>
+        </div>
+        <a href="/trips" class="td-trips-link">
+          <i class="bi bi-grid-3x3-gap me-1"></i>
+          <span data-i18n="modal_view_all">ดูทริปทั้งหมดและรอบอื่นๆ</span>
+        </a>
       </div>
-      <a href="/trips" class="td-trips-link">
-        <i class="bi bi-grid-3x3-gap me-1"></i>ดูทริปทั้งหมดและรอบอื่นๆ
-      </a>
     </div>
   </div>
-</div>
 
-<!-- i18n -->
-<script type="module" src="/src/i18n/i18n.js"></script>
+  <!-- i18n -->
+  <script type="module" src="/src/i18n/i18n.js"></script>
 
-<!-- Vite Entry Point (loads everything incl. CMS loader) -->
-<script type="module" src="/src/main.js"></script>
+  <!-- Vite Entry Point (loads everything incl. CMS loader) -->
+  <script type="module" src="/src/main.js"></script>
 
 </body>
+
 </html>

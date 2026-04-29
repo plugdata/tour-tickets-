@@ -8,6 +8,152 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="../assets/css/admin.css" rel="stylesheet">
+    <style>
+        /* ── Notification Panel ─────────────────────────── */
+        .notif-legend-row {
+            display: flex;
+            align-items: center;
+            gap: .9rem;
+            padding: .4rem 1.2rem;
+            background: #fafbfc;
+            border-bottom: 1px solid #f1f5f9;
+            flex-wrap: wrap;
+        }
+        .notif-legend-item {
+            display: flex;
+            align-items: center;
+            gap: .3rem;
+            font-size: .68rem;
+            color: #64748b;
+            white-space: nowrap;
+        }
+        .notif-legend-bar {
+            width: 10px;
+            height: 14px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        /* Collapsible section header */
+        .notif-sec-hdr {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .5rem 1.2rem;
+            background: #f8fafc;
+            border-top: 1px solid #f1f5f9;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            user-select: none;
+            transition: background .12s;
+        }
+        .notif-sec-hdr:hover { background: #f1f5f9; }
+
+        .notif-sec-hdr .ns-label {
+            font-size: .7rem;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+        .notif-sec-hdr .ns-count {
+            background: #e2e8f0;
+            color: #64748b;
+            border-radius: 100px;
+            padding: .05rem .45rem;
+            font-size: .65rem;
+            font-weight: 700;
+        }
+        .notif-sec-hdr .ns-chevron {
+            margin-left: auto;
+            color: #94a3b8;
+            font-size: .8rem;
+            transition: transform .2s;
+        }
+        .notif-sec-hdr.collapsed .ns-chevron { transform: rotate(-90deg); }
+
+        .notif-sec-body { overflow: hidden; }
+
+        /* Notification item */
+        .notif-item {
+            display: flex;
+            align-items: center;
+            padding: .65rem 1.2rem;
+            border-bottom: 1px solid #f8fafc;
+            gap: .75rem;
+            transition: background .1s;
+        }
+        .notif-item:hover { background: #f8fafc; }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item.urgency-high { border-left: 3px solid #ef4444; }
+        .notif-item.urgency-mid  { border-left: 3px solid #f59e0b; }
+        .notif-item.urgency-low  { border-left: 3px solid #3b82f6; }
+
+        .notif-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .85rem;
+            flex-shrink: 0;
+        }
+        .notif-body { flex: 1; min-width: 0; }
+        .notif-title {
+            font-size: .81rem;
+            font-weight: 600;
+            color: #1e293b;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .notif-desc {
+            font-size: .72rem;
+            color: #64748b;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .notif-time {
+            font-size: .66rem;
+            color: #94a3b8;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .notif-actions {
+            display: flex;
+            align-items: center;
+            gap: .3rem;
+            flex-shrink: 0;
+        }
+        .btn-quick {
+            font-size: .69rem;
+            padding: .2rem .55rem;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        /* Pagination wrapper inside section */
+        .notif-pager {
+            padding: .5rem 1rem;
+            border-top: 1px solid #f1f5f9;
+            background: #fafbfc;
+        }
+
+        .notif-empty {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: #94a3b8;
+            font-size: .88rem;
+        }
+        .notif-error {
+            text-align: center;
+            padding: 1.5rem;
+            color: #ef4444;
+            font-size: .85rem;
+        }
+    </style>
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -57,47 +203,55 @@
                 </div>
             </div>
 
-            <!-- Quick Links -->
-            <div class="row g-4">
-                <div class="col-lg-8">
-                    <div class="card">
-                        <div class="card-header"><h5 class="card-title mb-0"><i class="bi bi-lightning me-2"></i>เมนูด่วน</h5></div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-sm-6 col-md-4">
-                                    <a href="/frontend/pages/trips/list.html" class="btn btn-outline-primary w-100 py-3">
-                                        <i class="bi bi-map d-block fs-3 mb-1"></i>ทริปท่องเที่ยว
-                                    </a>
-                                </div>
-                                <div class="col-sm-6 col-md-4">
-                                    <a href="/frontend/pages/bus-rounds/list.html" class="btn btn-outline-success w-100 py-3">
-                                        <i class="bi bi-bus-front d-block fs-3 mb-1"></i>รอบรถ / ตั๋ว
-                                    </a>
-                                </div>
-                                <div class="col-sm-6 col-md-4">
-                                    <a href="/frontend/pages/bookings/list.html" class="btn btn-outline-warning w-100 py-3">
-                                        <i class="bi bi-ticket-detailed d-block fs-3 mb-1"></i>การจอง
-                                    </a>
-                                </div>
-                                <div class="col-sm-6 col-md-4">
-                                    <a href="/frontend/pages/payments/list.html" class="btn btn-outline-danger w-100 py-3">
-                                        <i class="bi bi-credit-card d-block fs-3 mb-1"></i>ชำระเงิน/สลิป
-                                    </a>
-                                </div>
-                                <div class="col-sm-6 col-md-4">
-                                    <a href="/frontend/pages/reports/summary.html" class="btn btn-outline-info w-100 py-3">
-                                        <i class="bi bi-bar-chart d-block fs-3 mb-1"></i>สรุปรายงาน
-                                    </a>
-                                </div>
-                                <div class="col-sm-6 col-md-4">
-                                    <a href="/frontend/pages/contents/list.html" class="btn btn-outline-secondary w-100 py-3">
-                                        <i class="bi bi-file-text d-block fs-3 mb-1"></i>เนื้อหาเว็บ
-                                    </a>
-                                </div>
+            <!-- Notification Panel -->
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+
+                        <!-- Header -->
+                        <div class="card-header d-flex align-items-center py-3 border-bottom">
+                            <i class="bi bi-bell-fill text-warning me-2 fs-5"></i>
+                            <h5 class="card-title mb-0 me-2">แจ้งเตือน</h5>
+                            <span class="badge rounded-pill bg-danger" id="notifBadge" style="display:none">0</span>
+                            <div class="ms-auto d-flex align-items-center gap-3">
+                                <small class="text-muted" id="notifUpdatedAt"></small>
+                                <button class="btn btn-sm btn-light px-2" onclick="loadNotifications()" title="รีเฟรช">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
                             </div>
                         </div>
+
+                        <!-- Color Legend -->
+                        <div class="notif-legend-row">
+                            <span style="font-size:.68rem;color:#94a3b8;font-weight:600;">สี:</span>
+                            <div class="notif-legend-item">
+                                <div class="notif-legend-bar" style="background:#ef4444;"></div>
+                                รอบใกล้ออกเดินทาง (7–10 วัน)
+                            </div>
+                            <div class="notif-legend-item">
+                                <div class="notif-legend-bar" style="background:#f59e0b;"></div>
+                                รอยืนยันสลิปมัดจำ
+                            </div>
+                            <div class="notif-legend-item">
+                                <div class="notif-legend-bar" style="background:#3b82f6;"></div>
+                                การจองใหม่ (48 ชม.)
+                            </div>
+                        </div>
+
+                        <!-- Sections container -->
+                        <div id="notifContainer">
+                            <div class="notif-empty">
+                                <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>
+                                กำลังโหลด...
+                            </div>
+                        </div>
+
                     </div>
                 </div>
+            </div>
+
+            <!-- ข้อมูลระบบ -->
+      <!--      <div class="row g-4">
                 <div class="col-lg-4">
                     <div class="card">
                         <div class="card-header"><h5 class="card-title mb-0"><i class="bi bi-info-circle me-2"></i>ข้อมูลระบบ</h5></div>
@@ -116,37 +270,452 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --> 
+
         </div>
     </main>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../assets/js/config.js"></script>
+<script src="../assets/js/i18n.js"></script>
 <script src="../assets/js/auth.js"></script>
 <script src="../assets/js/apiClient.js"></script>
+<script src="../modules/PaginationManager.js"></script>
 <script src="../assets/js/app.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', async () => {
-    await initPage();
-    document.getElementById('currentDate').textContent = formatDateThai(new Date());
-    const user = authManager.getUser();
-    document.getElementById('loggedUser').textContent = user?.name || user?.username || '-';
+// ── Notification state ────────────────────────────────────────
+const NOTIF_SECTIONS = ['rounds', 'deposits', 'bookings'];
+
+const sectionOpen  = { rounds: true, deposits: true, bookings: true };
+const pagState     = {
+    rounds:   { page: 1, perPage: 5 },
+    deposits: { page: 1, perPage: 5 },
+    bookings: { page: 1, perPage: 5 },
+};
+const pagManagers  = {};
+let   notifData    = { rounds: [], deposits: [], bookings: [] };
+
+// ── Helpers ───────────────────────────────────────────────────
+function notifRelTime(dateStr) {
+    const diff = Date.now() - new Date(dateStr);
+    const m = Math.floor(diff / 60000);
+    if (m < 1)  return 'เมื่อกี้';
+    if (m < 60) return `${m} นาทีที่แล้ว`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h} ชม.ที่แล้ว`;
+    return `${Math.floor(h / 24)} วันที่แล้ว`;
+}
+
+// ── Toggle collapse ───────────────────────────────────────────
+function toggleSection(key) {
+    sectionOpen[key] = !sectionOpen[key];
+    const hdr  = document.getElementById(`ns-hdr-${key}`);
+    const body = document.getElementById(`ns-body-${key}`);
+    if (!hdr || !body) return;
+    if (sectionOpen[key]) {
+        hdr.classList.remove('collapsed');
+        body.style.display = '';
+    } else {
+        hdr.classList.add('collapsed');
+        body.style.display = 'none';
+    }
+}
+
+// ── Render one paginated section ──────────────────────────────
+function renderSection(key) {
+    const all     = notifData[key];
+    const st      = pagState[key];
+    const start   = (st.page - 1) * st.perPage;
+    const slice   = all.slice(start, start + st.perPage);
+    const itemsEl = document.getElementById(`ns-items-${key}`);
+    if (!itemsEl) return;
+
+    if (!slice.length) {
+        itemsEl.innerHTML = `<div class="notif-empty" style="padding:1rem;">ไม่มีรายการ</div>`;
+    } else {
+        itemsEl.innerHTML = slice.map(n => buildItemHTML(key, n)).join('');
+    }
+
+    if (pagManagers[key]) {
+        pagManagers[key].render({
+            currentPage:  st.page,
+            perPage:      st.perPage,
+            totalRecords: all.length,
+        });
+    }
+}
+
+// ── Build one item row ────────────────────────────────────────
+function buildItemHTML(key, n) {
+    let actions = `<a href="${n.link}" class="btn btn-sm btn-outline-secondary btn-quick">ดู</a>`;
+
+    if (key === 'deposits') {
+        actions = `
+            <button class="btn btn-sm btn-success btn-quick"
+                    onclick="quickConfirmPayment(${n.id},'CONFIRMED')">
+                <i class="bi bi-check-lg"></i> ยืนยันด่วน
+            </button>
+            <button class="btn btn-sm btn-outline-danger btn-quick"
+                    onclick="quickConfirmPayment(${n.id},'REJECTED')">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <a href="${n.link}" class="btn btn-sm btn-outline-secondary btn-quick">ดู</a>`;
+    } else if (key === 'bookings') {
+        actions = `
+            <button class="btn btn-sm btn-primary btn-quick"
+                    onclick="quickConfirmBooking(${n.id})">
+                <i class="bi bi-check2-circle"></i> อนุมัติด่วน
+            </button>
+            <a href="${n.link}" class="btn btn-sm btn-outline-secondary btn-quick">ดู</a>`;
+    }
+
+    return `
+        <div class="notif-item urgency-${n.urgency}">
+            <div class="notif-icon" style="background:${n.iconBg}">
+                <i class="bi ${n.icon}" style="color:${n.iconColor}"></i>
+            </div>
+            <div class="notif-body">
+                <div class="notif-title">${n.title}</div>
+                <div class="notif-desc">${n.desc}</div>
+            </div>
+            <span class="notif-time">${notifRelTime(n.time)}</span>
+            <div class="notif-actions">${actions}</div>
+        </div>`;
+}
+
+// ── Build section container HTML ──────────────────────────────
+const SECTION_META = {
+    rounds: {
+        icon: 'bi-bus-front-fill', color: '#ef4444',
+        label: 'รอบใกล้ออกเดินทาง (7–10 วัน)',
+        pagId: 'pager-rounds',
+    },
+    deposits: {
+        icon: 'bi-cash-coin', color: '#f59e0b',
+        label: 'รอยืนยันสลิปมัดจำ',
+        pagId: 'pager-deposits',
+    },
+    bookings: {
+        icon: 'bi-ticket-detailed-fill', color: '#3b82f6',
+        label: 'การจองใหม่ (48 ชม.)',
+        pagId: 'pager-bookings',
+    },
+};
+
+const EXPORT_COLS = {
+    rounds:   ['เส้นทาง', 'วันที่ออกเดินทาง', 'ที่นั่งคงเหลือ', 'ที่นั่งทั้งหมด', 'อีก (วัน)'],
+    deposits: ['ลูกค้า', 'จำนวนเงิน (฿)', 'ทริป/เส้นทาง', 'วันที่แจ้ง'],
+    bookings: ['ลูกค้า', 'ทริป/เส้นทาง', 'จำนวนที่นั่ง', 'วันที่จอง'],
+};
+
+function buildSectionHTML(key) {
+    const m   = SECTION_META[key];
+    const cnt = notifData[key].length;
+    if (!cnt) return '';
+    return `
+        <div>
+            <div class="notif-sec-hdr${sectionOpen[key] ? '' : ' collapsed'}"
+                 id="ns-hdr-${key}" onclick="toggleSection('${key}')">
+                <i class="bi ${m.icon}" style="color:${m.color};font-size:.85rem;"></i>
+                <span class="ns-label">${m.label}</span>
+                <span class="ns-count">${cnt}</span>
+                <!-- Export dropdown (stop propagation so toggle doesn't fire) -->
+                <div class="ms-auto me-1" onclick="event.stopPropagation()">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle"
+                                style="font-size:.67rem;padding:.15rem .5rem;border-radius:6px;"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-download"></i> ส่งออก
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" style="font-size:.8rem;min-width:7rem;">
+                            <li>
+                                <a class="dropdown-item py-1" href="#" onclick="exportCSV('${key}');return false;">
+                                    <i class="bi bi-filetype-csv text-success me-1"></i>CSV
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-1" href="#" onclick="exportPDF('${key}');return false;">
+                                    <i class="bi bi-filetype-pdf text-danger me-1"></i>PDF
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <i class="bi bi-chevron-up ns-chevron"></i>
+            </div>
+            <div class="notif-sec-body" id="ns-body-${key}"
+                 style="${sectionOpen[key] ? '' : 'display:none'}">
+                <div id="ns-items-${key}"></div>
+                <div class="notif-pager" id="${m.pagId}"></div>
+            </div>
+        </div>`;
+}
+
+// ── Quick actions ─────────────────────────────────────────────
+async function quickConfirmPayment(id, status) {
+    const lbl = status === 'CONFIRMED' ? 'ยืนยัน' : 'ปฏิเสธ';
+    confirmAction(`ต้องการ${lbl}สลิปนี้?`, async () => {
+        try {
+            await API.payments.confirm(id, status);
+            showToast(`${lbl}สลิปสำเร็จ`);
+            await loadNotifications();
+        } catch (e) { showToast(e.message, 'danger'); }
+    });
+}
+
+async function quickConfirmBooking(id) {
+    confirmAction('ต้องการอนุมัติการจองนี้?', async () => {
+        try {
+            await API.bookings.updateStatus(id, 'CONFIRMED');
+            showToast('อนุมัติการจองสำเร็จ');
+            await loadNotifications();
+        } catch (e) { showToast(e.message, 'danger'); }
+    });
+}
+
+// ── Export CSV ────────────────────────────────────────────────
+function exportCSV(key) {
+    const cols = EXPORT_COLS[key];
+    const rows = notifData[key].map(n => n.exportRow || []);
+    const escape = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const csv    = [cols, ...rows].map(r => r.map(escape).join(',')).join('\r\n');
+    const blob   = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url    = URL.createObjectURL(blob);
+    const a      = Object.assign(document.createElement('a'), {
+        href: url,
+        download: `notify_${key}_${new Date().toISOString().slice(0, 10)}.csv`,
+    });
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
+// ── Export PDF (print-window, Thai-safe) ──────────────────────
+function exportPDF(key) {
+    const cols  = EXPORT_COLS[key];
+    const rows  = notifData[key].map(n => n.exportRow || []);
+    const label = SECTION_META[key].label;
+    const color = SECTION_META[key].color;
+    const dateNow = new Date().toLocaleString('th-TH');
+
+    const thead = `<tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr>`;
+    const tbody = rows.map(r =>
+        `<tr>${r.map(v => `<td>${v ?? ''}</td>`).join('')}</tr>`
+    ).join('');
+
+    const html = `<!DOCTYPE html><html lang="th"><head>
+<meta charset="UTF-8">
+<title>${label}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sarabun', sans-serif; font-size: 12px; color: #1e293b; padding: 24px; }
+  h2  { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .meta { font-size: 10px; color: #64748b; margin-bottom: 16px; }
+  .accent { display: inline-block; width: 10px; height: 14px; border-radius: 3px;
+            background: ${color}; margin-right: 6px; vertical-align: middle; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #1e293b; color: #fff; padding: 6px 10px; text-align: left; font-weight: 600; font-size: 11px; }
+  td { padding: 5px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  @media print { body { padding: 0; } }
+</style>
+</head><body>
+<h2><span class="accent"></span>${label}</h2>
+<div class="meta">ส่งออกเมื่อ: ${dateNow} &nbsp;|&nbsp; รวม ${rows.length} รายการ</div>
+<table><thead>${thead}</thead><tbody>${tbody}</tbody></table>
+<script>
+  window.addEventListener('load', () => {
+    setTimeout(() => { window.print(); }, 400);
+  });
+<\/script>
+</body></html>`;
+
+    const win = window.open('', '_blank', 'width=900,height=600');
+    if (!win) { alert('กรุณาอนุญาต popup ก่อนส่งออก PDF'); return; }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+}
+
+// ── Main load ─────────────────────────────────────────────────
+async function loadNotifications() {
+    const container = document.getElementById('notifContainer');
+    const badge     = document.getElementById('notifBadge');
+    const updatedEl = document.getElementById('notifUpdatedAt');
 
     try {
-        const [trips, bookings, payments, report] = await Promise.all([
-            API.trips.list(),
+        const now = new Date();
+        const [bookings, payments, busRounds] = await Promise.all([
             API.bookings.list(),
             API.payments.list(),
-            API.reports.summary()
+            API.busRounds.list(),
         ]);
-        document.getElementById('statTrips').textContent = trips.length;
-        document.getElementById('statBookings').textContent = bookings.length;
-        document.getElementById('statPending').textContent = payments.filter(p => p.status === 'PENDING').length;
-        document.getElementById('statRevenue').textContent = formatMoney(report.totalRevenue);
+
+        // 1. รอบใกล้ออก (7–10 วัน, มีที่ว่าง)
+        const d7  = new Date(now); d7.setDate(d7.getDate() + 7);
+        const d10 = new Date(now); d10.setDate(d10.getDate() + 10);
+        notifData.rounds = busRounds
+            .filter(r => {
+                const dept = new Date(r.departDate);
+                return r.isOpen && dept >= d7 && dept <= d10 && (r.totalSeats - r.bookedSeats) > 0;
+            })
+            .sort((a, b) => new Date(a.departDate) - new Date(b.departDate))
+            .map(r => {
+                const dept      = new Date(r.departDate);
+                const daysLeft  = Math.ceil((dept - now) / 86400000);
+                const seatsLeft = r.totalSeats - r.bookedSeats;
+                const dateStr   = dept.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+                return {
+                    id: r.id,
+                    icon: 'bi-bus-front-fill', iconBg: '#fee2e2', iconColor: '#ef4444',
+                    title: `${r.startPoint} → ${r.endPoint}`,
+                    desc:  `ออก ${dateStr} · เหลือ ${seatsLeft}/${r.totalSeats} ที่ · อีก ${daysLeft} วัน`,
+                    time:  r.departDate,
+                    link:  '/frontend/pages/bus-rounds/list.html',
+                    urgency: 'high',
+                    exportRow: [
+                        `${r.startPoint} → ${r.endPoint}`,
+                        dept.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }),
+                        seatsLeft,
+                        r.totalSeats,
+                        daysLeft,
+                    ],
+                };
+            });
+
+        // 2. รอยืนยันสลิปมัดจำ
+        notifData.deposits = payments
+            .filter(p => p.status === 'PENDING')
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .map(p => {
+                const customer = p.booking?.user?.name || p.user?.name || `จอง #${p.bookingId}`;
+                const route    = p.booking?.busRound?.trip?.title
+                    || (p.booking?.busRound ? `${p.booking.busRound.startPoint} → ${p.booking.busRound.endPoint}` : '');
+                return {
+                    id: p.id,
+                    icon: 'bi-cash-coin', iconBg: '#fef9c3', iconColor: '#ca8a04',
+                    title: `${customer} · ฿${Number(p.amount).toLocaleString()}`,
+                    desc:  route ? `${route} · รอตรวจสอบสลิป` : 'รอตรวจสอบสลิป',
+                    time:  p.createdAt,
+                    link:  '/frontend/pages/payments/list.html',
+                    urgency: 'mid',
+                    exportRow: [
+                        customer,
+                        Number(p.amount).toLocaleString(),
+                        route || '-',
+                        new Date(p.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }),
+                    ],
+                };
+            });
+
+        // 3. การจองใหม่ (PENDING, 48h)
+        const cutoff = new Date(now - 48 * 3600 * 1000);
+        notifData.bookings = bookings
+            .filter(b => b.status === 'PENDING' && new Date(b.createdAt) >= cutoff)
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .map(b => {
+                const customer = b.user?.name || b.user?.phone || `ลูกค้า #${b.userId}`;
+                const route    = b.busRound?.trip?.title
+                    || (b.busRound ? `${b.busRound.startPoint} → ${b.busRound.endPoint}` : `จอง #${b.id}`);
+                return {
+                    id: b.id,
+                    icon: 'bi-ticket-detailed-fill', iconBg: '#dbeafe', iconColor: '#3b82f6',
+                    title: customer,
+                    desc:  `${route} · ${b.seats} ที่นั่ง`,
+                    time:  b.createdAt,
+                    link:  '/frontend/pages/bookings/list.html',
+                    urgency: 'low',
+                    exportRow: [
+                        customer,
+                        route,
+                        b.seats,
+                        new Date(b.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }),
+                    ],
+                };
+            });
+
+        // Build HTML
+        const total = NOTIF_SECTIONS.reduce((s, k) => s + notifData[k].length, 0);
+
+        if (total === 0) {
+            container.innerHTML = `<div class="notif-empty">
+                <i class="bi bi-check-circle-fill text-success fs-3 d-block mb-2"></i>
+                ไม่มีแจ้งเตือน
+            </div>`;
+            badge.style.display = 'none';
+        } else {
+            badge.textContent   = total;
+            badge.style.display = '';
+
+            // Render section shells
+            container.innerHTML = NOTIF_SECTIONS.map(buildSectionHTML).join('');
+
+            // Init PaginationManager per section & render items
+            NOTIF_SECTIONS.forEach(key => {
+                if (!notifData[key].length) return;
+                const pagId = SECTION_META[key].pagId;
+                if (!pagManagers[key]) {
+                    pagManagers[key] = new PaginationManager({
+                        containerId:    pagId,
+                        perPageOptions: [5, 10, 20],
+                        onPageChange:   (p)  => { pagState[key].page = p;    renderSection(key); },
+                        onPerPageChange:(pp) => { pagState[key].perPage = pp; pagState[key].page = 1; renderSection(key); },
+                    });
+                } else {
+                    // Re-attach container (DOM was replaced)
+                    pagManagers[key].containerEl = document.getElementById(pagId);
+                }
+                pagState[key].page = 1;
+                renderSection(key);
+            });
+        }
+
+        updatedEl.textContent = 'อัปเดต ' + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+
     } catch (e) {
-        console.warn('Stats load error:', e);
+        console.warn('Notification load error:', e);
+        container.innerHTML = `<div class="notif-error">
+            <i class="bi bi-exclamation-triangle me-1"></i>โหลดข้อมูลไม่ได้
+        </div>`;
     }
+}
+
+// ── Page init ─────────────────────────────────────────────────
+// null-safe setter — silently skip if element not in DOM
+const $set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try { await initPage(); } catch (e) { console.warn('initPage error:', e); }
+
+    $set('currentDate', typeof formatDateThai === 'function'
+        ? formatDateThai(new Date())
+        : new Date().toLocaleDateString('th-TH'));
+
+    const user = typeof authManager !== 'undefined' ? authManager.getUser() : null;
+    $set('loggedUser', user?.name || user?.username || '-');
+
+    await Promise.all([
+        (async () => {
+            try {
+                const [trips, bookings, payments, report] = await Promise.all([
+                    API.trips.list(),
+                    API.bookings.list(),
+                    API.payments.list(),
+                    API.reports.summary()
+                ]);
+                $set('statTrips',    String(trips.length));
+                $set('statBookings', String(bookings.length));
+                $set('statPending',  String(payments.filter(p => p.status === 'PENDING').length));
+                $set('statRevenue',  typeof formatMoney === 'function' ? formatMoney(report.totalRevenue) : String(report.totalRevenue ?? 0));
+            } catch (e) { console.warn('Stats load error:', e); }
+        })(),
+        loadNotifications(),
+    ]);
+
+    setInterval(loadNotifications, 60_000);
 });
 </script>
 </body>

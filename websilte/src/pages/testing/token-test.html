@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token Usage Lab — AI Direct vs Tool-Based</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&family=Sarabun:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary:     #00d9b4;
+      --primary-dim: rgba(0,217,180,.12);
+      --accent:      #7c3aed;
+      --accent-dim:  rgba(124,58,237,.15);
+      --warn:        #f59e0b;
+      --warn-dim:    rgba(245,158,11,.12);
+      --danger:      #ef4444;
+      --danger-dim:  rgba(239,68,68,.12);
+      --dark:        #0f1419;
+      --dark-card:   #1a2232;
+      --dark-card2:  #141b26;
+      --gray:        #a0aec0;
+      --border:      rgba(255,255,255,.07);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; font-family: 'Sarabun', sans-serif; color: #fff; background: var(--dark); }
+
+    .page-bg {
+      position: fixed; inset: 0; z-index: 0;
+      background: linear-gradient(135deg, #0f1419 0%, #0a1628 50%, #0f1419 100%);
+    }
+    .page-bg::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse 60% 40% at 20% 20%, rgba(0,217,180,.06) 0%, transparent 60%),
+                  radial-gradient(ellipse 50% 50% at 80% 80%, rgba(124,58,237,.06) 0%, transparent 60%);
+    }
+
+    /* ── Layout ── */
+    .main-wrap { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    /* ── Header ── */
+    .page-header { text-align: center; padding: 32px 0 40px; }
+    .page-header h1 { font-family: 'Kanit', sans-serif; font-size: 2rem; font-weight: 700; }
+    .page-header h1 span { color: var(--primary); }
+    .page-header p { color: var(--gray); margin-top: 8px; font-size: .95rem; }
+    .badge-mode {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 20px; font-size: .78rem; font-weight: 600;
+    }
+    .badge-mode.direct { background: var(--primary-dim); color: var(--primary); border: 1px solid rgba(0,217,180,.25); }
+    .badge-mode.tool   { background: var(--accent-dim);  color: #a78bfa;          border: 1px solid rgba(124,58,237,.3); }
+
+    /* ── Cards ── */
+    .card-dark {
+      background: var(--dark-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px;
+    }
+    .card-dark.highlight-primary { border-color: rgba(0,217,180,.3); }
+    .card-dark.highlight-accent  { border-color: rgba(124,58,237,.3); }
+
+    /* ── Input Area ── */
+    .prompt-area {
+      background: var(--dark-card2); border: 1px solid var(--border);
+      border-radius: 12px; resize: vertical; min-height: 120px;
+      width: 100%; padding: 14px 16px; color: #fff; font-family: 'Sarabun', sans-serif;
+      font-size: .95rem; line-height: 1.6; outline: none; transition: border-color .2s;
+    }
+    .prompt-area:focus { border-color: rgba(0,217,180,.4); }
+    .prompt-area::placeholder { color: rgba(160,174,192,.5); }
+
+    /* ── Token Display ── */
+    .token-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.4rem; font-weight: 600; line-height: 1;
+    }
+    .token-number.primary { color: var(--primary); }
+    .token-number.accent  { color: #a78bfa; }
+    .token-number.warn    { color: var(--warn); }
+    .token-number.danger  { color: var(--danger); }
+
+    .token-label { font-size: .78rem; color: var(--gray); margin-top: 4px; }
+
+    /* ── Pipeline Visualization ── */
+    .pipeline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pipe-box {
+      border-radius: 8px; padding: 8px 14px; font-size: .82rem; font-weight: 600;
+      display: flex; align-items: center; gap: 6px; white-space: nowrap;
+    }
+    .pipe-box.input  { background: var(--primary-dim); border: 1px solid rgba(0,217,180,.25); color: var(--primary); }
+    .pipe-box.proc   { background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.3); color: #60a5fa; }
+    .pipe-box.tool   { background: var(--accent-dim);   border: 1px solid rgba(124,58,237,.3);  color: #a78bfa; }
+    .pipe-box.ctx    { background: var(--warn-dim);     border: 1px solid rgba(245,158,11,.25); color: var(--warn); }
+    .pipe-box.output { background: rgba(16,185,129,.15);border: 1px solid rgba(16,185,129,.3);  color: #34d399; }
+    .pipe-arrow { color: var(--gray); font-size: 1.1rem; }
+
+    /* ── Bar Chart ── */
+    .bar-wrap { display: flex; flex-direction: column; gap: 10px; }
+    .bar-row { display: flex; align-items: center; gap: 12px; }
+    .bar-label { font-size: .82rem; color: var(--gray); min-width: 130px; text-align: right; }
+    .bar-track { flex: 1; background: rgba(255,255,255,.05); border-radius: 6px; height: 28px; overflow: hidden; position: relative; }
+    .bar-fill {
+      height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 10px;
+      font-family: 'JetBrains Mono', monospace; font-size: .78rem; font-weight: 600;
+      transition: width .6s cubic-bezier(.34,1.56,.64,1);
+      white-space: nowrap;
+    }
+    .bar-fill.c-input  { background: linear-gradient(90deg, rgba(0,217,180,.7), rgba(0,217,180,.5)); }
+    .bar-fill.c-system { background: linear-gradient(90deg, rgba(239,68,68,.7), rgba(239,68,68,.5)); }
+    .bar-fill.c-tool   { background: linear-gradient(90deg, rgba(124,58,237,.7), rgba(124,58,237,.5)); }
+    .bar-fill.c-output { background: linear-gradient(90deg, rgba(16,185,129,.7), rgba(16,185,129,.5)); }
+    .bar-fill.c-ctx    { background: linear-gradient(90deg, rgba(245,158,11,.7), rgba(245,158,11,.5)); }
+
+    /* ── Comparison Table ── */
+    .cmp-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    .cmp-table th { color: var(--gray); font-weight: 600; padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+    .cmp-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.04); }
+    .cmp-table tr:last-child td { border-bottom: none; }
+    .cmp-table .mono { font-family: 'JetBrains Mono', monospace; font-size: .82rem; }
+    .cmp-table .better { color: var(--primary); }
+    .cmp-table .worse  { color: var(--danger); }
+    .cmp-table .neutral{ color: var(--gray); }
+
+    /* ── Buttons ── */
+    .btn-primary-custom {
+      background: var(--primary); color: var(--dark); border: none;
+      border-radius: 10px; padding: 10px 24px; font-weight: 700; font-size: .9rem;
+      cursor: pointer; transition: opacity .2s, transform .1s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary-custom:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-outline-custom {
+      background: transparent; color: var(--gray); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 20px; font-size: .9rem;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-outline-custom:hover { border-color: rgba(0,217,180,.4); color: var(--primary); }
+
+    /* ── Live counter ── */
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); animation: pulse 1.4s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+    /* ── Misc ── */
+    .section-title { font-family: 'Kanit', sans-serif; font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .cost-pill { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: .78rem; font-weight: 600; }
+    .cost-pill.green { background: rgba(16,185,129,.15); color: #34d399; }
+    .cost-pill.purple{ background: var(--accent-dim); color: #a78bfa; }
+    .tip-box { background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.2); border-radius: 10px; padding: 12px 16px; font-size: .83rem; color: #fcd34d; }
+
+    /* ── Scenario Presets ── */
+    .preset-btn {
+      background: var(--dark-card2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 14px; font-size: .82rem; color: var(--gray);
+      cursor: pointer; transition: all .2s;
+    }
+    .preset-btn:hover { border-color: rgba(0,217,180,.35); color: var(--primary); background: var(--primary-dim); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--dark); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="page-bg"></div>
+
+<div class="main-wrap">
+
+  <!-- ── Header ── -->
+  <div class="page-header">
+    <div class="d-flex justify-content-center gap-2 mb-3">
+      <span class="badge-mode direct"><i class="bi bi-chat-text"></i> AI Direct</span>
+      <span style="color:var(--gray);font-size:1.2rem;">vs</span>
+      <span class="badge-mode tool"><i class="bi bi-tools"></i> Tool-Based (code-review-graph)</span>
+    </div>
+    <h1>Token Usage <span>Lab</span></h1>
+    <p>วิเคราะห์ token ที่ใช้จริง — Input → Process → Tool Call → Output</p>
+  </div>
+
+  <!-- ── Presets ── -->
+  <div class="d-flex flex-wrap gap-2 justify-content-center mb-4">
+    <span style="color:var(--gray);font-size:.82rem;align-self:center;">ลอง Scenario:</span>
+    <button class="preset-btn" onclick="loadPreset('simple')">Simple Q&A</button>
+    <button class="preset-btn" onclick="loadPreset('review')">Code Review</button>
+    <button class="preset-btn" onclick="loadPreset('debug')">Bug Debug</button>
+    <button class="preset-btn" onclick="loadPreset('refactor')">Refactor Task</button>
+    <button class="preset-btn" onclick="loadPreset('full')">Full PR Review</button>
+  </div>
+
+  <!-- ── Main Input ── -->
+  <div class="card-dark mb-4">
+    <div class="section-title"><i class="bi bi-pencil-square text-success"></i> Your Prompt / Code Input</div>
+    <textarea id="userInput" class="prompt-area" rows="5"
+      placeholder="พิมพ์ prompt หรือ code ที่ต้องการส่งให้ AI...&#10;เช่น: 'Review โค้ดนี้ให้หน่อย...' หรือ paste code ลงมาได้เลย"></textarea>
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div class="d-flex gap-2">
+        <button class="btn-primary-custom" onclick="analyze()">
+          <i class="bi bi-lightning-charge-fill"></i> วิเคราะห์ Token
+        </button>
+        <button class="btn-outline-custom" onclick="clearAll()">
+          <i class="bi bi-arrow-counterclockwise"></i> Reset
+        </button>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <div class="live-dot"></div>
+        <span style="font-size:.82rem;color:var(--gray);">Live count: <span id="liveCount" class="mono" style="color:var(--primary);font-family:'JetBrains Mono',monospace;">0</span> tokens</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Results Grid ── -->
+  <div id="resultsSection" style="display:none;">
+
+    <!-- ── Pipeline Flow ── -->
+    <div class="card-dark mb-4">
+      <div class="section-title"><i class="bi bi-diagram-3"></i> Token Flow Pipeline</div>
+
+      <div class="mb-3">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge-mode direct" style="font-size:.72rem;padding:3px 10px;">AI Direct</span>
+        </div>
+        <div class="pipeline" id="pipeline-direct"></div>
+      </div>
+
+      <hr class="divider">
+
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge-mode tool" style="font-size:.72rem;padding:3px 10px;">Tool-Based</span>
+        </div>
+        <div class="pipeline" id="pipeline-tool"></div>
+      </div>
+    </div>
+
+    <!-- ── Side-by-Side Numbers ── -->
+    <div class="row g-3 mb-4">
+
+      <!-- Direct -->
+      <div class="col-md-6">
+        <div class="card-dark highlight-primary h-100">
+          <div class="section-title"><i class="bi bi-chat-left-text" style="color:var(--primary)"></i> AI Direct</div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-4 text-center">
+              <div class="token-number primary" id="d-input">0</div>
+              <div class="token-label">Input tokens</div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="token-number warn" id="d-system">0</div>
+              <div class="token-label">System prompt</div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="token-number" style="color:#34d399;" id="d-output">0</div>
+              <div class="token-label">Est. Output</div>
+            </div>
+          </div>
+
+          <div class="bar-wrap mb-3" id="bars-direct"></div>
+
+          <hr class="divider">
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="font-size:.85rem;color:var(--gray);">Total tokens used</span>
+            <span class="token-number primary" style="font-size:1.6rem;" id="d-total">0</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <span style="font-size:.82rem;color:var(--gray);">Est. cost (claude-sonnet-4-6)</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.9rem;color:var(--primary);" id="d-cost">$0.000</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tool-Based -->
+      <div class="col-md-6">
+        <div class="card-dark highlight-accent h-100">
+          <div class="section-title"><i class="bi bi-tools" style="color:#a78bfa"></i> Tool-Based (code-review-graph)</div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-3 text-center">
+              <div class="token-number accent" id="t-input">0</div>
+              <div class="token-label">Input tokens</div>
+            </div>
+            <div class="col-3 text-center">
+              <div class="token-number warn" id="t-system">0</div>
+              <div class="token-label">System prompt</div>
+            </div>
+            <div class="col-3 text-center">
+              <div class="token-number danger" id="t-tool">0</div>
+              <div class="token-label">Tool overhead</div>
+            </div>
+            <div class="col-3 text-center">
+              <div class="token-number" style="color:#34d399;" id="t-output">0</div>
+              <div class="token-label">Est. Output</div>
+            </div>
+          </div>
+
+          <div class="bar-wrap mb-3" id="bars-tool"></div>
+
+          <hr class="divider">
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="font-size:.85rem;color:var(--gray);">Total tokens used</span>
+            <span class="token-number accent" style="font-size:1.6rem;" id="t-total">0</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <span style="font-size:.82rem;color:var(--gray);">Est. cost (claude-sonnet-4-6)</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.9rem;color:#a78bfa;" id="t-cost">$0.000</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Bar Chart Comparison ── -->
+    <div class="card-dark mb-4">
+      <div class="section-title"><i class="bi bi-bar-chart-fill"></i> Visual Comparison</div>
+      <div class="bar-wrap" id="comparison-bars"></div>
+    </div>
+
+    <!-- ── Comparison Table ── -->
+    <div class="card-dark mb-4">
+      <div class="section-title"><i class="bi bi-table"></i> Breakdown Table</div>
+      <div class="table-responsive">
+        <table class="cmp-table">
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>AI Direct</th>
+              <th>Tool-Based</th>
+              <th>Difference</th>
+              <th>Verdict</th>
+            </tr>
+          </thead>
+          <tbody id="cmp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Insight Box ── -->
+    <div class="tip-box mb-4" id="insight-box"></div>
+
+    <!-- ── When to use each ── -->
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card-dark highlight-primary">
+          <div class="section-title" style="color:var(--primary);"><i class="bi bi-check-circle-fill"></i> ใช้ AI Direct เมื่อ</div>
+          <ul style="list-style:none;padding:0;color:var(--gray);font-size:.875rem;display:flex;flex-direction:column;gap:8px;" id="when-direct">
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card-dark highlight-accent">
+          <div class="section-title" style="color:#a78bfa;"><i class="bi bi-check-circle-fill"></i> ใช้ Tool-Based เมื่อ</div>
+          <ul style="list-style:none;padding:0;color:var(--gray);font-size:.875rem;display:flex;flex-direction:column;gap:8px;" id="when-tool">
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /resultsSection -->
+
+</div><!-- /main-wrap -->
+
+<script>
+// ── Token estimator ──────────────────────────────────────────────
+// rough: 1 token ≈ 4 chars for English, ~2-3 chars for Thai/CJK
+function estimateTokens(text) {
+  if (!text) return 0;
+  let t = 0;
+  for (const ch of text) {
+    const code = ch.codePointAt(0);
+    if (code >= 0x0E00 && code <= 0x0E7F) t += 0.5;  // Thai ≈ 2 chars/token
+    else if (code > 0x2E80) t += 0.6;                  // CJK
+    else t += 0.25;                                     // ASCII ≈ 4 chars/token
+  }
+  return Math.ceil(t);
+}
+
+// ── Pricing (claude-sonnet-4-6, per 1M tokens) ──────────────────
+const PRICE_INPUT  = 3.0;   // $3/M input
+const PRICE_OUTPUT = 15.0;  // $15/M output
+
+function calcCost(inp, out) {
+  return (inp * PRICE_INPUT + out * PRICE_OUTPUT) / 1_000_000;
+}
+
+// ── Presets ──────────────────────────────────────────────────────
+const PRESETS = {
+  simple: `อยากให้ช่วย review ฟังก์ชันนี้ให้หน่อยครับ
+
+function add(a, b) {
+  return a + b
+}`,
+
+  review: `ช่วย review โค้ดนี้ให้หน่อยนะครับ มีปัญหาด้านใดบ้าง
+
+async function getBooking(id) {
+  const res = await db.query('SELECT * FROM bookings WHERE id = ' + id)
+  return res.rows[0]
+}
+
+async function createBooking(data) {
+  const { userId, tripId, seats } = data
+  const price = seats * 500
+  await db.query(\`INSERT INTO bookings (user_id, trip_id, seats, price)
+    VALUES ($1, $2, $3, $4)\`, [userId, tripId, seats, price])
+}`,
+
+  debug: `โค้ดนี้มี bug อยู่ ช่วย debug ให้หน่อยครับ
+
+// ควรจะ filter เฉพาะ active trips แต่ return ทุก trip
+function getActiveTrips(trips) {
+  return trips.filter(trip => {
+    trip.status === 'active'
+  })
+}
+
+// ควรจะ sum แต่ได้ NaN
+function sumPrices(bookings) {
+  return bookings.reduce((acc, b) => acc + b.price, '')
+}`,
+
+  refactor: `ช่วย refactor โค้ดนี้ให้ clean ขึ้นและใช้ async/await แทน callback ด้วยครับ
+
+function processBooking(userId, tripId, seats, callback) {
+  db.getUser(userId, function(err, user) {
+    if (err) return callback(err)
+    if (!user) return callback(new Error('User not found'))
+    db.getTrip(tripId, function(err, trip) {
+      if (err) return callback(err)
+      if (!trip) return callback(new Error('Trip not found'))
+      if (trip.availableSeats < seats) return callback(new Error('Not enough seats'))
+      const price = seats * trip.pricePerSeat
+      db.createBooking({ userId, tripId, seats, price }, function(err, booking) {
+        if (err) return callback(err)
+        emailService.sendConfirmation(user.email, booking, function(err) {
+          if (err) console.error('Email failed', err)
+          callback(null, booking)
+        })
+      })
+    })
+  })
+}`,
+
+  full: `Please do a full PR review of the following changes.
+
+## PR: Add seat hold auto-cancel system
+
+### Modified files:
+1. src/routes/bookings.js — Added auto-cancel logic for conflicting holds
+2. src/middleware/session.js — Session timeout warning (5min)
+3. src/pages/seats.html — UI for seat selection with hold timer
+4. src/pages/booking/form.html — Page exit warning modal
+5. prisma/schema.prisma — Added seatHold model
+
+### Key changes:
+- When a user holds seats, competing holds on same trip are auto-cancelled after 10 minutes
+- Session timeout shows modal at 5 minutes remaining
+- Page navigation triggers confirmation dialog to prevent accidental hold loss
+- SeatHold table tracks: userId, tripId, seats[], expiresAt, status
+
+### Concerns:
+- Race conditions in seat hold cancellation?
+- Is 10 minute timeout appropriate?
+- Error handling for expired holds during checkout?
+
+Please review security, performance, and UX implications.`
+};
+
+function loadPreset(key) {
+  document.getElementById('userInput').value = PRESETS[key];
+  updateLive();
+}
+
+// ── Live counter ──────────────────────────────────────────────────
+document.getElementById('userInput').addEventListener('input', updateLive);
+function updateLive() {
+  const t = estimateTokens(document.getElementById('userInput').value);
+  document.getElementById('liveCount').textContent = t.toLocaleString();
+}
+
+// ── Main analyze ──────────────────────────────────────────────────
+function analyze() {
+  const text = document.getElementById('userInput').value.trim();
+  if (!text) { alert('กรุณาใส่ prompt ก่อนนะครับ'); return; }
+
+  const inputTok = estimateTokens(text);
+
+  // ── Direct AI model ──────────────────────────────────────────
+  const d = {
+    input:  inputTok,
+    system: 420,                         // minimal system prompt
+    output: Math.ceil(inputTok * 1.8),   // AI generates ~1.8x input
+  };
+  d.total = d.input + d.system + d.output;
+  d.cost  = calcCost(d.input + d.system, d.output);
+
+  // ── Tool-Based model ─────────────────────────────────────────
+  // Extra: tool schema tokens, call/result JSON, context retention
+  const toolSchemaTok  = 850;   // tool definitions injected into system
+  const toolCallTok    = 180;   // structured tool invocation JSON
+  const toolResultTok  = Math.ceil(inputTok * 0.6); // parsed result sent back
+  const ctxRetainTok   = Math.ceil(inputTok * 0.3); // prior context retained
+  const t = {
+    input:  inputTok,
+    system: 420 + toolSchemaTok,
+    toolOverhead: toolCallTok + toolResultTok + ctxRetainTok,
+    output: Math.ceil(inputTok * 1.6),   // slightly shorter (tool formats it)
+  };
+  t.total = t.input + t.system + t.toolOverhead + t.output;
+  t.cost  = calcCost(t.input + t.system + t.toolOverhead, t.output);
+
+  renderResults(d, t, inputTok, toolSchemaTok, toolCallTok, toolResultTok, ctxRetainTok);
+  document.getElementById('resultsSection').style.display = '';
+  document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── Render ────────────────────────────────────────────────────────
+function renderResults(d, t, inputTok, toolSchema, toolCall, toolResult, ctxRetain) {
+  // Numbers
+  document.getElementById('d-input').textContent  = d.input.toLocaleString();
+  document.getElementById('d-system').textContent = d.system.toLocaleString();
+  document.getElementById('d-output').textContent = d.output.toLocaleString();
+  document.getElementById('d-total').textContent  = d.total.toLocaleString();
+  document.getElementById('d-cost').textContent   = '$' + d.cost.toFixed(4);
+
+  document.getElementById('t-input').textContent  = t.input.toLocaleString();
+  document.getElementById('t-system').textContent = t.system.toLocaleString();
+  document.getElementById('t-tool').textContent   = t.toolOverhead.toLocaleString();
+  document.getElementById('t-output').textContent = t.output.toLocaleString();
+  document.getElementById('t-total').textContent  = t.total.toLocaleString();
+  document.getElementById('t-cost').textContent   = '$' + t.cost.toFixed(4);
+
+  // Pipelines
+  renderPipeline('pipeline-direct', [
+    { cls:'input',  icon:'bi-pencil',            label:'Your Input', val: d.input },
+    { cls:'proc',   icon:'bi-cpu',               label:'System Prompt', val: d.system },
+    { cls:'output', icon:'bi-chat-right-text',   label:'AI Output', val: d.output },
+  ]);
+  renderPipeline('pipeline-tool', [
+    { cls:'input',  icon:'bi-pencil',            label:'Your Input',  val: t.input },
+    { cls:'proc',   icon:'bi-cpu',               label:'System+Schema', val: t.system },
+    { cls:'tool',   icon:'bi-tools',             label:'Tool Call JSON', val: toolCall },
+    { cls:'ctx',    icon:'bi-arrow-repeat',      label:'Tool Result', val: toolResult },
+    { cls:'ctx',    icon:'bi-database',          label:'Context Retain', val: ctxRetain },
+    { cls:'output', icon:'bi-chat-right-text',   label:'AI Output', val: t.output },
+  ]);
+
+  // Per-card bars (direct)
+  const dMax = d.total;
+  renderBars('bars-direct', [
+    { label:'Input',       val: d.input,  cls:'c-input',  max: dMax },
+    { label:'System',      val: d.system, cls:'c-system', max: dMax },
+    { label:'Output',      val: d.output, cls:'c-output', max: dMax },
+  ]);
+
+  // Per-card bars (tool)
+  const tMax = t.total;
+  renderBars('bars-tool', [
+    { label:'Input',        val: t.input,         cls:'c-input',  max: tMax },
+    { label:'System+Schema',val: t.system,        cls:'c-system', max: tMax },
+    { label:'Tool Overhead',val: t.toolOverhead,  cls:'c-tool',   max: tMax },
+    { label:'Output',       val: t.output,        cls:'c-output', max: tMax },
+  ]);
+
+  // Comparison bars
+  const cMax = Math.max(d.total, t.total);
+  renderBars('comparison-bars', [
+    { label:'AI Direct — Total',     val: d.total,         cls:'c-input',  max: cMax },
+    { label:'Tool-Based — Total',    val: t.total,         cls:'c-tool',   max: cMax },
+    { label:'Tool Overhead alone',   val: t.toolOverhead,  cls:'c-ctx',    max: cMax },
+    { label:'Schema injection cost', val: 850,             cls:'c-system', max: cMax },
+  ]);
+
+  // Table
+  const diff = t.total - d.total;
+  const pct  = ((diff / d.total) * 100).toFixed(1);
+  const rows = [
+    ['Input tokens',       d.input, t.input,   0,             '—'],
+    ['System prompt',      d.system, 420,       0,             '—'],
+    ['Tool schema inject', 0,        850,       850,           'extra cost'],
+    ['Tool call JSON',     0,        toolCall,  toolCall,      'extra cost'],
+    ['Tool result back',   0,        toolResult,toolResult,    'extra cost'],
+    ['Context retention',  0,        ctxRetain, ctxRetain,     'extra cost'],
+    ['AI output',          d.output, t.output,  t.output-d.output, t.output>d.output?'more output':'less output'],
+    ['TOTAL',              d.total,  t.total,   diff,          `+${pct}% overhead`],
+  ];
+  const tbody = document.getElementById('cmp-tbody');
+  tbody.innerHTML = rows.map(([label, dv, tv, dif, verdict]) => {
+    const isTotalRow = label === 'TOTAL';
+    const difClass = dif > 0 ? 'worse' : dif < 0 ? 'better' : 'neutral';
+    return `<tr style="${isTotalRow?'font-weight:700;background:rgba(255,255,255,.03)':''}">
+      <td>${label}</td>
+      <td class="mono better">${dv.toLocaleString()}</td>
+      <td class="mono ${dv===0&&tv>0?'worse':'accent'}">${tv.toLocaleString()}</td>
+      <td class="mono ${difClass}">${dif>0?'+':''}${dif.toLocaleString()}</td>
+      <td style="font-size:.78rem;color:var(--gray);">${verdict}</td>
+    </tr>`;
+  }).join('');
+
+  // Insight
+  const overheadPct = ((t.toolOverhead / t.total) * 100).toFixed(0);
+  document.getElementById('insight-box').innerHTML = `
+    <i class="bi bi-lightbulb-fill me-2"></i>
+    <strong>สรุป:</strong>
+    Input ของคุณ = <strong>${inputTok} tokens</strong>.
+    Tool-Based ใช้ token มากกว่า AI Direct <strong>${diff.toLocaleString()} tokens (+${pct}%)</strong>
+    โดย overhead มาจาก tool schema + call/result JSON คิดเป็น <strong>${overheadPct}%</strong> ของ token ทั้งหมด.
+    ค่าใช้จ่ายต่างกัน <strong>$${(t.cost - d.cost).toFixed(5)}</strong> ต่อ request.
+  `;
+
+  // When-to-use lists
+  const shortInput = inputTok < 200;
+  document.getElementById('when-direct').innerHTML = [
+    shortInput ? '<li>✅ Prompt สั้น (เช่นตอนนี้ < 200 tokens) — overhead ไม่คุ้ม</li>' : '',
+    '<li>✅ ถามครั้งเดียว ไม่ต้องการ structured output</li>',
+    '<li>✅ ต้องการคำตอบเร็ว ไม่ซับซ้อน</li>',
+    '<li>✅ Budget จำกัด — ประหยัดกว่า</li>',
+    '<li>✅ ไม่ต้องการ graph/dependency analysis</li>',
+  ].join('');
+  document.getElementById('when-tool').innerHTML = [
+    !shortInput ? '<li>✅ Code ยาว/ซับซ้อน — tool parse ได้แม่นกว่า</li>' : '',
+    '<li>✅ ต้องการ visual dependency graph</li>',
+    '<li>✅ PR review ขนาดใหญ่ หลายไฟล์</li>',
+    '<li>✅ ต้องการ structured report (JSON/Markdown)</li>',
+    '<li>✅ integrate กับ CI/CD pipeline</li>',
+    '<li>✅ ต้องการ track review history ข้ามครั้ง</li>',
+  ].join('');
+}
+
+function renderPipeline(id, steps) {
+  document.getElementById(id).innerHTML = steps.map((s, i) => `
+    ${i > 0 ? '<span class="pipe-arrow"><i class="bi bi-arrow-right"></i></span>' : ''}
+    <div class="pipe-box ${s.cls}">
+      <i class="bi ${s.icon}"></i>
+      ${s.label}
+      <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;opacity:.8;">${s.val.toLocaleString()}</span>
+    </div>
+  `).join('');
+}
+
+function renderBars(id, rows) {
+  document.getElementById(id).innerHTML = rows.map(r => {
+    const pct = Math.max(2, Math.round((r.val / r.max) * 100));
+    return `
+      <div class="bar-row">
+        <div class="bar-label">${r.label}</div>
+        <div class="bar-track">
+          <div class="bar-fill ${r.cls}" style="width:${pct}%">${r.val.toLocaleString()}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function clearAll() {
+  document.getElementById('userInput').value = '';
+  document.getElementById('liveCount').textContent = '0';
+  document.getElementById('resultsSection').style.display = 'none';
+}
+
+// auto-init with simple preset
+loadPreset('simple');
+</script>
+</body>
+</html>

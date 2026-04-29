@@ -207,6 +207,7 @@ model Expense {
   description String?
   amount      Float
   date        DateTime @default(now())
+  notes       String?
   createdAt   DateTime @default(now())
 }
 

@@ -8,6 +8,7 @@ export const resources = {
     translation: {
       // ── Navbar ──
       nav_home:     'หน้าแรก',
+      nav_book:     'จองทริป',
       nav_register: 'ลงทะเบียน',
       nav_lang:     'EN',
 
@@ -23,7 +24,8 @@ export const resources = {
 
       // ── Domestic ──
       domestic_title:    'ทริปในประเทศ',
-      domestic_subtitle: 'สัมผัสธรรมชาติที่ยอดอยู่รอบตัวคุณ',
+      domestic_subtitle: 'สัมผัสธรรมชาติที่ยอดเยี่ยมรอบตัวคุณ',
+      view_all_trips:    'ดูทริปทั้งหมด',
       filter_placeholder: 'กรองตามภูมิภาค...',
       price_from:    'ราคาเริ่มต้น',
       view_detail:   'ดูรายละเอียด',
@@ -46,26 +48,28 @@ export const resources = {
       // ── Blog ──
       blog_title:    'ภาพความประทับใจ',
       blog_subtitle: 'บันทึกความทรงจำและรอยยิ้มจากการเดินทาง',
-      blog1_title:   'หนีเมืองมาพักหน่วง! บันทึกตะลุยป่ามาบึ 6 วัน 5 คืน...',
-      blog2_title:   'เลอควาเดา สง้คาย ตุดากล',
+
+      // ── Gallery ──
+      gallery_title:    'แกลเลอรี่',
+      gallery_subtitle: 'ภาพสวยๆ จากทริปที่ผ่านมา',
 
       // ── Services ──
       svc_title:    'บริการอื่นๆ',
-      svc_subtitle: 'ครบครันด้านการเดินทาง เรามอบประสบการณ์ระดับพรีเมียม',
+      svc_subtitle: 'เราพร้อมดูแลคุณตั้งแต่ต้นจนจบการเดินทาง',
       svc1_title:   'รับจัดทริปส่วนตัว',
-      svc1_text:    'กลุ่มครอบครัวหรือเพื่อนตั้งแต่ 8-10 คน สามารถติดต่อเพื่อจัดแพ็กเกจเดินทางส่วนตัว',
-      svc2_title:   'อุปกรณ์พร้อมให้เช่า',
-      svc2_text:    'มีเต้นท์ และเครื่องนอนราคาไม่แพง แบรนด์ NH, Mobi Garden',
-      svc3_title:   'บริการสำหรับองค์กร',
-      svc3_text:    'บริการจัดทริปสำหรับองค์กร พร้อมกิจกรรม Team Building และโปรแกรมพิเศษสำหรับกลุ่มใหญ่',
+      svc1_text:    'สำหรับกลุ่ม 8-10 คนขึ้นไป สามารถออกแบบโปรแกรมพิเศษตามความต้องการ',
+      svc2_title:   'อุปกรณ์เช่าพร้อม',
+      svc2_text:    'เต้นท์ ถุงนอน อุปกรณ์เดินป่า แบรนด์ NH, Mobi Garden ราคาเหมาะสม',
+      svc3_title:   'จัดทริปองค์กร',
+      svc3_text:    'บริการจัดทริปสำหรับองค์กร พร้อมกิจกรรม Team Building',
 
       // ── FAQ ──
       faq_title:    'คำถามที่พบบ่อย',
       faq_subtitle: 'ข้อสงสัยเกี่ยวกับการเดินทาง เรามีคำตอบ',
-      faq1_q: 'ไม่เคยมีประสบการณ์เดินป่ามาก่อน สามารถร่วมทริปได้หรือไม่?',
+      faq1_q: 'ไม่เคยมีประสบการณ์เดินป่ามาก่อน สามารถร่วมทริปได้ไหม?',
       faq1_a: 'ได้เลยครับ! ทริปของเรามี guide มืออาชีพคอยดูแลและให้คำแนะนำตลอดการเดินทาง เหมาะสำหรับทั้งมือใหม่และผู้มีประสบการณ์',
-      faq2_q: 'สามารถจองที่นั่งได้อย่างไร?',
-      faq2_a: 'สามารถจองได้ผ่านเว็บไซต์ หรือติดต่อทาง LINE Official Account @guga หรือโทรศัพท์โดยตรง ทีมงานพร้อมให้คำปรึกษา',
+      faq2_q: 'สามารถจองได้อย่างไร?',
+      faq2_a: 'สามารถจองได้ผ่านเว็บไซต์ หรือติดต่อทาง LINE Official Account ทีมงานพร้อมให้คำปรึกษา',
       faq3_q: 'มีช่องทางการชำระเงินอะไรบ้าง?',
       faq3_a: 'รับชำระผ่านการโอนเงิน, พร้อมเพย์, บัตรเครดิต และชำระเงินสดที่สำนักงาน',
       faq4_q: 'จุดนัดพบส่วนใหญ่อยู่ที่ไหน?',
@@ -75,10 +79,20 @@ export const resources = {
 
       // ── Social / CTA ──
       social_title:    'เริ่มต้นการเดินทางของคุณ',
-      social_subtitle: 'เลือกช่องทางที่คุณสะดวกเพื่อสอบถามหรือจองบริการ',
+      social_subtitle: 'เลือกช่องทางที่คุณสะดวกเพื่อสอบถามหรือจองบริการกับเรา',
+
+      // ── Trip card & modal labels ──
+      per_person:        '/ คน',
+      modal_duration:    'ระยะเวลา',
+      modal_price_from:  'ราคาเริ่มต้น',
+      modal_summary_title: 'สรุปข้อมูลทริป',
+      modal_btn_doc:     'ดูรายละเอียดก่อนจองได้เลย',
+      modal_btn_book:    'จองทริป',
+      modal_share_label: 'แชร์ให้เพื่อน',
+      modal_view_all:    'ดูทริปทั้งหมดและรอบอื่นๆ',
 
       // ── Cookie ──
-      cookie_text:   'เว็บไซต์นี้ใช้คุกกี้ (Cookies) เพื่อนำเสนอประสบการณ์การใช้งานที่ดีที่สุด การใช้งานถือว่าคุณยอมรับ',
+      cookie_text:   'เว็บไซต์นี้ใช้คุกกี้ (Cookies) เพื่อนำเสนอประสบการณ์การใช้งานที่ดีที่สุดให้กับคุณ',
       cookie_policy: 'นโยบายความเป็นส่วนตัว',
       cookie_btn:    'เข้าใจและยอมรับ',
     }
@@ -87,6 +101,7 @@ export const resources = {
     translation: {
       // ── Navbar ──
       nav_home:     'Home',
+      nav_book:     'Book Trip',
       nav_register: 'Register',
       nav_lang:     'TH',
 
@@ -103,6 +118,7 @@ export const resources = {
       // ── Domestic ──
       domestic_title:    'Domestic Trips',
       domestic_subtitle: 'Discover breathtaking nature right in your backyard',
+      view_all_trips:    'View All Trips',
       filter_placeholder: 'Filter by region...',
       price_from:    'Starting from',
       view_detail:   'View Details',
@@ -125,18 +141,20 @@ export const resources = {
       // ── Blog ──
       blog_title:    'Moments to Remember',
       blog_subtitle: 'Memories and smiles captured from every journey',
-      blog1_title:   'Escaping the City! A 6-Day 5-Night Wild Adventure...',
-      blog2_title:   'Forest Trek — Morning Mist & Mountain Peaks',
+
+      // ── Gallery ──
+      gallery_title:    'Gallery',
+      gallery_subtitle: 'Beautiful photos from past trips',
 
       // ── Services ──
       svc_title:    'Other Services',
-      svc_subtitle: 'Comprehensive travel solutions — premium experience guaranteed',
+      svc_subtitle: 'We care for you from start to finish of every journey',
       svc1_title:   'Private Trip Packages',
-      svc1_text:    'Groups of 8–10 people can contact us to arrange a custom private travel package.',
+      svc1_text:    'Groups of 8–10 people or more can design a special custom itinerary on request.',
       svc2_title:   'Gear Rental Available',
-      svc2_text:    'Tents and sleeping gear available at affordable prices. Brands: NH, Mobi Garden.',
-      svc3_title:   'Corporate & Group Services',
-      svc3_text:    'Trip planning for organizations, including Team Building activities and special group programs.',
+      svc2_text:    'Tents, sleeping bags & hiking gear — brands NH, Mobi Garden at great prices.',
+      svc3_title:   'Corporate & Group Trips',
+      svc3_text:    'Trip planning for organizations, including Team Building activities.',
 
       // ── FAQ ──
       faq_title:    'Frequently Asked Questions',
@@ -144,7 +162,7 @@ export const resources = {
       faq1_q: 'No hiking experience? Can I still join a trip?',
       faq1_a: 'Absolutely! Our trips have professional guides who care for and advise you throughout the journey, perfect for both beginners and experienced travelers.',
       faq2_q: 'How can I book a seat?',
-      faq2_a: 'You can book directly on our website, via LINE Official Account @guga, or by calling us. Our team is ready to help.',
+      faq2_a: 'You can book directly on our website, or via LINE Official Account. Our team is ready to help.',
       faq3_q: 'What payment methods are accepted?',
       faq3_a: 'We accept bank transfers, PromptPay, credit cards, and cash at our office.',
       faq4_q: 'Where are the meeting points?',
@@ -156,8 +174,18 @@ export const resources = {
       social_title:    'Start Your Journey',
       social_subtitle: 'Choose your preferred channel to enquire or book our services',
 
+      // ── Trip card & modal labels ──
+      per_person:        '/ person',
+      modal_duration:    'Duration',
+      modal_price_from:  'Starting price',
+      modal_summary_title: 'Trip Summary',
+      modal_btn_doc:     'View trip details before booking',
+      modal_btn_book:    'Book Trip',
+      modal_share_label: 'Share with friends',
+      modal_view_all:    'View all trips & other rounds',
+
       // ── Cookie ──
-      cookie_text:   'This website uses cookies to provide you with the best experience. By using this site, you agree to our',
+      cookie_text:   'This website uses cookies to provide you with the best experience possible.',
       cookie_policy: 'Privacy Policy',
       cookie_btn:    'Got it, Accept',
     }

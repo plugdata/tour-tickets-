@@ -55,10 +55,18 @@ export async function loadSiteSettings() {
       `linear-gradient(rgba(15,20,25,.6),rgba(15,20,25,.85)), url('${imgSrc(s.hero_bg_url)}') center/cover`
   }
   const heroTitle = $('heroTitle')
-  if (heroTitle && s.hero_title) heroTitle.textContent = s.hero_title
+  if (heroTitle && s.hero_title) {
+    heroTitle.textContent = s.hero_title
+    heroTitle.setAttribute('data-th', s.hero_title)
+    heroTitle.removeAttribute('data-en')  // CMS content → use API translation
+  }
 
   const heroSubtitle = $('heroSubtitle')
-  if (heroSubtitle && s.hero_subtitle) heroSubtitle.textContent = s.hero_subtitle
+  if (heroSubtitle && s.hero_subtitle) {
+    heroSubtitle.textContent = s.hero_subtitle
+    heroSubtitle.setAttribute('data-th', s.hero_subtitle)
+    heroSubtitle.removeAttribute('data-en')  // CMS content → use API translation
+  }
 
   // Social links
   const socials = {
@@ -136,22 +144,34 @@ export async function loadFireTicker() {
       link:  '/trips',
     }))
 
-    const slides = [...tripSlides, ...contentSlides]
+    let slides = [...tripSlides, ...contentSlides]
+    // ตัดสไลด์ที่ซ้ำกันออกโดยใช้ Title เป็นหลัก
+    const seen = new Set()
+    slides = slides.filter(s => {
+      if (seen.has(s.title)) return false
+      seen.add(s.title)
+      return true
+    })
+
     if (!slides.length) return
 
     const wrapper = qs('.fire-swiper .swiper-wrapper')
     if (!wrapper) return
+    const esc = s => (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
     wrapper.innerHTML = slides.map(s => `
       <div class="swiper-slide fire-slide">
         <div class="fire-card" style="--bg:url('${s.bg}')" onclick="window.location.href='${s.link}'">
           <div class="fire-card-overlay">
-            <div class="fire-card-tag"><i class="bi bi-geo-alt-fill"></i> ${s.tag}</div>
+            <div class="fire-card-tag">
+              <i class="bi bi-geo-alt-fill"></i>
+              <span data-i18n-dyn data-th="${esc(s.tag)}">${s.tag}</span>
+            </div>
             <div class="fire-card-body">
-              <div class="fire-card-title">${s.title}</div>
+              <div class="fire-card-title" data-i18n-dyn data-th="${esc(s.title)}">${s.title}</div>
               <div class="fire-card-meta">
                 ${s.date ? `<span><i class="bi bi-calendar3"></i> ${s.date}</span>` : ''}
               </div>
-              ${s.price ? `<div class="fire-card-price">${s.price} <span>/ คน</span></div>` : ''}
+              ${s.price ? `<div class="fire-card-price">${s.price} <span data-i18n="per_person">/ คน</span></div>` : ''}
             </div>
           </div>
         </div>

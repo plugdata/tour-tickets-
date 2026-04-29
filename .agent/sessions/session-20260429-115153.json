@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-04-29T04:52:41Z",
+  "user_task": "เพิ่ม validation ใน createBooking ให้ check ว่า seats มากกว่า 0",
+  "layer2_ops": {
+  "_schema": "layer2-ops v1.0",
+  "_status": "ready",
+  "task": {
+    "id": "task-20260429-100000",
+    "type": "edit",
+    "priority": "medium",
+    "target": {
+      "file": "backend/src/routes/booking.routes.js",
+      "function": "createBooking",
+      "class": "",
+      "line": null
+    },
+    "action": "Add validation logic to ensure the number of seats is greater than 0 before proceeding with booking creation.",
+    "context_refs": ["Booking", "booking_flow", "api_db"],
+    "constraints": {
+      "no_new_files": false,
+      "keep_existing_logic": true,
+      "output_format": "diff"
+    },
+    "status": "done",
+    "executed_by": "claude-sonnet-4-6",
+    "result_summary": "Added seats > 0 validation in createBooking (booking.routes.js:87-89). Returns HTTP 400 with message 'Number of seats must be greater than 0' if seats is missing or less than 1."
+  }
+}
+}

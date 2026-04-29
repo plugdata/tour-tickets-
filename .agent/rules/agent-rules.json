@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "session_language": "Thai allowed for human, English only between agents",
+
+  "agents": {
+    "gemini": {
+      "role": "Logic Architect",
+      "cli": "gemini",
+      "responsibilities": [
+        "Translate human Thai input → minimal English JSON task",
+        "Determine target file, function, line from layer1 context",
+        "Write layer2-ops.json with < 200 tokens",
+        "Validate task is scoped (no ambiguity)"
+      ],
+      "input_reads": [
+        ".agent/context/layer1-structure.json",
+        ".agent/rules/agent-rules.json"
+      ],
+      "output_writes": [".agent/context/layer2-ops.json"],
+      "token_budget": 200,
+      "language": "English only in output"
+    },
+
+    "claude": {
+      "role": "Code Executor",
+      "cli": "claude",
+      "responsibilities": [
+        "Read layer2-ops.json and execute exactly",
+        "Use code-review-graph MCP to fetch only relevant code",
+        "Output code diff only — no explanation unless asked",
+        "Update task status in layer2-ops.json after done"
+      ],
+      "input_reads": [
+        ".agent/context/layer2-ops.json",
+        ".agent/context/layer1-structure.json",
+        "code-review-graph (MCP)"
+      ],
+      "output_writes": ["target files per task"],
+      "token_budget": "minimal — use MCP context only",
+      "language": "Code output only"
+    }
+  },
+
+  "conversation_rules": {
+    "turn_order": "human → gemini → claude → human",
+    "gemini_must": "Always produce valid layer2-ops.json before Claude acts",
+    "claude_must": "Never ask for clarification — execute layer2-ops.json exactly",
+    "conflict_resolution": "gemini re-writes task if claude reports ambiguity"
+  }
+}

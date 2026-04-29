@@ -1,0 +1,74 @@
+{
+  "project": "project_ticket",
+  "type": "Tour Booking System",
+  "stack": {
+    "backend": "Node.js + Express + Prisma + PostgreSQL",
+    "frontend_admin": "Vanilla HTML/CSS/JS",
+    "frontend_web": "Vite + Vanilla JS",
+    "deploy": "Cloudflare Workers"
+  },
+
+  "data_models": [
+    "User", "BankAccount", "Trip", "BusRound",
+    "Booking", "BookingAddon", "Addon",
+    "Payment", "SeatBooking", "BookingSession",
+    "InsuranceForm", "InsuranceCondition", "InsurancePolicyContent",
+    "Content", "Expense", "CancelLog",
+    "Upload", "SiteSetting", "GalleryAlbum", "GalleryImage"
+  ],
+
+  "core_flow": "Trip → BusRound → BookingSession → SeatBooking → Booking → InsuranceForm → Payment",
+
+  "backend_routes": {
+    "auth":           "backend/src/routes/auth.routes.js",
+    "trip":           "backend/src/routes/trip.routes.js",
+    "busRound":       "backend/src/routes/busRound.routes.js",
+    "booking":        "backend/src/routes/booking.routes.js",
+    "bookingSession": "backend/src/routes/bookingSession.routes.js",
+    "seatBooking":    "backend/src/routes/seatBooking.routes.js",
+    "payment":        "backend/src/routes/payment.routes.js",
+    "insurance":      "backend/src/routes/insurance.routes.js",
+    "addon":          "backend/src/routes/addon.routes.js",
+    "expense":        "backend/src/routes/expense.routes.js",
+    "report":         "backend/src/routes/report.routes.js",
+    "user":           "backend/src/routes/user.routes.js",
+    "content":        "backend/src/routes/content.routes.js",
+    "gallery":        "backend/src/routes/gallery.routes.js",
+    "bankAccount":    "backend/src/routes/bank-account.routes.js",
+    "settings":       "backend/src/routes/settings.routes.js",
+    "upload":         "backend/src/routes/upload.routes.js"
+  },
+
+  "frontend_admin_pages": {
+    "dashboard":   "frontend/pages/dashboard.html",
+    "booking":     "frontend/pages/booking/",
+    "bookings":    "frontend/pages/bookings/",
+    "trips":       "frontend/pages/trips/",
+    "busRounds":   "frontend/pages/bus-rounds/",
+    "payments":    "frontend/pages/payments/",
+    "insurance":   "frontend/pages/insurance/",
+    "reports":     "frontend/pages/reports/",
+    "expenses":    "frontend/pages/expenses/",
+    "users":       "frontend/pages/users/",
+    "cms":         "frontend/pages/cms/"
+  },
+
+  "frontend_modules": {
+    "CrudManager":       "frontend/modules/CrudManager.js",
+    "FormManager":       "frontend/modules/FormManager.js",
+    "TableManager":      "frontend/modules/TableManager.js",
+    "PaginationManager": "frontend/modules/PaginationManager.js",
+    "FileUploadManager": "frontend/modules/FileUploadManager.js"
+  },
+
+  "schema": "backend/prisma/schema.prisma",
+  "entry":  "backend/src/server.js",
+  "middleware_auth": "backend/src/middleware/auth.js",
+
+  "workflows": {
+    "booking_flow":    ".agent/workflows/complete-booking-flow.md",
+    "api_db":          ".agent/workflows/api-db-workflow.md",
+    "thai_calendar":   ".agent/workflows/thai-calendar-integration.md",
+    "backoffice":      ".agent/workflows/backoffice-admin-enhancements.md"
+  }
+}
