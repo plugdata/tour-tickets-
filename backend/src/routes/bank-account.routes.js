@@ -8,11 +8,12 @@ const router = express.Router();
 // Note: File upload functionality requires multer package
 // For now, we'll handle image URLs as text input
 
-// GET all active bank accounts
+// GET all bank accounts (admin: ?all=true returns inactive too)
 router.get('/', async (req, res) => {
   try {
+    const showAll = req.query.all === 'true';
     const bankAccounts = await prisma.bankAccount.findMany({
-      where: { isActive: true },
+      where: showAll ? {} : { isActive: true },
       orderBy: { createdAt: 'desc' }
     });
     res.json(bankAccounts);
@@ -43,33 +44,32 @@ router.get('/:id', async (req, res) => {
 // POST create new bank account
 router.post('/', async (req, res) => {
   try {
-    const { accountNo, accountName, bankName, accountType, description, imageUrl } = req.body;
-    
-    // Validate required fields
-    if (!accountNo || !accountName || !bankName || !accountType) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    const { accountNo, accountName, bankName, branch, accountType, description, imageUrl, qrCodeUrl, bookbankUrl, isActive } = req.body;
+
+    if (!accountNo || !accountName || !bankName) {
+      return res.status(400).json({ message: 'Missing required fields: accountNo, accountName, bankName' });
     }
-    
-    // Check if account number already exists
-    const existingAccount = await prisma.bankAccount.findUnique({
-      where: { accountNo }
-    });
-    
+
+    const existingAccount = await prisma.bankAccount.findUnique({ where: { accountNo } });
     if (existingAccount) {
       return res.status(400).json({ message: 'Account number already exists' });
     }
-    
+
     const bankAccount = await prisma.bankAccount.create({
       data: {
         accountNo,
         accountName,
         bankName,
-        accountType,
+        branch: branch || null,
+        accountType: accountType || 'COMPANY',
         imageUrl: imageUrl || null,
-        description
+        qrCodeUrl: qrCodeUrl || null,
+        bookbankUrl: bookbankUrl || null,
+        description: description || null,
+        isActive: isActive !== undefined ? Boolean(isActive) : true
       }
     });
-    
+
     res.status(201).json(bankAccount);
   } catch (error) {
     console.error('Error creating bank account:', error);
@@ -80,38 +80,35 @@ router.post('/', async (req, res) => {
 // PUT update bank account
 router.put('/:id', async (req, res) => {
   try {
-    const { accountNo, accountName, bankName, accountType, description, imageUrl } = req.body;
     const id = parseInt(req.params.id);
     
-    // Check if bank account exists
-    const existingAccount = await prisma.bankAccount.findUnique({
-      where: { id }
-    });
-    
+    const { accountNo, accountName, bankName, branch, accountType, description, imageUrl, qrCodeUrl, bookbankUrl, isActive } = req.body;
+
+    const existingAccount = await prisma.bankAccount.findUnique({ where: { id } });
     if (!existingAccount) {
       return res.status(404).json({ message: 'Bank account not found' });
     }
-    
-    // Check if account number conflicts with another account
+
     if (accountNo && accountNo !== existingAccount.accountNo) {
-      const conflictingAccount = await prisma.bankAccount.findUnique({
-        where: { accountNo }
-      });
-      
+      const conflictingAccount = await prisma.bankAccount.findUnique({ where: { accountNo } });
       if (conflictingAccount) {
         return res.status(400).json({ message: 'Account number already exists' });
       }
     }
-    
+
     const updatedAccount = await prisma.bankAccount.update({
       where: { id },
       data: {
         ...(accountNo && { accountNo }),
         ...(accountName && { accountName }),
         ...(bankName && { bankName }),
+        ...(branch !== undefined && { branch }),
         ...(accountType && { accountType }),
         ...(imageUrl !== undefined && { imageUrl }),
-        ...(description !== undefined && { description })
+        ...(qrCodeUrl !== undefined && { qrCodeUrl }),
+        ...(bookbankUrl !== undefined && { bookbankUrl }),
+        ...(description !== undefined && { description }),
+        ...(isActive !== undefined && { isActive: Boolean(isActive) })
       }
     });
     

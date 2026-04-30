@@ -36,8 +36,11 @@ model BankAccount {
   accountNo   String   @unique
   accountName String
   bankName    String
-  accountType String   // 'COMPANY' or 'PERSONAL'
+  branch      String?
+  accountType String   @default("COMPANY")  // 'COMPANY' or 'PERSONAL'
   imageUrl    String?
+  qrCodeUrl   String?
+  bookbankUrl String?
   description String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())

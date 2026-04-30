@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สมุดบัญชีธนาคาร - Tour Backoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../../assets/css/admin.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; }
+        .page-title   { font-size: 1.25rem; color: #333; font-weight: 700; margin-bottom: 0.2rem; }
+        .page-subtitle { color: #888; font-size: 0.85rem; }
+
+        .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-radius: 0.75rem; }
+        .form-control, .form-select { border-radius: 0.5rem; border-color: #e2e8f0; font-size: 0.875rem; }
+        .form-control:focus, .form-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+        .acc-item {
+            border: none; border-radius: 8px; margin-bottom: 4px;
+            transition: background 0.15s;
+        }
+        .acc-item:hover  { background: #f0f4ff; }
+        .acc-item.active { background: #eff6ff; border-left: 3px solid #3b82f6; }
+
+        .bookbank-img {
+            max-width: 100%; border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.14);
+            cursor: zoom-in; transition: transform 0.2s;
+        }
+        .bookbank-img:hover { transform: scale(1.015); }
+
+        .info-pill {
+            background: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: 8px; padding: 0.5rem 0.85rem;
+        }
+        .info-pill .label { font-size: 0.72rem; color: #94a3b8; margin-bottom: 0.1rem; }
+        .info-pill .value { font-weight: 600; color: #1e293b; font-size: 0.875rem; }
+        .info-pill .acct-no { font-family: 'Courier New', monospace; letter-spacing: 2px; color: #2563eb; }
+
+        .upload-zone {
+            border: 2px dashed #cbd5e1; border-radius: 12px; padding: 2.5rem 1.5rem;
+            text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+        }
+        .upload-zone:hover { border-color: #3b82f6; background: #f0f4ff; }
+
+        .empty-state { padding: 4rem 2rem; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="d-flex">
+        <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+        <main class="main-content flex-fill">
+            <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+            <div class="page-content">
+
+                <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <a href="bookmoney.html" class="text-muted text-decoration-none small">
+                            <i class="bi bi-arrow-left me-1"></i>กลับหน้าบัญชีรับเงิน
+                        </a>
+                        <h1 class="page-title mt-1"><i class="bi bi-book me-2 text-primary"></i>สมุดบัญชีธนาคาร</h1>
+                        <p class="page-subtitle" id="pageSubtitle">เลือกบัญชีเพื่อดูหรืออัปโหลดรูปสมุดบัญชี</p>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+
+                    <!-- Account List Sidebar -->
+                    <div class="col-lg-4 col-xl-3">
+                        <div class="card">
+                            <div class="card-header bg-white border-bottom fw-semibold py-2 px-3">
+                                <i class="bi bi-bank2 me-2 text-primary"></i>บัญชีธนาคาร
+                            </div>
+                            <div class="card-body p-2" id="accountList">
+                                <div class="text-center py-3 text-muted small">
+                                    <div class="spinner-border spinner-border-sm me-1"></div>กำลังโหลด...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bookbank View / Upload -->
+                    <div class="col-lg-8 col-xl-9">
+                        <div class="card">
+                            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-2 px-3">
+                                <span class="fw-semibold"><i class="bi bi-file-image me-2 text-primary"></i>รูปสมุดบัญชี</span>
+                                <button id="btnUploadNew" class="btn btn-sm btn-primary d-none" onclick="showUploadSection()">
+                                    <i class="bi bi-cloud-upload me-1"></i>อัปโหลดใหม่
+                                </button>
+                            </div>
+                            <div class="card-body" id="bookbankContent">
+                                <div class="empty-state text-muted">
+                                    <i class="bi bi-bank2" style="font-size:3rem;opacity:0.25;"></i>
+                                    <p class="mt-2">เลือกบัญชีธนาคารด้านซ้ายเพื่อดูสมุดบัญชี</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Full-size image modal -->
+    <div class="modal fade" id="imgModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content bg-dark border-0">
+                <div class="modal-body text-center p-2">
+                    <img id="imgModalSrc" src="" class="img-fluid rounded" style="max-height:85vh;" alt="สมุดบัญชี">
+                </div>
+                <div class="modal-footer border-0 justify-content-center gap-2">
+                    <a id="imgDownloadLink" href="" download="bookbank.jpg" class="btn btn-primary">
+                        <i class="bi bi-download me-1"></i>ดาวน์โหลด
+                    </a>
+                    <button class="btn btn-light" data-bs-dismiss="modal">ปิด</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/i18n.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/apiClient.js"></script>
+    <script src="../../assets/js/features/file-upload.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        let accounts = [];
+        let selected  = null;
+        let imgModal;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initPage();
+            imgModal = new bootstrap.Modal(document.getElementById('imgModal'));
+            await loadAccounts();
+
+            const preselect = new URLSearchParams(location.search).get('id');
+            if (preselect) selectAccount(parseInt(preselect));
+        });
+
+        async function loadAccounts() {
+            try {
+                accounts = await api.get('/bank-accounts');
+                renderList();
+            } catch (e) {
+                document.getElementById('accountList').innerHTML =
+                    `<div class="p-2 text-danger small"><i class="bi bi-exclamation-triangle me-1"></i>${e.message}</div>`;
+            }
+        }
+
+        function renderList() {
+            const el = document.getElementById('accountList');
+            if (!accounts.length) {
+                el.innerHTML = `<div class="p-3 text-muted text-center small">ไม่มีบัญชีธนาคาร<br>
+                    <a href="bookmoney.html" class="btn btn-sm btn-outline-primary mt-2">เพิ่มบัญชี</a></div>`;
+                return;
+            }
+            el.innerHTML = accounts.map(a => `
+                <button class="list-group-item list-group-item-action acc-item px-3 py-2"
+                        id="acc-${a.id}" onclick="selectAccount(${a.id})">
+                    <div class="fw-semibold small">${esc(a.bankName)}</div>
+                    <div class="text-muted" style="font-size:0.73rem;">${esc(a.accountName)}</div>
+                    <div class="text-muted" style="font-size:0.7rem;font-family:monospace;">${esc(a.accountNo)}</div>
+                    <div class="mt-1">
+                        ${a.bookbankUrl
+                            ? `<span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.62rem;">
+                                   <i class="bi bi-check-circle me-1"></i>มีสมุดบัญชี</span>`
+                            : `<span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.62rem;">
+                                   <i class="bi bi-exclamation me-1"></i>ยังไม่มีสมุดบัญชี</span>`
+                        }
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function selectAccount(id) {
+            selected = accounts.find(a => a.id === id);
+            if (!selected) return;
+
+            document.querySelectorAll('.acc-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`acc-${id}`)?.classList.add('active');
+            document.getElementById('pageSubtitle').textContent =
+                `${selected.bankName} · ${selected.accountName} · ${selected.accountNo}`;
+
+            renderBookbank();
+        }
+
+        function renderBookbank() {
+            const a = selected;
+            const content  = document.getElementById('bookbankContent');
+            const btnNew   = document.getElementById('btnUploadNew');
+
+            if (a.bookbankUrl) {
+                btnNew.classList.remove('d-none');
+                content.innerHTML = `
+                    <div class="row g-3">
+                        <div class="col-md-7 text-center">
+                            <img src="${API_BASE_URL}${a.bookbankUrl}"
+                                 class="bookbank-img"
+                                 alt="สมุดบัญชี"
+                                 onclick="openFullImage('${API_BASE_URL}${a.bookbankUrl}')">
+                            <p class="text-muted small mt-2">
+                                <i class="bi bi-arrows-fullscreen me-1"></i>คลิกเพื่อดูเต็มจอ
+                            </p>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="info-pill mb-2">
+                                <div class="label">ชื่อธนาคาร</div>
+                                <div class="value">${esc(a.bankName)}</div>
+                            </div>
+                            <div class="info-pill mb-2">
+                                <div class="label">สาขา</div>
+                                <div class="value">${esc(a.branch || '—')}</div>
+                            </div>
+                            <div class="info-pill mb-2">
+                                <div class="label">ชื่อบัญชี</div>
+                                <div class="value">${esc(a.accountName)}</div>
+                            </div>
+                            <div class="info-pill mb-3">
+                                <div class="label">เลขบัญชี</div>
+                                <div class="value acct-no">${esc(a.accountNo)}</div>
+                            </div>
+                            <button class="btn btn-outline-primary w-100 btn-sm" onclick="showUploadSection()">
+                                <i class="bi bi-arrow-repeat me-1"></i>เปลี่ยนรูปสมุดบัญชี
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Upload section (hidden by default) -->
+                    <div id="uploadSection" class="d-none mt-4 pt-3 border-top">
+                        <p class="fw-semibold mb-2">อัปโหลดรูปสมุดบัญชีใหม่</p>
+                        <div id="bookbankUploadContainer"></div>
+                        <button class="btn btn-primary mt-3" onclick="doUpload()">
+                            <i class="bi bi-cloud-upload me-1"></i>บันทึก
+                        </button>
+                        <button class="btn btn-link text-muted mt-3" onclick="hideUploadSection()">ยกเลิก</button>
+                    </div>
+                `;
+            } else {
+                btnNew.classList.add('d-none');
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-file-earmark-image text-muted" style="font-size:3.5rem;opacity:0.35;"></i>
+                        <p class="text-muted mt-2 mb-4">ยังไม่มีรูปสมุดบัญชีสำหรับบัญชีนี้</p>
+                        <div class="upload-zone mx-auto" style="max-width:380px;" onclick="document.getElementById('bookbankFile_file').click()">
+                            <i class="bi bi-cloud-arrow-up fs-2 text-primary opacity-75 mb-2"></i>
+                            <p class="mb-0 text-muted">คลิกหรือลากไฟล์มาวางที่นี่</p>
+                            <p class="text-muted small">รองรับ JPG, PNG, PDF</p>
+                        </div>
+                        <div id="bookbankUploadContainer" class="mt-3 mx-auto" style="max-width:380px;"></div>
+                        <button class="btn btn-primary mt-3" onclick="doUpload()">
+                            <i class="bi bi-cloud-upload me-1"></i>อัปโหลดสมุดบัญชี
+                        </button>
+                    </div>
+                `;
+            }
+
+            // Init file upload component after DOM update
+            setTimeout(() => {
+                if (document.getElementById('bookbankUploadContainer')) {
+                    FileUpload.init('#bookbankUploadContainer', {
+                        targetInputId: 'bookbankFile',
+                        btnText: 'เลือกรูปสมุดบัญชี',
+                        btnIcon: 'bi-book',
+                        multiple: false,
+                        allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf']
+                    });
+                }
+            }, 0);
+        }
+
+        function showUploadSection() {
+            document.getElementById('uploadSection')?.classList.remove('d-none');
+        }
+
+        function hideUploadSection() {
+            document.getElementById('uploadSection')?.classList.add('d-none');
+        }
+
+        async function doUpload() {
+            const inst = FileUpload.instances['bookbankFile'];
+            if (!inst || !inst.pendingFiles.length) {
+                showToast('กรุณาเลือกไฟล์สมุดบัญชีก่อน', 'warning');
+                return;
+            }
+            try {
+                const urls = await FileUpload.uploadAllPending('bookbankFile');
+                await api.put(`/bank-accounts/${selected.id}`, { bookbankUrl: urls[0] });
+                showToast('อัปโหลดสมุดบัญชีสำเร็จ');
+                await loadAccounts();
+                selected = accounts.find(a => a.id === selected.id);
+                renderBookbank();
+            } catch (e) {
+                showToast(e.message, 'danger');
+            }
+        }
+
+        function openFullImage(url) {
+            document.getElementById('imgModalSrc').src = url;
+            document.getElementById('imgDownloadLink').href = url;
+            imgModal.show();
+        }
+
+        function esc(s) {
+            return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    </script>
+</body>
+</html>
