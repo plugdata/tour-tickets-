@@ -65,7 +65,6 @@
             font-weight: 700;
         }
         .notif-sec-hdr .ns-chevron {
-            margin-left: auto;
             color: #94a3b8;
             font-size: .8rem;
             transition: transform .2s;
@@ -421,7 +420,7 @@ function buildSectionHTML(key) {
                 <span class="ns-label">${m.label}</span>
                 <span class="ns-count">${cnt}</span>
                 <!-- Export dropdown (stop propagation so toggle doesn't fire) -->
-                <div class="ms-auto me-1" onclick="event.stopPropagation()">
+                <div class="ms-auto" onclick="event.stopPropagation()">
                     <div class="dropdown">
                         <button class="btn btn-outline-secondary dropdown-toggle"
                                 style="font-size:.67rem;padding:.15rem .5rem;border-radius:6px;"

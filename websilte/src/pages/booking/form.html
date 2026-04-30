@@ -280,7 +280,7 @@
         });
 
         //  Render pickup options
-        function renderPickupOptions() {
+        function renderPickupOptions(selectedValue = '') {
             let points = roundData?.pickupPoints || [];
 
             // Handle JSON string from API
@@ -294,10 +294,10 @@
 
             // Handle new structure with price
             if (points.length > 0 && typeof points[0] === 'object') {
-                return points.map(p => `<option value="${p.name}">${p.name} ${p.price > 0 ? `(+${p.price}  )` : ''}</option>`).join('');
+                return points.map(p => `<option value="${p.name}" ${p.name === selectedValue ? 'selected' : ''}>${p.name} ${p.price > 0 ? `(+${p.price}  )` : ''}</option>`).join('');
             }
             // Fallback for old string array
-            return points.map(p => `<option value="${p}">${p}</option>`).join('');
+            return points.map(p => `<option value="${p}" ${p === selectedValue ? 'selected' : ''}>${p}</option>`).join('');
         }
 
         //  Render dropoff options 
@@ -403,7 +403,7 @@
                         <label class="form-label small">จุดรับ <span class="text-danger">*</span></label>
                         <select class="form-select passenger-pickup" data-seat="${sn}" required>
                             <option value="">-</option>
-                            ${renderPickupOptions()}
+                            ${renderPickupOptions(s.pickupPoint)}
                         </select>
                     </div>
                 </div>
@@ -613,8 +613,20 @@
             }
         }
 
-        function goBack() {
-            window.location.href = '/trips';
+        async function goBack() {
+            if (!sessionData) return window.location.href = '/trips';
+            
+            // Save state before going back (skip validation for UX)
+            try {
+                const formData = collectData();
+                await postJSON('/booking-sessions', {
+                    token: sessionToken,
+                    step: 1,
+                    selectedSeats: formData.seats,
+                });
+            } catch (e) { console.warn('Failed to save state on back:', e); }
+
+            window.location.href = `/booking/seats?roundId=${sessionData.busRoundId}&token=${sessionToken}`;
         }
 
         // ── API helpers ───────────────────────────────────────────────────────────────

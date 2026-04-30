@@ -407,7 +407,7 @@ function renderInsuranceForms() {
                             <option value="OTHER"      ${s.beneficiaryRelation==='OTHER'?'selected':''}>อื่นๆ</option>
                         </select>
                     </div>
-                    <div class="col-12 d-none" id="otherRel_${sn}">
+                    <div class="col-12 ${s.beneficiaryRelation==='OTHER'?'':'d-none'}" id="otherRel_${sn}">
                         <input type="text" class="form-control form-control-sm ins-beneficiary-other"
                             data-seat="${sn}" placeholder="ระบุความสัมพันธ์..."
                             value="${s.beneficiaryRelationOther || ''}">
@@ -426,12 +426,19 @@ function toggleOtherRel(sel, sn) {
 function renderConditions() {
     const wrap = document.getElementById('conditionsList');
     if (!conditions.length) { wrap.innerHTML = '<p class="text-muted small">ไม่มีเงื่อนไขที่กำหนด</p>'; return; }
-    wrap.innerHTML = conditions.map(c => `
-        <div class="consent-item" id="cb_${c.id}">
+    
+    // Get saved consents from first seat (shared across session)
+    const firstSeat = sessionData.selectedSeats?.[0] || {};
+    const savedIds = firstSeat.consentedConditionIds || [];
+
+    wrap.innerHTML = conditions.map(c => {
+        const isChecked = savedIds.includes(Number(c.id));
+        return `
+        <div class="consent-item ${isChecked ? 'checked' : ''}" id="cb_${c.id}">
             <div class="form-check mb-0">
                 <input class="form-check-input consent-check" type="checkbox"
                     id="cond_${c.id}" data-id="${c.id}" data-required="${c.isRequired}"
-                    ${c.isRequired ? 'required' : ''} onchange="onConsentChange(this)">
+                    ${c.isRequired ? 'required' : ''} ${isChecked ? 'checked' : ''} onchange="onConsentChange(this)">
                 <label class="form-check-label" for="cond_${c.id}" style="cursor:pointer">
                     <i class="bi ${c.iconClass || 'bi-check-circle-fill text-success'} me-1"></i>
                     <span class="fw-semibold">${c.title}</span>
@@ -439,7 +446,12 @@ function renderConditions() {
                     ${!c.isRequired ? '<span class="badge bg-light text-muted border ms-1" style="font-size:.65rem">ไม่บังคับ</span>' : ''}
                 </label>
             </div>
-        </div>`).join('');
+        </div>`}).join('');
+
+    // Custom conditions prefill
+    if (firstSeat.customConditions) {
+        document.getElementById('customConditions').value = firstSeat.customConditions;
+    }
 }
 function onConsentChange(cb) {
     const box = document.getElementById(`cb_${cb.dataset.id}`);
@@ -580,8 +592,23 @@ function skipRental() {
     window.location.href = `/booking/ticket?token=${sessionToken}`;
 }
 
-function goBack() {
-    window.location.href = '/booking/form';
+async function goBack() {
+    if (!sessionToken) return window.location.href = '/trips';
+    
+    // Save state before going back
+    try {
+        const insData  = collectInsuranceData();
+        const consents = collectConsents();
+        const mergedSeats = (sessionData.selectedSeats || []).map(s => {
+            const ins = insData.find(i => i.seatNumber === s.seatNumber) || {};
+            return { ...s, ...ins, ...consents };
+        });
+        await postJSON('/booking-sessions', {
+            token: sessionToken, step: 2, selectedSeats: mergedSeats,
+        });
+    } catch(e) { console.warn('Back save failed:', e); }
+
+    window.location.href = `/booking/form?token=${sessionToken}`;
 }
 
 

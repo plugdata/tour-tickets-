@@ -459,10 +459,19 @@ router.post('/guest', async (req, res) => {
       }
     })
 
+    // ดึง booking info ล่าสุดพร้อม seatBookings
+    const fullBooking = await prisma.booking.findUnique({
+      where: { id: booking.id },
+      include: {
+        bookingAddons: { include: { addon: true } },
+        seatBookings: true,
+        payment: true
+      }
+    })
+
     res.status(201).json({
-      booking,
+      booking: fullBooking,
       payment,
-      seatBookings: seatBookings.length,
       message: 'Booking created successfully'
     })
 
@@ -501,7 +510,8 @@ router.get('/guest/:sessionToken', async (req, res) => {
       where: { id: session.bookingId },
       include: {
         payment: true,
-        bookingAddons: { include: { addon: true } }
+        bookingAddons: { include: { addon: true } },
+        seatBookings: true
       }
     });
 

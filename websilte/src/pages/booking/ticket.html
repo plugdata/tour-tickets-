@@ -546,20 +546,27 @@ async function confirmBooking() {
                 sessionToken: sessionToken,
                 paymentType: payType
             });
-            bookingId = bookingResult.booking.id;
+            const fullBooking = bookingResult.booking;
+            bookingId = fullBooking.id;
             sessionData.bookingId = bookingId;
             sessionData.step = 5;
 
             // Create insurance
-            for (const seat of sessionData.selectedSeats) {
-                if (seat.emergencyName && seat.beneficiaryName) {
+            const seatBookings = fullBooking.seatBookings || []; 
+            for (const sb of seatBookings) {
+                // Find matching insurance data from session using seatNumber
+                const s = sessionData.selectedSeats?.find(x => x.seatNumber === sb.seatNumber);
+                if (s && s.emergencyName && s.beneficiaryName) {
                     try {
                         await postAPI('/insurance', {
                             bookingId: bookingId,
-                            seatBookingId: seat.seatNumber, 
-                            beneficiaryName: seat.beneficiaryName,
-                            beneficiaryRelation: seat.beneficiaryRelation || 'SPOUSE',
+                            seatBookingId: sb.id, // Use the REAL DB ID returned from booking
+                            beneficiaryName: s.beneficiaryName,
+                            beneficiaryRelation: s.beneficiaryRelation || 'SPOUSE',
+                            beneficiaryRelationOther: s.beneficiaryRelationOther || null,
                             coverageAmount: 1000000,
+                            consentPolicyRead: s.consentPolicyRead || false,
+                            consentTermsAccepted: s.consentTermsAccepted || false,
                             status: 'SUBMITTED'
                         });
                     } catch (e) { console.error('Insurance Error:', e.message); }

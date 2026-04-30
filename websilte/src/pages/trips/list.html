@@ -2076,16 +2076,7 @@
 
     <div id="selBar" style="display:none; padding:1rem 1.2rem; background:#f0fdf4; border-top:1px solid #d1fae5; justify-content:space-between; align-items:center;"></div>
 
-    <!-- Final Action Footer -->
-    <div class="bk-footer-premium">
-      <div class="bk-status-row">
-        <div style="display:flex; flex-direction:column;">
-          <span style="font-size:.65rem; color:#94a3b8; font-weight:700; text-transform:uppercase;">สถานะการจอง</span>
-          <span style="font-size:.85rem; font-weight:700; color:#1e293b;">${statusTxt}</span>
-        </div>
-        <div class="bk-status-pill ${statusCls}">${pct}% จองแล้ว</div>
-      </div>
-      
+
       <div class="bk-bar" style="margin-bottom:1.2rem;"><div class="bk-bar-fill ${statusCls}" style="width:${pct}%"></div></div>
       
       <button class="bk-btn-booking" ${full ? 'disabled' : ''} onclick="seatProceed(${round.id})">

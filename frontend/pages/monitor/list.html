@@ -41,8 +41,10 @@
                             <button class="btn btn-sm btn-outline-primary" onclick="exportExcel()">
                                 <i class="bi bi-file-earmark-excel me-1"></i>Excel
                             </button>
-                            <button class="btn btn-sm btn-outline-info" id="btnPrintSelected" onclick="printSelected()" style="display:none;">
-                                <i class="bi bi-person-check me-1"></i>พิมพ์เฉพาะที่เลือก (<span id="selectedCount">0</span>)
+                            <button class="btn btn-sm btn-outline-info" id="btnPrintSelected" onclick="printSelected()"
+                                style="display:none;">
+                                <i class="bi bi-person-check me-1"></i>พิมพ์เฉพาะที่เลือก (<span
+                                    id="selectedCount">0</span>)
                             </button>
                             <button class="btn btn-sm btn-outline-secondary" onclick="openReport('passenger')">
                                 <i class="bi bi-printer me-1"></i>พิมพ์ตารางผู้โดยสาร
@@ -119,7 +121,8 @@
                                         <i class="bi bi-bus-front me-1"></i><span id="bannerBus"></span>
                                         <span class="mx-2">·</span>
                                         <i class="bi bi-calendar3 me-1"></i><span id="bannerDate"></span>
-                                        <div class="mt-1"><i class="bi bi-arrow-right-short me-1" style="color:#1cb8a0;"></i><span id="bannerRoute"></span></div>
+                                        <div class="mt-1"><i class="bi bi-arrow-right-short me-1"
+                                                style="color:#1cb8a0;"></i><span id="bannerRoute"></span></div>
                                     </div>
                                 </div>
 
@@ -145,7 +148,8 @@
                                 <div class="col-lg-3 text-end">
                                     <div class="task-status-box d-inline-block text-start">
                                         <div class="label">ผู้ดูแลทริป / สถานะ</div>
-                                        <div class="value mb-2" id="bannerResponsible"><i class="bi bi-person-circle me-1" style="color:#1cb8a0;"></i>-</div>
+                                        <div class="value mb-2" id="bannerResponsible"><i
+                                                class="bi bi-person-circle me-1" style="color:#1cb8a0;"></i>-</div>
                                         <div id="bannerStatusWrap">
                                             <span class="badge py-1 px-3" id="bannerStatus"
                                                 style="background:#e6faf6;color:#0d9488;border:1px solid #99f6e4;font-size:.78rem;">-</span>
@@ -196,8 +200,7 @@
                                         </li>
                                         <li class="nav-item">
                                             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabExpense"
-                                                type="button" id="tabExpenseBtn"
-                                                onclick="onExpenseTabShow()">
+                                                type="button" id="tabExpenseBtn" onclick="onExpenseTabShow()">
                                                 <i class="bi bi-cash-stack me-1"></i>รายจ่าย
                                                 <span class="badge ms-1" id="tabExpenseBadge"
                                                     style="display:none;background:#fee2e2;color:#991b1b;font-size:.68rem;">0</span>
@@ -214,11 +217,17 @@
                                             <table class="table table-bordered booking-table mb-0">
                                                 <thead>
                                                     <tr>
-                                                        <th rowspan="2" class="text-center no-print" style="width:30px;border-bottom:2px solid #10b981 !important;">
-                                                            <input type="checkbox" class="form-check-input" id="checkAllPax" onchange="toggleAllPax(this)">
+                                                        <th rowspan="2" class="text-center no-print"
+                                                            style="width:30px;border-bottom:2px solid #10b981 !important;">
+                                                            <input type="checkbox" class="form-check-input"
+                                                                id="checkAllPax" onchange="toggleAllPax(this)">
                                                         </th>
-                                                        <th rowspan="2" style="min-width:32px;border-bottom:2px solid #10b981 !important;">#</th>
-                                                        <th rowspan="2" class="text-center" style="min-width:90px;border-bottom:2px solid #10b981 !important;">สถานะ
+                                                        <th rowspan="2"
+                                                            style="min-width:32px;border-bottom:2px solid #10b981 !important;">
+                                                            #</th>
+                                                        <th rowspan="2" class="text-center"
+                                                            style="min-width:90px;border-bottom:2px solid #10b981 !important;">
+                                                            สถานะ
                                                         </th>
                                                         <th colspan="4" class="group-h" style="min-width:160px">เส้นทาง
                                                             / รถ</th>
@@ -275,7 +284,8 @@
                                     <!-- Tab 2: สถานะการอนุมัติ -->
                                     <div class="tab-pane fade" id="tabApproval">
                                         <!-- print-all section label -->
-                                        <div id="print-section-label-approval" style="display:none;" class="fw-bold pt-2 pb-1 border-bottom mb-2" style="font-size:9pt;">
+                                        <div id="print-section-label-approval" style="display:none;"
+                                            class="fw-bold pt-2 pb-1 border-bottom mb-2" style="font-size:9pt;">
                                             <i class="bi bi-clipboard-check me-1"></i>สถานะการอนุมัติ
                                         </div>
                                         <div style="overflow-y:auto;max-height:58vh;">
@@ -286,12 +296,14 @@
                                                         <th style="min-width:220px;">ผู้จอง / รายชื่อผู้โดยสาร</th>
                                                         <th style="min-width:100px;">โทรศัพท์</th>
                                                         <th class="text-center" style="min-width:60px;">ที่นั่ง</th>
-                                                        <th class="text-center" style="min-width:70px;">เลือก<br>ที่นั่ง</th>
+                                                        <th class="text-center" style="min-width:70px;">เลือก<br>ที่นั่ง
+                                                        </th>
                                                         <th class="text-center" style="min-width:70px;">มัดจำ 1K</th>
                                                         <th class="text-center" style="min-width:70px;">ชำระครบ</th>
                                                         <th class="text-center" style="min-width:90px;">สถานะ</th>
                                                         <th class="text-end" style="min-width:90px;">รวม (บาท)</th>
-                                                        <th class="text-center no-print" style="min-width:100px;">จัดการ</th>
+                                                        <th class="text-center no-print" style="min-width:100px;">จัดการ
+                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody id="approvalBody">
@@ -311,7 +323,8 @@
                                         <div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom no-print"
                                             style="background:#f8fffe;">
                                             <span class="text-muted small fw-semibold">
-                                                <i class="bi bi-cash-stack me-1" style="color:#1cb8a0;"></i>ค่าใช้จ่ายรอบนี้
+                                                <i class="bi bi-cash-stack me-1"
+                                                    style="color:#1cb8a0;"></i>ค่าใช้จ่ายรอบนี้
                                             </span>
                                             <span class="fw-bold" id="expenseRoundTotal"
                                                 style="color:#0d9488;font-size:1rem;">฿0</span>
@@ -323,10 +336,12 @@
                                             </div>
                                         </div>
                                         <!-- Category summary chips -->
-                                        <div class="d-flex flex-wrap gap-2 px-3 py-2 border-bottom no-print" id="expenseCatSummary"></div>
+                                        <div class="d-flex flex-wrap gap-2 px-3 py-2 border-bottom no-print"
+                                            id="expenseCatSummary"></div>
                                         <!-- Table -->
                                         <div style="overflow-y:auto;max-height:50vh;">
-                                            <table class="table table-bordered table-hover align-middle mb-0" style="font-size:.82rem;">
+                                            <table class="table table-bordered table-hover align-middle mb-0"
+                                                style="font-size:.82rem;">
                                                 <thead class="table-light">
                                                     <tr>
                                                         <th style="min-width:30px">#</th>
@@ -334,16 +349,21 @@
                                                         <th style="min-width:160px">รายละเอียด</th>
                                                         <th class="text-end" style="min-width:100px">จำนวน (บาท)</th>
                                                         <th style="min-width:90px">วันที่</th>
-                                                        <th class="text-center no-print" style="min-width:70px">จัดการ</th>
+                                                        <th class="text-center no-print" style="min-width:70px">จัดการ
+                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody id="expenseBody">
-                                                    <tr><td colspan="6" class="text-center py-4 text-muted">เลือกรอบรถเพื่อดูรายจ่าย</td></tr>
+                                                    <tr>
+                                                        <td colspan="6" class="text-center py-4 text-muted">
+                                                            เลือกรอบรถเพื่อดูรายจ่าย</td>
+                                                    </tr>
                                                 </tbody>
                                                 <tfoot class="table-light" id="expenseFoot" style="display:none;">
                                                     <tr>
                                                         <td colspan="3" class="text-end fw-bold">รวม</td>
-                                                        <td class="text-end fw-bold text-danger" id="expenseFootTotal">0</td>
+                                                        <td class="text-end fw-bold text-danger" id="expenseFootTotal">0
+                                                        </td>
                                                         <td colspan="2"></td>
                                                     </tr>
                                                 </tfoot>
@@ -418,7 +438,8 @@
                 <div class="modal-body">
                     <form id="expenseForm">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold small">หมวดหมู่ <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small">หมวดหมู่ <span
+                                    class="text-danger">*</span></label>
                             <select class="form-select" id="fExpCategory" required>
                                 <option value="รายจ่าย จานช้อน">รายจ่าย จานช้อน</option>
                                 <option value="อุปกรณ์สิ้นเปลือง">อุปกรณ์สิ้นเปลือง</option>
@@ -438,8 +459,10 @@
                             <input type="text" class="form-control" id="fExpDesc" placeholder="รายละเอียดเพิ่มเติม">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold small">จำนวนเงิน (บาท) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="fExpAmount" min="0" step="0.01" required placeholder="0.00">
+                            <label class="form-label fw-semibold small">จำนวนเงิน (บาท) <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="fExpAmount" min="0" step="0.01" required
+                                placeholder="0.00">
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold small">วันที่</label>

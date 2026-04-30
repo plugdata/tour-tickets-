@@ -89,15 +89,15 @@
     }
 
     /* ─── Van Shell (Premium look) ─────────────────────────── */
-    .van-wrapper {
+/*     .van-wrapper {
       padding: 2.5rem 1rem;
       background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%);
       border-radius: 24px;
       border: 1px solid #e2e8f0;
       box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
-    }
+    } */
 
-    .van-shell {
+/*     .van-shell {
       max-width: 320px;
       margin: 0 auto;
       background: #fff;
@@ -106,7 +106,7 @@
       padding: 20px;
       box-shadow: 0 30px 60px -12px rgba(0, 0, 0, .08), 0 18px 36px -18px rgba(0, 0, 0, .1);
       position: relative;
-    }
+    } */
 
     .van-shell::before {
       content: '';
@@ -120,14 +120,14 @@
       border-radius: 10px;
     }
 
-    .van-windshield {
+/*     .van-windshield {
       height: 16px;
       background: linear-gradient(90deg, #64748b, #94a3b8 50%, #64748b);
       border-radius: 20px;
       margin-bottom: 20px;
       box-shadow: inset 0 2px 4px rgba(0, 0, 0, .2);
       opacity: 0.8;
-    }
+    } */
 
     .van-front {
       display: grid;
@@ -168,28 +168,65 @@
 
     /* ─── Seatchart.js Overrides (Premium) ────────────────── */
     #sc-wrap .sc-seat {
-      width: 68px !important;
-      height: 68px !important;
-      border-radius: 18px !important;
-      font-size: .9rem !important;
+      width: 120px !important;
+      height: 120px !important;
+      border-radius: 20px !important;
+      font-size: 1.1rem !important;
       font-weight: 800 !important;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
       border: 1.5px solid #f1f5f9 !important;
       background: #fff !important;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: flex-end !important;
+      padding-bottom: 22px !important;
+      position: relative !important;
+    }
+
+    /* Hide seatchart indexers and center the container */
+    #sc-wrap {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      overflow: hidden;
+    }
+    .sc-indexer, .sc-indexer-rows, .sc-indexer-columns, .sc-front, .sc-spacer {
+       display: none !important;
+    }
+    .sc-map {
+      margin: 0 auto !important;
+      padding: 0 !important;
+    }
+
+    /* Person Icon via Pseudo-element */
+    #sc-wrap .sc-seat::before {
+      font-family: 'bootstrap-icons' !important;
+      content: "\F4DA" !important; /* bi-person-fill */
+      font-size: 2.5rem !important;
+      position: absolute !important;
+      top: 20px !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      transition: all 0.2s !important;
     }
 
     #sc-wrap .sc-seat-available {
-      color: #64748b !important;
+      color: #94a3b8 !important;
       background: #fff !important;
     }
+    #sc-wrap .sc-seat-available::before { color: #f1f5f9 !important; }
 
     #sc-wrap .sc-seat-available:hover {
+      background: var(--primary) !important;
       border-color: var(--primary) !important;
-      transform: translateY(-4px) scale(1.04) !important;
-      box-shadow: 0 12px 20px -5px rgba(0, 217, 180, 0.2) !important;
+      color: #fff !important;
+      transform: translateY(-5px) scale(1.02) !important;
+      box-shadow: 0 15px 30px -5px rgba(0, 217, 180, 0.4) !important;
       z-index: 10 !important;
     }
+    #sc-wrap .sc-seat-available:hover::before { color: #fff !important; }
 
     #sc-wrap .sc-seat-selected.seat-male {
       background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
@@ -206,22 +243,25 @@
     }
 
     #sc-wrap .sc-seat-reserved {
-      opacity: 0.6;
+      opacity: 0.85;
       cursor: not-allowed !important;
-      filter: grayscale(0.5);
     }
 
     #sc-wrap .sc-seat-reserved.seat-male {
-      background: #eff6ff !important;
-      border-color: #dbeafe !important;
+      background: #f0f7ff !important;
+      border-color: #3b82f6 !important;
       color: #3b82f6 !important;
     }
+    #sc-wrap .sc-seat-reserved.seat-male::before { color: #3b82f6 !important; }
 
     #sc-wrap .sc-seat-reserved.seat-female {
-      background: #fdf2f8 !important;
-      border-color: #fce7f3 !important;
-      color: #ec4899 !important;
+      background: #fff1f2 !important;
+      border-color: #ff2391 !important;
+      color: #ff2391 !important;
     }
+    #sc-wrap .sc-seat-reserved.seat-female::before { color: #ff2391 !important; }
+
+    #sc-wrap .sc-seat-selected::before { color: #fff !important; }
 
     /* ─── Real-time Bar ────────────────────────────────────── */
     .rt-bar {
@@ -245,6 +285,47 @@
       background: #10b981;
       box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
       animation: pulse-green 2s infinite;
+    }
+
+    /* ─── Responsive ───────────────────────────────────────── */
+    @media (max-width: 768px) {
+      #sc-wrap .sc-seat {
+        width: 90px !important;
+        height: 90px !important;
+        border-radius: 16px !important;
+        font-size: 1rem !important;
+        padding-bottom: 16px !important;
+      }
+      #sc-wrap .sc-seat::before {
+        font-size: 1.8rem !important;
+        top: 15px !important;
+      }
+      .premium-card-header {
+        padding: 1rem;
+      }
+      .card-body {
+        padding: 1rem !important;
+      }
+      #actionBar {
+        padding: 0.8rem 0;
+      }
+      #actionBar .container {
+        gap: 2;
+      }
+      .btn-premium {
+        padding: 0.8rem 1.5rem;
+        font-size: 0.95rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      #sc-wrap .sc-seat {
+        width: 80px !important;
+        height: 80px !important;
+      }
+      #sc-wrap .sc-seat::before {
+        font-size: 1.6rem !important;
+      }
     }
 
     @keyframes pulse-green {
@@ -457,14 +538,7 @@
             <div class="card-body p-4">
 
               <!-- Real-time bar -->
-              <div class="d-flex justify-content-center mb-4">
-                <div class="rt-bar">
-                  <div class="rt-dot"></div>
-                  <span class="fw-bold text-uppercase" style="letter-spacing: 0.5px;">Live Updates</span>
-                  <span class="ms-3 text-dark fw-bold" id="lastUpdate" style="font-family: monospace;">–</span>
-                </div>
-              </div>
-
+          
               <div class="van-wrapper">
                 <!-- Van shell -->
                 <div class="van-shell">
@@ -485,7 +559,7 @@
                   <div class="van-divider"></div>
 
                   <!-- seatchart.js renders here -->
-                  <div id="sc-wrap">
+                  <div id="sc-wrap" class="mt-2">
                     <div id="seatchart"></div>
                   </div>
                 </div><!-- /van-shell -->
@@ -648,7 +722,7 @@
     let sc = null        // Seatchart instance
     let genderModal
     let pollInterval = null
-    let sessionToken = null // Removed localStorage - use session only
+    let sessionToken = new URLSearchParams(location.search).get('token')
     let sessionTimeout = null // Track session timeout warning
 
     // { seatNumber: 'MALE' | 'FEMALE' }  — seats with confirmed gender
@@ -859,8 +933,9 @@
         map: {
           rows,
           columns: cols,
-          // Attempt to set labels during init
+          // Always use seat number as label
           seatLabel: (rowOrIdx, maybeCol) => String(idxToSeat(rowOrIdx, maybeCol)),
+          indexer: { visible: false },
           rowIndexer: { visible: false },
           columnIndexer: { visible: false },
           seatTypes: {
@@ -1013,9 +1088,8 @@
             const type = apiInfo.gender === 'MALE' ? 'male'
               : apiInfo.gender === 'FEMALE' ? 'female'
                 : 'economy'
-            // Show nickname → firstName → gender symbol → seat number
-            const label = apiInfo.nickname || apiInfo.firstName
-              || (apiInfo.gender === 'MALE' ? 'ชาย' : apiInfo.gender === 'FEMALE' ? 'หญิง' : String(n))
+            // Show only seat number as requested
+            const label = String(n)
             if (cur.state !== 'reserved' || cur.label !== label || cur.type !== type) {
               sc.setSeat(idx, { state: 'reserved', type, label })
             }
@@ -1086,13 +1160,18 @@
       info.innerHTML = `
     <div class="d-flex flex-wrap gap-2 mb-4">${chips}</div>
     <div class="p-3 rounded-4 bg-light bg-opacity-50 border border-white shadow-sm">
-      <div class="d-flex justify-content-between align-items-center mb-1">
-        <span class="text-muted small">${count} ที่นั่ง × ${price.toLocaleString('th-TH')} บาท</span>
-        <button class="btn btn-sm btn-link text-danger text-decoration-none p-0 fw-bold" onclick="clearAllSeats()" style="font-size: .75rem;">ล้างทั้งหมด</button>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="text-muted fw-bold" style="font-size: .85rem;">${count} ที่นั่ง × ${price.toLocaleString('th-TH')} บาท</span>
+        <button class="btn btn-sm btn-outline-danger px-3 py-2 rounded-pill fw-bold d-flex align-items-center gap-2 shadow-sm bg-white" 
+          onclick="clearAllSeats()" 
+          style="font-size: .8rem; transition: all 0.2s;">
+          <i class="bi bi-trash3-fill"></i>
+          <span>ล้างที่นั่งทั้งหมด</span>
+        </button>
       </div>
-      <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex justify-content-between align-items-center pt-2 border-top">
         <span class="fw-bold text-dark">รวมยอดสุทธิ</span>
-        <span class="fw-bold text-primary fs-5">${(price * count).toLocaleString('th-TH')} บาท</span>
+        <span class="fw-bold text-primary fs-4">${(price * count).toLocaleString('th-TH')} บาท</span>
       </div>
     </div>`
     }
@@ -1167,7 +1246,11 @@
           })
         })
         sessionToken = sess.token
-        console.log('[SEATS] Session token created:', sessionToken);
+        
+        // ── LOCK SEATS IN DB ──
+        await holdSeats(seatsData.map(s => s.seatNumber));
+
+        console.log('[SEATS] Session token created/resumed:', sessionToken);
         console.log('[SEATS] Seat selection audit:', {
           timestamp: new Date().toISOString(),
           roundId: roundId,
@@ -1199,6 +1282,25 @@
           showToast(e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่', 'danger')
           await pollSeats() // refresh to show any conflicts
         }
+      }
+    }
+
+    // ── HOLD SEATS API CALL ──
+    async function holdSeats(seatNums) {
+      if (!sessionToken || !roundId) return;
+      try {
+        await apiFetch('/seat-bookings/hold', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            busRoundId: parseInt(roundId),
+            seatNumbers: seatNums,
+            sessionToken: sessionToken
+          })
+        });
+      } catch (e) {
+        console.error('[SEATS] Hold failed:', e.message);
+        throw e;
       }
     }
 
