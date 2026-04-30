@@ -839,6 +839,10 @@
       // Init seatchart
       initSeatchart()
 
+      // Setup click interceptor for confirmed seats (before seatchart processes clicks)
+      // Uses DOM capture phase — fires before seatchart's bubble listener on each seat element
+      setupClickInterceptor()
+
       // First poll (marks reserved seats, restores session)
       await pollSeats()
 
@@ -972,6 +976,16 @@
       }
       suppressCart = false
 
+      // ── cartclear: ถูกเรียกเมื่อ sc.clearCart() — reset ทุก state ──
+      sc.addEventListener('cartclear', () => {
+        if (suppressCart) return
+        myGenders = {}
+        pendingIdx = null
+        pendingSeatNum = null
+        pickedGender = null
+        updateSummary()
+      })
+
       // ── cartchange: seat selected / deselected ──
       sc.addEventListener('cartchange', onCartChange)
     }
@@ -983,49 +997,73 @@
       if (suppressCart) return
 
       const cart = sc.getCart()
-      // Use idxToSeat to get consistent seat numbers regardless of display label
-      const cartNums = cart.map(s => idxToSeat(s.index))
 
-      // ── newly selected seat (not in myGenders yet) ──
+      // ── Newly selected seat (not in myGenders yet, not already pending) ──
       const newSeatInfo = cart.find(s => {
         const n = idxToSeat(s.index)
         return !myGenders[n] && !(pendingSeatNum !== null && n === pendingSeatNum)
       })
 
-      if (newSeatInfo) {
-        const n = idxToSeat(newSeatInfo.index)
-        // If another modal is somehow still open, cancel it first
-        if (pendingSeatNum !== null) {
-          genderModal.hide()
-          return
-        }
-        pendingIdx = newSeatInfo.index
-        pendingSeatNum = n
-        pickedGender = null
-        document.getElementById('genderSeatNum').textContent = `ที่นั่ง ${n}`
-        document.getElementById('cardMale').className = 'gender-card'
-        document.getElementById('cardFemale').className = 'gender-card'
-        document.getElementById('btnConfirmGender').disabled = true
-        genderModal.show()
+      if (!newSeatInfo) return
+
+      const n = idxToSeat(newSeatInfo.index)
+      if (pendingSeatNum !== null) {
+        // Another pending seat open — cancel it first, user must confirm sequentially
+        genderModal.hide()
         return
       }
-
-      // ── deselected seat (was in myGenders, now not in cart) ──
-      const activeNums = new Set(cartNums)
-      suppressCart = true
-      Object.keys(myGenders).forEach(n => {
-        if (!activeNums.has(Number(n))) {
-          delete myGenders[n]
-          // Explicitly reset type → economy so CSS class is fully cleared
-          try {
-            sc.setSeat(seatToIdx(Number(n)), { state: 'available', type: 'economy', label: String(n) })
-          } catch (_) {}
-        }
-      })
-      suppressCart = false
-
-      updateSummary()
+      pendingIdx = newSeatInfo.index
+      pendingSeatNum = n
+      pickedGender = null
+      document.getElementById('genderSeatNum').textContent = `ที่นั่ง ${n}`
+      document.getElementById('cardMale').className = 'gender-card'
+      document.getElementById('cardFemale').className = 'gender-card'
+      document.getElementById('btnConfirmGender').disabled = true
+      genderModal.show()
     }
+
+    // ════════════════════════════════════════════════════════════════
+    // Click interceptor — capture phase fires BEFORE seatchart's bubble listener
+    // Intercepts clicks on confirmed (blue/pink) seats to deselect without rebuild
+    // #seatchart div persists through initSeatchart() rebuilds, so register only ONCE
+    // ════════════════════════════════════════════════════════════════
+    function setupClickInterceptor() {
+      document.getElementById('seatchart').addEventListener('click', function (e) {
+        const seatEl = e.target.closest('.sc-seat')
+        if (!seatEl) return
+
+        // Only intercept CONFIRMED seats (blue=seat-male | pink=seat-female)
+        // Pending (amber = seat-economy) and reserved are not intercepted
+        const isConfirmed = seatEl.classList.contains('sc-seat-selected') &&
+          (seatEl.classList.contains('seat-male') || seatEl.classList.contains('seat-female'))
+        if (!isConfirmed) return
+
+        // Identify seat number from element text content (seatchart renders label as textContent)
+        const seatNum = parseInt(seatEl.textContent)
+        if (!seatNum || !myGenders[seatNum]) return
+
+        // Stop seatchart from toggling state (seatchart uses bubble phase on the seat element)
+        e.stopImmediatePropagation()
+
+        // Deselect: update store (triggers seatchange → DOM className update) + remove from cart
+        suppressCart = true
+        delete myGenders[seatNum]
+        try {
+          // setSeat({state:'available'}) — seatchart internally:
+          //   1. Updates store state: selected→available
+          //   2. Calls removeFromCart (cleans internal cart array)
+          //   3. Fires seatchange → stateEventListener updates className:
+          //      "sc-seat sc-seat-available seat-economy"
+          //   Our CSS: #sc-wrap .sc-seat-available { background:#fff !important }
+          //   guarantees visual reset without ANY rebuild needed
+          sc.setSeat(seatToIdx(seatNum), { state: 'available', type: 'economy', label: String(seatNum) })
+        } catch (_) { }
+        suppressCart = false
+
+        updateSummary()
+      }, true) // true = capture phase (fires before seatchart's bubble listeners)
+    }
+
 
     // ════════════════════════════════════════════════════════════════
     // Gender modal
@@ -1044,7 +1082,11 @@
       myGenders[n] = pickedGender
 
       suppressCart = true
-      sc.setSeat(seatToIdx(n), { type, label: String(n) })
+      // ⚠️ MUST include state:'selected' explicitly —
+      // seatchart checks i.state !== t.state to decide cart ops.
+      // Omitting state → t.state=undefined ≠ 'selected' → addToCart() called AGAIN
+      // → seat duplicated in internal cart → stale entry after deselect → modal shows old seat
+      sc.setSeat(seatToIdx(n), { state: 'selected', type, label: String(n) })
       suppressCart = false
 
       // Clear BEFORE hide so hidden.bs.modal guard (pendingSeatNum===null) skips reset
@@ -1091,40 +1133,42 @@
           const idx = seatToIdx(n)
           const apiInfo = apiSeats[n]
 
+          // Skip if user is interacting with it
           if (cartNums.has(n)) continue
           if (pendingSeatNum && n === pendingSeatNum) continue
 
           const cur = sc.getSeat(idx)
+          if (!cur) continue
 
           if (!apiInfo || apiInfo.status === 'AVAILABLE') {
-            // Ensure numeric label is set even for available seats
-            if (cur.state === 'reserved' || cur.label !== String(n)) {
+            // Only update if not already available OR label is wrong
+            if (cur.state !== 'available' || cur.type !== 'economy' || cur.label !== String(n)) {
               sc.setSeat(idx, { state: 'available', type: 'economy', label: String(n) })
             }
           } else if (apiInfo.status === 'BOOKED') {
             const type = apiInfo.gender === 'MALE' ? 'male'
               : apiInfo.gender === 'FEMALE' ? 'female'
                 : 'economy'
-            // Show only seat number as requested
             const label = String(n)
-            if (cur.state !== 'reserved' || cur.label !== label || cur.type !== type) {
+            // Only update if state/type/label doesn't match
+            if (cur.state !== 'reserved' || cur.type !== type || cur.label !== label) {
               sc.setSeat(idx, { state: 'reserved', type, label })
             }
           }
-          // SELECTED status — first come first served: treat as available
         }
 
-        // Restore my selected seats — ห้ามส่ง state:'selected' ซ้ำ (seatchart จะ duplicate ใน cart)
+        // Restore my selected seats only if they drifted (e.g., from poll reset)
+        let needsSummary = false
         Object.entries(myGenders).forEach(([n, gender]) => {
-          const idx = seatToIdx(Number(n))
+          const num = Number(n)
+          const idx = seatToIdx(num)
           const cur = sc.getSeat(idx)
+          if (!cur) return
           const type = gender === 'MALE' ? 'male' : 'female'
-          if (cur.state !== 'selected') {
-            // ที่นั่งถูก poll reset → select กลับมา
+          
+          if (cur.state !== 'selected' || cur.type !== type || cur.label !== String(n)) {
             sc.setSeat(idx, { state: 'selected', type, label: String(n) })
-          } else if (cur.type !== type) {
-            // selected อยู่แล้ว แค่ fix type (ไม่แตะ state ป้องกัน duplicate)
-            sc.setSeat(idx, { type, label: String(n) })
+            needsSummary = true
           }
         })
 
@@ -1134,8 +1178,6 @@
         const bookedCount = Object.values(apiSeats).filter(s => s.status === 'BOOKED').length
         document.getElementById('seatCountLabel').textContent =
           `ว่าง ${totalSeats - bookedCount} / ${totalSeats} ที่นั่ง`
-        document.getElementById('lastUpdate').textContent =
-          new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
         updateSummary()
       } catch (e) {
@@ -1194,25 +1236,33 @@
     }
 
     function clearAllSeats() {
-      suppressCart = true
+      // 1. Reset ALL JS state first (before any seatchart calls)
+      myGenders = {}
+      const hadPending = pendingSeatNum !== null
+      pendingIdx = null
+      pendingSeatNum = null   // set null FIRST so hide.bs.modal guard skips reset
+      pickedGender = null
 
-      // Clear pending seat (awaiting gender confirmation)
-      if (pendingSeatNum) {
-        sc.setSeat(seatToIdx(pendingSeatNum), { state: 'available', type: 'economy', label: String(pendingSeatNum) })
-        pendingIdx = null
-        pendingSeatNum = null
-        pickedGender = null
+      // 2. Hide gender modal if open (guard in hide.bs.modal will return early since pendingSeatNum=null)
+      if (hadPending) {
+        suppressCart = true
         genderModal.hide()
+        suppressCart = false
       }
 
-      // Clear all confirmed seats
-      Object.keys(myGenders).forEach(n => {
-        const idx = seatToIdx(Number(n))
-        sc.setSeat(idx, { state: 'available', type: 'economy', label: String(n) })
-      })
-      myGenders = {}
-
+      // 3. Nuclear approach: destroy and rebuild seatchart (100% guaranteed clean slate)
+      //    Reason: sc.clearCart() only resets state, NOT type — seats keep blue/pink CSS class
+      suppressCart = true
+      try {
+        const el = document.getElementById('seatchart')
+        el.innerHTML = ''
+        initSeatchart()
+      } catch (_) {}
       suppressCart = false
+
+      // 4. Re-sync DB reserved seats (runs async, won't block UI)
+      pollSeats()
+
       updateSummary()
     }
 
@@ -1276,17 +1326,9 @@
           action: 'seat_selection_confirmed'
         });
 
-        // Set timeout warning (4 minutes = 240 seconds)
-        clearTimeout(sessionTimeout);
-        sessionTimeout = setTimeout(() => {
-          if (sessionToken) {
-            showToast('⏰ เหลือเวลาอีก 1 นาทีสำหรับเลือกที่นั่ง', 'warning');
-          }
-        }, 240000); // 4 minutes
-
-        clearAllSeats() // Clear selected seats after booking
+        // Stop polling and navigate — no need to clearAllSeats (page is leaving)
         clearInterval(pollInterval)
-        clearTimeout(sessionTimeout) // Clear timeout warning
+        clearTimeout(sessionTimeout)
         window.location.href = `/booking/form?token=${sessionToken}`
       } catch (e) {
         // Handle 409 Conflict specifically
