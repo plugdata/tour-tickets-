@@ -176,13 +176,14 @@
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
       border: 1.5px solid #f1f5f9 !important;
       background: #fff !important;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      transition: background 0.1s, border-color 0.1s, box-shadow 0.1s, transform 0.1s !important;
       display: flex !important;
       flex-direction: column !important;
       align-items: center !important;
       justify-content: flex-end !important;
       padding-bottom: 22px !important;
       position: relative !important;
+      will-change: transform, background !important;
     }
 
     /* Hide seatchart indexers and center the container */
@@ -222,11 +223,21 @@
       background: var(--primary) !important;
       border-color: var(--primary) !important;
       color: #fff !important;
-      transform: translateY(-5px) scale(1.02) !important;
-      box-shadow: 0 15px 30px -5px rgba(0, 217, 180, 0.4) !important;
+      transform: translateY(-3px) scale(1.01) !important;
+      box-shadow: 0 10px 20px -5px rgba(0, 217, 180, 0.4) !important;
       z-index: 10 !important;
     }
     #sc-wrap .sc-seat-available:hover::before { color: #fff !important; }
+
+    /* ── Pending (awaiting gender pick) ── amber/yellow — visible on FIRST click */
+    #sc-wrap .sc-seat-selected {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+      border-color: #d97706 !important;
+      color: #fff !important;
+      box-shadow: 0 8px 20px rgba(245,158,11,0.35) !important;
+      transform: translateY(-3px) scale(1.02) !important;
+    }
+    #sc-wrap .sc-seat-selected::before { color: #fff !important; }
 
     #sc-wrap .sc-seat-selected.seat-male {
       background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
@@ -260,8 +271,6 @@
       color: #ff2391 !important;
     }
     #sc-wrap .sc-seat-reserved.seat-female::before { color: #ff2391 !important; }
-
-    #sc-wrap .sc-seat-selected::before { color: #fff !important; }
 
     /* ─── Real-time Bar ────────────────────────────────────── */
     .rt-bar {
@@ -402,13 +411,14 @@
       padding: 1.75rem 1rem;
       cursor: pointer;
       text-align: center;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: border-color 0.1s, background 0.1s, transform 0.1s, box-shadow 0.1s;
       background: #f8fafc;
+      will-change: transform;
     }
 
     .gender-card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 15px 30px rgba(0, 0, 0, .1);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, .1);
       border-color: #e2e8f0;
     }
 
@@ -650,7 +660,7 @@
   </div>
 
   <!-- Gender modal -->
-  <div class="modal fade" id="genderModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal" id="genderModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 440px; margin: 1rem auto;">
       <div class="modal-content border-0 shadow-lg rounded-5 overflow-hidden"
         style="background: rgba(255,255,255,0.98); backdrop-filter: blur(20px);">
@@ -784,14 +794,15 @@
     document.addEventListener('DOMContentLoaded', async () => {
       genderModal = new bootstrap.Modal(document.getElementById('genderModal'))
 
-      // ── hidden.bs.modal = single source of truth for cancel (fires AFTER animation) ──
-      document.getElementById('genderModal').addEventListener('hidden.bs.modal', () => {
+      // ── hide.bs.modal = fires immediately (no fade delay) — resets pending seat ──
+      document.getElementById('genderModal').addEventListener('hide.bs.modal', () => {
         if (pendingSeatNum === null) return  // already handled by confirmGender
-        // Seat was never confirmed — reset it back to available
+        // Seat was never confirmed — reset it back to available immediately (no fade delay)
+        const n = pendingSeatNum
         suppressCart = true
         try {
-          sc.setSeat(seatToIdx(pendingSeatNum), { state: 'available', type: 'economy', label: String(pendingSeatNum) })
-        } catch (_) { }
+          sc.setSeat(seatToIdx(n), { state: 'available', type: 'economy', label: String(n) })
+        } catch (_) {}
         suppressCart = false
         pendingIdx = null
         pendingSeatNum = null
@@ -1001,11 +1012,17 @@
 
       // ── deselected seat (was in myGenders, now not in cart) ──
       const activeNums = new Set(cartNums)
+      suppressCart = true
       Object.keys(myGenders).forEach(n => {
         if (!activeNums.has(Number(n))) {
           delete myGenders[n]
+          // Explicitly reset type → economy so CSS class is fully cleared
+          try {
+            sc.setSeat(seatToIdx(Number(n)), { state: 'available', type: 'economy', label: String(n) })
+          } catch (_) {}
         }
       })
+      suppressCart = false
 
       updateSummary()
     }
