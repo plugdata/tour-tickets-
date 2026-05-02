@@ -279,30 +279,32 @@
             }
         });
 
+        // ── Shared: parse pickupPoints from round (handles string, array, null) ──
+        function getPickupPoints() {
+            let points = roundData?.pickupPoints || [];
+            if (typeof points === 'string') {
+                try { points = JSON.parse(points || '[]'); } catch (e) { points = []; }
+            }
+            // Fallback: if still empty, use startPoint as the sole free option
+            if (!points || points.length === 0) {
+                const sp = roundData?.startPoint;
+                if (sp) points = [{ name: sp, price: 0 }];
+            }
+            return Array.isArray(points) ? points : [];
+        }
+
         //  Render pickup options
         function renderPickupOptions(selectedValue = '') {
-            let points = roundData?.pickupPoints || [];
-
-            // Handle JSON string from API
-            if (typeof points === 'string') {
-                try {
-                    points = JSON.parse(points || '[]');
-                } catch (e) {
-                    points = [];
-                }
-            }
-
-            // Handle new structure with price
+            const points = getPickupPoints();
             if (points.length > 0 && typeof points[0] === 'object') {
-                return points.map(p => `<option value="${p.name}" ${p.name === selectedValue ? 'selected' : ''}>${p.name} ${p.price > 0 ? `(+${p.price}  )` : ''}</option>`).join('');
+                return points.map(p => `<option value="${p.name}" ${p.name === selectedValue ? 'selected' : ''}>${p.name}${p.price > 0 ? ` (+${Number(p.price).toLocaleString()} บาท)` : ''}</option>`).join('');
             }
-            // Fallback for old string array
+            // Fallback for old plain-string array
             return points.map(p => `<option value="${p}" ${p === selectedValue ? 'selected' : ''}>${p}</option>`).join('');
         }
 
         //  Render dropoff options 
         function renderDropoffOptions() {
-            // Use only endPoint since dropoffPoints field doesn't exist in schema
             const endPoint = roundData?.endPoint || '';
             return `<option value="${endPoint}">${endPoint}</option>`;
         }
@@ -452,17 +454,7 @@
                     pickupPoint: g('passenger-pickup') || null,
                     pickupPrice: (() => {
                         const selected = g('passenger-pickup');
-                        let points = roundData?.pickupPoints || [];
-
-                        // Handle JSON string from API
-                        if (typeof points === 'string') {
-                            try {
-                                points = JSON.parse(points || '[]');
-                            } catch (e) {
-                                points = [];
-                            }
-                        }
-
+                        const points = getPickupPoints();
                         if (points.length > 0 && typeof points[0] === 'object') {
                             const pickup = points.find(p => p.name === selected);
                             return pickup ? pickup.price : 0;
@@ -501,17 +493,7 @@
                     pickupPoint: g('passenger-pickup') || null,
                     pickupPrice: (() => {
                         const selected = g('passenger-pickup');
-                        let points = roundData?.pickupPoints || [];
-
-                        // Handle JSON string from API
-                        if (typeof points === 'string') {
-                            try {
-                                points = JSON.parse(points || '[]');
-                            } catch (e) {
-                                points = [];
-                            }
-                        }
-
+                        const points = getPickupPoints();
                         if (points.length > 0 && typeof points[0] === 'object') {
                             const pickup = points.find(p => p.name === selected);
                             return pickup ? pickup.price : 0;
