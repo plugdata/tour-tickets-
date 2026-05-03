@@ -83,7 +83,8 @@
     <script>
         // Check if already logged in
         if (authManager.isAuthenticated()) {
-            window.location.href = '/frontend/pages/dashboard.html';
+            const returnUrl = new URLSearchParams(window.location.search).get('return');
+            window.location.href = returnUrl || '/frontend/pages/dashboard.html';
         }
 
         // Toggle password visibility
@@ -138,7 +139,8 @@
                 const result = await authManager.login(username, password, remember);
 
                 if (result.success) {
-                    window.location.href = '/frontend/pages/dashboard.html';
+                    const returnUrl = new URLSearchParams(window.location.search).get('return');
+                    window.location.href = returnUrl || '/frontend/pages/dashboard.html';
                 } else {
                     if (errorDiv) {
                         errorDiv.textContent = result.error || 'เข้าสู่ระบบไม่สำเร็จ';

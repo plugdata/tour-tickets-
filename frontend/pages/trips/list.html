@@ -1,300 +1,335 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ทริปท่องเที่ยว - Tour Backoffice</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link href="../../assets/css/admin.css" rel="stylesheet">
 </head>
+
 <body>
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
-<div class="d-flex">
-    <nav class="sidebar bg-white border-end" id="sidebar"></nav>
-    <main class="main-content flex-fill">
-        <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
-        <div class="page-content">
-            <div class="page-header d-flex justify-content-between align-items-center">
-                <div><h1 class="page-title">ทริปท่องเที่ยว</h1><p class="page-subtitle">จัดการทริปในประเทศ ต่างประเทศ และตั้ง Hot Trip</p></div>
-                <button class="btn btn-primary" onclick="openModal()"><i class="bi bi-plus-lg me-1"></i>เพิ่มทริป</button>
-            </div>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="d-flex">
+        <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+        <main class="main-content flex-fill">
+            <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+            <div class="page-content">
+                <div class="page-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="page-title">ทริปท่องเที่ยว</h1>
+                        <p class="page-subtitle">จัดการทริปในประเทศ ต่างประเทศ และตั้ง Hot Trip</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal()"><i
+                            class="bi bi-plus-lg me-1"></i>เพิ่มทริป</button>
+                </div>
 
-            <!-- Type Tabs -->
-            <ul class="nav nav-tabs mb-3" id="typeTabs">
-                <li class="nav-item"><a class="nav-link active" href="#" onclick="setTypeFilter('',this);return false;">
-                    <i class="bi bi-grid me-1"></i>ทั้งหมด <span class="badge bg-secondary ms-1" id="cntAll">0</span></a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="setTypeFilter('DOMESTIC',this);return false;">
-                    <i class="bi bi-flag me-1"></i>ในประเทศ <span class="badge bg-primary ms-1" id="cntDomestic">0</span></a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="setTypeFilter('INTERNATIONAL',this);return false;">
-                    <i class="bi bi-globe2 me-1"></i>ต่างประเทศ <span class="badge bg-info ms-1" id="cntIntl">0</span></a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="setTypeFilter('HOT',this);return false;">
-                    <i class="bi bi-fire me-1"></i>Hot <span class="badge bg-danger ms-1" id="cntHot">0</span></a></li>
-            </ul>
+                <!-- Type Tabs -->
+                <ul class="nav nav-tabs mb-3" id="typeTabs">
+                    <li class="nav-item"><a class="nav-link active" href="#"
+                            onclick="setTypeFilter('',this);return false;">
+                            <i class="bi bi-grid me-1"></i>ทั้งหมด <span class="badge bg-secondary ms-1"
+                                id="cntAll">0</span></a></li>
+                    <li class="nav-item"><a class="nav-link" href="#"
+                            onclick="setTypeFilter('DOMESTIC',this);return false;">
+                            <i class="bi bi-flag me-1"></i>ในประเทศ <span class="badge bg-primary ms-1"
+                                id="cntDomestic">0</span></a></li>
+                    <li class="nav-item"><a class="nav-link" href="#"
+                            onclick="setTypeFilter('INTERNATIONAL',this);return false;">
+                            <i class="bi bi-globe2 me-1"></i>ต่างประเทศ <span class="badge bg-info ms-1"
+                                id="cntIntl">0</span></a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="setTypeFilter('HOT',this);return false;">
+                            <i class="bi bi-fire me-1"></i>Hot <span class="badge bg-danger ms-1"
+                                id="cntHot">0</span></a></li>
+                </ul>
 
-            <!-- Filter Card -->
-            <div class="card mb-3 shadow-sm border-0">
-                <div class="card-body py-2">
-                    <div class="row g-2 align-items-center">
-                        <div class="col-md-4">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                                <input type="text" class="form-control border-start-0" id="searchTrip"
-                                    placeholder="ค้นหาชื่อทริป / ประเทศ..." onkeyup="if(event.key==='Enter') loadTrips()">
+                <!-- Filter Card -->
+                <div class="card mb-3 shadow-sm border-0">
+                    <div class="card-body py-2">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i
+                                            class="bi bi-search text-muted"></i></span>
+                                    <input type="text" class="form-control border-start-0" id="searchTrip"
+                                        placeholder="ค้นหาชื่อทริป / ประเทศ..."
+                                        onkeyup="if(event.key==='Enter') loadTrips()">
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-calendar3 text-muted"></i></span>
-                                <input type="text" class="form-control border-end-0 text-dark bg-white" id="startDate"
-                                    placeholder="เริ่มวันที่" readonly style="font-size: .85rem;">
-                                <span class="input-group-text bg-white border-start-0 border-end-0 text-muted px-1">ถึง</span>
-                                <input type="text" class="form-control border-start-0 text-dark bg-white" id="endDate"
-                                    placeholder="ถึงวันที่" readonly style="font-size: .85rem;">
-                                <button class="btn btn-outline-secondary border-start-0" onclick="clearDateRange()" title="ล้าง">
-                                    <i class="bi bi-x"></i>
-                                </button>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i
+                                            class="bi bi-calendar3 text-muted"></i></span>
+                                    <input type="text" class="form-control border-end-0 text-dark bg-white"
+                                        id="startDate" placeholder="เริ่มวันที่" readonly style="font-size: .85rem;">
+                                    <span
+                                        class="input-group-text bg-white border-start-0 border-end-0 text-muted px-1">ถึง</span>
+                                    <input type="text" class="form-control border-start-0 text-dark bg-white"
+                                        id="endDate" placeholder="ถึงวันที่" readonly style="font-size: .85rem;">
+                                    <button class="btn btn-outline-secondary border-start-0" onclick="clearDateRange()"
+                                        title="ล้าง">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="card">
-                <div class="card-body p-0">
-                    <table class="table table-hover mb-0" id="tripsTable">
-                        <thead class="table-light">
-                            <tr>
-                                <th>#</th><th>ชื่อทริป</th><th>ประเภท / ประเทศ</th>
-                                <th>ราคา</th><th>Hot</th><th>สถานะ</th><th>สร้างเมื่อ</th><th>จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tripsBody">
-                            <tr><td colspan="8" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="card-footer bg-white border-top-0">
-                    <div id="tripPagination"></div>
+                <div class="card">
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0" id="tripsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>ชื่อทริป</th>
+                                    <th>ประเภท / ประเทศ</th>
+                                    <th>ราคา</th>
+                                    <th>Hot</th>
+                                    <th>สถานะ</th>
+                                    <th>สร้างเมื่อ</th>
+                                    <th>จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tripsBody">
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">กำลังโหลด...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <div id="tripPagination"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </main>
-</div>
+        </main>
+    </div>
 
-<!-- Modal -->
-<div class="modal fade" id="tripModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">เพิ่มทริป</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="tripForm">
-                    <input type="hidden" id="tripId">
-                    <ul class="nav nav-tabs mb-3" id="tripFormTabs">
-                        <li class="nav-item"><a class="nav-link active" data-ttab="basic" href="#">ข้อมูลหลัก</a></li>
-                        <li class="nav-item"><a class="nav-link" data-ttab="media" href="#">รูปภาพ</a></li>
-                        <li class="nav-item"><a class="nav-link" data-ttab="setting" href="#">ตั้งค่า</a></li>
-                    </ul>
-                    <!-- Tab: basic -->
-                    <div id="ttab-basic">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label">ชื่อทริป <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="fTitle" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">ประเภท <span class="text-danger">*</span></label>
-                            <select class="form-select" id="fTripType">
-                                <option value="DOMESTIC">ในประเทศ (DOMESTIC)</option>
-                                <option value="INTERNATIONAL">ต่างประเทศ (INTERNATIONAL)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">ประเทศ / จังหวัดหลัก</label>
-                            <input type="text" class="form-control" id="fCountry" placeholder="เช่น เชียงใหม่, ลาว, เวียดนาม">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">คำอธิบาย</label>
-                            <textarea class="form-control" id="fDesc" rows="3"></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">ราคา (บาท) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="fPrice" min="0" step="0.01" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">เงินมัดจำ (บาท)</label>
-                            <input type="number" class="form-control" id="fDeposit" min="0" step="0.01" value="0">
-                        </div>
-                    </div>
-                    </div>
-                    <!-- Tab: media -->
-                    <div id="ttab-media" class="d-none">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label">รูปภาพทริป</label>
-                            <div id="imageUploadContainer"></div>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">ไฟล์/ลิงก์อธิบายทริป (PDF)</label>
-                            <div id="docUploadContainer"></div>
-                        </div>
-                    </div>
-                    </div>
-                    <!-- Tab: setting -->
-                    <div id="ttab-setting" class="d-none">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <div class="alert alert-warning py-2 small">
-                                <i class="bi bi-fire me-1"></i>
-                                <strong>Hot Trip</strong> — ทริปที่ติด Hot จะแสดงใน <em>Fire Ticker</em> บนหน้าเว็บไซต์
+    <!-- Modal -->
+    <div class="modal fade" id="tripModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">เพิ่มทริป</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="tripForm">
+                        <input type="hidden" id="tripId">
+                        <ul class="nav nav-tabs mb-3" id="tripFormTabs">
+                            <li class="nav-item"><a class="nav-link active" data-ttab="basic" href="#">ข้อมูลหลัก</a>
+                            </li>
+                            <li class="nav-item"><a class="nav-link" data-ttab="media" href="#">รูปภาพ</a></li>
+                            <li class="nav-item"><a class="nav-link" data-ttab="setting" href="#">ตั้งค่า</a></li>
+                        </ul>
+                        <!-- Tab: basic -->
+                        <div id="ttab-basic">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">ชื่อทริป <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="fTitle" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">ประเภท <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="fTripType">
+                                        <option value="DOMESTIC">ในประเทศ (DOMESTIC)</option>
+                                        <option value="INTERNATIONAL">ต่างประเทศ (INTERNATIONAL)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">ประเทศ / จังหวัดหลัก</label>
+                                    <input type="text" class="form-control" id="fCountry"
+                                        placeholder="เช่น เชียงใหม่, ลาว, เวียดนาม">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">คำอธิบาย</label>
+                                    <textarea class="form-control" id="fDesc" rows="3"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">ราคา (บาท) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="fPrice" min="0" step="0.01" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">เงินมัดจำ (บาท)</label>
+                                    <input type="number" class="form-control" id="fDeposit" min="0" step="0.01"
+                                        value="0">
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="fIsHot">
-                                <label class="form-check-label fw-semibold"><i class="bi bi-fire text-danger me-1"></i>Hot Trip</label>
+                        <!-- Tab: media -->
+                        <div id="ttab-media" class="d-none">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">รูปภาพทริป</label>
+                                    <div id="imageUploadContainer"></div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">ไฟล์/ลิงก์อธิบายทริป (PDF)</label>
+                                    <div id="docUploadContainer"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">ลำดับ Hot (น้อย = ขึ้นก่อน)</label>
-                            <input type="number" class="form-control" id="fHotOrder" min="1" max="99" value="99">
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-check form-switch mt-4">
-                                <input class="form-check-input" type="checkbox" id="fActive" checked>
-                                <label class="form-check-label">เปิดใช้งาน</label>
+                        <!-- Tab: setting -->
+                        <div id="ttab-setting" class="d-none">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="alert alert-warning py-2 small">
+                                        <i class="bi bi-fire me-1"></i>
+                                        <strong>Hot Trip</strong> — ทริปที่ติด Hot จะแสดงใน <em>Fire Ticker</em>
+                                        บนหน้าเว็บไซต์
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="fIsHot">
+                                        <label class="form-check-label fw-semibold"><i
+                                                class="bi bi-fire text-danger me-1"></i>Hot Trip</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">ลำดับ Hot (น้อย = ขึ้นก่อน)</label>
+                                    <input type="number" class="form-control" id="fHotOrder" min="1" max="99"
+                                        value="99">
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch mt-4">
+                                        <input class="form-check-input" type="checkbox" id="fActive" checked>
+                                        <label class="form-check-label">เปิดใช้งาน</label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                <button type="button" class="btn btn-primary" onclick="saveTrip()">บันทึก</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTrip()">บันทึก</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../assets/js/config.js"></script>
-<script src="../../assets/js/i18n.js"></script>
-<script src="../../assets/js/auth.js"></script>
-<script src="../../assets/js/apiClient.js"></script>
-<script src="../../assets/js/features/thai-calendar.js"></script>
-<script src="../../assets/js/features/file-upload.js"></script>
-<script src="../../modules/PaginationManager.js"></script>
-<script src="../../assets/js/app.js"></script>
-<script>
-let modal, pagination;
-let currentPage = 1, perPage = 10, filteredData = [], allTrips = [];
-let currentTypeFilter = '';
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/i18n.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/auth-guard.js"></script>
+    <script src="../../assets/js/apiClient.js"></script>
+    <script src="../../assets/js/features/thai-calendar.js"></script>
+    <script src="../../assets/js/features/file-upload.js"></script>
+    <script src="../../modules/PaginationManager.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        let modal, pagination;
+        let currentPage = 1, perPage = 10, filteredData = [], allTrips = [];
+        let currentTypeFilter = '';
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await initPage();
-    modal = new bootstrap.Modal(document.getElementById('tripModal'));
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initPage();
+            modal = new bootstrap.Modal(document.getElementById('tripModal'));
 
-    pagination = new PaginationManager({
-        containerId: 'tripPagination',
-        onPageChange: (p) => { currentPage = p; renderTrips(); },
-        onPerPageChange: (pp) => { perPage = pp; currentPage = 1; renderTrips(); }
-    });
+            pagination = new PaginationManager({
+                containerId: 'tripPagination',
+                onPageChange: (p) => { currentPage = p; renderTrips(); },
+                onPerPageChange: (pp) => { perPage = pp; currentPage = 1; renderTrips(); }
+            });
 
-    await ThaiCalendar.init('#startDate', { onChange: loadTrips });
-    await ThaiCalendar.init('#endDate', { onChange: loadTrips });
+            await ThaiCalendar.init('#startDate', { onChange: loadTrips });
+            await ThaiCalendar.init('#endDate', { onChange: loadTrips });
 
-    FileUpload.init('#imageUploadContainer', { targetInputId: 'fImage', multiple: true });
-    FileUpload.init('#docUploadContainer', {
-        targetInputId: 'fDocUrl', multiple: false,
-        btnText: 'เลือกไฟล์อธิบาย', btnIcon: 'bi-file-earmark-text',
-        allowedTypes: ['application/pdf', 'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/html']
-    });
+            FileUpload.init('#imageUploadContainer', { targetInputId: 'fImage', multiple: true });
+            FileUpload.init('#docUploadContainer', {
+                targetInputId: 'fDocUrl', multiple: false,
+                btnText: 'เลือกไฟล์อธิบาย', btnIcon: 'bi-file-earmark-text',
+                allowedTypes: ['application/pdf', 'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/html']
+            });
 
-    // Form tabs
-    document.querySelectorAll('#tripFormTabs .nav-link').forEach(link => {
-        link.addEventListener('click', e => {
-            e.preventDefault();
-            document.querySelectorAll('#tripFormTabs .nav-link').forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
-            document.querySelectorAll('[id^="ttab-"]').forEach(p => p.classList.add('d-none'));
-            document.getElementById('ttab-' + link.dataset.ttab).classList.remove('d-none');
+            // Form tabs
+            document.querySelectorAll('#tripFormTabs .nav-link').forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    document.querySelectorAll('#tripFormTabs .nav-link').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    document.querySelectorAll('[id^="ttab-"]').forEach(p => p.classList.add('d-none'));
+                    document.getElementById('ttab-' + link.dataset.ttab).classList.remove('d-none');
+                });
+            });
+
+            loadTrips();
         });
-    });
 
-    loadTrips();
-});
+        function setTypeFilter(type, el) {
+            currentTypeFilter = type;
+            document.querySelectorAll('#typeTabs .nav-link').forEach(l => l.classList.remove('active'));
+            el.classList.add('active');
+            applyFilter();
+        }
 
-function setTypeFilter(type, el) {
-    currentTypeFilter = type;
-    document.querySelectorAll('#typeTabs .nav-link').forEach(l => l.classList.remove('active'));
-    el.classList.add('active');
-    applyFilter();
-}
+        function clearDateRange() {
+            document.getElementById('startDate')._flatpickr?.clear();
+            document.getElementById('endDate')._flatpickr?.clear();
+            loadTrips();
+        }
 
-function clearDateRange() {
-    document.getElementById('startDate')._flatpickr?.clear();
-    document.getElementById('endDate')._flatpickr?.clear();
-    loadTrips();
-}
+        async function loadTrips() {
+            try {
+                allTrips = await API.trips.list();
+                // Update counters
+                document.getElementById('cntAll').textContent = allTrips.length;
+                document.getElementById('cntDomestic').textContent = allTrips.filter(t => t.tripType === 'DOMESTIC').length;
+                document.getElementById('cntIntl').textContent = allTrips.filter(t => t.tripType === 'INTERNATIONAL').length;
+                document.getElementById('cntHot').textContent = allTrips.filter(t => t.isHot).length;
+                applyFilter();
+            } catch (e) { showToast('โหลดข้อมูลล้มเหลว', 'danger'); }
+        }
 
-async function loadTrips() {
-    try {
-        allTrips = await API.trips.list();
-        // Update counters
-        document.getElementById('cntAll').textContent      = allTrips.length;
-        document.getElementById('cntDomestic').textContent = allTrips.filter(t => t.tripType === 'DOMESTIC').length;
-        document.getElementById('cntIntl').textContent     = allTrips.filter(t => t.tripType === 'INTERNATIONAL').length;
-        document.getElementById('cntHot').textContent      = allTrips.filter(t => t.isHot).length;
-        applyFilter();
-    } catch (e) { showToast('โหลดข้อมูลล้มเหลว', 'danger'); }
-}
+        function applyFilter() {
+            const query = document.getElementById('searchTrip').value.toLowerCase();
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
 
-function applyFilter() {
-    const query = document.getElementById('searchTrip').value.toLowerCase();
-    const start = document.getElementById('startDate').value;
-    const end   = document.getElementById('endDate').value;
+            let trips = [...allTrips];
+            if (currentTypeFilter === 'HOT') trips = trips.filter(t => t.isHot);
+            else if (currentTypeFilter) trips = trips.filter(t => t.tripType === currentTypeFilter);
+            if (query) trips = trips.filter(t =>
+                t.title.toLowerCase().includes(query) ||
+                (t.description || '').toLowerCase().includes(query) ||
+                (t.country || '').toLowerCase().includes(query));
+            if (start || end) trips = ThaiCalendar.filterByDateRange(trips, 'createdAt', start, end);
 
-    let trips = [...allTrips];
-    if (currentTypeFilter === 'HOT') trips = trips.filter(t => t.isHot);
-    else if (currentTypeFilter)      trips = trips.filter(t => t.tripType === currentTypeFilter);
-    if (query) trips = trips.filter(t =>
-        t.title.toLowerCase().includes(query) ||
-        (t.description||'').toLowerCase().includes(query) ||
-        (t.country||'').toLowerCase().includes(query));
-    if (start || end) trips = ThaiCalendar.filterByDateRange(trips, 'createdAt', start, end);
+            filteredData = trips; currentPage = 1; renderTrips();
+        }
 
-    filteredData = trips; currentPage = 1; renderTrips();
-}
+        const typeLabel = { DOMESTIC: 'ในประเทศ', INTERNATIONAL: 'ต่างประเทศ' };
+        const typeBadge = { DOMESTIC: 'primary', INTERNATIONAL: 'info' };
 
-const typeLabel = { DOMESTIC: 'ในประเทศ', INTERNATIONAL: 'ต่างประเทศ' };
-const typeBadge = { DOMESTIC: 'primary', INTERNATIONAL: 'info' };
+        function renderTrips() {
+            const tbody = document.getElementById('tripsBody');
+            const startIdx = (currentPage - 1) * perPage;
+            const pagedData = filteredData.slice(startIdx, startIdx + perPage);
 
-function renderTrips() {
-    const tbody = document.getElementById('tripsBody');
-    const startIdx = (currentPage - 1) * perPage;
-    const pagedData = filteredData.slice(startIdx, startIdx + perPage);
+            if (!filteredData.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">ไม่พบข้อมูลทริป</td></tr>';
+                pagination.render({ totalRecords: 0, currentPage, perPage }); return;
+            }
 
-    if (!filteredData.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">ไม่พบข้อมูลทริป</td></tr>';
-        pagination.render({ totalRecords: 0, currentPage, perPage }); return;
-    }
-
-    tbody.innerHTML = pagedData.map((t, i) => `
+            tbody.innerHTML = pagedData.map((t, i) => `
         <tr>
             <td>${startIdx + i + 1}</td>
             <td>
                 <strong>${t.title}</strong>
                 ${t.imageUrl ? `<br><small class="text-primary"><i class="bi bi-image me-1"></i>รูปภาพ</small>` : ''}
                 ${t.docUrl ? `<a href="${t.docUrl}" target="_blank" class="ms-2 small text-success"><i class="bi bi-file-earmark-text me-1"></i>เอกสาร</a>` : ''}
-                ${t.description ? `<br><small class="text-muted">${t.description.substring(0,60)}${t.description.length>60?'...':''}</small>` : ''}
+                ${t.description ? `<br><small class="text-muted">${t.description.substring(0, 60)}${t.description.length > 60 ? '...' : ''}</small>` : ''}
             </td>
             <td>
-                <span class="badge bg-${typeBadge[t.tripType]||'secondary'}">${typeLabel[t.tripType]||t.tripType}</span>
+                <span class="badge bg-${typeBadge[t.tripType] || 'secondary'}">${typeLabel[t.tripType] || t.tripType}</span>
                 ${t.country ? `<br><small class="text-muted"><i class="bi bi-geo-alt me-1"></i>${t.country}</small>` : ''}
                 ${t.busRounds?.length ? `<br><small class="text-muted"><i class="bi bi-bus-front me-1"></i>${t.busRounds.length} รอบ</small>` : ''}
             </td>
@@ -304,124 +339,125 @@ function renderTrips() {
             </td>
             <td class="text-center">
                 ${t.isHot
-                  ? `<button class="btn btn-sm btn-danger py-0" onclick="toggleHot(${t.id},false)" title="ปิด Hot">
+                    ? `<button class="btn btn-sm btn-danger py-0" onclick="toggleHot(${t.id},false)" title="ปิด Hot">
                        <i class="bi bi-fire"></i> HOT</button>`
-                  : `<button class="btn btn-sm btn-outline-secondary py-0" onclick="toggleHot(${t.id},true)" title="ตั้ง Hot">
+                    : `<button class="btn btn-sm btn-outline-secondary py-0" onclick="toggleHot(${t.id},true)" title="ตั้ง Hot">
                        <i class="bi bi-fire"></i></button>`}
             </td>
             <td><span class="badge ${t.isActive ? 'bg-success' : 'bg-secondary'}">${t.isActive ? 'เปิด' : 'ปิด'}</span></td>
             <td>${formatDateThai(t.createdAt)}</td>
             <td>
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="editTrip(${JSON.stringify(t).replace(/"/g,'&quot;')})"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editTrip(${JSON.stringify(t).replace(/"/g, '&quot;')})"><i class="bi bi-pencil"></i></button>
                 <a href="/frontend/pages/bus-rounds/list.html?tripId=${t.id}" class="btn btn-sm btn-outline-success me-1" title="รอบรถ"><i class="bi bi-bus-front"></i></a>
                 <button class="btn btn-sm btn-outline-danger" onclick="deleteTrip(${t.id})"><i class="bi bi-trash"></i></button>
             </td>
         </tr>`).join('');
 
-    pagination.render({ totalRecords: filteredData.length, currentPage, perPage });
-}
+            pagination.render({ totalRecords: filteredData.length, currentPage, perPage });
+        }
 
-async function toggleHot(id, isHot) {
-    try {
-        await API.trips.update(id, { isHot });
-        showToast(isHot ? '🔥 ตั้ง Hot แล้ว' : 'ยกเลิก Hot แล้ว');
-        loadTrips();
-    } catch (e) { showToast(e.message, 'danger'); }
-}
+        async function toggleHot(id, isHot) {
+            try {
+                await API.trips.update(id, { isHot });
+                showToast(isHot ? '🔥 ตั้ง Hot แล้ว' : 'ยกเลิก Hot แล้ว');
+                loadTrips();
+            } catch (e) { showToast(e.message, 'danger'); }
+        }
 
-function resetFormTabs() {
-    document.querySelectorAll('#tripFormTabs .nav-link').forEach(l => l.classList.toggle('active', l.dataset.ttab === 'basic'));
-    document.querySelectorAll('[id^="ttab-"]').forEach(p => p.classList.toggle('d-none', p.id !== 'ttab-basic'));
-}
+        function resetFormTabs() {
+            document.querySelectorAll('#tripFormTabs .nav-link').forEach(l => l.classList.toggle('active', l.dataset.ttab === 'basic'));
+            document.querySelectorAll('[id^="ttab-"]').forEach(p => p.classList.toggle('d-none', p.id !== 'ttab-basic'));
+        }
 
-function openModal(title='เพิ่มทริป') {
-    document.getElementById('modalTitle').textContent = title;
-    document.getElementById('tripForm').reset();
-    document.getElementById('tripId').value = '';
-    document.getElementById('fActive').checked = true;
-    document.getElementById('fIsHot').checked = false;
-    document.getElementById('fHotOrder').value = 99;
-    document.getElementById('fTripType').value = 'DOMESTIC';
-    FileUpload.setExisting('', 'fImage');
-    FileUpload.setExisting('', 'fDocUrl');
-    resetFormTabs();
-    modal.show();
-}
+        function openModal(title = 'เพิ่มทริป') {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('tripForm').reset();
+            document.getElementById('tripId').value = '';
+            document.getElementById('fActive').checked = true;
+            document.getElementById('fIsHot').checked = false;
+            document.getElementById('fHotOrder').value = 99;
+            document.getElementById('fTripType').value = 'DOMESTIC';
+            FileUpload.setExisting('', 'fImage');
+            FileUpload.setExisting('', 'fDocUrl');
+            resetFormTabs();
+            modal.show();
+        }
 
-function editTrip(t) {
-    document.getElementById('modalTitle').textContent = 'แก้ไขทริป';
-    document.getElementById('tripId').value = t.id;
-    document.getElementById('fTitle').value = t.title;
-    document.getElementById('fTripType').value = t.tripType || 'DOMESTIC';
-    document.getElementById('fCountry').value = t.country || '';
-    document.getElementById('fDesc').value = t.description || '';
-    document.getElementById('fPrice').value = t.price;
-    document.getElementById('fDeposit').value = t.deposit || 0;
-    document.getElementById('fIsHot').checked = t.isHot || false;
-    document.getElementById('fHotOrder').value = t.hotOrder || 99;
-    document.getElementById('fActive').checked = t.isActive;
-    FileUpload.setExisting(t.imageUrl, 'fImage');
-    FileUpload.setExisting(t.docUrl, 'fDocUrl');
-    resetFormTabs();
-    modal.show();
-}
+        function editTrip(t) {
+            document.getElementById('modalTitle').textContent = 'แก้ไขทริป';
+            document.getElementById('tripId').value = t.id;
+            document.getElementById('fTitle').value = t.title;
+            document.getElementById('fTripType').value = t.tripType || 'DOMESTIC';
+            document.getElementById('fCountry').value = t.country || '';
+            document.getElementById('fDesc').value = t.description || '';
+            document.getElementById('fPrice').value = t.price;
+            document.getElementById('fDeposit').value = t.deposit || 0;
+            document.getElementById('fIsHot').checked = t.isHot || false;
+            document.getElementById('fHotOrder').value = t.hotOrder || 99;
+            document.getElementById('fActive').checked = t.isActive;
+            FileUpload.setExisting(t.imageUrl, 'fImage');
+            FileUpload.setExisting(t.docUrl, 'fDocUrl');
+            resetFormTabs();
+            modal.show();
+        }
 
-async function saveTrip() {
-    const id = document.getElementById('tripId').value;
-    const btnSave = document.querySelector('.modal-footer .btn-primary');
-    const originalText = btnSave.innerHTML;
+        async function saveTrip() {
+            const id = document.getElementById('tripId').value;
+            const btnSave = document.querySelector('.modal-footer .btn-primary');
+            const originalText = btnSave.innerHTML;
 
-    try {
-        btnSave.disabled = true;
-        btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> กำลังบันทึก...';
+            try {
+                btnSave.disabled = true;
+                btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> กำลังบันทึก...';
 
-        // 1. Upload pending for both containers
-        const [newImages, newDocs] = await Promise.all([
-            FileUpload.uploadAllPending('fImage'),
-            FileUpload.uploadAllPending('fDocUrl')
-        ]);
-        
-        // 2. Combine with existing
-        const existingImages = document.getElementById('fImage').value.split(',').filter(x => x);
-        const finalImages = [...existingImages, ...newImages].join(',');
+                // 1. Upload pending for both containers
+                const [newImages, newDocs] = await Promise.all([
+                    FileUpload.uploadAllPending('fImage'),
+                    FileUpload.uploadAllPending('fDocUrl')
+                ]);
 
-        const existingDocs = document.getElementById('fDocUrl').value.split(',').filter(x => x);
-        const finalDoc = [...existingDocs, ...newDocs][0] || ''; // Single doc expected
+                // 2. Combine with existing
+                const existingImages = document.getElementById('fImage').value.split(',').filter(x => x);
+                const finalImages = [...existingImages, ...newImages].join(',');
 
-        const data = {
-            title:       document.getElementById('fTitle').value,
-            tripType:    document.getElementById('fTripType').value,
-            country:     document.getElementById('fCountry').value || null,
-            description: document.getElementById('fDesc').value,
-            price:       parseFloat(document.getElementById('fPrice').value),
-            deposit:     parseFloat(document.getElementById('fDeposit').value || 0),
-            isHot:       document.getElementById('fIsHot').checked,
-            hotOrder:    parseInt(document.getElementById('fHotOrder').value || 99),
-            imageUrl:    finalImages,
-            docUrl:      finalDoc,
-            isActive:    document.getElementById('fActive').checked,
-        };
+                const existingDocs = document.getElementById('fDocUrl').value.split(',').filter(x => x);
+                const finalDoc = [...existingDocs, ...newDocs][0] || ''; // Single doc expected
 
-        if (id) await API.trips.update(id, data);
-        else await API.trips.create(data);
-        
-        modal.hide();
-        showToast('บันทึกสำเร็จ');
-        loadTrips();
-    } catch (e) { 
-        showToast(e.message, 'danger'); 
-    } finally {
-        btnSave.disabled = false;
-        btnSave.innerHTML = originalText;
-    }
-}
+                const data = {
+                    title: document.getElementById('fTitle').value,
+                    tripType: document.getElementById('fTripType').value,
+                    country: document.getElementById('fCountry').value || null,
+                    description: document.getElementById('fDesc').value,
+                    price: parseFloat(document.getElementById('fPrice').value),
+                    deposit: parseFloat(document.getElementById('fDeposit').value || 0),
+                    isHot: document.getElementById('fIsHot').checked,
+                    hotOrder: parseInt(document.getElementById('fHotOrder').value || 99),
+                    imageUrl: finalImages,
+                    docUrl: finalDoc,
+                    isActive: document.getElementById('fActive').checked,
+                };
 
-async function deleteTrip(id) {
-    confirmAction('ต้องการลบทริปนี้?', async () => {
-        try { await API.trips.delete(id); showToast('ลบสำเร็จ'); loadTrips(); }
-        catch (e) { showToast(e.message, 'danger'); }
-    });
-}
-</script>
+                if (id) await API.trips.update(id, data);
+                else await API.trips.create(data);
+
+                modal.hide();
+                showToast('บันทึกสำเร็จ');
+                loadTrips();
+            } catch (e) {
+                showToast(e.message, 'danger');
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerHTML = originalText;
+            }
+        }
+
+        async function deleteTrip(id) {
+            confirmAction('ต้องการลบทริปนี้?', async () => {
+                try { await API.trips.delete(id); showToast('ลบสำเร็จ'); loadTrips(); }
+                catch (e) { showToast(e.message, 'danger'); }
+            });
+        }
+    </script>
 </body>
+
 </html>
