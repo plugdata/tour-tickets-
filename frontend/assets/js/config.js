@@ -9,7 +9,7 @@ const getApiBaseUrl = () => {
 
     // If running on production server
     if (currentHost === '154.197.124.146') {
-        return `http://${currentHost}/api`;
+        return `http://${currentHost}:5000/api`;
     }
 
     // If running locally
@@ -17,8 +17,8 @@ const getApiBaseUrl = () => {
         return `http://${currentHost}:${currentPort || 5000}/api`;
     }
 
-    // Default fallback
-    return `http://${currentHost}/api`;
+    // Default fallback - assume port 5000
+    return `http://${currentHost}:5000/api`;
 };
 
 const API_BASE_URL = getApiBaseUrl();
