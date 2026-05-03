@@ -5,10 +5,10 @@
   "scripts": {
     "dev": "vite",
     "dev:local": "cp .env.example .env && npm run dev",
-    "dev:production": "cp .env.production .env && npm run dev",
+    "dev:production": "test -f .env.production && cp .env.production .env && npm run dev || echo 'VITE_API_URL=http://154.197.124.146:5000/api' > .env && npm run dev",
     "build": "vite build",
     "build:local": "cp .env.example .env && npm run build",
-    "build:production": "cp .env.production .env && npm run build",
+    "build:production": "test -f .env.production && cp .env.production .env && npm run build || echo 'VITE_API_URL=http://154.197.124.146:5000/api' > .env && npm run build",
     "preview": "vite preview"
   },
   "keywords": [],
