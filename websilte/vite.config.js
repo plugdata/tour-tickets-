@@ -2,13 +2,13 @@ import { defineConfig } from 'vite'
 import { resolve } from 'path'
 
 const urlRewrites = {
-  '/trips':             '/src/pages/trips/list.html',
-  '/booking/seats':     '/src/pages/booking/seats.html',
-  '/booking/form':      '/src/pages/booking/form.html',
+  '/trips': '/src/pages/trips/list.html',
+  '/booking/seats': '/src/pages/booking/seats.html',
+  '/booking/form': '/src/pages/booking/form.html',
   '/booking/insurance': '/src/pages/booking/insurance.html',
-  '/booking/rental':    '/src/pages/booking/rental.html',
-  '/booking/ticket':    '/src/pages/booking/ticket.html',
-  '/booking/status':    '/src/pages/booking/status.html',
+  '/booking/rental': '/src/pages/booking/rental.html',
+  '/booking/ticket': '/src/pages/booking/ticket.html',
+  '/booking/status': '/src/pages/booking/status.html',
 }
 
 export default defineConfig({
@@ -33,11 +33,11 @@ export default defineConfig({
     allowedHosts: 'all',
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: process.env.NODE_ENV === 'production' ? 'http://154.197.124.146:5000' : 'http://localhost:5000',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://localhost:5000',
+        target: process.env.NODE_ENV === 'production' ? 'http://154.197.124.146:5000' : 'http://localhost:5000',
         changeOrigin: true,
       },
     },
@@ -51,13 +51,13 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: {
-        main:      resolve(__dirname, 'index.html'),
-        form:      resolve(__dirname, 'src/pages/booking/form.html'),
-        seats:     resolve(__dirname, 'src/pages/booking/seats.html'),
+        main: resolve(__dirname, 'index.html'),
+        form: resolve(__dirname, 'src/pages/booking/form.html'),
+        seats: resolve(__dirname, 'src/pages/booking/seats.html'),
         insurance: resolve(__dirname, 'src/pages/booking/insurance.html'),
-        rental:    resolve(__dirname, 'src/pages/booking/rental.html'),
-        ticket:    resolve(__dirname, 'src/pages/booking/ticket.html'),
-        status:    resolve(__dirname, 'src/pages/booking/status.html'),
+        rental: resolve(__dirname, 'src/pages/booking/rental.html'),
+        ticket: resolve(__dirname, 'src/pages/booking/ticket.html'),
+        status: resolve(__dirname, 'src/pages/booking/status.html'),
         tripsList: resolve(__dirname, 'src/pages/trips/list.html'),
       }
     }

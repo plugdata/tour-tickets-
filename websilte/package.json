@@ -4,7 +4,11 @@
   "description": "GROW UP GO ANYWHERE - GUGA Travels Frontend",
   "scripts": {
     "dev": "vite",
+    "dev:local": "cp .env.example .env && npm run dev",
+    "dev:production": "cp .env.production .env && npm run dev",
     "build": "vite build",
+    "build:local": "cp .env.example .env && npm run build",
+    "build:production": "cp .env.production .env && npm run build",
     "preview": "vite preview"
   },
   "keywords": [],
