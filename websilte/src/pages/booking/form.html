@@ -581,10 +581,15 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>  1...';
 
             try {
+                // Save session with passenger data AND customerData (for searchability)
                 await postJSON('/booking-sessions', {
                     token: sessionToken,
                     step: 2,
                     selectedSeats: formData.seats,
+                    customerData: {
+                        mainName: formData.seats[0]?.passengerName || 'Guest User',
+                        mainPhone: formData.seats[0]?.phone || null
+                    }
                 });
 
                 window.location.href = `/booking/insurance?token=${sessionToken}`;

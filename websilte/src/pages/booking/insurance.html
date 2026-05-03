@@ -570,10 +570,18 @@ async function goNext() {
             customClass: { popup: 'swal-font-th', confirmButton: 'swal-btn-confirm', cancelButton: 'swal-btn-cancel' },
             reverseButtons: true,
             width: '380px',
-        }).then(r => {
+        }).then(async r => {
             if (r.isConfirmed) {
                 window.location.href = `/booking/rental?token=${sessionToken}`;
             } else if (r.dismiss === Swal.DismissReason.cancel) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'จองสำเร็จ',
+                    text: 'ไปที่หน้าชำระเงิน',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    customClass: { popup: 'swal-font-th' },
+                });
                 window.location.href = `/booking/ticket?token=${sessionToken}`;
             }
         });

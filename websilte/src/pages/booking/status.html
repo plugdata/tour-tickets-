@@ -10,9 +10,14 @@
     <style>
         body { font-family:'Sarabun',sans-serif; background:#f0f4f8; min-height:100vh; }
         .brand-bar { background:#fff; border-bottom:3px solid #0d6efd; padding:.75rem 1.5rem; display:flex; align-items:center; gap:.75rem; }
-        .search-box { max-width:480px; margin:2rem auto; }
+        .search-box { max-width:500px; margin:2rem auto; }
+        .filter-bar { max-width:680px; margin:1.5rem auto 2rem; display:flex; gap:.75rem; flex-wrap: wrap; align-items:center; }
+        .filter-btn { padding:.5rem .75rem; font-size:.85rem; border-radius:20px; border:1px solid #dee2e6; background:#fff; cursor:pointer; transition:all .2s; }
+        .filter-btn:hover { border-color:#0d6efd; background:#f0f7ff; }
+        .filter-btn.active { background:#0d6efd; color:#fff; border-color:#0d6efd; }
         .results-wrap { max-width:680px; margin:0 auto 4rem; }
-        .booking-card { background:#fff; border-radius:.75rem; border:1px solid #dee2e6; margin-bottom:1.25rem; overflow:hidden; }
+        .booking-card { background:#fff; border-radius:.75rem; border:1px solid #dee2e6; margin-bottom:1.25rem; overflow:hidden; transition:all .2s; }
+        .booking-card:hover { border-color:#0d6efd; box-shadow:0 4px 12px rgba(13,110,253,0.1); }
         .booking-card-header { padding:1rem 1.25rem; border-bottom:1px solid #f0f0f0; }
         .booking-card-body { padding:1.25rem; }
         /* Pipeline tracker */
@@ -151,8 +156,18 @@ function renderResults(sessions, rounds, phone) {
 }
 
 function renderBookingCard(session, rounds) {
-    const cd = session.customerData || {};
+    let cd = session.customerData || {};
     const seats = session.selectedSeats || [];
+    
+    // Fallback: if customerData is missing, use info from first passenger
+    if (!cd.mainName && seats.length > 0) {
+        cd = {
+            mainName: seats[0].passengerName || [seats[0].firstName, seats[0].lastName].filter(Boolean).join(' '),
+            mainPhone: seats[0].phone,
+            mainLine: seats[0].line
+        };
+    }
+
     const round = rounds.find(r => r.id == session.busRoundId);
     const trip = round?.trip;
 
@@ -179,10 +194,24 @@ function renderBookingCard(session, rounds) {
     }).join('');
 
     // ── Step label & color ────────────────────────────────────────────────────
-    const STEP_LABEL = { 1:'รอเลือกที่นั่ง', 2:'กรอกข้อมูล', 3:'บันทึกประกัน', 4:'รอชำระเงิน', 5:'ยืนยันแล้ว' };
+    const STEP_LABEL = { 
+        1:'รอเลือกที่นั่ง', 
+        2:'กรอกข้อมูล', 
+        3:'บันทึกประกัน', 
+        4:'รอชำระเงิน', 
+        5:'ยืนยันแล้ว' 
+    };
     const STEP_COLOR = { 1:'secondary', 2:'warning', 3:'info', 4:'primary', 5:'success' };
+    const STEP_ICON = { 
+        1:'⏳', 
+        2:'📋', 
+        3:'🛡️', 
+        4:'💳', 
+        5:'✅' 
+    };
     const stepLabel = STEP_LABEL[currentStep] || `ขั้นตอน ${currentStep}`;
     const stepColor = STEP_COLOR[currentStep] || 'secondary';
+    const stepIcon = STEP_ICON[currentStep] || '•';
 
     // ── Format depart date ───────────────────────────────────────────────────
     let departStr = '-';
@@ -218,13 +247,17 @@ function renderBookingCard(session, rounds) {
     return `
     <div class="booking-card">
         <div class="booking-card-header">
-            <div class="d-flex align-items-start gap-2 flex-wrap">
+            <div class="d-flex align-items-start gap-2 flex-wrap justify-content-between">
                 <div class="flex-grow-1">
-                    <div class="fw-bold">${trip?.title || `รอบรถ #${session.busRoundId || '-'}`}</div>
-                    ${round ? `<div class="text-muted small">${round.startPoint} → ${round.endPoint} · รถคันที่ ${round.busNumber}</div>` : ''}
+                    <div class="fw-bold fs-5 mb-1">${stepIcon} ${trip?.title || `รอบรถ #${session.busRoundId || '-'}`}</div>
+                    ${round ? `<div class="text-muted small mb-1">🚌 ${round.startPoint} → ${round.endPoint} · รถคันที่ ${round.busNumber}</div>` : ''}
                     <div class="text-muted small"><i class="bi bi-calendar3 me-1"></i>${departStr}</div>
                 </div>
-                <span class="badge bg-${stepColor} px-2 py-1" style="font-size:.75rem">${stepLabel}</span>
+                <div class="text-end">
+                    <span class="badge bg-${stepColor} px-3 py-2" style="font-size:.85rem; white-space: nowrap;">
+                        <i class="bi bi-info-circle me-1"></i>${stepLabel}
+                    </span>
+                </div>
             </div>
         </div>
         <div class="booking-card-body">
@@ -234,6 +267,16 @@ function renderBookingCard(session, rounds) {
                 ${pipeHtml}
             </div>
 
+            <!-- Payment Status Alert (if step 4) -->
+            ${currentStep === 4 ? `
+            <div class="alert alert-warning d-flex align-items-start gap-2 mb-4">
+                <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0 mt-1"></i>
+                <div>
+                    <strong>⏳ รอการชำระเงิน</strong>
+                    <div class="small mt-1">กรุณาอัปโหลดสลิปการโอนเพื่อให้เราทำการยืนยันการจองของคุณ</div>
+                </div>
+            </div>` : ''}
+
             <!-- Seats -->
             ${seats.length ? `
             <div class="mb-3">
@@ -242,16 +285,16 @@ function renderBookingCard(session, rounds) {
             </div>` : ''}
 
             <!-- Contact -->
-            <div class="row g-2 small mb-3">
+            <div class="row g-2 small mb-3 p-3 bg-light rounded-2">
                 <div class="col-sm-6">
-                    <div class="text-muted">ผู้จอง</div>
+                    <div class="text-muted small">👤 ผู้จอง</div>
                     <div class="fw-semibold">${cd.mainName || '-'}</div>
                 </div>
                 <div class="col-sm-3">
-                    <div class="text-muted">เบอร์โทร</div>
-                    <div>${cd.mainPhone || '-'}</div>
+                    <div class="text-muted small">📱 เบอร์โทร</div>
+                    <div class="fw-semibold">${cd.mainPhone || '-'}</div>
                 </div>
-                ${cd.mainLine ? `<div class="col-sm-3"><div class="text-muted">LINE</div><div>${cd.mainLine}</div></div>` : ''}
+                ${cd.mainLine ? `<div class="col-sm-3"><div class="text-muted small">💬 LINE</div><div class="fw-semibold">${cd.mainLine}</div></div>` : ''}
             </div>
 
             <!-- Actions -->
@@ -271,9 +314,9 @@ function renderBookingCard(session, rounds) {
                 </button>
             </div>
 
-            <div class="text-muted mt-2" style="font-size:.72rem">
+            <div class="text-muted mt-3 pt-2 border-top" style="font-size:.72rem">
                 <i class="bi bi-clock me-1"></i>
-                Session token: <code style="font-size:.7rem">${session.token?.substring(0,16)}...</code>
+                Token: <code style="font-size:.65rem">${session.token?.substring(0,12)}...</code>
                 &nbsp;·&nbsp; หมดอายุ: ${session.expiresAt ? new Date(session.expiresAt).toLocaleDateString('th-TH') : '-'}
             </div>
         </div>

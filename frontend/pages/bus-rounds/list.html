@@ -71,8 +71,72 @@
                 </div>
             </div>
 
-            <div class="row g-3" id="roundsGrid">
-                <div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>
+            <!-- View Toggle Tabs & Export Buttons -->
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm border-0 rounded-0 fw-semibold text-primary position-relative" 
+                            id="gridViewBtn" onclick="switchView('grid')" style="border-bottom: 3px solid #0d6efd;">
+                        <i class="bi bi-grid-3x3-gap me-1"></i>มุมมองกริด
+                    </button>
+                    <button class="btn btn-sm border-0 rounded-0 fw-semibold text-muted position-relative" 
+                            id="tableViewBtn" onclick="switchView('table')">
+                        <i class="bi bi-table me-1"></i>มุมมองตาราง
+                    </button>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-success" onclick="exportToCSV()" title="ส่งออก CSV">
+                        <i class="bi bi-file-earmark-csv me-1"></i>CSV
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="exportToPDF()" title="ส่งออก PDF">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid View -->
+            <div id="gridContainer">
+                <div class="row g-3" id="roundsGrid">
+                    <div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>
+                </div>
+            </div>
+
+            <!-- Table View -->
+            <div id="tableContainer" class="d-none">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="roundsTable" style="font-size: 1rem; border-collapse: collapse;">
+                        <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); font-weight: 600; border-bottom: 2px solid #dee2e6;">
+                            <tr style="height: 45px;">
+                                <th style="width: 13%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle;">
+                                    <i class="bi bi-calendar3 me-2"></i>วันที่ออกเดินทาง
+                                </th>
+                                <th style="width: 12%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle;">
+                                    <i class="bi bi-bus-front me-2"></i>ตู่
+                                </th>
+                                <th style="width: 16%; padding: 10px; border-right: 1px solid #e9ecef; text-align: left; vertical-align: middle;">
+                                    <i class="bi bi-map me-2"></i>ทริป
+                                </th>
+                                <th style="width: 18%; padding: 10px; border-right: 1px solid #e9ecef; text-align: left; vertical-align: middle;">
+                                    <i class="bi bi-geo-alt me-2"></i>เส้นทาง
+                                </th>
+                                <th style="width: 13%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle;">
+                                    <i class="bi bi-grid-1x2 me-2"></i>ที่นั่ง
+                                </th>
+                                <th style="width: 12%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle;">
+                                    <i class="bi bi-flag-fill me-2"></i>สถานะ
+                                </th>
+                                <th style="width: 16%; padding: 10px; text-align: center; vertical-align: middle;">
+                                    <i class="bi bi-gear me-2"></i>การจัดการ
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="roundsTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">กำลังโหลด...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="tableNoData" class="text-center py-4 text-muted d-none">ไม่พบรอบรถ</div>
             </div>
 
             <div class="mt-4 pb-4">
@@ -156,6 +220,7 @@ let roundModal, startPicker, endPicker, departPicker;
 let trips = [], allRounds = [];
 let pagination;
 let currentPage = 1, perPage = 9, filteredData = [];
+let currentViewMode = 'grid';
 
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -285,19 +350,32 @@ function renderRounds(resetPage = true) {
     });
 
     filteredData = data;
-    const grid = document.getElementById('roundsGrid');
 
     if (!data.length) {
-        grid.innerHTML = '<div class="col-12 text-center py-4 text-muted">ไม่พบรอบรถ</div>';
+        document.getElementById('roundsGrid').innerHTML = '<div class="col-12 text-center py-4 text-muted">ไม่พบรอบรถ</div>';
+        document.getElementById('tableNoData').classList.remove('d-none');
+        document.getElementById('roundsTableBody').innerHTML = '';
         pagination.render({ totalRecords: 0, currentPage, perPage });
         return;
     }
 
+    document.getElementById('tableNoData').classList.add('d-none');
     const startIdx = (currentPage - 1) * perPage;
     let endIdx = startIdx + perPage;
-    
     const pagedData = data.slice(startIdx, endIdx);
 
+    // Render based on current view mode
+    if (currentViewMode === 'grid') {
+        renderGridView(pagedData);
+    } else {
+        renderTableView(pagedData);
+    }
+
+    pagination.render({ totalRecords: data.length, currentPage, perPage });
+}
+
+function renderGridView(pagedData) {
+    const grid = document.getElementById('roundsGrid');
     let html = pagedData.map(r => {
         const pct    = Math.round((r.bookedSeats / r.totalSeats) * 100);
         const isFull = r.bookedSeats >= r.totalSeats;
@@ -361,7 +439,233 @@ function renderRounds(resetPage = true) {
     }).join('');
 
     grid.innerHTML = html;
-    pagination.render({ totalRecords: data.length, currentPage, perPage });
+}
+
+function renderTableView(pagedData) {
+    const tbody = document.getElementById('roundsTableBody');
+    let html = pagedData.map(r => {
+        const pct    = Math.round((r.bookedSeats / r.totalSeats) * 100);
+        const isFull = r.bookedSeats >= r.totalSeats;
+        const pickupPoints = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
+        const allPoints = pickupPoints.map(p => p.name).join(' → ');
+        
+        return `<tr style="height: 50px; border-bottom: 1px solid #e9ecef; ${!r.isOpen ? 'background-color: #f8f9fa;' : 'background-color: #fff;'}">
+            <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: center; font-weight: 500;">
+                <div class="text-dark">${formatDateTime(r.departDate)}</div>
+            </td>
+            <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: center; font-weight: 600; font-size: 1.1rem;">
+                <i class="bi bi-bus-front me-2 text-info"></i><span class="text-primary">${r.busNumber}</span>
+            </td>
+            <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: left;">
+                <strong class="text-dark">${r.trip?.title || '-'}</strong>
+            </td>
+            <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: left;">
+                <small class="text-muted">${allPoints || r.startPoint}</small>
+            </td>
+            <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: center;">
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                    <span class="fw-semibold ${isFull ? 'text-danger' : 'text-success'}" style="font-size: 1.05rem;">
+                        ${r.bookedSeats}/${r.totalSeats}
+                    </span>
+                </div>
+                <div class="progress mt-1" style="height: 5px; width: 70px; margin: 0 auto;">
+                    <div class="progress-bar ${isFull ? 'bg-danger' : 'bg-success'}" style="width: ${pct}%"></div>
+                </div>
+            </td>
+            <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: center;">
+                <span class="badge ${r.isOpen ? 'bg-success' : 'bg-secondary'} px-2 py-1" style="font-size: 0.9rem; font-weight: 600;">
+                    ${r.isOpen ? '✓ เปิด' : '✕ ปิด'}
+                </span>
+            </td>
+            <td style="padding: 12px 10px; text-align: center;">
+                <div class="btn-group btn-group-sm" role="group" style="gap: 2px;">
+                    <a href="/frontend/pages/monitor/list.html?roundId=${r.id}" class="btn btn-sm btn-outline-info" title="ดูตั๋ว" style="border-radius: 4px;">
+                        <i class="bi bi-ticket-perforated"></i>
+                    </a>
+                    <button class="btn btn-sm btn-outline-warning" onclick="toggleRound(${r.id})" title="${r.isOpen ? 'ปิดจอง' : 'เปิดจอง'}" style="border-radius: 4px;">
+                        <i class="bi bi-${r.isOpen ? 'lock' : 'unlock'}"></i>
+                    </button>
+                    <a href="/frontend/pages/reports/print.html?roundId=${r.id}" class="btn btn-sm btn-outline-secondary" title="พิมพ์" style="border-radius: 4px;">
+                        <i class="bi bi-printer"></i>
+                    </a>
+                    <button class="btn btn-sm btn-outline-primary" onclick="editRound(${JSON.stringify(r).replace(/"/g,'&quot;')})" title="แก้ไข" style="border-radius: 4px;">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+
+    tbody.innerHTML = html;
+}
+
+function switchView(viewMode) {
+    currentViewMode = viewMode;
+    
+    // Update UI - tab buttons
+    if (viewMode === 'grid') {
+        document.getElementById('gridViewBtn').classList.remove('text-muted');
+        document.getElementById('gridViewBtn').classList.add('text-primary');
+        document.getElementById('gridViewBtn').style.borderBottom = '3px solid #0d6efd';
+        
+        document.getElementById('tableViewBtn').classList.remove('text-primary');
+        document.getElementById('tableViewBtn').classList.add('text-muted');
+        document.getElementById('tableViewBtn').style.borderBottom = 'none';
+        
+        document.getElementById('gridContainer').classList.remove('d-none');
+        document.getElementById('tableContainer').classList.add('d-none');
+    } else {
+        document.getElementById('gridViewBtn').classList.remove('text-primary');
+        document.getElementById('gridViewBtn').classList.add('text-muted');
+        document.getElementById('gridViewBtn').style.borderBottom = 'none';
+        
+        document.getElementById('tableViewBtn').classList.remove('text-muted');
+        document.getElementById('tableViewBtn').classList.add('text-primary');
+        document.getElementById('tableViewBtn').style.borderBottom = '3px solid #0d6efd';
+        
+        document.getElementById('gridContainer').classList.add('d-none');
+        document.getElementById('tableContainer').classList.remove('d-none');
+    }
+    
+    // Re-render with new view
+    renderRounds(false);
+}
+
+// ===== Export Functions =====
+function exportToCSV() {
+    if (!filteredData || filteredData.length === 0) {
+        showToast('ไม่มีข้อมูลที่จะส่งออก', 'warning');
+        return;
+    }
+
+    // Prepare CSV headers
+    const headers = ['วันที่ออกเดินทาง', 'ตู่', 'ทริป', 'เส้นทาง', 'ที่นั่ง (จอง/ทั้งหมด)', 'สถานะ'];
+    
+    // Prepare CSV rows
+    const rows = filteredData.map(r => {
+        const pickupPoints = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
+        const allPoints = pickupPoints.map(p => p.name).join(' → ') || r.startPoint;
+        
+        return [
+            formatDateTime(r.departDate),
+            r.busNumber,
+            r.trip?.title || '-',
+            allPoints,
+            `${r.bookedSeats}/${r.totalSeats}`,
+            r.isOpen ? 'เปิด' : 'ปิด'
+        ];
+    });
+
+    // Combine headers and rows
+    const csvContent = [
+        headers.map(h => `"${h}"`).join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Create blob and download
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `bus-rounds-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast('ส่งออก CSV สำเร็จ', 'success');
+}
+
+function exportToPDF() {
+    if (!filteredData || filteredData.length === 0) {
+        showToast('ไม่มีข้อมูลที่จะส่งออก', 'warning');
+        return;
+    }
+
+    // Create a temporary container for PDF content
+    const printWindow = window.open('', '', 'height=600,width=800');
+    
+    // Build HTML table for PDF
+    let tableHTML = `
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>รอบรถ / ตั๋ว</title>
+            <style>
+                body { font-family: 'Sarabun', Arial, sans-serif; margin: 20px; }
+                h1 { text-align: center; color: #333; margin-bottom: 5px; }
+                p { text-align: center; color: #666; margin-bottom: 20px; font-size: 0.9rem; }
+                table { 
+                    width: 100%; 
+                    border-collapse: collapse; 
+                    margin-top: 20px;
+                }
+                th { 
+                    background-color: #f0f0f0; 
+                    padding: 10px; 
+                    border: 1px solid #ddd;
+                    text-align: left;
+                    font-weight: bold;
+                }
+                td { 
+                    padding: 8px; 
+                    border: 1px solid #ddd;
+                }
+                tr:nth-child(even) { background-color: #f9f9f9; }
+                .status-open { color: green; font-weight: bold; }
+                .status-closed { color: gray; font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <h1>รอบรถ / ตั๋ว</h1>
+            <p>วันที่พิมพ์: ${new Date().toLocaleString('th-TH')}</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>วันที่ออกเดินทาง</th>
+                        <th>ตู่</th>
+                        <th>ทริป</th>
+                        <th>เส้นทาง</th>
+                        <th>ที่นั่ง</th>
+                        <th>สถานะ</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    // Add data rows
+    filteredData.forEach(r => {
+        const pickupPoints = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
+        const allPoints = pickupPoints.map(p => p.name).join(' → ') || r.startPoint;
+        const statusClass = r.isOpen ? 'status-open' : 'status-closed';
+        const statusText = r.isOpen ? 'เปิด' : 'ปิด';
+        
+        tableHTML += `
+            <tr>
+                <td>${formatDateTime(r.departDate)}</td>
+                <td>${r.busNumber}</td>
+                <td>${r.trip?.title || '-'}</td>
+                <td>${allPoints}</td>
+                <td>${r.bookedSeats}/${r.totalSeats}</td>
+                <td class="${statusClass}">${statusText}</td>
+            </tr>
+        `;
+    });
+
+    tableHTML += `
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `;
+
+    printWindow.document.write(tableHTML);
+    printWindow.document.close();
+    
+    setTimeout(() => {
+        printWindow.print();
+        showToast('เปิดหน้าพิมพ์เพื่อส่งออก PDF', 'info');
+    }, 250);
 }
 
 // ===== Pickup Points Manager =====

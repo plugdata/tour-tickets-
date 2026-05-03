@@ -60,12 +60,24 @@ router.get('/by-phone', async (req, res) => {
     const all = await prisma.bookingSession.findMany()
     const matches = all
       .filter(s => {
-        if (!s.customerData) return false
-        try {
-          const cd = JSON.parse(s.customerData)
-          const p = (cd.mainPhone || '').replace(/[-\s]/g, '')
-          return p === norm
-        } catch { return false }
+        // 1. Try customerData (main contact)
+        if (s.customerData) {
+          try {
+            const cd = JSON.parse(s.customerData)
+            const p = (cd.mainPhone || cd.phone || '').replace(/[-\s]/g, '')
+            if (p === norm) return true
+          } catch (e) {}
+        }
+        // 2. Try individual seats (any passenger phone)
+        if (s.selectedSeats) {
+          try {
+            const seats = JSON.parse(s.selectedSeats)
+            if (Array.isArray(seats)) {
+              return seats.some(seat => (seat.phone || '').replace(/[-\s]/g, '') === norm)
+            }
+          } catch (e) {}
+        }
+        return false
       })
       .map(s => parseSession(s))
     res.json(matches)
