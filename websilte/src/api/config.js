@@ -20,10 +20,22 @@ const getApiBaseUrl = () => {
 export const API_BASE = getApiBaseUrl()
 
 export async function apiFetch(path, options = {}) {
-  const res = await fetch(API_BASE + path, options)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }))
-    throw new Error(err.message || `HTTP ${res.status}`)
+  try {
+    console.log(`🌐 API Request: ${API_BASE}${path}`)
+    const res = await fetch(API_BASE + path, options)
+    console.log(`📡 API Response: ${res.status} ${res.statusText}`)
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }))
+      console.error(`❌ API Error:`, err)
+      throw new Error(err.message || `HTTP ${res.status}`)
+    }
+
+    const data = await res.json()
+    console.log(`✅ API Success:`, data)
+    return data
+  } catch (error) {
+    console.error(`💥 API Fetch Failed:`, error)
+    throw error
   }
-  return res.json()
 }

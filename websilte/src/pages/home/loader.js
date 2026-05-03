@@ -70,11 +70,11 @@ export async function loadSiteSettings() {
 
   // Social links
   const socials = {
-    'social-facebook':  s.social_facebook,
-    'social-line':      s.social_line_oa ? `https://line.me/ti/p/~${s.social_line_oa}` : '',
+    'social-facebook': s.social_facebook,
+    'social-line': s.social_line_oa ? `https://line.me/ti/p/~${s.social_line_oa}` : '',
     'social-instagram': s.social_instagram,
-    'social-tiktok':    s.social_tiktok,
-    'social-email':     s.contact_email ? `mailto:${s.contact_email}` : '',
+    'social-tiktok': s.social_tiktok,
+    'social-email': s.contact_email ? `mailto:${s.contact_email}` : '',
   }
   Object.entries(socials).forEach(([id, href]) => {
     const el = $(id)
@@ -82,14 +82,14 @@ export async function loadSiteSettings() {
   })
 
   // Contact info section
-  const cPhone   = $('contactPhone')
-  const cEmail   = $('contactEmail')
+  const cPhone = $('contactPhone')
+  const cEmail = $('contactEmail')
   const cAddress = $('contactAddress')
-  const cHours   = $('contactHours')
-  if (cPhone   && s.contact_phone)   cPhone.textContent   = s.contact_phone
-  if (cEmail   && s.contact_email)   cEmail.textContent   = s.contact_email
+  const cHours = $('contactHours')
+  if (cPhone && s.contact_phone) cPhone.textContent = s.contact_phone
+  if (cEmail && s.contact_email) cEmail.textContent = s.contact_email
   if (cAddress && s.contact_address) cAddress.textContent = s.contact_address
-  if (cHours   && s.contact_hours)   cHours.textContent   = s.contact_hours
+  if (cHours && s.contact_hours) cHours.textContent = s.contact_hours
 
   // Map embed
   if (s.contact_map_embed) {
@@ -121,27 +121,27 @@ export async function loadFireTicker() {
       getContents(null, { hot: 'true', limit: 8 }),
     ])
 
-    const trips   = hotTrips.status   === 'fulfilled' ? hotTrips.value   : []
+    const trips = hotTrips.status === 'fulfilled' ? hotTrips.value : []
     const content = hotContent.status === 'fulfilled' ? hotContent.value : []
 
     // แปลง hot trips เป็น fire-card slides
     const tripSlides = trips.map(t => ({
-      bg:    imgSrc(t.imageUrl) || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
-      tag:   t.country || (t.tripType === 'INTERNATIONAL' ? 'ต่างประเทศ' : 'ในประเทศ'),
+      bg: imgSrc(t.imageUrl) || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
+      tag: t.country || (t.tripType === 'INTERNATIONAL' ? 'ต่างประเทศ' : 'ในประเทศ'),
       title: t.title,
-      price: `฿${Number(t.price||0).toLocaleString()}`,
-      date:  '',
-      link:  '/trips',
+      price: `฿${Number(t.price || 0).toLocaleString()}`,
+      date: '',
+      link: '/trips',
     }))
 
     // แปลง hot content (อาจมี trip ผูกอยู่)
     const contentSlides = content.map(c => ({
-      bg:    imgSrc(c.imageUrl) || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
-      tag:   c.trip?.title || 'GUGA Travels',
+      bg: imgSrc(c.imageUrl) || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
+      tag: c.trip?.title || 'GUGA Travels',
       title: c.title,
-      price: c.trip ? `฿${Number(c.trip.price||0).toLocaleString()}` : '',
-      date:  new Date(c.createdAt).toLocaleDateString('th-TH',{day:'numeric',month:'short'}),
-      link:  '/trips',
+      price: c.trip ? `฿${Number(c.trip.price || 0).toLocaleString()}` : '',
+      date: new Date(c.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }),
+      link: '/trips',
     }))
 
     let slides = [...tripSlides, ...contentSlides]
@@ -176,7 +176,7 @@ export async function loadFireTicker() {
           </div>
         </div>
       </div>`).join('')
-  } catch (_) {}
+  } catch (_) { }
 }
 
 // ── 3. Trips — handled by Trip Browser JS in index.html ──
@@ -206,14 +206,14 @@ export async function loadBlogSection() {
             <div class="blog-image-container">
               <img src="${img}" alt="${c.title}" class="blog-image">
               <div class="blog-overlay">
-                <span class="blog-category"><i class="bi bi-tag"></i> ${c.tags||'บทความ'}</span>
+                <span class="blog-category"><i class="bi bi-tag"></i> ${c.tags || 'บทความ'}</span>
                 <h4 class="blog-title">${c.title}</h4>
               </div>
             </div>
           </div>
         </div>`
     }).join('')
-  } catch (_) {}
+  } catch (_) { }
 }
 
 // ── 5. Gallery Albums ─────────────────────────────────────
@@ -236,20 +236,20 @@ export async function loadGallery() {
           <div class="gallery-card" onclick="openAlbumModal(${a.id})" style="cursor:pointer">
             <div class="gallery-thumb">
               ${cover
-                ? `<img src="${imgSrc(cover)}" alt="${a.title}" class="w-100 h-100" style="object-fit:cover">`
-                : `<div class="gallery-thumb-placeholder"><i class="bi bi-image"></i></div>`}
+          ? `<img src="${imgSrc(cover)}" alt="${a.title}" class="w-100 h-100" style="object-fit:cover">`
+          : `<div class="gallery-thumb-placeholder"><i class="bi bi-image"></i></div>`}
               <div class="gallery-thumb-overlay">
                 <i class="bi bi-zoom-in" style="font-size:1.5rem"></i>
               </div>
             </div>
             <div class="gallery-info">
               <h6 class="gallery-title">${a.title}</h6>
-              <small class="text-muted">${cnt} รูปภาพ${a.category ? ' · '+a.category : ''}</small>
+              <small class="text-muted">${cnt} รูปภาพ${a.category ? ' · ' + a.category : ''}</small>
             </div>
           </div>
         </div>`
     }).join('')
-  } catch (_) {}
+  } catch (_) { }
 }
 
 // ── 6. FAQ from API ───────────────────────────────────────
@@ -272,7 +272,7 @@ export async function loadFAQ() {
 
     // Re-init FAQ accordion (imported in main.js)
     if (window.__initFAQ) window.__initFAQ()
-  } catch (_) {}
+  } catch (_) { }
 }
 
 // ── 7. Announcements (Featured content) → Hero badge ─────
@@ -292,19 +292,52 @@ export async function loadFeaturedContent() {
       badge.href = '/trips'
       badge.textContent = c.title
     }
-  } catch (_) {}
+  } catch (_) { }
 }
 
 // ── Master loader ─────────────────────────────────────────
 export async function loadHomepage() {
-  // Run settings first (needed for hero bg), others in parallel
-  await loadSiteSettings()
-  await Promise.allSettled([
-    loadFireTicker(),
-    loadTrips(),
-    loadBlogSection(),
-    loadGallery(),
-    loadFAQ(),
-    loadFeaturedContent(),
-  ])
+  try {
+    console.log('🏠 Loading homepage...')
+
+    // Run settings first (needed for hero bg), others in parallel
+    console.log('⚙️ Loading site settings...')
+    await loadSiteSettings()
+    console.log('✅ Site settings loaded')
+
+    console.log('📦 Loading homepage content...')
+    const results = await Promise.allSettled([
+      loadFireTicker(),
+      loadTrips(),
+      loadBlogSection(),
+      loadGallery(),
+      loadFAQ(),
+      loadFeaturedContent(),
+    ])
+
+    // Log any failures for debugging
+    results.forEach((result, index) => {
+      const loaders = ['FireTicker', 'Trips', 'Blog', 'Gallery', 'FAQ', 'Featured']
+      if (result.status === 'rejected') {
+        console.warn(`❌ ${loaders[index]} failed:`, result.reason)
+      } else {
+        console.log(`✅ ${loaders[index]} loaded`)
+      }
+    })
+
+    console.log('🎉 Homepage loading complete!')
+  } catch (error) {
+    console.error('💥 Homepage loading failed:', error)
+    // Show error message to user
+    const heroSection = $('heroSection')
+    if (heroSection) {
+      heroSection.innerHTML = `
+        <div style="text-align:center;padding:4rem 2rem;">
+          <h2>🚫 ไม่สามารถโหลดข้อมูลได้</h2>
+          <p>กรุณาลองใหม่อีกครั้งหรือติดต่อผู้ดูแลระบบ</p>
+          <button onclick="location.reload()" class="btn btn-primary">ลองใหม่</button>
+        </div>
+      `
+    }
+  }
 }
