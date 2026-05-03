@@ -33,7 +33,8 @@ class AuthManager {
 
     async login(username, password, remember = false) {
         try {
-            const res = await fetch(`${API_BASE_URL}/auth/login`, {
+            const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:5000/api';
+            const res = await fetch(`${apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })

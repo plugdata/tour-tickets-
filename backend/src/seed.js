@@ -1,37 +1,195 @@
 /**
  * GUGA Travels — Mock Data Seed
  * รัน: node src/seed.js
+ * รันเฉพาะ admin: node src/seed.js admin-only
+ * ล้างข้อมูล + admin: node src/seed.js clean-admin
  */
 const prisma = require('./config/prisma')
+const bcrypt = require('bcryptjs')
+
+async function clearAllData() {
+  console.log('🧹 Clearing all data...')
+
+  try {
+    // Disable foreign key constraints temporarily (PostgreSQL specific)
+    await prisma.$executeRaw`SET session_replication_role = replica;`
+
+    // Delete in order of dependencies (child tables first)
+    const deleteOrder = [
+      'bookingAddons',
+      'insuranceForm',
+      'seatBooking',
+      'payment',
+      'booking',
+      'galleryImage',
+      'galleryAlbum',
+      'upload',
+      'insuranceCondition',
+      'insurancePolicyContent',
+      'bookingSession',
+      'cancelLog',
+      'expense',
+      'content',
+      'addon',
+      'busRound',
+      'trip',
+      'user',
+      'bankAccount',
+      'siteSetting'
+    ]
+
+    let totalDeleted = 0
+
+    for (const table of deleteOrder) {
+      try {
+        const model = prisma[table]
+        if (model && typeof model.deleteMany === 'function') {
+          const result = await model.deleteMany()
+          if (result.count > 0) {
+            console.log(`  🗑️  Deleted ${result.count} records from ${table}`)
+            totalDeleted += result.count
+          } else {
+            console.log(`  ✅ ${table} already empty`)
+          }
+        }
+      } catch (error) {
+        console.log(`  ⚠️  Could not delete ${table}: ${error.message}`)
+      }
+    }
+
+    // Reset auto-increment sequences (PostgreSQL specific)
+    console.log('\n🔄 Resetting auto-increment sequences...')
+    const tables = ['users', 'trips', 'bus_rounds', 'bookings', 'payments', 'contents', 'gallery_albums', 'gallery_images']
+
+    for (const table of tables) {
+      try {
+        await prisma.$executeRawUnsafe(`ALTER SEQUENCE ${table}_id_seq RESTART WITH 1;`)
+        console.log(`  📝 Reset ${table}_id_seq`)
+      } catch (error) {
+        // Sequence might not exist, that's okay
+        console.log(`  ⚠️  Could not reset ${table}_id_seq: ${error.message}`)
+      }
+    }
+
+    // Re-enable foreign key constraints
+    await prisma.$executeRaw`SET session_replication_role = DEFAULT;`
+
+    console.log(`✅ All data cleared! Total records: ${totalDeleted}`)
+
+  } catch (error) {
+    console.error('❌ Error clearing database:', error)
+    throw error
+  }
+}
+
+async function seedAdminOnly() {
+  console.log('👤 Seeding admin user only...')
+
+  const adminUser = {
+    username: 'admin001',
+    password: 'admin1234',
+    role: 'ADMIN',
+    name: 'Administrator',
+    phone: '089-123-4567',
+    email: 'admin@guga.travel'
+  }
+
+  const existing = await prisma.user.findFirst({ where: { username: adminUser.username } })
+  if (!existing) {
+    const hashedPassword = await bcrypt.hash(adminUser.password, 10)
+    await prisma.user.create({
+      data: {
+        ...adminUser,
+        password: hashedPassword
+      }
+    })
+    console.log(`  ✅ Created admin user: ${adminUser.username}`)
+  } else {
+    console.log(`  ⏭️  Admin user already exists: ${adminUser.username}`)
+  }
+
+  console.log('✅ Admin user seeded')
+}
+
+async function seedUsers() {
+  console.log('👥 Seeding users...')
+
+  const users = [
+    {
+      username: 'admin001',
+      password: 'admin1234',
+      role: 'ADMIN',
+      name: 'Administrator',
+      phone: '089-123-4567',
+      email: 'admin@guga.travel'
+    },
+    {
+      username: 'staff001',
+      password: 'staff1234',
+      role: 'STUFF',
+      name: 'Staff Member',
+      phone: '089-123-4568',
+      email: 'staff@guga.travel'
+    },
+    {
+      username: 'customer001',
+      password: 'customer1234',
+      role: 'CUSTOMER',
+      name: 'Customer Test',
+      phone: '089-123-4569',
+      email: 'customer@guga.travel'
+    }
+  ]
+
+  for (const userData of users) {
+    const existing = await prisma.user.findFirst({ where: { username: userData.username } })
+    if (!existing) {
+      const hashedPassword = await bcrypt.hash(userData.password, 10)
+      await prisma.user.create({
+        data: {
+          ...userData,
+          password: hashedPassword
+        }
+      })
+      console.log(`  ✅ Created user: ${userData.username} (${userData.role})`)
+    } else {
+      console.log(`  ⏭️  User already exists: ${userData.username}`)
+    }
+  }
+  console.log('✅ Users seeded')
+}
 
 async function main() {
   console.log('🌱 Seeding mock data...')
 
+  // ── 0. Users ────────────────────────────────────────
+  await seedUsers()
+
   // ── 1. Site Settings ────────────────────────────────────
   const settings = {
-    site_name:           'GUGA Travels',
-    site_tagline:        'GROW UP GO ANYWHERE',
-    site_description:    'บริการจัดทริปท่องเที่ยว ทริปเดินป่า และทัวร์ต่างประเทศ ดูแลโดยทีมงานมืออาชีพ',
-    site_logo_url:       '',
-    hero_title:          'โตละ...จะไปไหนก็ได้',
-    hero_subtitle:       'Grow up, Go anywhere — เปิดโลกกว้าง สัมผัสธรรมชาติ เติมประสบการณ์ใหม่ กับทีมงานมืออาชีพ',
-    hero_bg_url:         'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1400&q=80',
+    site_name: 'GUGA Travels',
+    site_tagline: 'GROW UP GO ANYWHERE',
+    site_description: 'บริการจัดทริปท่องเที่ยว ทริปเดินป่า และทัวร์ต่างประเทศ ดูแลโดยทีมงานมืออาชีพ',
+    site_logo_url: '',
+    hero_title: 'โตละ...จะไปไหนก็ได้',
+    hero_subtitle: 'Grow up, Go anywhere — เปิดโลกกว้าง สัมผัสธรรมชาติ เติมประสบการณ์ใหม่ กับทีมงานมืออาชีพ',
+    hero_bg_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1400&q=80',
     announcement_active: 'true',
-    announcement_text:   '🔥 โปรโมชันพิเศษ! จองทริปเกาะสมุยก่อน 30 เม.ย. ลด 500 บาท — ติดต่อ LINE @guga',
-    seo_title:           'GUGA Travels — จองทริปท่องเที่ยว เดินป่า ทัวร์ต่างประเทศ',
-    seo_description:     'จองทริปท่องเที่ยวกับ GUGA Travels ทริปในประเทศและต่างประเทศ ดูแลโดยทีมงานมืออาชีพ',
-    seo_keywords:        'ทริป,ท่องเที่ยว,เดินป่า,ทัวร์,เกาะสมุย,เชียงใหม่,ลาว,เวียดนาม,booking',
-    social_facebook:     'https://facebook.com/gugatravels',
-    social_line_oa:      '@guga',
-    social_instagram:    'https://instagram.com/gugatravels',
-    social_tiktok:       'https://tiktok.com/@gugatravels',
-    contact_phone:       '089-123-4567',
-    contact_email:       'contact@guga.travel',
-    contact_address:     '99/1 ถนนสุขุมวิท แขวงคลองตัน เขตคลองเตย กรุงเทพฯ 10110',
-    contact_hours:       'จ-ศ 09:00-18:00 | ส-อา 10:00-16:00',
-    contact_map_embed:   '',
-    cookie_policy_text:  'เว็บไซต์นี้ใช้คุกกี้เพื่อนำเสนอประสบการณ์ที่ดีที่สุดให้กับคุณ การใช้งานเว็บไซต์นี้ถือว่าคุณยอมรับนโยบายความเป็นส่วนตัวของเรา',
-    email_notify_to:     'admin@guga.travel',
+    announcement_text: '🔥 โปรโมชันพิเศษ! จองทริปเกาะสมุยก่อน 30 เม.ย. ลด 500 บาท — ติดต่อ LINE @guga',
+    seo_title: 'GUGA Travels — จองทริปท่องเที่ยว เดินป่า ทัวร์ต่างประเทศ',
+    seo_description: 'จองทริปท่องเที่ยวกับ GUGA Travels ทริปในประเทศและต่างประเทศ ดูแลโดยทีมงานมืออาชีพ',
+    seo_keywords: 'ทริป,ท่องเที่ยว,เดินป่า,ทัวร์,เกาะสมุย,เชียงใหม่,ลาว,เวียดนาม,booking',
+    social_facebook: 'https://facebook.com/gugatravels',
+    social_line_oa: '@guga',
+    social_instagram: 'https://instagram.com/gugatravels',
+    social_tiktok: 'https://tiktok.com/@gugatravels',
+    contact_phone: '089-123-4567',
+    contact_email: 'contact@guga.travel',
+    contact_address: '99/1 ถนนสุขุมวิท แขวงคลองตัน เขตคลองเตย กรุงเทพฯ 10110',
+    contact_hours: 'จ-ศ 09:00-18:00 | ส-อา 10:00-16:00',
+    contact_map_embed: '',
+    cookie_policy_text: 'เว็บไซต์นี้ใช้คุกกี้เพื่อนำเสนอประสบการณ์ที่ดีที่สุดให้กับคุณ การใช้งานเว็บไซต์นี้ถือว่าคุณยอมรับนโยบายความเป็นส่วนตัวของเรา',
+    email_notify_to: 'admin@guga.travel',
   }
   for (const [key, value] of Object.entries(settings)) {
     await prisma.siteSetting.upsert({
@@ -238,7 +396,7 @@ async function main() {
 
   // ── 6. Trip Posts (hot content linked to trips) ──────────
   const domesticTrip = createdTrips.find(t => t.tripType === 'DOMESTIC' && t.isHot)
-  const intlTrip     = createdTrips.find(t => t.tripType === 'INTERNATIONAL' && t.isHot)
+  const intlTrip = createdTrips.find(t => t.tripType === 'INTERNATIONAL' && t.isHot)
 
   const tripPosts = [
     {
@@ -364,6 +522,7 @@ async function main() {
 
   console.log('\n🎉 All mock data seeded successfully!')
   console.log('📊 Summary:')
+  console.log('   - Users: 3 (admin, staff, customer)')
   console.log('   - Site settings: configured')
   console.log(`   - Trips: ${createdTrips.length} (in/international + hot flags)`)
   console.log('   - FAQ: 6 entries')
@@ -382,60 +541,80 @@ async function seedBusRounds() {
 
   const roundsData = [
     // DOMESTIC trips
-    { tripTitle: 'ทริปเกาะสมุย 3 วัน 2 คืน',
+    {
+      tripTitle: 'ทริปเกาะสมุย 3 วัน 2 คืน',
       rounds: [
         { start: 'กรุงเทพ (หมอชิต)', end: 'เกาะสมุย', dept: '2026-05-10T04:00:00Z', duration: '3 วัน 2 คืน', seats: 9, booked: 4 },
         { start: 'กรุงเทพ (หมอชิต)', end: 'เกาะสมุย', dept: '2026-05-24T04:00:00Z', duration: '3 วัน 2 คืน', seats: 9, booked: 2 },
         { start: 'กรุงเทพ (หมอชิต)', end: 'เกาะสมุย', dept: '2026-06-14T04:00:00Z', duration: '3 วัน 2 คืน', seats: 9, booked: 0 },
-      ]},
-    { tripTitle: 'ดอยอินทนนท์ ยอดดอยสูงสุด เชียงใหม่',
+      ]
+    },
+    {
+      tripTitle: 'ดอยอินทนนท์ ยอดดอยสูงสุด เชียงใหม่',
       rounds: [
         { start: 'กรุงเทพ (หมอชิต)', end: 'ดอยอินทนนท์', dept: '2026-05-08T22:00:00Z', duration: '3 วัน 2 คืน', seats: 12, booked: 7 },
         { start: 'กรุงเทพ (หมอชิต)', end: 'ดอยอินทนนท์', dept: '2026-05-22T22:00:00Z', duration: '3 วัน 2 คืน', seats: 12, booked: 3 },
         { start: 'กรุงเทพ (หมอชิต)', end: 'ดอยอินทนนท์', dept: '2026-06-05T22:00:00Z', duration: '3 วัน 2 คืน', seats: 12, booked: 0 },
-      ]},
-    { tripTitle: 'ปูยหลวง แม่ฮ่องสอน ทะเลหมอก',
+      ]
+    },
+    {
+      tripTitle: 'ปูยหลวง แม่ฮ่องสอน ทะเลหมอก',
       rounds: [
         { start: 'เชียงใหม่ (สนามบิน)', end: 'ปูยหลวง', dept: '2026-05-16T05:00:00Z', duration: '2 วัน 1 คืน', seats: 10, booked: 5 },
         { start: 'เชียงใหม่ (สนามบิน)', end: 'ปูยหลวง', dept: '2026-06-13T05:00:00Z', duration: '2 วัน 1 คืน', seats: 10, booked: 0 },
-      ]},
-    { tripTitle: 'อุ้มผาง ล่องแก่ง วังเจ้า',
+      ]
+    },
+    {
+      tripTitle: 'อุ้มผาง ล่องแก่ง วังเจ้า',
       rounds: [
         { start: 'กรุงเทพ (หมอชิต)', end: 'อุ้มผาง', dept: '2026-05-20T22:00:00Z', duration: '4 วัน 3 คืน', seats: 9, booked: 6 },
         { start: 'กรุงเทพ (หมอชิต)', end: 'อุ้มผาง', dept: '2026-06-17T22:00:00Z', duration: '4 วัน 3 คืน', seats: 9, booked: 1 },
-      ]},
-    { tripTitle: 'เขาใหญ่ เดินป่า Wildlife',
+      ]
+    },
+    {
+      tripTitle: 'เขาใหญ่ เดินป่า Wildlife',
       rounds: [
         { start: 'กรุงเทพ (สยาม)', end: 'เขาใหญ่', dept: '2026-05-09T05:30:00Z', duration: '2 วัน 1 คืน', seats: 14, booked: 8 },
         { start: 'กรุงเทพ (สยาม)', end: 'เขาใหญ่', dept: '2026-05-23T05:30:00Z', duration: '2 วัน 1 คืน', seats: 14, booked: 4 },
         { start: 'กรุงเทพ (สยาม)', end: 'เขาใหญ่', dept: '2026-06-06T05:30:00Z', duration: '2 วัน 1 คืน', seats: 14, booked: 0 },
-      ]},
-    { tripTitle: 'ทะเลเกาะกูด ตราด',
+      ]
+    },
+    {
+      tripTitle: 'ทะเลเกาะกูด ตราด',
       rounds: [
         { start: 'กรุงเทพ (เอกมัย)', end: 'เกาะกูด', dept: '2026-05-15T04:00:00Z', duration: '3 วัน 2 คืน', seats: 9, booked: 3 },
         { start: 'กรุงเทพ (เอกมัย)', end: 'เกาะกูด', dept: '2026-06-12T04:00:00Z', duration: '3 วัน 2 คืน', seats: 9, booked: 0 },
-      ]},
+      ]
+    },
     // INTERNATIONAL trips
-    { tripTitle: 'ลาว หลวงพระบาง มรดกโลก',
+    {
+      tripTitle: 'ลาว หลวงพระบาง มรดกโลก',
       rounds: [
         { start: 'สนามบินสุวรรณภูมิ', end: 'หลวงพระบาง', dept: '2026-06-10T04:00:00Z', duration: '4 วัน 3 คืน', seats: 15, booked: 9 },
         { start: 'สนามบินสุวรรณภูมิ', end: 'หลวงพระบาง', dept: '2026-07-08T04:00:00Z', duration: '4 วัน 3 คืน', seats: 15, booked: 3 },
-      ]},
-    { tripTitle: 'เวียดนาม ฮาลองเบย์ ฮานอย',
+      ]
+    },
+    {
+      tripTitle: 'เวียดนาม ฮาลองเบย์ ฮานอย',
       rounds: [
         { start: 'สนามบินสุวรรณภูมิ', end: 'ฮานอย', dept: '2026-05-27T23:00:00Z', duration: '5 วัน 4 คืน', seats: 15, booked: 11 },
         { start: 'สนามบินสุวรรณภูมิ', end: 'ฮานอย', dept: '2026-06-24T23:00:00Z', duration: '5 วัน 4 คืน', seats: 15, booked: 2 },
-      ]},
-    { tripTitle: 'อินโดนีเซีย Rinjani Volcano Trek',
+      ]
+    },
+    {
+      tripTitle: 'อินโดนีเซีย Rinjani Volcano Trek',
       rounds: [
         { start: 'สนามบินสุวรรณภูมิ', end: 'ลอมบอก', dept: '2026-06-18T23:00:00Z', duration: '6 วัน 5 คืน', seats: 12, booked: 6 },
         { start: 'สนามบินสุวรรณภูมิ', end: 'ลอมบอก', dept: '2026-07-16T23:00:00Z', duration: '6 วัน 5 คืน', seats: 12, booked: 0 },
-      ]},
-    { tripTitle: 'ฟิลิปปินส์ CEBU Island Hopping',
+      ]
+    },
+    {
+      tripTitle: 'ฟิลิปปินส์ CEBU Island Hopping',
       rounds: [
         { start: 'สนามบินสุวรรณภูมิ', end: 'เซบู', dept: '2026-06-03T01:00:00Z', duration: '4 วัน 3 คืน', seats: 14, booked: 8 },
         { start: 'สนามบินสุวรรณภูมิ', end: 'เซบู', dept: '2026-07-01T01:00:00Z', duration: '4 วัน 3 คืน', seats: 14, booked: 1 },
-      ]},
+      ]
+    },
   ]
 
   let created = 0
@@ -466,6 +645,31 @@ async function seedBusRounds() {
   console.log(`✅ ${created} bus rounds seeded`)
 }
 
-seedBusRounds()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect())
+// Check command line arguments
+const args = process.argv.slice(2)
+
+async function run() {
+  try {
+    if (args.includes('clean-admin')) {
+      // Clear all data and seed only admin
+      await clearAllData()
+      await seedAdminOnly()
+      console.log('\n🎉 Clean admin seeding completed!')
+    } else if (args.includes('admin-only')) {
+      // Seed only admin user (no clearing)
+      await seedAdminOnly()
+      console.log('\n🎉 Admin-only seeding completed!')
+    } else {
+      // Default: run full seeding
+      await main()
+      await seedBusRounds()
+      console.log('\n🎉 Full seeding completed!')
+    }
+  } catch (error) {
+    console.error('❌ Seeding failed:', error)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+run()

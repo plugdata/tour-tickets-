@@ -4,10 +4,18 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/server.js",
+    "dev:local": "node scripts/set-env.js local && npm run dev",
+    "dev:production": "node scripts/set-env.js production && npm run dev",
     "start": "node src/server.js",
+    "start:local": "node scripts/set-env.js local && npm start",
+    "start:production": "node scripts/set-env.js production && npm start",
     "migrate": "prisma migrate dev",
     "generate": "prisma generate",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+    "seed": "node src/seed.js",
+    "seed:admin": "node src/seed.js admin-only",
+    "seed:clean": "node src/seed.js clean-admin",
+    "clear": "node src/clearDB.js"
   },
   "keywords": [],
   "author": "",

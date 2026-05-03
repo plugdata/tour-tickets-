@@ -390,7 +390,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80");
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -399,16 +399,18 @@ body {
 .login-card {
     width: 100%;
     max-width: 420px;
-    background: white;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     border-radius: 1rem;
-    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.3);
     padding: 2.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .login-logo {
     width: 64px;
     height: 64px;
-    background: linear-gradient(135deg, var(--primary-color), #0dcaf0);
+    background: linear-gradient(135deg, #2196F3, #00BCD4);
     border-radius: 16px;
     display: flex;
     align-items: center;
@@ -416,6 +418,7 @@ body {
     color: white;
     font-size: 1.75rem;
     margin: 0 auto 1.5rem;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
 }
 
 .login-title {
