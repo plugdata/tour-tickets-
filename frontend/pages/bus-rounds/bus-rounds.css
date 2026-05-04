@@ -1,0 +1,335 @@
+/* Bus Rounds Page Styles */
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+    margin-bottom: 1.5rem;
+}
+
+.input-group.shadow-sm {
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.input-group .form-control:focus {
+    z-index: 3;
+}
+
+/* ===== TRIP FILTER DROPDOWN ===== */
+#tripFilterDropdown {
+    z-index: 1050;
+    max-height: 240px;
+    overflow-y: auto;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+}
+
+#tripFilterDropdown div:hover {
+    background-color: #f0fdf9;
+}
+
+/* ===== VIEW TOGGLE TABS ===== */
+.view-toggle-btn {
+    border: none;
+    border-radius: 0;
+    font-weight: 600;
+    position: relative;
+    padding: 0.5rem 1rem;
+    color: #6c757d;
+}
+
+.view-toggle-btn.active {
+    color: #0d6efd !important;
+    border-bottom: 3px solid #0d6efd !important;
+}
+
+/* ===== TABLE STYLES ===== */
+#roundsTable {
+    font-size: 1rem;
+    border-collapse: collapse;
+}
+
+#roundsTable thead {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+#roundsTable th {
+    padding: 12px 10px;
+    border-right: 1px solid #e9ecef;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#roundsTable th:last-child {
+    border-right: none;
+}
+
+#roundsTable tbody td {
+    padding: 12px 10px;
+    border-right: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+#roundsTable tbody td:last-child {
+    border-right: none;
+}
+
+/* ===== GRID VIEW STYLES ===== */
+.card.opacity-75 {
+    background-color: #f8f9fa;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+
+/* ===== MODAL STYLES ===== */
+#roundModal .modal-header {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    border-bottom: none;
+}
+
+#roundModal .modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+#roundModal .form-label {
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    color: #212529;
+}
+
+#roundModal .form-control,
+#roundModal .form-select {
+    font-size: 0.95rem;
+    border-color: #dee2e6;
+}
+
+#roundModal .form-control:focus,
+#roundModal .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* ===== VEHICLE ROWS ===== */
+.vehicle-item {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: #fff;
+    transition: all 0.2s ease;
+}
+
+.vehicle-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: #0d6efd;
+}
+
+.vehicle-item .vehicle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.vehicle-item .vehicle-fields {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.vehicle-item .form-group {
+    flex: 1;
+    min-width: 150px;
+}
+
+.vehicle-item .form-group label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0.3rem;
+}
+
+.vehicle-item .btn-remove {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+/* ===== PICKUP POINT ROWS ===== */
+.pickup-item {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    align-items: flex-end;
+    transition: background-color 0.2s;
+}
+
+.pickup-item:hover {
+    background-color: #f8f9fa;
+}
+
+.pickup-item:last-child {
+    border-bottom: none;
+}
+
+.pickup-item.is-first {
+    background-color: #e7f3ff;
+}
+
+.pickup-item input.p-name {
+    flex: 1;
+    min-width: 200px;
+    font-size: 0.9rem;
+}
+
+.pickup-item input.p-price {
+    width: 110px;
+    font-size: 0.9rem;
+}
+
+.pickup-item .input-group-text {
+    font-size: 0.85rem;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.pickup-item .btn-remove {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.pickup-item .badge {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.6rem;
+    min-width: 50px;
+    text-align: center;
+}
+
+/* ===== STATUS BADGES ===== */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-badge.open {
+    background-color: #d1f2eb;
+    color: #0f5c36;
+}
+
+.status-badge.closed {
+    background-color: #f8d7da;
+    color: #842029;
+}
+
+/* ===== SECTION HEADERS ===== */
+.section-header {
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h6 {
+    font-size: 1rem;
+    color: #212529;
+    margin: 0;
+}
+
+.section-header i {
+    font-size: 1.1rem;
+}
+
+/* ===== FORM CONTROLS ===== */
+.form-select-lg {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+}
+
+output.form-control-plaintext {
+    padding: 0.375rem 0;
+    border: none;
+    min-height: auto;
+}
+
+/* ===== CARDS ===== */
+.card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card.border-info {
+    border-color: #0dcaf0 !important;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .page-header .btn {
+        margin-top: 1rem;
+        width: 100%;
+    }
+
+    .vehicle-item .vehicle-fields {
+        flex-direction: column;
+    }
+
+    .vehicle-item .form-group {
+        width: 100%;
+    }
+
+    .pickup-item {
+        flex-wrap: wrap;
+    }
+
+    .pickup-item input {
+        font-size: 0.9rem;
+        padding: 0.375rem 0.5rem;
+    }
+
+    #roundModal .modal-dialog {
+        margin: 0.5rem;
+    }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.fw-semibold {
+    font-weight: 600;
+}
+
+.text-danger {
+    color: #dc3545;
+}
+
+.text-muted {
+    color: #6c757d;
+}
+
+.text-success {
+    color: #198754;
+}
+
+.text-info {
+    color: #0dcaf0;
+}
+
+.text-warning {
+    color: #ffc107;
+}

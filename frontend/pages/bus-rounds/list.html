@@ -1,805 +1,164 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>รอบรถ / ตั๋ว - Tour Backoffice</title>
+    <!-- Core CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Theme CSS -->
     <link href="../../assets/css/admin.css" rel="stylesheet">
+    
+    <!-- Page CSS -->
+    <link href="bus-rounds.css" rel="stylesheet">
 </head>
+
 <body>
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
-<div class="d-flex">
-    <nav class="sidebar bg-white border-end" id="sidebar"></nav>
-    <main class="main-content flex-fill">
-        <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
-        <div class="page-content">
-            <div class="page-header d-flex justify-content-between align-items-center">
-                <div><h1 class="page-title">รอบรถ / ตั๋ว</h1><p class="page-subtitle">จัดการรอบรถและที่นั่ง</p></div>
-                <button class="btn btn-primary" onclick="openModal()"><i class="bi bi-plus-lg me-1"></i>เปิดรอบรถ</button>
-            </div>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="d-flex">
+        <!-- Sidebar Component -->
+        <nav class="sidebar bg-white border-end" id="sidebar"></nav>
+        
+        <main class="main-content flex-fill">
+            <!-- Header Component -->
+            <header id="main-header" class="bg-white border-bottom p-3 sticky-top shadow-sm"></header>
+            
+            <div class="page-content">
+                <!-- Page Title -->
+                <div class="page-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="page-title">รอบรถ / ตั๋ว</h1>
+                        <p class="page-subtitle">จัดการรอบรถและที่นั่ง</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal()">
+                        <i class="bi bi-plus-lg me-1"></i>เปิดรอบรถ
+                    </button>
+                </div>
 
-            <!-- Filter + Search -->
-            <div class="card mb-3">
-                <div class="card-body py-2">
-                    <div class="row g-2 align-items-center">
-                        <div class="col-md-4 position-relative">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="bi bi-map text-muted"></i></span>
-                                <input type="text" class="form-control border-start-0" id="filterTrip"
-                                    placeholder="ค้นหาชื่อทริป..."
-                                    oninput="onFilterTripInput()"
-                                    onfocus="showTripDropdown()"
-                                    onkeydown="handleTripFilterKey(event)"
-                                    autocomplete="off">
-                                <button class="btn btn-outline-secondary btn-sm px-2" onclick="clearTripFilter()" title="ล้าง">
-                                    <i class="bi bi-x"></i>
-                                </button>
+                <!-- Filters Section -->
+                <div class="card mb-3 shadow-sm border-0">
+                    <div class="card-body py-2">
+                        <div class="row g-2 align-items-center">
+                            <!-- Trip Filter -->
+                            <div class="col-md-4 position-relative">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i class="bi bi-map text-muted"></i></span>
+                                    <input type="text" class="form-control border-start-0" id="filterTrip"
+                                        placeholder="ค้นหาชื่อทริป..." oninput="onFilterTripInput()"
+                                        onfocus="showTripDropdown()" onkeydown="handleTripFilterKey(event)"
+                                        autocomplete="off">
+                                    <button class="btn btn-outline-secondary btn-sm px-2" onclick="clearTripFilter()" title="ล้าง">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                                <div id="tripFilterDropdown" class="position-absolute bg-white border rounded-3 shadow d-none"></div>
                             </div>
-                            <div id="tripFilterDropdown"
-                                class="position-absolute bg-white border rounded-3 shadow d-none"
-                                style="z-index:1050;max-height:240px;overflow-y:auto;top:calc(100% + 2px);left:0;right:0;">
+                            
+                            <!-- Location Search -->
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i class="bi bi-geo-alt text-muted"></i></span>
+                                    <input type="text" class="form-control border-start-0" id="searchInput"
+                                        placeholder="จุดรับ / ปลายทาง..." oninput="renderRounds()">
+                                </div>
+                            </div>
+                            
+                            <!-- Date Filter -->
+                            <div class="col-md-5">
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-white"><i class="bi bi-calendar3 text-muted"></i></span>
+                                    <input type="text" class="form-control border-end-0 text-dark bg-white" id="startDate"
+                                        placeholder="เริ่มวันที่..." readonly>
+                                    <span class="input-group-text bg-white border-start-0 border-end-0 text-muted px-1">ถึง</span>
+                                    <input type="text" class="form-control border-start-0 text-dark bg-white" id="endDate"
+                                        placeholder="ถึงวันที่..." readonly>
+                                    <button class="btn btn-outline-secondary border-start-0" onclick="clearDateRange()" title="ล้าง">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-
-                        <!-- ค้นหาจุดขึ้น/ลง -->
-                        <div class="col-md-3">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="bi bi-geo-alt text-muted"></i></span>
-                                <input type="text" class="form-control border-start-0" id="searchInput"
-                                    placeholder="จุดรับ / ปลายทาง..." oninput="renderRounds()">
-                            </div>
-                        </div>
-
-                        <!-- ค้นหาเป็นช่วงเวลา -->
-                        <div class="col-md-5">
-                            <div class="input-group shadow-sm">
-                                <span class="input-group-text bg-white"><i class="bi bi-calendar3 text-muted"></i></span>
-                                <input type="text" class="form-control border-end-0 text-dark" id="startDate"
-                                    placeholder="เริ่มวันที่..." readonly style="background:white; font-size: .85rem;">
-                                <span class="input-group-text bg-white border-start-0 border-end-0 text-muted px-1">ถึง</span>
-                                <input type="text" class="form-control border-start-0 text-dark" id="endDate"
-                                    placeholder="ถึงวันที่..." readonly style="background:white; font-size: .85rem;">
-                                <button class="btn btn-outline-secondary border-start-0" onclick="clearDateRange()" title="ล้าง">
-                                    <i class="bi bi-x"></i>
-                                </button>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
-            </div>
 
-            <!-- View Toggle Tabs & Export Buttons -->
-            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm border-0 rounded-0 fw-semibold text-primary position-relative" 
-                            id="gridViewBtn" onclick="switchView('grid')" style="border-bottom: 3px solid #0d6efd;">
-                        <i class="bi bi-grid-3x3-gap me-1"></i>มุมมองกริด
-                    </button>
-                    <button class="btn btn-sm border-0 rounded-0 fw-semibold text-muted position-relative" 
-                            id="tableViewBtn" onclick="switchView('table')">
-                        <i class="bi bi-table me-1"></i>มุมมองตาราง
-                    </button>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-outline-success" onclick="exportToCSV()" title="ส่งออก CSV">
-                        <i class="bi bi-file-earmark-csv me-1"></i>CSV
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="exportToPDF()" title="ส่งออก PDF">
-                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
-                    </button>
-                </div>
-            </div>
-
-            <!-- Grid View -->
-            <div id="gridContainer">
-                <div class="row g-3" id="roundsGrid">
-                    <div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>
-                </div>
-            </div>
-
-            <!-- Table View -->
-            <div id="tableContainer" class="d-none">
-                <div class="table-responsive">
-                    <table class="table table-hover" id="roundsTable" style="font-size: 1rem; border-collapse: collapse;">
-                        <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); font-weight: 600; border-bottom: 2px solid #dee2e6;">
-                            <tr style="height: 45px;">
-                                <th style="width: 13%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle;">
-                                    <i class="bi bi-calendar3 me-2"></i>วันที่ออกเดินทาง
-                                </th>
-                                <th style="width: 12%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle;">
-                                    <i class="bi bi-bus-front me-2"></i>ตู่
-                                </th>
-                                <th style="width: 16%; padding: 10px; border-right: 1px solid #e9ecef; text-align: left; vertical-align: middle;">
-                                    <i class="bi bi-map me-2"></i>ทริป
-                                </th>
-                                <th style="width: 18%; padding: 10px; border-right: 1px solid #e9ecef; text-align: left; vertical-align: middle;">
-                                    <i class="bi bi-geo-alt me-2"></i>เส้นทาง
-                                </th>
-                                <th style="width: 13%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle;">
-                                    <i class="bi bi-grid-1x2 me-2"></i>ที่นั่ง
-                                </th>
-                                <th style="width: 12%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle;">
-                                    <i class="bi bi-flag-fill me-2"></i>สถานะ
-                                </th>
-                                <th style="width: 16%; padding: 10px; text-align: center; vertical-align: middle;">
-                                    <i class="bi bi-gear me-2"></i>การจัดการ
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody id="roundsTableBody">
-                            <tr>
-                                <td colspan="7" class="text-center py-4 text-muted">กำลังโหลด...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div id="tableNoData" class="text-center py-4 text-muted d-none">ไม่พบรอบรถ</div>
-            </div>
-
-            <div class="mt-4 pb-4">
-                <div id="roundPagination"></div>
-            </div>
-        </div>
-    </main>
-</div>
-
-<!-- Create Round Modal -->
-<div class="modal fade" id="roundModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">เปิดรอบรถ</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="roundForm">
-                    <input type="hidden" id="roundId">
-                    <div class="mb-3">
-                        <label class="form-label">ทริป <span class="text-danger">*</span></label>
-                        <select class="form-select" id="fTripId" required onchange="updateNextBusNumber()"></select>
+                <!-- View Toggle Tabs & Export Buttons -->
+                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm view-toggle-btn active" id="gridViewBtn" onclick="switchView('grid')">
+                            <i class="bi bi-grid-3x3-gap me-1"></i>มุมมองกริด
+                        </button>
+                        <button class="btn btn-sm view-toggle-btn" id="tableViewBtn" onclick="switchView('table')">
+                            <i class="bi bi-table me-1"></i>มุมมองตาราง
+                        </button>
                     </div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">รถคันที่</label>
-                            <input type="number" class="form-control" id="fBusNum" value="1" min="1">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">จำนวนที่นั่ง <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="fSeats" min="1" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">จุดสิ้นสุด <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="fEnd" placeholder="เช่น ท่าเรือต้นไทร" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">วัน-เวลาออกเดินทาง <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="fDepart" readonly placeholder="เลือกวันที่และเวลา..." required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">ระยะเวลา</label>
-                            <input type="text" class="form-control" id="fDuration" placeholder="เช่น 2 วัน 1 คืน, 6 ชั่วโมง">
-                        </div>
-                        <div class="col-12">
-                            <hr class="my-1">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label mb-0 fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i>จุดรับ (Pickup Points) <span class="text-danger">*</span></label>
-                                <button type="button" class="btn btn-sm btn-outline-success" onclick="addPickupRow()">
-                                    <i class="bi bi-plus-lg me-1"></i>เพิ่มจุดรับ
-                                </button>
-                            </div>
-                            <div id="pickupList" class="p-2 border rounded bg-light" style="max-height: 200px; overflow-y: auto;">
-                                <!-- Dynamic Rows -->
-                            </div>
-                            <small class="text-muted mt-1 d-block">จุดแรกจะถูกใช้เป็นจุดเริ่มต้นหลัก</small>
-                        </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-success" onclick="exportToCSV()">
+                            <i class="bi bi-file-earmark-csv me-1"></i>CSV
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="exportToPDF()">
+                            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                        </button>
                     </div>
-                </form>
+                </div>
+
+                <!-- Grid View Container -->
+                <div id="gridContainer">
+                    <div class="row g-3" id="roundsGrid">
+                        <div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>
+                    </div>
+                </div>
+
+                <!-- Table View Container -->
+                <div id="tableContainer" class="d-none">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="roundsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 15%"><i class="bi bi-calendar3 me-2"></i>วันที่เดินทาง</th>
+                                    <th style="width: 10%"><i class="bi bi-bus-front me-2"></i>รถ/ตู่</th>
+                                    <th style="width: 20%"><i class="bi bi-map me-2"></i>ชื่อทริป</th>
+                                    <th style="width: 25%"><i class="bi bi-geo-alt me-2"></i>เส้นทาง</th>
+                                    <th style="width: 10%"><i class="bi bi-grid-1x2 me-2"></i>ที่นั่ง</th>
+                                    <th style="width: 10%"><i class="bi bi-flag-fill me-2"></i>สถานะ</th>
+                                    <th style="width: 10%"><i class="bi bi-gear me-2"></i>จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roundsTableBody">
+                                <tr><td colspan="7" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="tableNoData" class="text-center py-4 text-muted d-none">ไม่พบรอบรถที่ต้องการ</div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="mt-4 pb-4">
+                    <div id="roundPagination"></div>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                <button class="btn btn-primary" onclick="saveRound()">บันทึก</button>
-            </div>
-        </div>
+        </main>
     </div>
-</div>
 
+    <!-- Modal Container (For separated form) -->
+    <div id="modal-container"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../assets/js/config.js"></script>
-<script src="../../assets/js/i18n.js"></script>
-<script src="../../assets/js/auth.js"></script>
-<script src="../../assets/js/auth-guard.js"></script>
-
-<script src="../../assets/js/apiClient.js"></script>
-<script src="../../modules/PaginationManager.js"></script>
-<script src="../../assets/js/app.js"></script>
-<script src="../../assets/js/features/thai-calendar.js"></script>
-<script>
-let roundModal, startPicker, endPicker, departPicker;
-let trips = [], allRounds = [];
-let pagination;
-let currentPage = 1, perPage = 9, filteredData = [];
-let currentViewMode = 'grid';
-
-
-document.addEventListener('DOMContentLoaded', async () => {
-    await initPage();
-    roundModal = new bootstrap.Modal(document.getElementById('roundModal'));
-
-    trips = await API.trips.list();
-    const fSel = document.getElementById('fTripId');
-    fSel.innerHTML = '<option value="">-- เลือกทริป --</option>';
-    trips.forEach(t => {
-        fSel.insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.title}</option>`);
-    });
-
-    // Pagination
-    pagination = new PaginationManager({
-        containerId: 'roundPagination',
-        onPageChange: (p) => { currentPage = p; renderRounds(false); },
-        onPerPageChange: (pp) => { perPage = pp; currentPage = 1; renderRounds(false); }
-    });
-
-    // ถ้ามี tripId ใน URL → ใส่ชื่อทริปในช่องค้นหาเลย
-    const urlTripId = new URLSearchParams(location.search).get('tripId');
-    if (urlTripId) {
-        const matched = trips.find(t => String(t.id) === urlTripId);
-        if (matched) document.getElementById('filterTrip').value = matched.title;
-    }
-
-    await loadRounds();
-
-    // เริ่มต้นตัวเลือกช่วงวันที่ไทย
-    startPicker = await ThaiCalendar.init('#startDate', {
-        onChange: () => renderRounds()
-    });
-    endPicker = await ThaiCalendar.init('#endDate', {
-        onChange: () => renderRounds()
-    });
-    departPicker = await ThaiCalendar.init('#fDepart', {
-        enableTime: true
-    });
-
-    // ปิด dropdown เมื่อคลิกนอก
-    document.addEventListener('click', e => {
-        if (!document.getElementById('filterTrip').contains(e.target) &&
-            !document.getElementById('tripFilterDropdown').contains(e.target)) {
-            hideTripDropdown();
-        }
-    });
-});
-
-// ─── Trip Filter Autocomplete ───────────────────────────────
-function showTripDropdown() {
-    const q = document.getElementById('filterTrip').value.toLowerCase().trim();
-    const dd = document.getElementById('tripFilterDropdown');
-    const filtered = q ? trips.filter(t => t.title.toLowerCase().includes(q)) : trips;
-
-    if (!filtered.length) { dd.classList.add('d-none'); return; }
-
-    dd.innerHTML = filtered.map((t, i) => `
-        <div class="trip-dd-item px-3 py-2" data-idx="${i}"
-            style="cursor:pointer;font-size:.88rem;border-bottom:1px solid #f0f0f0;"
-            onmousedown="selectTrip('${t.title.replace(/'/g, "\\'")}')"
-            onmouseover="this.style.background='#f0fdf9'"
-            onmouseout="this.style.background=''">
-            <i class="bi bi-map me-2 text-muted" style="font-size:.8rem;"></i>${t.title}
-        </div>`).join('');
-
-    dd.classList.remove('d-none');
-}
-
-function onFilterTripInput() {
-    showTripDropdown();
-    renderRounds();
-}
-
-function selectTrip(title) {
-    document.getElementById('filterTrip').value = title;
-    hideTripDropdown();
-    renderRounds();
-}
-
-function hideTripDropdown() {
-    document.getElementById('tripFilterDropdown').classList.add('d-none');
-}
-
-function clearTripFilter() {
-    document.getElementById('filterTrip').value = '';
-    hideTripDropdown();
-    renderRounds();
-}
-
-function clearDateRange() {
-    if (startPicker) startPicker.clear();
-    if (endPicker) endPicker.clear();
-    renderRounds();
-}
-
-function handleTripFilterKey(e) {
-    if (e.key === 'Escape') { hideTripDropdown(); }
-    if (e.key === 'Enter')  { hideTripDropdown(); renderRounds(); }
-}
-
-async function loadRounds() {
-    try {
-        allRounds = await API.busRounds.list();
-        renderRounds();
-    } catch (e) { showToast('โหลดล้มเหลว', 'danger'); }
-}
-
-function renderRounds(resetPage = true) {
-    if (resetPage) currentPage = 1;
-
-    const tripQ = document.getElementById('filterTrip').value.toLowerCase().trim();
-    const startQ = document.getElementById('startDate').value;
-    const endQ = document.getElementById('endDate').value;
-    const q = document.getElementById('searchInput').value.toLowerCase().trim();
-
-    let data = allRounds;
-    if (tripQ) data = data.filter(r => (r.trip?.title || '').toLowerCase().includes(tripQ));
-    if (startQ || endQ) {
-        data = ThaiCalendar.filterByDateRange(data, 'departDate', startQ, endQ);
-    }
-    if (q) data = data.filter(r => {
-        const pickupPoints = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
-        return (r.startPoint || '').toLowerCase().includes(q) ||
-               (r.endPoint || '').toLowerCase().includes(q) ||
-               pickupPoints.some(p => p.name.toLowerCase().includes(q));
-    });
-
-    filteredData = data;
-
-    if (!data.length) {
-        document.getElementById('roundsGrid').innerHTML = '<div class="col-12 text-center py-4 text-muted">ไม่พบรอบรถ</div>';
-        document.getElementById('tableNoData').classList.remove('d-none');
-        document.getElementById('roundsTableBody').innerHTML = '';
-        pagination.render({ totalRecords: 0, currentPage, perPage });
-        return;
-    }
-
-    document.getElementById('tableNoData').classList.add('d-none');
-    const startIdx = (currentPage - 1) * perPage;
-    let endIdx = startIdx + perPage;
-    const pagedData = data.slice(startIdx, endIdx);
-
-    // Render based on current view mode
-    if (currentViewMode === 'grid') {
-        renderGridView(pagedData);
-    } else {
-        renderTableView(pagedData);
-    }
-
-    pagination.render({ totalRecords: data.length, currentPage, perPage });
-}
-
-function renderGridView(pagedData) {
-    const grid = document.getElementById('roundsGrid');
-    let html = pagedData.map(r => {
-        const pct    = Math.round((r.bookedSeats / r.totalSeats) * 100);
-        const isFull = r.bookedSeats >= r.totalSeats;
-        return `<div class="col-md-6 col-xl-4">
-            <div class="card h-100 ${!r.isOpen ? 'border-secondary opacity-75' : ''}">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span class="fw-semibold"><i class="bi bi-bus-front me-1"></i>รถ${r.busNumber} — ${r.trip?.title || ''}</span>
-                    <span class="badge ${r.isOpen ? 'bg-success' : 'bg-secondary'}">${r.isOpen ? 'เปิดจอง' : 'ปิดจอง'}</span>
-                </div>
-                <div class="card-body">
-                    <div class="mb-1 text-primary small fw-bold">
-                        <i class="bi bi-geo-alt-fill me-1"></i>${r.startPoint} 
-                    </div>
-                    ${(() => {
-        const pickupPoints = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
-        return pickupPoints.length > 1 ? `
-            <div class="mb-2 ps-2 border-start text-muted" style="font-size: 0.75rem; margin-left: 0.35rem;">
-                ${pickupPoints.slice(1).map(p => `
-                    <div class="mb-1"><i class="bi bi-plus-circle me-1" style="font-size:0.6rem"></i>${p.name} ${p.price > 0 ? `<span class="text-success fw-bold">+${p.price}</span>` : ''}</div>
-                `).join('')}
-            </div>
-        ` : '';
-    })()}
-                    <div class="mb-2 text-muted small"><i class="bi bi-arrow-right-short me-1"></i>ถึง: ${r.endPoint}</div>
-                    <div class="mb-2 text-muted small"><i class="bi bi-calendar me-1"></i>${formatDateTime(r.departDate)}</div>
-                    ${r.extraPrice > 0 ? `<div class="mb-2 text-success small fw-semibold"><i class="bi bi-plus-circle me-1"></i>ราคาเริ่มต้นเพิ่ม: +${formatMoney(r.extraPrice)}</div>` : ''}
-                    ${r.duration ? `<div class="mb-2 text-muted small"><i class="bi bi-clock me-1"></i>${r.duration}</div>` : ''}
-                    <div class="mb-1 d-flex justify-content-between small">
-                        <span>ที่นั่ง</span>
-                        <span class="fw-semibold ${isFull ? 'text-danger' : ''}">${r.bookedSeats}/${r.totalSeats}</span>
-                    </div>
-                    <div class="progress mb-3" style="height:6px">
-                        <div class="progress-bar ${isFull ? 'bg-danger' : 'bg-success'}" style="width:${pct}%"></div>
-                    </div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <a href="/frontend/pages/monitor/list.html?roundId=${r.id}"
-                           class="btn btn-sm btn-outline-primary flex-fill">
-                            <i class="bi bi-ticket-perforated me-1"></i>ดูตั๋ว
-                            ${r.bookedSeats > 0 ? `<span class="badge bg-primary ms-1">${r.bookedSeats}</span>` : ''}
-                        </a>
-                        <a href="/frontend/pages/booking/seats.html?roundId=${r.id}"
-                           class="btn btn-sm btn-outline-warning" title="หน้าจองที่นั่ง (ลูกค้า)" target="_blank">
-                            <i class="bi bi-grid-3x3-gap"></i>
-                        </a>
-                        <button class="btn btn-sm ${r.isOpen ? 'btn-outline-danger' : 'btn-outline-success'}"
-                            onclick="toggleRound(${r.id})" title="${r.isOpen ? 'ปิดจอง' : 'เปิดจอง'}">
-                            <i class="bi bi-${r.isOpen ? 'lock' : 'unlock'}"></i>
-                        </button>
-                        <a href="/frontend/pages/reports/print.html?roundId=${r.id}"
-                           class="btn btn-sm btn-outline-secondary" title="พิมพ์">
-                            <i class="bi bi-printer"></i>
-                        </a>
-                        <button class="btn btn-sm btn-outline-primary" 
-                            onclick="editRound(${JSON.stringify(r).replace(/"/g,'&quot;')})" title="แก้ไข">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-
-    grid.innerHTML = html;
-}
-
-function renderTableView(pagedData) {
-    const tbody = document.getElementById('roundsTableBody');
-    let html = pagedData.map(r => {
-        const pct    = Math.round((r.bookedSeats / r.totalSeats) * 100);
-        const isFull = r.bookedSeats >= r.totalSeats;
-        const pickupPoints = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
-        const allPoints = pickupPoints.map(p => p.name).join(' → ');
-        
-        return `<tr style="height: 50px; border-bottom: 1px solid #e9ecef; ${!r.isOpen ? 'background-color: #f8f9fa;' : 'background-color: #fff;'}">
-            <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: center; font-weight: 500;">
-                <div class="text-dark">${formatDateTime(r.departDate)}</div>
-            </td>
-            <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: center; font-weight: 600; font-size: 1.1rem;">
-                <i class="bi bi-bus-front me-2 text-info"></i><span class="text-primary">${r.busNumber}</span>
-            </td>
-            <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: left;">
-                <strong class="text-dark">${r.trip?.title || '-'}</strong>
-            </td>
-            <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: left;">
-                <small class="text-muted">${allPoints || r.startPoint}</small>
-            </td>
-            <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: center;">
-                <div class="d-flex align-items-center justify-content-center gap-2">
-                    <span class="fw-semibold ${isFull ? 'text-danger' : 'text-success'}" style="font-size: 1.05rem;">
-                        ${r.bookedSeats}/${r.totalSeats}
-                    </span>
-                </div>
-                <div class="progress mt-1" style="height: 5px; width: 70px; margin: 0 auto;">
-                    <div class="progress-bar ${isFull ? 'bg-danger' : 'bg-success'}" style="width: ${pct}%"></div>
-                </div>
-            </td>
-            <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: center;">
-                <span class="badge ${r.isOpen ? 'bg-success' : 'bg-secondary'} px-2 py-1" style="font-size: 0.9rem; font-weight: 600;">
-                    ${r.isOpen ? '✓ เปิด' : '✕ ปิด'}
-                </span>
-            </td>
-            <td style="padding: 12px 10px; text-align: center;">
-                <div class="btn-group btn-group-sm" role="group" style="gap: 2px;">
-                    <a href="/frontend/pages/monitor/list.html?roundId=${r.id}" class="btn btn-sm btn-outline-info" title="ดูตั๋ว" style="border-radius: 4px;">
-                        <i class="bi bi-ticket-perforated"></i>
-                    </a>
-                    <button class="btn btn-sm btn-outline-warning" onclick="toggleRound(${r.id})" title="${r.isOpen ? 'ปิดจอง' : 'เปิดจอง'}" style="border-radius: 4px;">
-                        <i class="bi bi-${r.isOpen ? 'lock' : 'unlock'}"></i>
-                    </button>
-                    <a href="/frontend/pages/reports/print.html?roundId=${r.id}" class="btn btn-sm btn-outline-secondary" title="พิมพ์" style="border-radius: 4px;">
-                        <i class="bi bi-printer"></i>
-                    </a>
-                    <button class="btn btn-sm btn-outline-primary" onclick="editRound(${JSON.stringify(r).replace(/"/g,'&quot;')})" title="แก้ไข" style="border-radius: 4px;">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>`;
-    }).join('');
-
-    tbody.innerHTML = html;
-}
-
-function switchView(viewMode) {
-    currentViewMode = viewMode;
+    <!-- Core Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/i18n.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/auth-guard.js"></script>
+    <script src="../../assets/js/apiClient.js"></script>
+    <script src="../../modules/PaginationManager.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/features/thai-calendar.js"></script>
     
-    // Update UI - tab buttons
-    if (viewMode === 'grid') {
-        document.getElementById('gridViewBtn').classList.remove('text-muted');
-        document.getElementById('gridViewBtn').classList.add('text-primary');
-        document.getElementById('gridViewBtn').style.borderBottom = '3px solid #0d6efd';
-        
-        document.getElementById('tableViewBtn').classList.remove('text-primary');
-        document.getElementById('tableViewBtn').classList.add('text-muted');
-        document.getElementById('tableViewBtn').style.borderBottom = 'none';
-        
-        document.getElementById('gridContainer').classList.remove('d-none');
-        document.getElementById('tableContainer').classList.add('d-none');
-    } else {
-        document.getElementById('gridViewBtn').classList.remove('text-primary');
-        document.getElementById('gridViewBtn').classList.add('text-muted');
-        document.getElementById('gridViewBtn').style.borderBottom = 'none';
-        
-        document.getElementById('tableViewBtn').classList.remove('text-muted');
-        document.getElementById('tableViewBtn').classList.add('text-primary');
-        document.getElementById('tableViewBtn').style.borderBottom = '3px solid #0d6efd';
-        
-        document.getElementById('gridContainer').classList.add('d-none');
-        document.getElementById('tableContainer').classList.remove('d-none');
-    }
-    
-    // Re-render with new view
-    renderRounds(false);
-}
-
-// ===== Export Functions =====
-function exportToCSV() {
-    if (!filteredData || filteredData.length === 0) {
-        showToast('ไม่มีข้อมูลที่จะส่งออก', 'warning');
-        return;
-    }
-
-    // Prepare CSV headers
-    const headers = ['วันที่ออกเดินทาง', 'ตู่', 'ทริป', 'เส้นทาง', 'ที่นั่ง (จอง/ทั้งหมด)', 'สถานะ'];
-    
-    // Prepare CSV rows
-    const rows = filteredData.map(r => {
-        const pickupPoints = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
-        const allPoints = pickupPoints.map(p => p.name).join(' → ') || r.startPoint;
-        
-        return [
-            formatDateTime(r.departDate),
-            r.busNumber,
-            r.trip?.title || '-',
-            allPoints,
-            `${r.bookedSeats}/${r.totalSeats}`,
-            r.isOpen ? 'เปิด' : 'ปิด'
-        ];
-    });
-
-    // Combine headers and rows
-    const csvContent = [
-        headers.map(h => `"${h}"`).join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
-    // Create blob and download
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `bus-rounds-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    showToast('ส่งออก CSV สำเร็จ', 'success');
-}
-
-function exportToPDF() {
-    if (!filteredData || filteredData.length === 0) {
-        showToast('ไม่มีข้อมูลที่จะส่งออก', 'warning');
-        return;
-    }
-
-    // Create a temporary container for PDF content
-    const printWindow = window.open('', '', 'height=600,width=800');
-    
-    // Build HTML table for PDF
-    let tableHTML = `
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>รอบรถ / ตั๋ว</title>
-            <style>
-                body { font-family: 'Sarabun', Arial, sans-serif; margin: 20px; }
-                h1 { text-align: center; color: #333; margin-bottom: 5px; }
-                p { text-align: center; color: #666; margin-bottom: 20px; font-size: 0.9rem; }
-                table { 
-                    width: 100%; 
-                    border-collapse: collapse; 
-                    margin-top: 20px;
-                }
-                th { 
-                    background-color: #f0f0f0; 
-                    padding: 10px; 
-                    border: 1px solid #ddd;
-                    text-align: left;
-                    font-weight: bold;
-                }
-                td { 
-                    padding: 8px; 
-                    border: 1px solid #ddd;
-                }
-                tr:nth-child(even) { background-color: #f9f9f9; }
-                .status-open { color: green; font-weight: bold; }
-                .status-closed { color: gray; font-weight: bold; }
-            </style>
-        </head>
-        <body>
-            <h1>รอบรถ / ตั๋ว</h1>
-            <p>วันที่พิมพ์: ${new Date().toLocaleString('th-TH')}</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>วันที่ออกเดินทาง</th>
-                        <th>ตู่</th>
-                        <th>ทริป</th>
-                        <th>เส้นทาง</th>
-                        <th>ที่นั่ง</th>
-                        <th>สถานะ</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-
-    // Add data rows
-    filteredData.forEach(r => {
-        const pickupPoints = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
-        const allPoints = pickupPoints.map(p => p.name).join(' → ') || r.startPoint;
-        const statusClass = r.isOpen ? 'status-open' : 'status-closed';
-        const statusText = r.isOpen ? 'เปิด' : 'ปิด';
-        
-        tableHTML += `
-            <tr>
-                <td>${formatDateTime(r.departDate)}</td>
-                <td>${r.busNumber}</td>
-                <td>${r.trip?.title || '-'}</td>
-                <td>${allPoints}</td>
-                <td>${r.bookedSeats}/${r.totalSeats}</td>
-                <td class="${statusClass}">${statusText}</td>
-            </tr>
-        `;
-    });
-
-    tableHTML += `
-                </tbody>
-            </table>
-        </body>
-        </html>
-    `;
-
-    printWindow.document.write(tableHTML);
-    printWindow.document.close();
-    
-    setTimeout(() => {
-        printWindow.print();
-        showToast('เปิดหน้าพิมพ์เพื่อส่งออก PDF', 'info');
-    }, 250);
-}
-
-// ===== Pickup Points Manager =====
-function createPickupRow(name = '', price = 0) {
-    return `
-        <div class="pickup-row d-flex gap-2 mb-2">
-            <input type="text" class="form-control form-control-sm p-name" placeholder="ชื่อจุดรับ" value="${name}" required>
-            <div class="input-group input-group-sm" style="width: 140px;">
-                <span class="input-group-text badge-success">+</span>
-                <input type="number" class="form-control p-price" placeholder="บวกเพิ่ม" value="${price}" min="0" step="1">
-            </div>
-            <button type="button" class="btn btn-sm btn-outline-danger px-2" onclick="this.closest('.pickup-row').remove()">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-    `;
-}
-
-function addPickupRow(name = '', price = 0) {
-    document.getElementById('pickupList').insertAdjacentHTML('beforeend', createPickupRow(name, price));
-}
-
-function openModal() {
-    document.getElementById('roundForm').reset();
-    document.getElementById('roundId').value = '';
-    
-    // Auto Select Trip if filter is active
-    const tripQ = document.getElementById('filterTrip').value.toLowerCase().trim();
-    if (tripQ) {
-        const found = trips.find(t => t.title.toLowerCase().includes(tripQ));
-        if (found) document.getElementById('fTripId').value = found.id;
-    }
-
-    document.getElementById('fDuration').value = '';
-    if (departPicker) departPicker.clear();
-    
-    document.getElementById('pickupList').innerHTML = '';
-    addPickupRow('ท่าเรือ', 0); // Default row
-    
-    updateNextBusNumber();
-    roundModal.show();
-}
-
-function updateNextBusNumber() {
-    const tripId = parseInt(document.getElementById('fTripId').value);
-    if (!tripId) return;
-
-    // Find max bus number for this trip in allRounds
-    const sameTripRounds = allRounds.filter(r => r.tripId === tripId);
-    if (sameTripRounds.length === 0) {
-        document.getElementById('fBusNum').value = 1;
-    } else {
-        const numbers = sameTripRounds.map(r => r.busNumber || 0);
-        const maxNum = Math.max(...numbers);
-        document.getElementById('fBusNum').value = maxNum + 1;
-    }
-}
-
-function editRound(r) {
-    document.getElementById('roundId').value = r.id;
-    document.getElementById('fTripId').value = r.tripId;
-    document.getElementById('fBusNum').value = r.busNumber;
-    document.getElementById('fSeats').value = r.totalSeats;
-    document.getElementById('fEnd').value = r.endPoint;
-    document.getElementById('fDuration').value = r.duration || '';
-    
-    if (departPicker) {
-        departPicker.setDate(new Date(r.departDate));
-    }
-
-    // Load Pickups
-    document.getElementById('pickupList').innerHTML = '';
-    const points = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || [{ name: r.startPoint, price: r.extraPrice }]);
-    points.forEach(p => addPickupRow(p.name, p.price));
-
-    roundModal.show();
-}
-
-async function saveRound() {
-    const id = document.getElementById('roundId').value;
-    // Collect Pickup Points
-    const rows = document.querySelectorAll('.pickup-row');
-    const pickups = [];
-    rows.forEach(r => {
-        pickups.push({
-            name: r.querySelector('.p-name').value.trim(),
-            price: parseFloat(r.querySelector('.p-price').value || 0)
-        });
-    });
-
-    if (pickups.length === 0) return showToast('กรุณาเพิ่มจุดรับอย่างน้อย 1 จุด', 'warning');
-
-    let departDateVal = document.getElementById('fDepart').value;
-    if (departDateVal) {
-        // Handle BE to AD conversion if year is > 2500
-        const parts = departDateVal.match(/^(\d{4})-(.*)$/);
-        if (parts && parseInt(parts[1]) > 2500) {
-            departDateVal = (parseInt(parts[1]) - 543) + '-' + parts[2];
-        }
-        try {
-            departDateVal = new Date(departDateVal).toISOString();
-        } catch(e) { console.error('Date conversion failed', e); }
-    }
-
-    const data = {
-        tripId:     parseInt(document.getElementById('fTripId').value),
-        busNumber:  parseInt(document.getElementById('fBusNum').value),
-        totalSeats: parseInt(document.getElementById('fSeats').value),
-        startPoint: pickups[0].name,
-        extraPrice: pickups[0].price,
-        endPoint:   document.getElementById('fEnd').value,
-        pickupPoints: pickups,
-        departDate: departDateVal,
-        duration:   document.getElementById('fDuration').value || null
-    };
-
-    if (!data.departDate) return showToast('กรุณาเลือกวัน-เวลาเดินทาง', 'warning');
-
-    try {
-        if (id) await API.busRounds.update(id, data);
-        else await API.busRounds.create(data);
-        
-        roundModal.hide();
-        showToast(id ? 'แก้ไขรอบรถสำเร็จ' : 'เปิดรอบรถสำเร็จ');
-        await loadRounds();
-    } catch (e) { showToast(e.message, 'danger'); }
-}
-
-async function toggleRound(id) {
-    try { await API.busRounds.toggle(id); showToast('อัปเดตสำเร็จ'); await loadRounds(); }
-    catch (e) { showToast(e.message, 'danger'); }
-}
-</script>
+    <!-- Page Script -->
+    <script src="bus-rounds.js"></script>
 </body>
+
 </html>
