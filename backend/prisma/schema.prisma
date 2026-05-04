@@ -65,6 +65,7 @@ model Trip {
   updatedAt   DateTime @updatedAt
 
   busRounds   BusRound[]
+  draftRounds DraftBusRound[] @relation("DraftRounds")
   addons      Addon[]
   contents    Content[]
 }
@@ -76,8 +77,8 @@ model BusRound {
   trip        Trip     @relation(fields: [tripId], references: [id])
   busNumber         Int      @default(1)
   startPoint        String
-  endPoint          String
   departDate        DateTime
+  returnDate        DateTime   // วันกลับ (บังคับ)
   duration          String?
   totalSeats        Int
   bookedSeats       Int      @default(0)
@@ -85,11 +86,31 @@ model BusRound {
   responsiblePerson String?
   extraPrice        Float    @default(0)
   pickupPoints      Json?
+  vehicles          Json?    // [{id, busNumber, seatCapacity, status}, ...]
   createdAt         DateTime @default(now())
   updatedAt         DateTime @default(now()) @updatedAt
 
   bookings     Booking[]
   seatBookings SeatBooking[]
+}
+
+// ===== DRAFT BUS ROUND (ทดค่ารอบ) =====
+model DraftBusRound {
+  id          Int      @id @default(autoincrement())
+  tripId      Int
+  trip        Trip     @relation("DraftRounds", fields: [tripId], references: [id])
+  busNumber         Int      @default(1)
+  startPoint        String
+  departDate        DateTime
+  returnDate        DateTime   // วันกลับ (บังคับ)
+  duration          String?
+  totalSeats        Int?
+  responsiblePerson String?
+  extraPrice        Float    @default(0)
+  pickupPoints      Json?    // [{name, price}, ...]
+  vehicles          Json?    // [{id, busNumber, seatCapacity, status}, ...]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
 }
 
 // ===== BOOKING (การจอง) =====

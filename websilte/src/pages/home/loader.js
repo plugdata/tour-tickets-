@@ -297,47 +297,14 @@ export async function loadFeaturedContent() {
 
 // ── Master loader ─────────────────────────────────────────
 export async function loadHomepage() {
-  try {
-    console.log('🏠 Loading homepage...')
-
-    // Run settings first (needed for hero bg), others in parallel
-    console.log('⚙️ Loading site settings...')
-    await loadSiteSettings()
-    console.log('✅ Site settings loaded')
-
-    console.log('📦 Loading homepage content...')
-    const results = await Promise.allSettled([
-      loadFireTicker(),
-      loadTrips(),
-      loadBlogSection(),
-      loadGallery(),
-      loadFAQ(),
-      loadFeaturedContent(),
-    ])
-
-    // Log any failures for debugging
-    results.forEach((result, index) => {
-      const loaders = ['FireTicker', 'Trips', 'Blog', 'Gallery', 'FAQ', 'Featured']
-      if (result.status === 'rejected') {
-        console.warn(`❌ ${loaders[index]} failed:`, result.reason)
-      } else {
-        console.log(`✅ ${loaders[index]} loaded`)
-      }
-    })
-
-    console.log('🎉 Homepage loading complete!')
-  } catch (error) {
-    console.error('💥 Homepage loading failed:', error)
-    // Show error message to user
-    const heroSection = $('heroSection')
-    if (heroSection) {
-      heroSection.innerHTML = `
-        <div style="text-align:center;padding:4rem 2rem;">
-          <h2>🚫 ไม่สามารถโหลดข้อมูลได้</h2>
-          <p>กรุณาลองใหม่อีกครั้งหรือติดต่อผู้ดูแลระบบ</p>
-          <button onclick="location.reload()" class="btn btn-primary">ลองใหม่</button>
-        </div>
-      `
-    }
-  }
+  // Run settings first (needed for hero bg), others in parallel
+  await loadSiteSettings()
+  await Promise.allSettled([
+    loadFireTicker(),
+    loadTrips(),
+    loadBlogSection(),
+    loadGallery(),
+    loadFAQ(),
+    loadFeaturedContent(),
+  ])
 }

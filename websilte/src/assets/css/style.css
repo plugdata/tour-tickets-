@@ -193,7 +193,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0 1.5rem;
 }
 .fire-sidebar {
-  width: 140px; /* ลดลงจาก 180px เพื่อให้มีพื้นที่ ticker มากขึ้นสำหรับ 4 cards */
+  width: 140px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -204,6 +204,34 @@ h1, h2, h3, h4, h5, h6 {
 .fire-ticker-area {
   flex: 1;
   min-width: 0;
+}
+
+@media (max-width: 576px) {
+  .fire-section-layout {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0 0.75rem;
+  }
+  .fire-sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    padding-right: 0;
+    gap: 0.75rem;
+  }
+  .fire-subtitle { display: none; }
+  .fire-ticker-area { width: 100%; }
+  .fire-ticker-wrap {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+  }
+  .fire-slide {
+    width: calc(80vw) !important;
+  }
+  .fire-card {
+    width: 100%;
+  }
 }
 
 .fire-header {

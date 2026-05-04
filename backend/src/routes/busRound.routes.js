@@ -119,11 +119,17 @@ router.get('/trip/:tripId', async (req, res) => {
  *             required: [tripId, startPoint, endPoint, departDate, totalSeats]
  *             properties:
  *               tripId: { type: integer }
- *               busNumber: { type: integer }
+ *               busNumber: { type: integer, default: 1 }
  *               startPoint: { type: string }
  *               endPoint: { type: string }
  *               departDate: { type: string, format: date-time }
+ *               returnDate: { type: string, format: date-time, nullable: true }
+ *               duration: { type: string }
  *               totalSeats: { type: integer }
+ *               responsiblePerson: { type: string }
+ *               extraPrice: { type: number, default: 0 }
+ *               pickupPoints: { type: object }
+ *               vehicles: { type: object }
  *     responses:
  *       201: { description: Created }
  */

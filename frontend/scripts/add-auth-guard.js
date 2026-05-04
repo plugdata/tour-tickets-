@@ -50,28 +50,28 @@ const protectedPages = [
 function addAuthGuard(filePath) {
     try {
         let content = fs.readFileSync(filePath, 'utf8');
-        
+
         // Check if auth-guard is already included
         if (content.includes('auth-guard.js')) {
             console.log(`✅ ${filePath} - Already has auth guard`);
             return;
         }
-        
+
         // Find the auth.js script and add auth-guard.js after it
         const authJsPattern = /<script src="[^"]*auth\.js"><\/script>/;
         const match = content.match(authJsPattern);
-        
+
         if (match) {
             // Insert auth-guard.js after auth.js
             const authGuardScript = match[0].replace('auth.js', 'auth-guard.js') + '\n';
             content = content.replace(match[0], match[0] + '\n' + authGuardScript);
-            
+
             fs.writeFileSync(filePath, content, 'utf8');
             console.log(`✅ ${filePath} - Added auth guard`);
         } else {
             console.log(`⚠️  ${filePath} - Could not find auth.js script`);
         }
-        
+
     } catch (error) {
         console.error(`❌ ${filePath} - Error: ${error.message}`);
     }

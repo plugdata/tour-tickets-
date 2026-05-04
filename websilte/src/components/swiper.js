@@ -27,9 +27,8 @@ export function initSwipers() {
       nextEl: '.domestic-swiper .swiper-button-next',
       prevEl: '.domestic-swiper .swiper-button-prev',
     },
-    pagination: { el: '.domestic-swiper .swiper-pagination', clickable: true },
     breakpoints: {
-      0: { spaceBetween: 12 },
+      0: { spaceBetween: 10 },
       640: { spaceBetween: 16 },
       1024: { spaceBetween: 20 }
     }
@@ -46,9 +45,8 @@ export function initSwipers() {
       nextEl: '.international-swiper .swiper-button-next',
       prevEl: '.international-swiper .swiper-button-prev',
     },
-    pagination: { el: '.international-swiper .swiper-pagination', clickable: true },
     breakpoints: {
-      0: { spaceBetween: 12 },
+      0: { spaceBetween: 10 },
       640: { spaceBetween: 16 },
       1024: { spaceBetween: 20 }
     }

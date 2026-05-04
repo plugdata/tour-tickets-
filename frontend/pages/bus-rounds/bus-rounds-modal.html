@@ -63,26 +63,12 @@
 
                     <hr class="my-3">
 
-                    <!-- ③ จุดเริ่มต้น จุดสิ้นสุด ผู้รับผิดชอบ ค่าเพิ่มเติม -->
+                    <!-- ③ ผู้รับผิดชอบ ค่าเพิ่มเติม -->
                     <div class="mb-3">
                         <p class="fw-semibold text-secondary small text-uppercase mb-2 ls-wide">
                             <i class="bi bi-info-circle me-1"></i>ข้อมูลเพิ่มเติม
                         </p>
                         <div class="row g-2">
-                            <div class="col-md-6">
-                                <label class="form-label small fw-semibold mb-1">
-                                    <i class="bi bi-geo-alt text-success me-1"></i>จุดเริ่มต้น
-                                </label>
-                                <input type="text" class="form-control form-control-sm" id="fStartPoint" placeholder="เช่น สถานีชุมชน">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-semibold mb-1">
-                                    <i class="bi bi-geo text-danger me-1"></i>จุดสิ้นสุด
-                                </label>
-                                <input type="text" class="form-control form-control-sm" id="fEndPoint" placeholder="เช่น หัวหิน">
-                            </div>
-                        </div>
-                        <div class="row g-2 mt-2">
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold mb-1">
                                     <i class="bi bi-person-badge text-info me-1"></i>ผู้รับผิดชอบ
@@ -115,9 +101,11 @@
                                         placeholder="กรุณาเลือกวันที่" data-input>
                                 </div>
                                 <div class="col-md-5">
-                                    <label class="form-label small fw-semibold mb-1">วันสิ้นสุด</label>
+                                    <label class="form-label small fw-semibold mb-1">
+                                        วันสิ้นสุด <span class="text-danger">*</span>
+                                    </label>
                                     <input type="text" class="form-control flatpickr-input" id="fEndDate"
-                                        placeholder="เลือกวันที่ (ไม่บังคับ)" data-input>
+                                        placeholder="กรุณาเลือกวันที่" data-input required>
                                 </div>
                                 <div class="col-md-2 d-flex align-items-end">
                                     <div class="px-2 py-1 rounded bg-light text-center w-100" style="min-height:38px; display:flex; align-items:center; justify-content:center;">

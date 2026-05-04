@@ -479,9 +479,8 @@
 
     /* Swiper override for trip rows */
     .ht-swiper {
-      padding: 0 0 2.5rem !important;
+      padding: 0 0 0.5rem !important;
       overflow: hidden !important;
-      /* เปลี่ยนจาก visible เป็น hidden เพื่อให้ตัดขอบที่ container */
     }
 
     .ht-swiper .swiper-slide {
@@ -536,16 +535,35 @@
 
     @media(max-width:640px) {
       .ht-swiper .swiper-slide {
-        width: 220px !important;
+        width: calc(82vw) !important;
       }
 
       .ht-img,
       .ht-img-placeholder {
-        height: 140px;
+        height: 160px;
       }
 
       .ht-seats-overlay {
         display: none;
+      }
+
+      .ht-card-title {
+        font-size: 1rem;
+      }
+
+      .ht-price {
+        font-size: 1.25rem;
+      }
+
+      .ht-btn-book {
+        font-size: .78rem;
+        padding: .4rem .75rem;
+      }
+    }
+
+    @media(max-width:400px) {
+      .ht-swiper .swiper-slide {
+        width: calc(90vw) !important;
       }
     }
 
@@ -1091,13 +1109,12 @@
           <h2 class="ht-title" data-i18n="domestic_title">ทริปในประเทศ</h2>
           <p class="ht-sub" data-i18n="domestic_subtitle">สัมผัสธรรมชาติที่ยอดเยี่ยมรอบตัวคุณ</p>
         </div>
-        <a href="/trips" class="ht-view-all"><span data-i18n="view_all_trips">ดูทริปทั้งหมด</span> <i class="bi bi-arrow-right"></i></a>
+        <a href="/trips?type=DOMESTIC" class="ht-view-all"><span data-i18n="view_all_trips">ดูทริปทั้งหมด</span> <i class="bi bi-arrow-right"></i></a>
       </div>
       <div class="swiper ht-swiper domestic-swiper">
         <div class="swiper-wrapper" id="domesticWrapper"></div>
         <div class="swiper-button-next"></div>
         <div class="swiper-button-prev"></div>
-        <div class="swiper-pagination"></div>
       </div>
     </div>
   </section>
@@ -1110,13 +1127,12 @@
           <h2 class="ht-title" data-i18n="intl_title">ทริปต่างประเทศ</h2>
           <p class="ht-sub" data-i18n="intl_subtitle">ก้าวข้ามพรมแดน สู่จุดหมายที่ดีที่สุด</p>
         </div>
-        <a href="/trips" class="ht-view-all"><span data-i18n="view_all_trips">ดูทริปทั้งหมด</span> <i class="bi bi-arrow-right"></i></a>
+        <a href="/trips?type=INTERNATIONAL" class="ht-view-all"><span data-i18n="view_all_trips">ดูทริปทั้งหมด</span> <i class="bi bi-arrow-right"></i></a>
       </div>
       <div class="swiper ht-swiper international-swiper">
         <div class="swiper-wrapper" id="intlWrapper"></div>
         <div class="swiper-button-next"></div>
         <div class="swiper-button-prev"></div>
-        <div class="swiper-pagination"></div>
       </div>
     </div>
   </section>
@@ -1440,7 +1456,7 @@
 
       return `
   <div class="swiper-slide">
-    <div class="ht-card" onclick="window.__tdOpen(${t.id})">
+    <div class="ht-card" onclick="window.location.href='/trips/${t.id}'">
       <div class="ht-img-wrap">
         ${t.imageUrl
           ? `<img src="${t.imageUrl}" class="ht-img" alt="${esc(t.title)}" loading="lazy">`
@@ -1474,7 +1490,7 @@
         </div>` : ''}
         <div class="ht-card-footer">
           <div class="ht-price">฿${Number(t.price).toLocaleString()}<small data-i18n="per_person"> / คน</small></div>
-          <button class="ht-btn-book" onclick="event.stopPropagation();window.__tdOpen(${t.id})">
+          <button class="ht-btn-book" onclick="event.stopPropagation();window.location.href='/trips/${t.id}'">
             <i class="bi bi-info-circle me-1"></i><span data-i18n="view_detail">รายละเอียด</span>
           </button>
         </div>
@@ -1505,6 +1521,8 @@
         const domEl = document.getElementById('domesticWrapper')
         const intlEl = document.getElementById('intlWrapper')
         domEl.innerHTML = domestic.length ? domestic.map(t => tripCard(t, homeRoundMap.get(t.id) || [])).join('') : emptySlide('ยังไม่มีทริปในประเทศ')
+        // Hide intl section if no data
+        document.getElementById('intlSection').style.display = international.length ? '' : 'none'
         intlEl.innerHTML = international.length ? international.map(t => tripCard(t, homeRoundMap.get(t.id) || [])).join('') : emptySlide('ยังไม่มีทริปต่างประเทศ')
 
         if (window.__initSwipers) window.__initSwipers()
@@ -1692,6 +1710,11 @@
         <span data-i18n-dyn data-th="เลือกรอบ แล้วกดจองทริป">เลือกรอบ แล้วกดจองทริป</span>
       </div>
     </div>`
+      // Auto-select first available round
+      const firstAvailable = rounds.find(r => r.isOpen && (r.totalSeats - r.bookedSeats) > 0)
+      if (firstAvailable) {
+        setTimeout(() => window.__tdSelectRound(firstAvailable.id), 50)
+      }
     }
 
     window.__tdSelectRound = function (rid) {

@@ -147,7 +147,6 @@ function renderRounds(resetPage = true) {
     if (q) data = data.filter(r => {
         const pts = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
         return (r.startPoint || '').toLowerCase().includes(q) ||
-            (r.endPoint || '').toLowerCase().includes(q) ||
             pts.some(p => p.name.toLowerCase().includes(q));
     });
 
@@ -197,7 +196,6 @@ function renderGridView(pagedData) {
                     ${pts.length > 1 ? `<div class="mb-2 ps-2 border-start text-muted" style="font-size:.75rem;margin-left:.35rem;">
                         ${pts.slice(1).map(p => `<div class="mb-1"><i class="bi bi-plus-circle me-1" style="font-size:.6rem"></i>${p.name}${p.price > 0 ? ` <span class="text-success fw-bold">+${p.price}</span>` : ''}</div>`).join('')}
                     </div>` : ''}
-                    <div class="mb-2 text-muted small"><i class="bi bi-arrow-right-short me-1"></i>ถึง: ${r.endPoint}</div>
                     <div class="mb-2 text-muted small"><i class="bi bi-calendar me-1"></i>${formatDateTime(r.departDate)}</div>
                     ${r.extraPrice > 0 ? `<div class="mb-2 text-success small fw-semibold"><i class="bi bi-plus-circle me-1"></i>ราคาเพิ่ม: +${formatMoney(r.extraPrice)}</div>` : ''}
                     ${r.duration ? `<div class="mb-2 text-muted small"><i class="bi bi-clock me-1"></i>${r.duration}</div>` : ''}
@@ -381,12 +379,6 @@ function onRoundSelect() {
         durationDisplay.textContent = first?.duration || '-';
     }
 
-    const startPointInput = document.getElementById('fStartPoint');
-    if (startPointInput) startPointInput.value = first?.startPoint || '';
-
-    const endPointInput = document.getElementById('fEndPoint');
-    if (endPointInput) endPointInput.value = first?.endPoint || '';
-
     const responsibleInput = document.getElementById('fResponsiblePerson');
     if (responsibleInput) responsibleInput.value = first?.responsiblePerson || '';
 
@@ -489,12 +481,6 @@ function onNewRoundDateSelected() {
     if (roundSelect) roundSelect.value = '';
 
     // Clear additional fields
-    const startPointInput = document.getElementById('fStartPoint');
-    if (startPointInput) startPointInput.value = '';
-
-    const endPointInput = document.getElementById('fEndPoint');
-    if (endPointInput) endPointInput.value = '';
-
     const responsibleInput = document.getElementById('fResponsiblePerson');
     if (responsibleInput) responsibleInput.value = '';
 
@@ -536,13 +522,7 @@ function resetRoundForm() {
     const durationDisplay = document.getElementById('durationDisplay');
     if (durationDisplay) durationDisplay.textContent = '-';
 
-    // Reset new fields
-    const startPointInput = document.getElementById('fStartPoint');
-    if (startPointInput) startPointInput.value = '';
-
-    const endPointInput = document.getElementById('fEndPoint');
-    if (endPointInput) endPointInput.value = '';
-
+    // Reset additional fields
     const responsibleInput = document.getElementById('fResponsiblePerson');
     if (responsibleInput) responsibleInput.value = '';
 
@@ -631,7 +611,7 @@ function calcDuration() {
 }
 
 // ─── Vehicle Management ───────────────────────────────────────
-function addVehicleRow(busNum = null, seats = 40, isOpen = true, id = null) {
+function addVehicleRow(busNum = null, seats = 10, isOpen = true, id = null) {
     const list = document.getElementById('vehicleList');
     if (!list) return;
 
@@ -649,7 +629,7 @@ function addVehicleRow(busNum = null, seats = 40, isOpen = true, id = null) {
                     </div>
                     <div>
                         <label class="form-label small fw-semibold mb-1">ที่นั่ง</label>
-                        <input type="number" class="form-control form-control-sm v-seats" value="${seats}" min="1" placeholder="40" style="width:80px;">
+                        <input type="number" class="form-control form-control-sm v-seats" value="${seats}" min="1" placeholder="10" style="width:80px;">
                     </div>
                     <div>
                         <label class="form-label small fw-semibold mb-1">สถานะ</label>
@@ -860,15 +840,14 @@ async function saveDraft() {
     const endVal = endDate ? endDate.toISOString().split('T')[0] : (endDateInput?.value?.trim() || '');
 
     if (!startVal) return showToast('กรุณาเลือกวันเริ่มต้น', 'warning');
+    if (!endVal) return showToast('กรุณาเลือกวันสิ้นสุด', 'warning');
 
     // Parse back to Date object
     const [sy, sm, sd] = startVal.split('-').map(Number);
     const startDateObj = new Date(sy, sm - 1, sd);
-    let endDateObj = null;
-    if (endVal) {
-        const [ey, em, ed] = endVal.split('-').map(Number);
-        endDateObj = new Date(ey, em - 1, ed);
-    }
+
+    const [ey, em, ed] = endVal.split('-').map(Number);
+    const endDateObj = new Date(ey, em - 1, ed);
 
     const vehicles = document.querySelectorAll('.vehicle-row');
     if (!vehicles.length) return showToast('กรุณาเพิ่มรถอย่างน้อย 1 คัน', 'warning');
@@ -880,12 +859,12 @@ async function saveDraft() {
 
     if (!pickups.length) return showToast('กรุณาเพิ่มจุดรับอย่างน้อย 1 จุด', 'warning');
 
+    if (endDateObj < startDateObj) return showToast('วันสิ้นสุดต้องอยู่หลังวันเริ่มต้น', 'warning');
+
     const durationDisplay = document.getElementById('durationDisplay');
     const durationText = durationDisplay ? durationDisplay.textContent.trim() : '';
     if (durationText.includes('⚠')) return showToast('วันสิ้นสุดต้องอยู่หลังวันเริ่มต้น', 'warning');
     const duration = durationText && durationText !== '-' ? durationText : null;
-
-    if (endDateObj && endDateObj < startDateObj) return showToast('วันสิ้นสุดต้องอยู่หลังวันเริ่มต้น', 'warning');
 
     try {
         const vehicleRows = [...vehicles];
@@ -896,14 +875,12 @@ async function saveDraft() {
             status: v.querySelector('.v-status').checked ? 'Open' : 'Closed'
         }));
 
-        const startPointInput = document.getElementById('fStartPoint');
-        const endPointInput = document.getElementById('fEndPoint');
         const responsiblePersonInput = document.getElementById('fResponsiblePerson');
         const extraPriceInput = document.getElementById('fExtraPrice');
         const departureTimeInput = document.getElementById('fDepartureTime');
 
-        const startPoint = startPointInput ? startPointInput.value.trim() : pickups[0]?.name || '';
-        const endPoint = endPointInput ? endPointInput.value.trim() : '';
+        // startPoint is the first pickup point name
+        const startPoint = pickups[0]?.name || '';
         const responsiblePerson = responsiblePersonInput ? responsiblePersonInput.value.trim() : null;
         const extraPrice = extraPriceInput ? parseFloat(extraPriceInput.value || 0) : 0;
         const departureTime = departureTimeInput ? departureTimeInput.value : '08:00';
@@ -924,9 +901,8 @@ async function saveDraft() {
             tripId,
             busNumber: 1,
             startPoint,
-            endPoint,
             departDate: departDateWithTime.toISOString(),
-            returnDate: returnDateWithTime ? returnDateWithTime.toISOString() : null,
+            returnDate: returnDateWithTime.toISOString(),
             duration,
             totalSeats: vehiclesData.reduce((sum, v) => sum + v.seatCapacity, 0),
             responsiblePerson,
