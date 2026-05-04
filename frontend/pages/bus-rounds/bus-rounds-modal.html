@@ -1,0 +1,244 @@
+<!-- Bus Rounds Modal - Create/Edit Round -->
+<div class="modal fade" id="roundModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+
+            <!-- Header -->
+            <div class="modal-header" style="background: linear-gradient(135deg,#0d6efd,#0b5ed7); color:#fff;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-bus-front fs-5"></i>
+                    <h5 class="modal-title mb-0 fw-semibold">จัดการรอบรถ</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body px-4 py-3">
+                <form id="roundForm" onsubmit="return false;">
+
+                    <!-- ① ทริป -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold mb-1">
+                            <i class="bi bi-map text-primary me-1"></i>ทริป
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="fTripId" required onchange="onTripChange()">
+                            <option value="">— กรุณาเลือกทริป —</option>
+                        </select>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- ② รอบทริป & เวลาออกรถ -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold mb-2">
+                            <i class="bi bi-calendar-event text-info me-1"></i>รอบทริป
+                            <span class="text-danger">*</span>
+                        </label>
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-8">
+                                <select class="form-select" id="fRoundSelect" onchange="onRoundSelect()">
+                                    <option value="">— เลือกรอบที่มีอยู่ —</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-success btn-sm w-100" id="btnAddRound" onclick="toggleAddRound()">
+                                    <i class="bi bi-plus-circle me-1"></i>สร้างรอบใหม่
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm w-100 d-none" id="btnCancelAddRound" onclick="cancelAddRound()">
+                                    <i class="bi bi-x-circle me-1"></i>ยกเลิก
+                                </button>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control form-control-sm flatpickr-input mt-2" id="fNewRoundDate"
+                            placeholder="เลือกวันสำหรับรอบใหม่" style="display:none;">
+                    </div>
+
+                    <!-- เวลาออกรถ -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold mb-1">
+                            <i class="bi bi-clock text-warning me-1"></i>เวลาออกรถ
+                        </label>
+                        <input type="time" class="form-control form-control-sm" id="fDepartureTime" value="08:00">
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- ③ จุดเริ่มต้น จุดสิ้นสุด ผู้รับผิดชอบ ค่าเพิ่มเติม -->
+                    <div class="mb-3">
+                        <p class="fw-semibold text-secondary small text-uppercase mb-2 ls-wide">
+                            <i class="bi bi-info-circle me-1"></i>ข้อมูลเพิ่มเติม
+                        </p>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold mb-1">
+                                    <i class="bi bi-geo-alt text-success me-1"></i>จุดเริ่มต้น
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="fStartPoint" placeholder="เช่น สถานีชุมชน">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold mb-1">
+                                    <i class="bi bi-geo text-danger me-1"></i>จุดสิ้นสุด
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="fEndPoint" placeholder="เช่น หัวหิน">
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold mb-1">
+                                    <i class="bi bi-person-badge text-info me-1"></i>ผู้รับผิดชอบ
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="fResponsiblePerson" placeholder="ชื่อผู้รับผิดชอบ">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold mb-1">
+                                    <i class="bi bi-cash-coin text-warning me-1"></i>ค่าเพิ่มเติม
+                                </label>
+                                <input type="number" class="form-control form-control-sm" id="fExtraPrice" placeholder="0" value="0" min="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- ④ ข้อมูลวันที่ -->
+                    <div id="roundDetailsSection" style="display:none;">
+                        <div class="mb-3">
+                            <p class="fw-semibold text-secondary small text-uppercase mb-2 ls-wide">
+                                <i class="bi bi-calendar-range me-1"></i>ข้อมูลวันที่
+                            </p>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-semibold mb-1">
+                                        วันเริ่มต้น <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control flatpickr-input" id="fStartDate"
+                                        placeholder="กรุณาเลือกวันที่" data-input>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-semibold mb-1">วันสิ้นสุด</label>
+                                    <input type="text" class="form-control flatpickr-input" id="fEndDate"
+                                        placeholder="เลือกวันที่ (ไม่บังคับ)" data-input>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <div class="px-2 py-1 rounded bg-light text-center w-100" style="min-height:38px; display:flex; align-items:center; justify-content:center;">
+                                        <output id="durationDisplay" class="fw-semibold text-success small">-</output>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-3">
+
+                        <!-- ⑤ รถที่เปิดในรอบนี้ -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <p class="fw-semibold text-secondary small text-uppercase mb-0 ls-wide">
+                                    <i class="bi bi-bus-front-fill me-1 text-info"></i>รถที่เปิดในรอบนี้
+                                </p>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="addVehicleRow()">
+                                    <i class="bi bi-plus-lg me-1"></i>เพิ่มรถ
+                                </button>
+                            </div>
+
+                            <div id="vehicleList" class="vehicle-list-container">
+                                <!-- vehicle rows injected here -->
+                            </div>
+
+                            <p class="text-muted small mb-0 mt-1">
+                                <i class="bi bi-info-circle me-1"></i>เพิ่มรถได้ไม่จำกัด — ที่นั่งรวมคำนวณอัตโนมัติ
+                            </p>
+                        </div>
+
+                        <hr class="my-3">
+
+                        <!-- ⑥ Pickup Points -->
+                        <div class="mb-1">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <p class="fw-semibold text-secondary small text-uppercase mb-0 ls-wide">
+                                    <i class="bi bi-pin-map-fill me-1 text-success"></i>Pickup Points
+                                </p>
+                                <button type="button" class="btn btn-success btn-sm" onclick="addPickupRow()">
+                                    <i class="bi bi-plus-lg me-1"></i>เพิ่มจุด
+                                </button>
+                            </div>
+
+                            <div id="pickupList" class="pickup-list-container">
+                                <!-- pickup rows injected here -->
+                            </div>
+
+                            <p class="text-muted small mb-0 mt-1">
+                                <i class="bi bi-info-circle me-1"></i>จุดแรก = DEFAULT · จุดถัดไปมีค่าบริการเพิ่มเติมได้
+                            </p>
+                        </div>
+
+                    </div>
+                    <!-- /roundDetailsSection -->
+
+                </form>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer bg-light border-top">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>ปิด
+                </button>
+                <button type="button" class="btn btn-warning px-4" onclick="saveDraft()" id="btnSaveDraft">
+                    <i class="bi bi-cloud-arrow-down me-1"></i>บันทึกร่าง
+                </button>
+                <button type="button" class="btn btn-success px-4" onclick="publishDraft()" id="btnPublish" style="display:none;">
+                    <i class="bi bi-check-circle me-1"></i>ส่งใช้งาน
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+/* ── Modal shell ─────────────────────────────────────── */
+#roundModal .modal-content {
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+/* ── Section labels ──────────────────────────────────── */
+.ls-wide { letter-spacing: .06em; }
+
+/* ── Vehicle rows ────────────────────────────────────── */
+.vehicle-row {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    background: #fff;
+    transition: box-shadow .15s;
+}
+.vehicle-row:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    border-color: #0d6efd55;
+}
+
+/* ── Pickup rows ─────────────────────────────────────── */
+.pickup-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.pickup-row:last-child { border-bottom: none; }
+.pickup-row:first-child { background: #f0f7ff; border-radius: 0.375rem; padding: 0.5rem 0.5rem; margin-bottom: 0.25rem; }
+
+/* ── Status badge ────────────────────────────────────── */
+.status-badge { display:inline-block; padding:.2rem .65rem; border-radius:20px; font-size:.78rem; font-weight:500; }
+.status-badge.open  { background:#d1f2eb; color:#0f5c36; }
+.status-badge.closed{ background:#f8d7da; color:#842029; }
+
+/* ── Duration display ────────────────────────────────── */
+#durationDisplay { font-size: .88rem; }
+#durationDisplay[style*="color: rgb(220"] { font-size: .72rem; }
+
+/* ── Containers ──────────────────────────────────────── */
+.vehicle-list-container,
+.pickup-list-container { min-height: 40px; }
+</style>
