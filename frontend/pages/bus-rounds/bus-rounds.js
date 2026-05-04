@@ -108,7 +108,13 @@ function handleTripFilterKey(e) {
 // ─── Data Loading & Rendering ────────────────────────────────
 async function loadRounds() {
     try {
-        allRounds = await API.busRounds.list();
+        const published = await API.busRounds.list();
+        const drafts = await API.draftBusRounds.list();
+
+        // Mark drafts and merge with published rounds
+        const draftRounds = drafts.map(d => ({ ...d, isDraft: true }));
+        allRounds = [...published, ...draftRounds];
+
         renderRounds();
     } catch (e) {
         console.error(e);
@@ -916,26 +922,12 @@ async function saveDraft() {
             vehicles: vehiclesData
         };
 
-        const token = localStorage.getItem('token');
-        const response = await fetch('/api/draft-bus-rounds', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(draftData)
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            return showToast(error.message || 'บันทึกร่างล้มเหลว', 'danger');
-        }
-
+        await API.draftBusRounds.create(draftData);
         showToast(`บันทึกร่างสำเร็จ (${vehicleRows.length} คัน)`);
         if (roundModal) roundModal.hide();
         await loadRounds();
     } catch (e) {
-        showToast(e.message || 'เกิดข้อผิดพลาด', 'danger');
+        showToast(e.message || 'บันทึกร่างล้มเหลว', 'danger');
     }
 }
 
@@ -944,24 +936,12 @@ async function publishDraft() {
 
     try {
         const draftId = _editingIds[0];
-        const token = localStorage.getItem('token');
-        const response = await fetch(`/api/draft-bus-rounds/${draftId}/publish`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            return showToast(error.message || 'ส่งไปใช้งานล้มเหลว', 'danger');
-        }
-
+        await API.draftBusRounds.publish(draftId);
         showToast('ส่งไปใช้งานสำเร็จ');
         if (roundModal) roundModal.hide();
         await loadRounds();
     } catch (e) {
-        showToast(e.message || 'เกิดข้อผิดพลาด', 'danger');
+        showToast(e.message || 'ส่งไปใช้งานล้มเหลว', 'danger');
     }
 }
 

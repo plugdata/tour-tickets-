@@ -77,6 +77,15 @@ const API = {
         toggle: (id)      => api.patch(`/bus-rounds/${id}/toggle`, {}),
     },
 
+    draftBusRounds: {
+        list: ()          => api.get('/draft-bus-rounds'),
+        byTrip: (tid)     => api.get(`/draft-bus-rounds?tripId=${tid}`),
+        create: (d)       => api.post('/draft-bus-rounds', d),
+        update: (id, d)   => api.put(`/draft-bus-rounds/${id}`, d),
+        publish: (id)     => api.post(`/draft-bus-rounds/${id}/publish`, {}),
+        delete: (id)      => api.delete(`/draft-bus-rounds/${id}`),
+    },
+
     // Bookings
     bookings: {
         list: ()                      => api.get('/bookings'),
