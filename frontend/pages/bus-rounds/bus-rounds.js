@@ -226,6 +226,9 @@ function renderGridView(pagedData) {
                         <button class="btn btn-sm btn-outline-primary" onclick="editRoundById(${r.id})" title="แก้ไข">
                             <i class="bi bi-pencil"></i>
                         </button>
+                        ${r.isDraft ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteDraft(${r.id})" title="ลบร่าง">
+                            <i class="bi bi-trash"></i>
+                        </button>` : ''}
                     </div>
                 </div>
             </div>
@@ -265,6 +268,7 @@ function renderTableView(pagedData) {
                     <button class="btn btn-sm btn-outline-warning" onclick="toggleRound(${r.id})"><i class="bi bi-${r.isOpen ? 'lock' : 'unlock'}"></i></button>
                     <a href="/frontend/pages/reports/print.html?roundId=${r.id}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i></a>
                     <button class="btn btn-sm btn-outline-primary" onclick="editRoundById(${r.id})"><i class="bi bi-pencil"></i></button>
+                    ${r.isDraft ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteDraft(${r.id})"><i class="bi bi-trash"></i></button>` : ''}
                 </div>
             </td>
         </tr>`;
@@ -951,6 +955,18 @@ async function publishDraft() {
         await loadRounds();
     } catch (e) {
         showToast(e.message || 'ส่งไปใช้งานล้มเหลว', 'danger');
+    }
+}
+
+async function deleteDraft(draftId) {
+    if (!confirm('คุณแน่ใจว่าต้องการลบร่างนี้?')) return;
+
+    try {
+        await API.draftBusRounds.delete(draftId);
+        showToast('ลบร่างสำเร็จ');
+        await loadRounds();
+    } catch (e) {
+        showToast(e.message || 'ลบร่างล้มเหลว', 'danger');
     }
 }
 
