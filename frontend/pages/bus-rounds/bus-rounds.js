@@ -112,7 +112,13 @@ async function loadRounds() {
         const drafts = await API.draftBusRounds.list();
 
         // Mark drafts and merge with published rounds
-        const draftRounds = drafts.map(d => ({ ...d, isDraft: true }));
+        // Drafts don't have bookedSeats, so default to 0
+        const draftRounds = drafts.map(d => ({
+            ...d,
+            isDraft: true,
+            bookedSeats: 0,
+            isOpen: true
+        }));
         allRounds = [...published, ...draftRounds];
 
         renderRounds();
@@ -173,15 +179,18 @@ function renderGridView(pagedData) {
     if (!grid) return;
 
     grid.innerHTML = pagedData.map(r => {
-        const pct = Math.round((r.bookedSeats / r.totalSeats) * 100);
+        const pct = r.totalSeats ? Math.round(((r.bookedSeats || 0) / r.totalSeats) * 100) : 0;
         const isFull = r.bookedSeats >= r.totalSeats;
         const pts = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
-        
+
         return `<div class="col-md-6 col-xl-4">
-            <div class="card h-100 ${!r.isOpen ? 'border-secondary opacity-75' : ''}">
+            <div class="card h-100 ${!r.isOpen ? 'border-secondary opacity-75' : ''} ${r.isDraft ? 'border-warning' : ''}">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span class="fw-semibold"><i class="bi bi-bus-front me-1"></i>รถ${r.busNumber} — ${r.trip?.title || ''}</span>
-                    <span class="badge ${r.isOpen ? 'bg-success' : 'bg-secondary'}">${r.isOpen ? 'เปิดจอง' : 'ปิดจอง'}</span>
+                    <div class="d-flex gap-2">
+                        ${r.isDraft ? `<span class="badge bg-warning text-dark">ร่าง</span>` : ''}
+                        <span class="badge ${r.isOpen ? 'bg-success' : 'bg-secondary'}">${r.isOpen ? 'เปิดจอง' : 'ปิดจอง'}</span>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="mb-1 text-primary small fw-bold"><i class="bi bi-geo-alt-fill me-1"></i>${r.startPoint}</div>
@@ -229,8 +238,8 @@ function renderTableView(pagedData) {
     if (!tableBody) return;
 
     tableBody.innerHTML = pagedData.map(r => {
-        const pct = Math.round((r.bookedSeats / r.totalSeats) * 100);
-        const isFull = r.bookedSeats >= r.totalSeats;
+        const pct = r.totalSeats ? Math.round(((r.bookedSeats || 0) / r.totalSeats) * 100) : 0;
+        const isFull = (r.bookedSeats || 0) >= (r.totalSeats || 0);
         const pts = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
         const allPts = pts.map(p => p.name).join(' → ');
         
@@ -242,13 +251,13 @@ function renderTableView(pagedData) {
             <td style="padding:12px 10px;border-right:1px solid #e9ecef;"><strong>${r.trip?.title || '-'}</strong></td>
             <td style="padding:12px 10px;border-right:1px solid #e9ecef;"><small class="text-muted">${allPts || r.startPoint}</small></td>
             <td style="padding:12px 10px;border-right:1px solid #e9ecef;text-align:center;">
-                <span class="fw-semibold ${isFull ? 'text-danger' : 'text-success'}">${r.bookedSeats}/${r.totalSeats}</span>
+                <span class="fw-semibold ${isFull ? 'text-danger' : 'text-success'}">${r.bookedSeats || 0}/${r.totalSeats}</span>
                 <div class="progress mt-1" style="height:5px;width:70px;margin:0 auto;">
                     <div class="progress-bar ${isFull ? 'bg-danger' : 'bg-success'}" style="width:${pct}%"></div>
                 </div>
             </td>
             <td style="padding:12px 10px;border-right:1px solid #e9ecef;text-align:center;">
-                <span class="badge ${r.isOpen ? 'bg-success' : 'bg-secondary'} px-2 py-1">${r.isOpen ? '✓ เปิด' : '✕ ปิด'}</span>
+                <span class="badge ${r.isDraft ? 'bg-warning text-dark' : (r.isOpen ? 'bg-success' : 'bg-secondary')} px-2 py-1">${r.isDraft ? '✎ ร่าง' : (r.isOpen ? '✓ เปิด' : '✕ ปิด')}</span>
             </td>
             <td style="padding:12px 10px;text-align:center;">
                 <div class="d-flex gap-1 justify-content-center">
@@ -291,7 +300,7 @@ function exportToCSV() {
     const headers = ['วันที่ออกเดินทาง', 'ตู่', 'ทริป', 'เส้นทาง', 'ที่นั่ง', 'สถานะ'];
     const rows = filteredData.map(r => {
         const pts = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
-        return [formatDateTime(r.departDate), r.busNumber, r.trip?.title || '-', pts.map(p => p.name).join(' → ') || r.startPoint, `${r.bookedSeats}/${r.totalSeats}`, r.isOpen ? 'เปิด' : 'ปิด'];
+        return [formatDateTime(r.departDate), r.busNumber, r.trip?.title || '-', pts.map(p => p.name).join(' → ') || r.startPoint, `${r.bookedSeats || 0}/${r.totalSeats}`, r.isDraft ? 'ร่าง' : (r.isOpen ? 'เปิด' : 'ปิด')];
     });
     const csv = [headers, ...rows].map(row => row.map(c => `"${c}"`).join(',')).join('\n');
     const a = Object.assign(document.createElement('a'), { 
@@ -307,7 +316,7 @@ function exportToPDF() {
     const w = window.open('', '', 'height=600,width=800');
     const rows = filteredData.map(r => {
         const pts = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
-        return `<tr><td>${formatDateTime(r.departDate)}</td><td>${r.busNumber}</td><td>${r.trip?.title || '-'}</td><td>${pts.map(p => p.name).join(' → ') || r.startPoint}</td><td>${r.bookedSeats}/${r.totalSeats}</td><td class="${r.isOpen ? 'open' : 'closed'}">${r.isOpen ? 'เปิด' : 'ปิด'}</td></tr>`;
+        return `<tr><td>${formatDateTime(r.departDate)}</td><td>${r.busNumber}</td><td>${r.trip?.title || '-'}</td><td>${pts.map(p => p.name).join(' → ') || r.startPoint}</td><td>${r.bookedSeats || 0}/${r.totalSeats}</td><td class="${r.isDraft ? 'draft' : (r.isOpen ? 'open' : 'closed')}">${r.isDraft ? 'ร่าง' : (r.isOpen ? 'เปิด' : 'ปิด')}</td></tr>`;
     }).join('');
     w.document.write(`<html><head><meta charset="UTF-8"><title>รอบรถ</title><style>body{font-family:Sarabun,Arial,sans-serif;margin:20px}table{width:100%;border-collapse:collapse}th,td{padding:8px;border:1px solid #ddd;text-align:left}th{background:#f0f0f0}.open{color:green;font-weight:bold}.closed{color:gray}</style></head><body><h2>รอบรถ / ตั๋ว</h2><p>${new Date().toLocaleString('th-TH')}</p><table><thead><tr><th>วันที่</th><th>ตู่</th><th>ทริป</th><th>เส้นทาง</th><th>ที่นั่ง</th><th>สถานะ</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
     w.document.close();
