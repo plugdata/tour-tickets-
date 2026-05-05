@@ -91,8 +91,8 @@ model BusRound {
   tripId      Int
   trip        Trip     @relation(fields: [tripId], references: [id])
 
-  roudeStackId Int
-  roudeStack   RoudeStack @relation(fields: [roudeStackId], references: [id]) // ✅ เพิ่ม
+  roudeStackId Int?
+  roudeStack   RoudeStack? @relation(fields: [roudeStackId], references: [id]) // ✅ เพิ่ม
 
   busNumber         Int      @default(1)
   startPoint        String
