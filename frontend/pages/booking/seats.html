@@ -396,6 +396,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   roundId = new URLSearchParams(location.search).get('roundId')
   if (!roundId) { showError('ไม่พบ roundId ใน URL'); return }
+  roundId = parseInt(roundId, 10) // Convert to number for proper comparison
 
   if (sessionToken) {
     try {
@@ -424,9 +425,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Load round info
 // ════════════════════════════════════════════════════════════════
 async function loadRound() {
-  const all = await apiFetch('/bus-rounds')
-  roundData = all.find(r => r.id == roundId)
-  if (!roundData) { showError('ไม่พบรอบรถนี้'); throw new Error('not found') }
+  try {
+    const all = await apiFetch('/bus-rounds')
+    roundData = all.find(r => Number(r.id) === roundId)
+    if (!roundData) {
+      showError(`ไม่พบรอบรถ ID ${roundId} ในระบบ`);
+      throw new Error('not found')
+    }
+  } catch (e) {
+    if (e.message === 'not found') throw e
+    showError('ไม่สามารถโหลดข้อมูลรอบรถได้: ' + e.message)
+    throw e
+  }
 
   totalSeats = roundData.totalSeats || 9
 
