@@ -1,0 +1,12 @@
+/* Trips List styles */
+.info-box-small {
+    font-size: 0.85rem;
+}
+
+.date-input-small {
+    font-size: 0.85rem;
+}
+
+.trip-description-count {
+    max-width: 300px;
+}

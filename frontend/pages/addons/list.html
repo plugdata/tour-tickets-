@@ -43,6 +43,11 @@
                             </div>
                         </div>
                         <div class="col-md-2">
+                            <select class="form-select" id="filterDuration" onchange="renderAddons()">
+                                <option value="">-- ทุกระยะเวลา --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
                             <select class="form-select" id="filterStatus" onchange="renderAddons()">
                                 <option value="">-- ทุกสถานะ --</option>
                                 <option value="active">เปิดให้จอง</option>
@@ -66,6 +71,7 @@
                                     <th>#</th>
                                     <th>ชื่อรายการ</th>
                                     <th>คำอธิบาย</th>
+                                    <th>ระยะเวลา</th>
                                     <th class="text-end">ราคา / หน่วย</th>
                                     <th class="text-center">สถานะ</th>
                                     <th class="text-center">จัดการ</th>
@@ -111,6 +117,12 @@
                             <span class="input-group-text">บาท</span>
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">ระยะเวลา (เลือกจากรอบรถ) <span class="text-danger">*</span></label>
+                        <select class="form-select" id="fDuration" required>
+                            <option value="">-- เลือกระยะเวลา --</option>
+                        </select>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -136,6 +148,7 @@
 let modal, allAddons = [];
 let pagination;
 let currentPage = 1, perPage = 10, filteredData = [];
+let allDurations = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     await initPage();
@@ -149,20 +162,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     allAddons = await API.addons.list();
+
+    // Load unique durations from BusRounds
+    try {
+        const busRounds = await API.busRounds.list();
+        allDurations = [...new Set(busRounds
+            .map(r => r.duration)
+            .filter(d => d && d.trim() !== '')
+        )].sort();
+
+        // Populate form duration select
+        const durationSelect = document.getElementById('fDuration');
+        allDurations.forEach(duration => {
+            const opt = document.createElement('option');
+            opt.value = duration;
+            opt.textContent = duration;
+            durationSelect.appendChild(opt);
+        });
+
+        // Populate filter duration select
+        const filterDurationSelect = document.getElementById('filterDuration');
+        allDurations.forEach(duration => {
+            const opt = document.createElement('option');
+            opt.value = duration;
+            opt.textContent = duration;
+            filterDurationSelect.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('Failed to load bus round durations:', e);
+    }
+
     renderAddons();
 });
 
 function renderAddons(resetPage = true) {
     if (resetPage) currentPage = 1;
 
-    const q       = document.getElementById('searchInput').value.toLowerCase().trim();
-    const status  = document.getElementById('filterStatus').value;
+    const q        = document.getElementById('searchInput').value.toLowerCase().trim();
+    const duration = document.getElementById('filterDuration').value.trim();
+    const status   = document.getElementById('filterStatus').value;
 
     let data = allAddons;
     if (q)       data = data.filter(a =>
         a.name.toLowerCase().includes(q) ||
         (a.description || '').toLowerCase().includes(q)
     );
+    if (duration) data = data.filter(a => a.duration === duration);
     if (status === 'active')   data = data.filter(a => a.isActive);
     if (status === 'inactive') data = data.filter(a => !a.isActive);
 
@@ -171,7 +216,7 @@ function renderAddons(resetPage = true) {
     const tbody = document.getElementById('addonsBody');
 
     if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">ไม่พบรายการ</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">ไม่พบรายการ</td></tr>';
         pagination.render({ totalRecords: 0, currentPage, perPage });
         return;
     }
@@ -186,6 +231,7 @@ function renderAddons(resetPage = true) {
                 <div class="addon-name">${a.name}</div>
             </td>
             <td class="addon-desc">${a.description || '<span class="text-muted">-</span>'}</td>
+            <td><span class="badge bg-info">${a.duration || '<span class="text-muted">-</span>'}</span></td>
             <td class="text-end">
                 <span class="price-tag">${formatMoney(a.price)}</span>
                 <span class="text-muted small"> บาท</span>
@@ -231,6 +277,7 @@ function editAddon(a) {
     document.getElementById('fName').value     = a.name;
     document.getElementById('fDesc').value     = a.description || '';
     document.getElementById('fPrice').value    = a.price;
+    document.getElementById('fDuration').value = a.duration || '';
     modal.show();
 }
 
@@ -252,9 +299,11 @@ async function saveAddon() {
         name:        document.getElementById('fName').value.trim(),
         description: document.getElementById('fDesc').value.trim(),
         price:       parseFloat(document.getElementById('fPrice').value),
+        duration:    document.getElementById('fDuration').value.trim(),
         isActive:    true
     };
-    if (!data.name || !data.price) return showToast('กรุณากรอกข้อมูลให้ครบ', 'warning');
+    if (!data.name || !data.price) return showToast('กรุณากรอกชื่อรายการและราคา', 'warning');
+    if (!data.duration) return showToast('กรุณาเลือกระยะเวลา', 'warning');
     try {
         if (id) await API.addons.update(id, data);
         else    await API.addons.create(data);

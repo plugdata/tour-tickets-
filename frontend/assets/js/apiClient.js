@@ -3,7 +3,7 @@
  */
 class ApiClient {
     constructor() {
-        this.base = API_BASE_URL;
+        this.base = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:5000/api';
     }
 
     headers(json = true) {
@@ -22,6 +22,12 @@ class ApiClient {
             });
             if (res.status === 401) { authManager.logout(); throw new Error('Unauthorized'); }
             const text = await res.text();
+
+            // Check if response is HTML (error page) or JSON
+            if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+                throw new Error(`Server Error: ${res.status} - ${text.substring(0, 100)}`);
+            }
+
             const data = text ? JSON.parse(text) : {};
             if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
             return data;
@@ -31,16 +37,18 @@ class ApiClient {
         }
     }
 
-    get(path)             { return this.req(path); }
-    post(path, body)      { return this.req(path, { method: 'POST', body: JSON.stringify(body) }); }
-    put(path, body)       { return this.req(path, { method: 'PUT',  body: JSON.stringify(body) }); }
-    patch(path, body)     { return this.req(path, { method: 'PATCH',body: JSON.stringify(body) }); }
-    delete(path)          { return this.req(path, { method: 'DELETE' }); }
+    get(path) { return this.req(path); }
+    post(path, body) { return this.req(path, { method: 'POST', body: JSON.stringify(body) }); }
+    put(path, body) { return this.req(path, { method: 'PUT', body: JSON.stringify(body) }); }
+    patch(path, body) { return this.req(path, { method: 'PATCH', body: JSON.stringify(body) }); }
+    delete(path) { return this.req(path, { method: 'DELETE' }); }
 
     // FormData (for file uploads)
     postForm(path, fd) {
-        return this.req(path, { method: 'POST', body: fd, formData: true,
-            headers: { Authorization: `Bearer ${authManager.getToken()}` } });
+        return this.req(path, {
+            method: 'POST', body: fd, formData: true,
+            headers: { Authorization: `Bearer ${authManager.getToken()}` }
+        });
     }
 }
 
@@ -53,64 +61,66 @@ const API = {
 
     // Users
     users: {
-        list: ()        => api.get('/users'),
+        list: () => api.get('/users'),
         update: (id, d) => api.put(`/users/${id}`, d),
-        delete: (id)    => api.delete(`/users/${id}`),
-        register: (d)   => api.post('/auth/register', d),
+        delete: (id) => api.delete(`/users/${id}`),
+        register: (d) => api.post('/auth/register', d),
     },
 
     // Trips
     trips: {
-        list: (q = {})  => api.get('/trips' + (Object.keys(q).length ? '?' + new URLSearchParams(q) : '')),
-        get: (id)       => api.get(`/trips/${id}`),
-        create: (d)     => api.post('/trips', d),
+        list: (q = {}) => api.get('/trips' + (Object.keys(q).length ? '?' + new URLSearchParams(q) : '')),
+        get: (id) => api.get(`/trips/${id}`),
+        create: (d) => api.post('/trips', d),
         update: (id, d) => api.put(`/trips/${id}`, d),
-        delete: (id)    => api.delete(`/trips/${id}`),
+        delete: (id) => api.delete(`/trips/${id}`),
+    },
+
+    // RoudeStack (รอบเที่ยว/รอบป่า)
+    roudeStack: {
+        list: () => api.get('/roudestack'),
+        byTrip: (tid) => api.get(`/roudestack/trip/${tid}`),
+        get: (id) => api.get(`/roudestack/${id}`),
+        create: (d) => api.post('/roudestack', d),
+        update: (id, d) => api.put(`/roudestack/${id}`, d),
+        delete: (id) => api.delete(`/roudestack/${id}`),
     },
 
     // BusRounds
     busRounds: {
-        list: ()          => api.get('/bus-rounds'),
-        byTrip: (tid)     => api.get(`/bus-rounds/trip/${tid}`),
-        create: (d)       => api.post('/bus-rounds', d),
-        update: (id, d)   => api.put(`/bus-rounds/${id}`, d),
-        toggle: (id)      => api.patch(`/bus-rounds/${id}/toggle`, {}),
-    },
-
-    draftBusRounds: {
-        list: ()          => api.get('/draft-bus-rounds'),
-        byTrip: (tid)     => api.get(`/draft-bus-rounds?tripId=${tid}`),
-        create: (d)       => api.post('/draft-bus-rounds', d),
-        update: (id, d)   => api.put(`/draft-bus-rounds/${id}`, d),
-        publish: (id)     => api.post(`/draft-bus-rounds/${id}/publish`, {}),
-        delete: (id)      => api.delete(`/draft-bus-rounds/${id}`),
+        list: () => api.get('/bus-rounds'),
+        byTrip: (tid) => api.get(`/bus-rounds/trip/${tid}`),
+        create: (d) => api.post('/bus-rounds', d),
+        update: (id, d) => api.put(`/bus-rounds/${id}`, d),
+        toggle: (id) => api.patch(`/bus-rounds/${id}/toggle`, {}),
+        delete: (id) => api.delete(`/bus-rounds/${id}`),
     },
 
     // Bookings
     bookings: {
-        list: ()                      => api.get('/bookings'),
-        get: (id)                     => api.get(`/bookings/${id}`),
-        byRound: (roundId)            => api.get(`/bookings/round/${roundId}`),
-        my: ()                        => api.get('/bookings/my'),
-        create: (d)                   => api.post('/bookings', d),
+        list: () => api.get('/bookings'),
+        get: (id) => api.get(`/bookings/${id}`),
+        byRound: (roundId) => api.get(`/bookings/round/${roundId}`),
+        my: () => api.get('/bookings/my'),
+        create: (d) => api.post('/bookings', d),
         updateStatus: (id, s, reason) => api.patch(`/bookings/${id}/status`, { status: s, cancelReason: reason }),
     },
 
     // Payments
     payments: {
-        list: ()               => api.get('/payments'),
-        submit: (d)            => api.post('/payments', d),
-        confirm: (id, status)  => api.patch(`/payments/${id}/confirm`, { status }),
+        list: () => api.get('/payments'),
+        submit: (d) => api.post('/payments', d),
+        confirm: (id, status) => api.patch(`/payments/${id}/confirm`, { status }),
     },
 
     // Addons
     addons: {
-        list: ()        => api.get('/addons'),
-        active: ()      => api.get('/addons/active'),
-        byTrip: (tid)   => api.get(`/addons/trip/${tid}`),
-        create: (d)     => api.post('/addons', d),
+        list: () => api.get('/addons'),
+        active: () => api.get('/addons/active'),
+        byTrip: (tid) => api.get(`/addons/trip/${tid}`),
+        create: (d) => api.post('/addons', d),
         update: (id, d) => api.put(`/addons/${id}`, d),
-        delete: (id)    => api.delete(`/addons/${id}`),
+        delete: (id) => api.delete(`/addons/${id}`),
     },
 
     // Contents
@@ -127,40 +137,40 @@ const API = {
             const qs = p.toString()
             return api.get(`/contents${qs ? '?' + qs : ''}`)
         },
-        get: (id)       => api.get(`/contents/${id}`),
-        create: (d)     => api.post('/contents', d),
+        get: (id) => api.get(`/contents/${id}`),
+        create: (d) => api.post('/contents', d),
         update: (id, d) => api.put(`/contents/${id}`, d),
-        delete: (id)    => api.delete(`/contents/${id}`),
+        delete: (id) => api.delete(`/contents/${id}`),
     },
 
     // Site Settings
     settings: {
-        all: ()         => api.get('/settings'),
-        get: (key)      => api.get(`/settings/${key}`),
-        save: (data)    => api.put('/settings', data),
+        all: () => api.get('/settings'),
+        get: (key) => api.get(`/settings/${key}`),
+        save: (data) => api.put('/settings', data),
         saveKey: (k, v) => api.put(`/settings/${k}`, { value: v }),
     },
 
     // Gallery
     gallery: {
         albums: {
-            list: (q = {})   => api.get('/gallery/albums' + (Object.keys(q).length ? '?' + new URLSearchParams(q) : '')),
-            get: (id)        => api.get(`/gallery/albums/${id}`),
-            create: (d)      => api.post('/gallery/albums', d),
-            update: (id, d)  => api.put(`/gallery/albums/${id}`, d),
-            delete: (id)     => api.delete(`/gallery/albums/${id}`),
+            list: (q = {}) => api.get('/gallery/albums' + (Object.keys(q).length ? '?' + new URLSearchParams(q) : '')),
+            get: (id) => api.get(`/gallery/albums/${id}`),
+            create: (d) => api.post('/gallery/albums', d),
+            update: (id, d) => api.put(`/gallery/albums/${id}`, d),
+            delete: (id) => api.delete(`/gallery/albums/${id}`),
         },
         images: {
-            list: (albumId)       => api.get(`/gallery/albums/${albumId}/images`),
-            add: (albumId, imgs)  => api.post(`/gallery/albums/${albumId}/images`, imgs),
-            update: (id, d)       => api.put(`/gallery/images/${id}`, d),
-            delete: (id)          => api.delete(`/gallery/images/${id}`),
+            list: (albumId) => api.get(`/gallery/albums/${albumId}/images`),
+            add: (albumId, imgs) => api.post(`/gallery/albums/${albumId}/images`, imgs),
+            update: (id, d) => api.put(`/gallery/images/${id}`, d),
+            delete: (id) => api.delete(`/gallery/images/${id}`),
         },
     },
 
     // Expenses
     expenses: {
-        list: ()    => api.get('/expenses'),
+        list: () => api.get('/expenses'),
         create: (d) => api.post('/expenses', d),
         delete: (id) => api.delete(`/expenses/${id}`),
     },
@@ -168,45 +178,45 @@ const API = {
     // Reports
     reports: {
         summary: (q = {}) => api.get('/reports/summary' + (Object.keys(q).length ? '?' + new URLSearchParams(q) : '')),
-        monthly: ()       => api.get('/reports/monthly'),
-        print: (roundId)  => api.get(`/reports/print/${roundId}`),
+        monthly: () => api.get('/reports/monthly'),
+        print: (roundId) => api.get(`/reports/print/${roundId}`),
     },
 
     // Seat Bookings (real-time seat status)
     seatBookings: {
-        byRound: (roundId)                   => api.get(`/seat-bookings/round/${roundId}`),
+        byRound: (roundId) => api.get(`/seat-bookings/round/${roundId}`),
         hold: (busRoundId, seatNumbers, token, gender) =>
             api.post('/seat-bookings/hold', { busRoundId, seatNumbers, sessionToken: token, gender }),
-        releaseHold: (token)                 => api.delete(`/seat-bookings/hold/${token}`),
+        releaseHold: (token) => api.delete(`/seat-bookings/hold/${token}`),
     },
 
     // Booking Sessions (serial token / flow tracking)
     sessions: {
-        create: (data)   => api.post('/booking-sessions', data),
-        update: (data)   => api.post('/booking-sessions', data),
-        get: (token)     => api.get(`/booking-sessions/${token}`),
+        create: (data) => api.post('/booking-sessions', data),
+        update: (data) => api.post('/booking-sessions', data),
+        get: (token) => api.get(`/booking-sessions/${token}`),
     },
 
     // Insurance
     insurance: {
-        list: ()            => api.get('/insurance'),
-        get: (id)           => api.get(`/insurance/${id}`),
+        list: () => api.get('/insurance'),
+        get: (id) => api.get(`/insurance/${id}`),
         getByBooking: (bid) => api.get(`/insurance/booking/${bid}`),
-        create: (d)         => api.post('/insurance', d),
-        submit: (d)         => api.post('/insurance', d),
-        submitDraft: (id)   => api.patch(`/insurance/${id}/submit`, {}),
-        update: (id, d)     => api.put(`/insurance/${id}`, d),
-        review: (id, d)     => api.patch(`/insurance/${id}/review`, d),
+        create: (d) => api.post('/insurance', d),
+        submit: (d) => api.post('/insurance', d),
+        submitDraft: (id) => api.patch(`/insurance/${id}/submit`, {}),
+        update: (id, d) => api.put(`/insurance/${id}`, d),
+        review: (id, d) => api.patch(`/insurance/${id}/review`, d),
         policyContent: {
-            get: ()    => api.get('/insurance/policy-content'),
+            get: () => api.get('/insurance/policy-content'),
             update: (d) => api.put('/insurance/policy-content', d),
         },
         conditions: {
             list: (all = false) => api.get('/insurance/conditions' + (all ? '?all=1' : '')),
-            create: (d)         => api.post('/insurance/conditions', d),
-            update: (id, d)     => api.put(`/insurance/conditions/${id}`, d),
-            toggle: (id)        => api.patch(`/insurance/conditions/${id}/toggle`, {}),
-            remove: (id)        => api.delete(`/insurance/conditions/${id}`),
+            create: (d) => api.post('/insurance/conditions', d),
+            update: (id, d) => api.put(`/insurance/conditions/${id}`, d),
+            toggle: (id) => api.patch(`/insurance/conditions/${id}/toggle`, {}),
+            remove: (id) => api.delete(`/insurance/conditions/${id}`),
         },
     },
 

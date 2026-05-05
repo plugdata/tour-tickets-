@@ -35,18 +35,24 @@ const ThaiCalendar = {
         return flatpickr(input, {
             locale: 'th',
             dateFormat: options.enableTime ? 'Y-m-d H:i' : 'Y-m-d',
-            altInput: false,
+            altInput: true,
+            altFormat: options.enableTime ? 'j F Y H:i' : 'j F Y',
             allowInput: true,
             disableMobile: true,
 
             onChange: (selectedDates, dateStr, ins) => {
+                // setTimeout(0): รอให้ flatpickr อัปเดต altInput ตาม altFormat เสร็จก่อน
+                // แล้วค่อย override ด้วยปี ค.ศ. ของเรา
+                setTimeout(() => self._updateAltInput(ins), 0);
                 if (options.onChange) options.onChange(dateStr, selectedDates, ins);
             },
             onValueUpdate: (sd, ds, ins) => {
-                // Catch ทุก event ที่ flatpickr update ค่า
+                // Catch ทุก event ที่ flatpickr update ค่า (รวม manual input)
+                setTimeout(() => self._updateAltInput(ins), 0);
             },
             onReady: (sd, ds, ins) => {
                 self._patchYearInput(ins);
+                setTimeout(() => self._updateAltInput(ins), 0);
                 if (options.onReady) options.onReady(sd, ds, ins);
             },
             onOpen: (sd, ds, ins) => {

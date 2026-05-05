@@ -94,9 +94,9 @@ function showTripDropdown() {
 
 function onFilterTripInput() { showTripDropdown(); renderRounds(); }
 function selectTrip(title) { document.getElementById('filterTrip').value = title; hideTripDropdown(); renderRounds(); }
-function hideTripDropdown() { 
+function hideTripDropdown() {
     const dd = document.getElementById('tripFilterDropdown');
-    if (dd) dd.classList.add('d-none'); 
+    if (dd) dd.classList.add('d-none');
 }
 function clearTripFilter() { document.getElementById('filterTrip').value = ''; hideTripDropdown(); renderRounds(); }
 function clearDateRange() { if (startPicker) startPicker.clear(); if (endPicker) endPicker.clear(); renderRounds(); }
@@ -130,7 +130,7 @@ async function loadRounds() {
 
 function renderRounds(resetPage = true) {
     if (resetPage) currentPage = 1;
-    
+
     const tripFilter = document.getElementById('filterTrip');
     const searchFilter = document.getElementById('searchInput');
     const startFilter = document.getElementById('startDate');
@@ -140,7 +140,7 @@ function renderRounds(resetPage = true) {
     const startQ = startFilter ? startFilter.value : '';
     const endQ = endFilter ? endFilter.value : '';
     const q = searchFilter ? searchFilter.value.toLowerCase().trim() : '';
-    
+
     let data = allRounds;
     if (tripQ) data = data.filter(r => (r.trip?.title || '').toLowerCase().includes(tripQ));
     if (startQ || endQ) data = ThaiCalendar.filterByDateRange(data, 'departDate', startQ, endQ);
@@ -151,7 +151,7 @@ function renderRounds(resetPage = true) {
     });
 
     filteredData = data;
-    
+
     const gridContainer = document.getElementById('roundsGrid');
     const tableBody = document.getElementById('roundsTableBody');
     const noData = document.getElementById('tableNoData');
@@ -166,10 +166,10 @@ function renderRounds(resetPage = true) {
 
     if (noData) noData.classList.add('d-none');
     const pagedData = data.slice((currentPage - 1) * perPage, currentPage * perPage);
-    
+
     if (currentViewMode === 'grid') renderGridView(pagedData);
     else renderTableView(pagedData);
-    
+
     if (pagination) pagination.render({ totalRecords: data.length, currentPage, perPage });
 }
 
@@ -243,7 +243,7 @@ function renderTableView(pagedData) {
         const isFull = (r.bookedSeats || 0) >= (r.totalSeats || 0);
         const pts = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
         const allPts = pts.map(p => p.name).join(' → ');
-        
+
         return `<tr style="height:50px;border-bottom:1px solid #e9ecef;background-color:${!r.isOpen ? '#f8f9fa' : '#fff'};">
             <td style="padding:12px 10px;border-right:1px solid #e9ecef;text-align:center;font-weight:500;">${formatDateTime(r.departDate)}</td>
             <td style="padding:12px 10px;border-right:1px solid #e9ecef;text-align:center;font-weight:600;font-size:1.1rem;">
@@ -276,7 +276,7 @@ function renderTableView(pagedData) {
 function switchView(viewMode) {
     currentViewMode = viewMode;
     const isGrid = viewMode === 'grid';
-    
+
     const gridBtn = document.getElementById('gridViewBtn');
     const tableBtn = document.getElementById('tableViewBtn');
     const gridContainer = document.getElementById('gridContainer');
@@ -292,7 +292,7 @@ function switchView(viewMode) {
     }
     if (gridContainer) gridContainer.classList.toggle('d-none', !isGrid);
     if (tableContainer) tableContainer.classList.toggle('d-none', isGrid);
-    
+
     renderRounds(false);
 }
 
@@ -305,9 +305,9 @@ function exportToCSV() {
         return [formatDateTime(r.departDate), r.busNumber, r.trip?.title || '-', pts.map(p => p.name).join(' → ') || r.startPoint, `${r.bookedSeats || 0}/${r.totalSeats}`, r.isDraft ? 'ร่าง' : (r.isOpen ? 'เปิด' : 'ปิด')];
     });
     const csv = [headers, ...rows].map(row => row.map(c => `"${c}"`).join(',')).join('\n');
-    const a = Object.assign(document.createElement('a'), { 
-        href: URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })), 
-        download: `bus-rounds-${new Date().toISOString().split('T')[0]}.csv` 
+    const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })),
+        download: `bus-rounds-${new Date().toISOString().split('T')[0]}.csv`
     });
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     showToast('ส่งออก CSV สำเร็จ', 'success');
@@ -346,10 +346,10 @@ function onTripChange() {
     // Populate Round Select directly
     if (roundSelect) {
         Object.keys(_tripRoundsByDate).sort().forEach(d => {
-            const label = new Date(d + 'T00:00:00').toLocaleDateString('th-TH', { 
-                day: 'numeric', 
-                month: 'short', 
-                year: 'numeric' 
+            const label = new Date(d + 'T00:00:00').toLocaleDateString('th-TH', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
             });
             roundSelect.insertAdjacentHTML('beforeend', `<option value="${d}">${label}</option>`);
         });
@@ -673,7 +673,7 @@ function addPickupRow(name = '', price = 0) {
     if (!list) return;
 
     const isFirst = !list.querySelectorAll('.pickup-row').length;
-    
+
     // Default naming for the first point if empty
     if (isFirst && !name) name = 'ลานจอดรถ BTS หมอชิต';
 
@@ -697,14 +697,14 @@ function removePickup(btn) {
         const badge = r.querySelector('.badge');
         const delBtn = r.querySelector('.btn-outline-danger');
         if (badge) {
-            if (i === 0) { 
-                badge.className = 'badge bg-secondary text-nowrap'; 
-                badge.textContent = 'DEFAULT'; 
-                if (delBtn) delBtn.style.visibility = 'hidden'; 
-            } else { 
-                badge.className = 'badge bg-light border text-muted text-nowrap'; 
-                badge.textContent = 'จุด'; 
-                if (delBtn) delBtn.style.visibility = ''; 
+            if (i === 0) {
+                badge.className = 'badge bg-secondary text-nowrap';
+                badge.textContent = 'DEFAULT';
+                if (delBtn) delBtn.style.visibility = 'hidden';
+            } else {
+                badge.className = 'badge bg-light border text-muted text-nowrap';
+                badge.textContent = 'จุด';
+                if (delBtn) delBtn.style.visibility = '';
             }
         }
     });
@@ -947,12 +947,12 @@ async function deleteDraft(draftId) {
 }
 
 async function toggleRound(id) {
-    try { 
-        await API.busRounds.toggle(id); 
-        showToast('อัปเดตสถานะสำเร็จ'); 
-        await loadRounds(); 
-    } catch (e) { 
-        showToast(e.message, 'danger'); 
+    try {
+        await API.busRounds.toggle(id);
+        showToast('อัปเดตสถานะสำเร็จ');
+        await loadRounds();
+    } catch (e) {
+        showToast(e.message, 'danger');
     }
 }
 

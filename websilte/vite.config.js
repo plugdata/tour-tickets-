@@ -20,7 +20,8 @@ export default defineConfig({
       configureServer(server) {
         server.middlewares.use((req, _res, next) => {
           const [pathname, qs] = (req.url || '/').split('?')
-          const target = urlRewrites[pathname]
+          const target = urlRewrites[pathname] ||
+            (pathname.startsWith('/trips/') ? '/src/pages/trips/list.html' : null)
           if (target) req.url = target + (qs ? '?' + qs : '')
           next()
         })
@@ -28,6 +29,7 @@ export default defineConfig({
     },
   ],
   server: {
+    host: '0.0.0.0',
     port: 5173,
     open: true,
     allowedHosts: 'all',

@@ -1,0 +1,9 @@
+
+> backend@1.0.0 start
+> node src/server.js
+
+◇ injected env (6) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+🐘 Using PostgreSQL database
+Server running on http://localhost:5000
+Swagger docs: http://localhost:5000/api-docs

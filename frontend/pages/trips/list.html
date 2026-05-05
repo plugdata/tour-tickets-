@@ -125,6 +125,7 @@
                             <li class="nav-item"><a class="nav-link active" data-ttab="basic" href="#">ข้อมูลหลัก</a>
                             </li>
                             <li class="nav-item"><a class="nav-link" data-ttab="media" href="#">รูปภาพ</a></li>
+                            <li class="nav-item"><a class="nav-link" data-ttab="roudestack" href="#">รอบเที่ยว/รอบป่า</a></li>
                             <li class="nav-item"><a class="nav-link" data-ttab="setting" href="#">ตั้งค่า</a></li>
                         </ul>
                         <!-- Tab: basic -->
@@ -171,6 +172,53 @@
                                 <div class="col-12">
                                     <label class="form-label">ไฟล์/ลิงก์อธิบายทริป (PDF)</label>
                                     <div id="docUploadContainer"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Tab: roudestack -->
+                        <div id="ttab-roudestack" class="d-none">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="alert alert-info small py-2">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        รอบเที่ยว/รอบป่า เป็นการแบ่งการเดินทางออกเป็นหลายรอบ ตามวันและเส้นทาง
+                                    </div>
+                                </div>
+                                <div class="col-12" id="roudestackContainer">
+                                    <p class="text-muted text-center py-3">กรุณาบันทึกทริปก่อนเพื่อเพิ่มรอบเที่ยว/รอบป่า</p>
+                                </div>
+                                <div class="col-12" id="roudestackFormContainer" style="display: none;">
+                                    <div class="border rounded p-3 bg-light">
+                                        <h6 class="mb-3">เพิ่มรอบเที่ยว/รอบป่า</h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">ชื่อรอบเที่ยว <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="rsRoundname" placeholder="เช่น วันที่ 1">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">วันออกเดินทาง <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="rsDeteoudestr" placeholder="เลือกวันที่">
+                                            </div>
+                                            <div class="col-12">
+                                                <button type="button" class="btn btn-sm btn-primary" onclick="addRoudestackItem()">
+                                                    <i class="bi bi-plus-lg me-1"></i>เพิ่มรอบเที่ยว
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12" id="roudestackListContainer">
+                                    <table class="table table-sm table-hover" id="roudestackTable" style="display: none;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>ชื่อรอบ</th>
+                                                <th>วันออกเดินทาง</th>
+                                                <th>จัดการ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="roudestackBody"></tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -379,6 +427,9 @@
             document.getElementById('fTripType').value = 'DOMESTIC';
             FileUpload.setExisting('', 'fImage');
             FileUpload.setExisting('', 'fDocUrl');
+            pendingRoudestacks = [];
+            currentRoudestacks = [];
+            initRoudestackUI(null);
             resetFormTabs();
             modal.show();
         }
@@ -397,6 +448,8 @@
             document.getElementById('fActive').checked = t.isActive;
             FileUpload.setExisting(t.imageUrl, 'fImage');
             FileUpload.setExisting(t.docUrl, 'fDocUrl');
+            pendingRoudestacks = [];
+            initRoudestackUI(t.id);
             resetFormTabs();
             modal.show();
         }
@@ -437,8 +490,17 @@
                     isActive: document.getElementById('fActive').checked,
                 };
 
+                let tripId = id;
                 if (id) await API.trips.update(id, data);
-                else await API.trips.create(data);
+                else {
+                    const newTrip = await API.trips.create(data);
+                    tripId = newTrip.id;
+                }
+
+                // Save pending roudestacks
+                if (tripId && pendingRoudestacks.length > 0) {
+                    await savePendingRoudestacks(tripId);
+                }
 
                 modal.hide();
                 showToast('บันทึกสำเร็จ');
@@ -456,6 +518,103 @@
                 try { await API.trips.delete(id); showToast('ลบสำเร็จ'); loadTrips(); }
                 catch (e) { showToast(e.message, 'danger'); }
             });
+        }
+
+        // ===== RoudeStack Functions =====
+        let currentRoudestacks = [];
+        let pendingRoudestacks = []; // New ones to be created after trip save
+
+        async function loadRoudestacks(tripId) {
+            try {
+                currentRoudestacks = await API.roudeStack.byTrip(tripId);
+                renderRoudestackList();
+            } catch (e) {
+                console.error('Failed to load roudestacks:', e);
+                currentRoudestacks = [];
+            }
+        }
+
+        function renderRoudestackList() {
+            const tbody = document.getElementById('roudestackBody');
+            const table = document.getElementById('roudestackTable');
+            const container = document.getElementById('roudestackContainer');
+
+            if (currentRoudestacks.length === 0 && pendingRoudestacks.length === 0) {
+                table.style.display = 'none';
+                container.innerHTML = '<p class="text-muted text-center py-3">ไม่มีรอบเที่ยว/รอบป่า</p>';
+                return;
+            }
+
+            const allStacks = [...currentRoudestacks, ...pendingRoudestacks.map((r, i) => ({ ...r, id: `_pending_${i}`, isPending: true }))];
+            tbody.innerHTML = allStacks.map((r, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td><strong>${r.roundname}</strong></td>
+                    <td>${formatDateThai(r.deteroudestr)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteRoudestackItem('${r.id}', ${r.isPending ? true : false})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            table.style.display = 'table';
+            container.innerHTML = '';
+        }
+
+        function addRoudestackItem() {
+            const roundname = document.getElementById('rsRoundname').value.trim();
+            const deteroudestr = document.getElementById('rsDeteoudestr').value;
+
+            if (!roundname) { showToast('กรุณากรอกชื่อรอบเที่ยว', 'warning'); return; }
+            if (!deteroudestr) { showToast('กรุณาเลือกวันออกเดินทาง', 'warning'); return; }
+
+            pendingRoudestacks.push({ roundname, deteroudestr: new Date(deteroudestr), isPending: true });
+            document.getElementById('rsRoundname').value = '';
+            document.getElementById('rsDeteoudestr').value = '';
+            document.getElementById('rsDeteoudestr')._flatpickr?.clear();
+            renderRoudestackList();
+            showToast('เพิ่มรอบเที่ยวแล้ว');
+        }
+
+        async function deleteRoudestackItem(id, isPending = false) {
+            confirmAction('ต้องการลบรอบเที่ยว/รอบป่านี้?', async () => {
+                try {
+                    if (isPending) {
+                        pendingRoudestacks = pendingRoudestacks.filter((_, i) => `_pending_${i}` !== id);
+                    } else {
+                        await API.roudeStack.delete(id);
+                        currentRoudestacks = currentRoudestacks.filter(r => r.id !== id);
+                    }
+                    renderRoudestackList();
+                    showToast('ลบรอบเที่ยว/รอบป่าแล้ว');
+                } catch (e) { showToast(e.message, 'danger'); }
+            });
+        }
+
+        async function savePendingRoudestacks(tripId) {
+            for (const rs of pendingRoudestacks) {
+                try {
+                    await API.roudeStack.create({
+                        tripId,
+                        roundname: rs.roundname,
+                        deteroudestr: rs.deteroudestr.toISOString()
+                    });
+                } catch (e) {
+                    console.error('Failed to save roude stack:', e);
+                }
+            }
+            pendingRoudestacks = [];
+        }
+
+        function initRoudestackUI(tripId) {
+            document.getElementById('roudestackFormContainer').style.display = tripId ? 'block' : 'none';
+            if (tripId) {
+                loadRoudestacks(tripId);
+                if (!document.getElementById('rsDeteoudestr')._flatpickr) {
+                    ThaiCalendar.init('#rsDeteoudestr', {});
+                }
+            }
         }
     </script>
 </body>

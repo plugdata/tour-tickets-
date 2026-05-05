@@ -119,23 +119,26 @@ router.get('/trip/:tripId', async (req, res) => {
  *             required: [tripId, startPoint, endPoint, departDate, totalSeats]
  *             properties:
  *               tripId: { type: integer }
- *               busNumber: { type: integer, default: 1 }
+ *               busNumber: { type: integer }
  *               startPoint: { type: string }
  *               endPoint: { type: string }
  *               departDate: { type: string, format: date-time }
- *               returnDate: { type: string, format: date-time, nullable: true }
- *               duration: { type: string }
  *               totalSeats: { type: integer }
- *               responsiblePerson: { type: string }
- *               extraPrice: { type: number, default: 0 }
- *               pickupPoints: { type: object }
- *               vehicles: { type: object }
  *     responses:
  *       201: { description: Created }
  */
 router.post('/', authenticate, authorize('ADMIN'), async (req, res) => {
   try {
-    const round = await prisma.busRound.create({ data: req.body })
+    const data = {
+      ...req.body,
+      tripId: Number(req.body.tripId),
+      roudeStackId: Number(req.body.roudeStackId),
+      busNumber: Number(req.body.busNumber),
+      totalSeats: Number(req.body.totalSeats),
+      extraPrice: parseFloat(req.body.extraPrice || 0),
+      pickupPoints: req.body.pickupPoints ? (typeof req.body.pickupPoints === 'string' ? JSON.parse(req.body.pickupPoints) : req.body.pickupPoints) : []
+    }
+    const round = await prisma.busRound.create({ data })
     res.status(201).json(round)
   } catch (e) {
     res.status(500).json({ message: e.message })
@@ -168,11 +171,30 @@ router.patch('/:id/toggle', authenticate, authorize('ADMIN'), async (req, res) =
 
 router.put('/:id', authenticate, authorize('ADMIN'), async (req, res) => {
   try {
+    const data = { ...req.body }
+    if (data.tripId) data.tripId = Number(data.tripId)
+    if (data.roudeStackId) data.roudeStackId = Number(data.roudeStackId)
+    if (data.busNumber) data.busNumber = Number(data.busNumber)
+    if (data.totalSeats) data.totalSeats = Number(data.totalSeats)
+    if (data.extraPrice) data.extraPrice = parseFloat(data.extraPrice)
+    if (data.pickupPoints && typeof data.pickupPoints === 'string') data.pickupPoints = JSON.parse(data.pickupPoints)
+
     const round = await prisma.busRound.update({
       where: { id: Number(req.params.id) },
-      data: req.body
+      data
     })
     res.json(round)
+  } catch (e) {
+    res.status(500).json({ message: e.message })
+  }
+})
+
+router.delete('/:id', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    await prisma.busRound.delete({
+      where: { id: Number(req.params.id) }
+    })
+    res.status(204).send()
   } catch (e) {
     res.status(500).json({ message: e.message })
   }
