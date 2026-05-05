@@ -92,15 +92,26 @@
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>#</th>
-                                            <th>ชื่อ-นามสกุล</th>
-                                            <th>เลขบัตรประชาชน</th>
-                                            <th>หมู่เลือด</th>
-                                            <th>ผู้รับประโยชน์</th>
-                                            <th>สถานะ</th>
-                                            <th>เลขกรมธรรม์</th>
-                                            <th>วันที่ส่ง</th>
+                                            <th style="cursor: pointer; user-select: none;" onclick="toggleSort('id')"># <span id="sortIcon-id" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                            <th style="cursor: pointer; user-select: none;" onclick="toggleSort('fullName')">ชื่อ-นามสกุล <span id="sortIcon-fullName" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                            <th style="cursor: pointer; user-select: none;" onclick="toggleSort('nationalId')">เลขบัตรประชาชน <span id="sortIcon-nationalId" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                            <th style="cursor: pointer; user-select: none;" onclick="toggleSort('bloodType')">หมู่เลือด <span id="sortIcon-bloodType" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                            <th style="cursor: pointer; user-select: none;" onclick="toggleSort('beneficiaryName')">ผู้รับประโยชน์ <span id="sortIcon-beneficiaryName" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                            <th style="cursor: pointer; user-select: none;" onclick="toggleSort('status')">สถานะ <span id="sortIcon-status" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                            <th style="cursor: pointer; user-select: none;" onclick="toggleSort('issuedPolicyNo')">เลขกรมธรรม์ <span id="sortIcon-issuedPolicyNo" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                            <th style="cursor: pointer; user-select: none;" onclick="toggleSort('submittedAt')">วันที่ส่ง <span id="sortIcon-submittedAt" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
                                             <th class="text-center">จัดการ</th>
+                                        </tr>
+                                        <tr class="table-filter-row" style="background: #f8f9fa;">
+                                            <th></th>
+                                            <th><select class="form-select form-select-sm" id="colName" onchange="applyColumnFilters()"><option value="">ทั้งหมด</option></select></th>
+                                            <th><select class="form-select form-select-sm" id="colId" onchange="applyColumnFilters()"><option value="">ทั้งหมด</option></select></th>
+                                            <th><select class="form-select form-select-sm" id="colBlood" onchange="applyColumnFilters()"><option value="">ทั้งหมด</option></select></th>
+                                            <th><select class="form-select form-select-sm" id="colBenef" onchange="applyColumnFilters()"><option value="">ทั้งหมด</option></select></th>
+                                            <th></th>
+                                            <th><select class="form-select form-select-sm" id="colPolicy" onchange="applyColumnFilters()"><option value="">ทั้งหมด</option></select></th>
+                                            <th></th>
+                                            <th></th>
                                         </tr>
                                     </thead>
                                     <tbody id="tableBody"></tbody>
@@ -183,7 +194,73 @@
         let reviewAction = null
         let pagination;
         let currentPage = 1, perPage = 10, filteredData = [];
+        let sortColumn = '', sortDirection = 'asc';
         const modal = new bootstrap.Modal(document.getElementById('reviewModal'))
+
+        function toggleSort(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            currentPage = 1;
+            applyFilter(false);
+        }
+
+        function updateSortIcons() {
+            document.querySelectorAll('[id^="sortIcon-"]').forEach(el => {
+                el.textContent = '';
+                el.style.opacity = '0.3';
+            });
+
+            if (sortColumn) {
+                const icon = document.getElementById(`sortIcon-${sortColumn}`);
+                if (icon) {
+                    icon.textContent = sortDirection === 'asc' ? '▲' : '▼';
+                    icon.style.opacity = '1';
+                    icon.style.color = '#0d6efd';
+                }
+            }
+        }
+
+        function getSortedData(data) {
+            if (!sortColumn) return data;
+
+            return data.sort((a, b) => {
+                let aVal, bVal;
+
+                if (sortColumn === 'fullName') {
+                    aVal = `${a.seatBooking?.firstName || ''} ${a.seatBooking?.lastName || ''}`.toLowerCase();
+                    bVal = `${b.seatBooking?.firstName || ''} ${b.seatBooking?.lastName || ''}`.toLowerCase();
+                } else if (sortColumn === 'nationalId') {
+                    aVal = a.seatBooking?.nationalId || '';
+                    bVal = b.seatBooking?.nationalId || '';
+                } else if (sortColumn === 'bloodType') {
+                    aVal = a.seatBooking?.bloodType || '';
+                    bVal = b.seatBooking?.bloodType || '';
+                } else {
+                    aVal = a[sortColumn];
+                    bVal = b[sortColumn];
+                }
+
+                if (aVal == null && bVal == null) return 0;
+                if (aVal == null) return sortDirection === 'asc' ? 1 : -1;
+                if (bVal == null) return sortDirection === 'asc' ? -1 : 1;
+
+                if (typeof aVal === 'string' && typeof bVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                    return sortDirection === 'asc' ? aVal.localeCompare(bVal, 'th') : bVal.localeCompare(aVal, 'th');
+                }
+
+                if (sortDirection === 'asc') {
+                    return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                } else {
+                    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                }
+            });
+        }
 
         function renderTable(data, startIdx) {
             const tbody = document.getElementById('tableBody')
@@ -238,11 +315,60 @@
             
             empty.classList.add('d-none');
             pagWrap.classList.remove('d-none');
-            
+
             const startIdx = (currentPage - 1) * perPage;
             const pagedData = data.slice(startIdx, startIdx + perPage);
             renderTable(pagedData, startIdx);
             pagination.render({ totalRecords: data.length, currentPage, perPage });
+        }
+
+        function applyColumnFilters() {
+            const colName = document.getElementById('colName')?.value.toLowerCase() || '';
+            const colId = document.getElementById('colId')?.value || '';
+            const colBlood = document.getElementById('colBlood')?.value || '';
+            const colBenef = document.getElementById('colBenef')?.value.toLowerCase() || '';
+            const colPolicy = document.getElementById('colPolicy')?.value.toLowerCase() || '';
+
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            let data = currentStatus ? allForms.filter(f => f.status === currentStatus) : allForms;
+
+            if (q) data = data.filter(f =>
+                `${f.seatBooking?.firstName || ''} ${f.seatBooking?.lastName || ''}`.toLowerCase().includes(q) ||
+                (f.seatBooking?.nationalId || '').includes(q)
+            );
+
+            if (colName) data = data.filter(f =>
+                `${f.seatBooking?.firstName || ''} ${f.seatBooking?.lastName || ''}`.toLowerCase().includes(colName)
+            );
+            if (colId) data = data.filter(f => (f.seatBooking?.nationalId || '').includes(colId));
+            if (colBlood) data = data.filter(f => f.seatBooking?.bloodType === colBlood);
+            if (colBenef) data = data.filter(f => (f.beneficiaryName || '').toLowerCase().includes(colBenef));
+            if (colPolicy) data = data.filter(f => (f.issuedPolicyNo || '').toLowerCase().includes(colPolicy));
+
+            filteredData = data;
+            currentPage = 1;
+
+            updateSortIcons();
+            const empty = document.getElementById('emptyState')
+            const pagWrap = document.getElementById('paginationWrap')
+
+            const sortedData = getSortedData([...data]);
+
+            if (!sortedData.length) {
+                document.getElementById('tableBody').innerHTML = '';
+                empty.classList.remove('d-none');
+                pagWrap.classList.add('d-none');
+                pagination.render({ totalRecords: 0, currentPage, perPage });
+                return;
+            }
+
+            empty.classList.add('d-none');
+            pagWrap.classList.remove('d-none');
+
+            const startIdx = (currentPage - 1) * perPage;
+            const pagedData = sortedData.slice(startIdx, startIdx + perPage);
+            renderTable(pagedData, startIdx);
+            pagination.render({ totalRecords: sortedData.length, currentPage, perPage });
         }
 
         function openReview(id, name) {

@@ -61,7 +61,7 @@
                             <div class="row g-2 align-items-end">
 
                                 <!-- 1 ─ ชื่อทริป (typeahead, unique trips) -->
-                                <div class="col-md-4 position-relative">
+                                <div class="col-md-3 position-relative">
                                     <div class="srch-label"><i class="bi bi-map me-1"></i>ชื่อทริป</div>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-white text-muted border-end-0">
@@ -77,16 +77,25 @@
                                         top:calc(100% + 2px);left:0;right:0;"></div>
                                 </div>
 
-                                <!-- 2 ─ รถ + เส้นทาง (select, enabled after trip) -->
+                                <!-- 2 ─ รอบเที่ยว/รอบป่า (select, enabled after trip) -->
                                 <div class="col-md-3">
-                                    <div class="srch-label"><i class="bi bi-bus-front me-1"></i>รถ + เส้นทาง</div>
-                                    <select class="form-select form-select-sm" id="selBus" onchange="onSelBusChange()"
+                                    <div class="srch-label"><i class="bi bi-layers me-1"></i>รอบเที่ยว/รอบป่า</div>
+                                    <select class="form-select form-select-sm" id="selRoudeStack" onchange="onSelRoudestackChange()"
                                         disabled>
-                                        <option value="">— เลือกรถ —</option>
+                                        <option value="">— เลือก —</option>
                                     </select>
                                 </div>
 
-                                <!-- 3 ─ วันที่ / เดือน ปี (select, enabled after bus) -->
+                                <!-- 3 ─ รถตู่ (select, enabled after RoudeStack) -->
+                                <div class="col-md-2">
+                                    <div class="srch-label"><i class="bi bi-bus-front me-1"></i>รถตู่</div>
+                                    <select class="form-select form-select-sm" id="selBusNum" onchange="onSelBusNumChange()"
+                                        disabled>
+                                        <option value="">— เลือก —</option>
+                                    </select>
+                                </div>
+
+                                <!-- 4 ─ วันที่ / เดือน ปี (select, enabled after bus number) -->
                                 <div class="col-md-3">
                                     <div class="srch-label"><i class="bi bi-calendar3 me-1"></i>วันที่ / เดือน ปี</div>
                                     <select class="form-select form-select-sm" id="selDate" onchange="onSelDateChange()"
@@ -96,10 +105,10 @@
                                 </div>
 
                                 <!-- clear button -->
-                                <div class="col-md-2 d-flex align-items-end justify-content-end pb-1">
-                                    <button class="btn btn-sm btn-outline-secondary py-1 px-4 w-100"
+                                <div class="col-md-1 d-flex align-items-end justify-content-end pb-1">
+                                    <button class="btn btn-sm btn-outline-secondary py-1 px-3 w-100"
                                         id="btnClearSelection" style="display:none;" onclick="clearRound()">
-                                        <i class="bi bi-x-circle me-1 text-danger opacity-75"></i>ล้างข้อมูล
+                                        <i class="bi bi-x-circle me-1 text-danger opacity-75"></i>ล้าง
                                     </button>
                                 </div>
 

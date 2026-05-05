@@ -126,13 +126,13 @@
                             <table class="table table-bordered table-hover align-middle mb-0">
                             <thead>
                                 <tr>
-                                    <th>ข้อมูลลูกค้า</th>
-                                    <th>ทริป / การจอง</th>
-                                    <th>ประเภท</th>
-                                    <th class="text-end">จำนวนจ่าย</th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('customer')">ข้อมูลลูกค้า <span id="sortIcon-customer" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('trip')">ทริป / การจอง <span id="sortIcon-trip" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('type')">ประเภท <span id="sortIcon-type" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                    <th style="cursor: pointer; user-select: none; text-end;" onclick="toggleSort('amount')">จำนวนจ่าย <span id="sortIcon-amount" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
                                     <th class="text-end">ยอดคงค้าง</th>
-                                    <th>สถานะ</th>
-                                    <th>แจ้งเมื่อ</th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('status')">สถานะ <span id="sortIcon-status" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('createdAt')">แจ้งเมื่อ <span id="sortIcon-createdAt" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
                                     <th class="text-center">จัดการ</th>
                                 </tr>
                             </thead>
@@ -179,6 +179,7 @@
         let allPayments = [], insuranceMap = {}, slipModal;
         let pagination;
         let currentPage = 1, perPage = 10, filteredData = [];
+        let sortColumn = '', sortDirection = 'asc';
 
         const PAY_BADGE = { PENDING: 'status-pending', CONFIRMED: 'status-confirmed', REJECTED: 'status-rejected' };
         const PAY_LABEL = { PENDING: 'รอตรวจสอบ', CONFIRMED: 'ยืนยันแล้ว', REJECTED: 'ปฏิเสธ' };
@@ -220,6 +221,68 @@
             }
         });
 
+        function toggleSort(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            currentPage = 1;
+            renderPayments(false);
+        }
+
+        function updateSortIcons() {
+            document.querySelectorAll('[id^="sortIcon-"]').forEach(el => {
+                el.textContent = '';
+                el.style.opacity = '0.3';
+            });
+
+            if (sortColumn) {
+                const icon = document.getElementById(`sortIcon-${sortColumn}`);
+                if (icon) {
+                    icon.textContent = sortDirection === 'asc' ? '▲' : '▼';
+                    icon.style.opacity = '1';
+                    icon.style.color = '#0d6efd';
+                }
+            }
+        }
+
+        function getSortedData(data) {
+            if (!sortColumn) return data;
+
+            return data.sort((a, b) => {
+                let aVal, bVal;
+
+                if (sortColumn === 'customer') {
+                    aVal = (a.booking?.user?.name || '-').toLowerCase();
+                    bVal = (b.booking?.user?.name || '-').toLowerCase();
+                } else if (sortColumn === 'trip') {
+                    aVal = (a.booking?.busRound?.trip?.title || '-').toLowerCase();
+                    bVal = (b.booking?.busRound?.trip?.title || '-').toLowerCase();
+                } else {
+                    aVal = a[sortColumn];
+                    bVal = b[sortColumn];
+                }
+
+                if (aVal == null && bVal == null) return 0;
+                if (aVal == null) return sortDirection === 'asc' ? 1 : -1;
+                if (bVal == null) return sortDirection === 'asc' ? -1 : 1;
+
+                if (typeof aVal === 'string' && typeof bVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                    return sortDirection === 'asc' ? aVal.localeCompare(bVal, 'th') : bVal.localeCompare(aVal, 'th');
+                }
+
+                if (sortDirection === 'asc') {
+                    return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                } else {
+                    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                }
+            });
+        }
+
         function renderPayments(resetPage = true) {
             if (resetPage) currentPage = 1;
 
@@ -241,17 +304,20 @@
             });
 
             filteredData = data;
+            updateSortIcons();
             document.getElementById('countBadge').textContent = `${data.length} รายการ`;
             const tbody = document.getElementById('paymentsBody');
 
-            if (!data.length) {
+            const sortedData = getSortedData([...data]);
+
+            if (!sortedData.length) {
                 tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">ไม่พบข้อมูล</td></tr>';
                 pagination.render({ totalRecords: 0, currentPage, perPage });
                 return;
             }
 
             const startIdx = (currentPage - 1) * perPage;
-            const pagedData = data.slice(startIdx, startIdx + perPage);
+            const pagedData = sortedData.slice(startIdx, startIdx + perPage);
 
             tbody.innerHTML = pagedData.map(p => {
                 const forms = insuranceMap[p.bookingId] || [];
@@ -308,7 +374,7 @@
         </tr>`;
             }).join('');
 
-            pagination.render({ totalRecords: data.length, currentPage, perPage });
+            pagination.render({ totalRecords: sortedData.length, currentPage, perPage });
         }
 
         function buildCustomerCell(p, forms) {

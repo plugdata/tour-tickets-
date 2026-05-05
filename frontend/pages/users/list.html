@@ -33,13 +33,42 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>#</th>
-                                    <th>Username</th>
-                                    <th>ชื่อ</th>
-                                    <th>โทร</th>
-                                    <th>อีเมล</th>
-                                    <th>Role</th>
-                                    <th>สร้างเมื่อ</th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('username')">
+                                        Username <span id="sortIcon-username" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('name')">
+                                        ชื่อ <span id="sortIcon-name" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('phone')">
+                                        โทร <span id="sortIcon-phone" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('email')">
+                                        อีเมล <span id="sortIcon-email" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('role')">
+                                        Role <span id="sortIcon-role" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('createdAt')">
+                                        สร้างเมื่อ <span id="sortIcon-createdAt" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
                                     <th>จัดการ</th>
+                                </tr>
+                                <tr class="table-filter-row" style="background: #f8f9fa;">
+                                    <th></th>
+                                    <th><input type="text" class="form-control form-control-sm" id="colUsername" placeholder="ค้นหา..." oninput="applyColumnFilters()"></th>
+                                    <th><input type="text" class="form-control form-control-sm" id="colName" placeholder="ค้นหา..." oninput="applyColumnFilters()"></th>
+                                    <th><input type="text" class="form-control form-control-sm" id="colPhone" placeholder="ค้นหา..." oninput="applyColumnFilters()"></th>
+                                    <th><input type="text" class="form-control form-control-sm" id="colEmail" placeholder="ค้นหา..." oninput="applyColumnFilters()"></th>
+                                    <th>
+                                        <select class="form-select form-select-sm" id="colRole" onchange="applyColumnFilters()">
+                                            <option value="">ทั้งหมด</option>
+                                            <option value="ADMIN">Admin</option>
+                                            <option value="STUFF">Staff</option>
+                                            <option value="CUSTOMER">Customer</option>
+                                        </select>
+                                    </th>
+                                    <th></th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody id="usersBody">
@@ -48,6 +77,9 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <div id="userPagination"></div>
                     </div>
                 </div>
             </div>
@@ -101,26 +133,117 @@
     <script src="../../assets/js/auth.js"></script>
     <script src="../../assets/js/auth-guard.js"></script>
     <script src="../../assets/js/apiClient.js"></script>
+    <script src="../../modules/PaginationManager.js"></script>
     <script src="../../assets/js/app.js"></script>
     <script>
-        let modal;
+        let modal, pagination;
+        let allUsers = [], filteredData = [];
+        let currentPage = 1, perPage = 10;
+        let sortColumn = '', sortDirection = 'asc';
         const roleBadge = { ADMIN: 'danger', STUFF: 'warning', CUSTOMER: 'primary' };
         const roleLabel = { ADMIN: 'Admin', STUFF: 'Staff', CUSTOMER: 'Customer' };
 
         document.addEventListener('DOMContentLoaded', async () => {
             await initPage();
             modal = new bootstrap.Modal(document.getElementById('userModal'));
+
+            pagination = new PaginationManager({
+                containerId: 'userPagination',
+                onPageChange: (p) => { currentPage = p; renderUsers(false); },
+                onPerPageChange: (pp) => { perPage = pp; currentPage = 1; renderUsers(false); }
+            });
+
             loadUsers();
         });
 
         async function loadUsers() {
             try {
-                const users = await API.users.list();
-                const tbody = document.getElementById('usersBody');
-                if (!users.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">ไม่พบข้อมูล</td></tr>'; return; }
-                tbody.innerHTML = users.map((u, i) => `
+                allUsers = await API.users.list();
+                applyColumnFilters();
+            } catch (e) { showToast('โหลดล้มเหลว', 'danger'); }
+        }
+
+        function toggleSort(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            updateSortIcons();
+            applyColumnFilters();
+        }
+
+        function updateSortIcons() {
+            ['username', 'name', 'phone', 'email', 'role', 'createdAt'].forEach(col => {
+                const icon = document.getElementById(`sortIcon-${col}`);
+                if (sortColumn === col) {
+                    icon.textContent = sortDirection === 'asc' ? '▲' : '▼';
+                    icon.style.opacity = '1.0';
+                } else {
+                    icon.textContent = '';
+                    icon.style.opacity = '0.3';
+                }
+            });
+        }
+
+        function getSortedData(data) {
+            if (!sortColumn) return data;
+
+            return [...data].sort((a, b) => {
+                let aVal, bVal;
+
+                if (sortColumn === 'username') {
+                    aVal = (a.username || '').toLowerCase();
+                    bVal = (b.username || '').toLowerCase();
+                } else if (sortColumn === 'name') {
+                    aVal = (a.name || '').toLowerCase();
+                    bVal = (b.name || '').toLowerCase();
+                } else if (sortColumn === 'phone') {
+                    aVal = (a.phone || '').toLowerCase();
+                    bVal = (b.phone || '').toLowerCase();
+                } else if (sortColumn === 'email') {
+                    aVal = (a.email || '').toLowerCase();
+                    bVal = (b.email || '').toLowerCase();
+                } else if (sortColumn === 'role') {
+                    aVal = (a.role || '').toLowerCase();
+                    bVal = (b.role || '').toLowerCase();
+                } else if (sortColumn === 'createdAt') {
+                    aVal = new Date(a.createdAt);
+                    bVal = new Date(b.createdAt);
+                } else {
+                    return 0;
+                }
+
+                if (typeof aVal === 'string' && typeof bVal === 'string') {
+                    const cmp = aVal.localeCompare(bVal, 'th');
+                    return sortDirection === 'asc' ? cmp : -cmp;
+                }
+
+                if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+                if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        function renderUsers(resetPage = true) {
+            if (resetPage) currentPage = 1;
+            const tbody = document.getElementById('usersBody');
+
+            if (!filteredData.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">ไม่พบข้อมูล</td></tr>';
+                pagination.render({ totalRecords: 0, currentPage, perPage });
+                updateSortIcons();
+                return;
+            }
+
+            const sortedData = getSortedData(filteredData);
+            const startIdx = (currentPage - 1) * perPage;
+            const pagedData = sortedData.slice(startIdx, startIdx + perPage);
+
+            tbody.innerHTML = pagedData.map((u, i) => `
             <tr>
-                <td>${i + 1}</td><td><strong>${u.username}</strong></td><td>${u.name}</td>
+                <td>${startIdx + i + 1}</td><td><strong>${u.username}</strong></td><td>${u.name}</td>
                 <td>${u.phone || '-'}</td><td>${u.email || '-'}</td>
                 <td><span class="badge bg-${roleBadge[u.role]}">${roleLabel[u.role]}</span></td>
                 <td>${formatDateThai(u.createdAt)}</td>
@@ -129,7 +252,29 @@
                     <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${u.id})"><i class="bi bi-trash"></i></button>
                 </td>
             </tr>`).join('');
-            } catch (e) { showToast('โหลดล้มเหลว', 'danger'); }
+
+            updateSortIcons();
+            pagination.render({ totalRecords: sortedData.length, currentPage, perPage });
+        }
+
+        function applyColumnFilters() {
+            const colUsername = document.getElementById('colUsername')?.value.toLowerCase() || '';
+            const colName = document.getElementById('colName')?.value.toLowerCase() || '';
+            const colPhone = document.getElementById('colPhone')?.value.toLowerCase() || '';
+            const colEmail = document.getElementById('colEmail')?.value.toLowerCase() || '';
+            const colRole = document.getElementById('colRole')?.value || '';
+
+            let data = allUsers;
+
+            if (colUsername) data = data.filter(u => u.username.toLowerCase().includes(colUsername));
+            if (colName) data = data.filter(u => u.name.toLowerCase().includes(colName));
+            if (colPhone) data = data.filter(u => (u.phone || '').toLowerCase().includes(colPhone));
+            if (colEmail) data = data.filter(u => (u.email || '').toLowerCase().includes(colEmail));
+            if (colRole) data = data.filter(u => u.role === colRole);
+
+            filteredData = data;
+            currentPage = 1;
+            renderUsers(false);
         }
 
         function openModal() {

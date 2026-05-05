@@ -85,14 +85,38 @@
                         <table class="table table-hover mb-0" id="tripsTable">
                             <thead class="table-light">
                                 <tr>
-                                    <th>#</th>
-                                    <th>ชื่อทริป</th>
-                                    <th>ประเภท / ประเทศ</th>
-                                    <th>ราคา</th>
-                                    <th>Hot</th>
-                                    <th>สถานะ</th>
-                                    <th>สร้างเมื่อ</th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('id')" title="คลิกเพื่อจัดลำดับ">
+                                        # <span id="sortIcon-id" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('title')" title="คลิกเพื่อจัดลำดับ">
+                                        ชื่อทริป <span id="sortIcon-title" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('tripType')" title="คลิกเพื่อจัดลำดับ">
+                                        ประเภท / ประเทศ <span id="sortIcon-tripType" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('price')" title="คลิกเพื่อจัดลำดับ">
+                                        ราคา <span id="sortIcon-price" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('isHot')" title="คลิกเพื่อจัดลำดับ">
+                                        Hot <span id="sortIcon-isHot" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('isActive')" title="คลิกเพื่อจัดลำดับ">
+                                        สถานะ <span id="sortIcon-isActive" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('createdAt')" title="คลิกเพื่อจัดลำดับ">
+                                        สร้างเมื่อ <span id="sortIcon-createdAt" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
+                                    </th>
                                     <th>จัดการ</th>
+                                </tr>
+                                <tr class="table-filter-row" style="background: #f8f9fa;">
+                                    <th></th>
+                                    <th><select class="form-select form-select-sm" id="colTitle" onchange="applyColumnFilters()"><option value="">ทั้งหมด</option></select></th>
+                                    <th><select class="form-select form-select-sm" id="colType" onchange="applyColumnFilters()"><option value="">ทั้งหมด</option></select></th>
+                                    <th><select class="form-select form-select-sm" id="colPrice" onchange="applyColumnFilters()"><option value="">ทั้งหมด</option></select></th>
+                                    <th><select class="form-select form-select-sm" id="colHot" onchange="applyColumnFilters()"><option value="">ทั้งหมด</option></select></th>
+                                    <th><select class="form-select form-select-sm" id="colActive" onchange="applyColumnFilters()"><option value="">ทั้งหมด</option></select></th>
+                                    <th></th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody id="tripsBody">
@@ -276,6 +300,7 @@
         let modal, pagination;
         let currentPage = 1, perPage = 10, filteredData = [], allTrips = [];
         let currentTypeFilter = '';
+        let sortColumn = '', sortDirection = 'asc';
 
         document.addEventListener('DOMContentLoaded', async () => {
             await initPage();
@@ -351,25 +376,157 @@
                 (t.country || '').toLowerCase().includes(query));
             if (start || end) trips = ThaiCalendar.filterByDateRange(trips, 'createdAt', start, end);
 
-            filteredData = trips; currentPage = 1; renderTrips();
+            filteredData = trips; currentPage = 1; renderTrips(); updateColumnFilterOptions();
+        }
+
+        let columnFilters = { title: '', type: '', price: '', hot: '', active: '' };
+
+        function getFilteredData() {
+            let data = [...allTrips];
+
+            if (columnFilters.title) data = data.filter(t => t.title === columnFilters.title);
+            if (columnFilters.type) data = data.filter(t => t.tripType === columnFilters.type);
+            if (columnFilters.price) data = data.filter(t => t.price == columnFilters.price);
+            if (columnFilters.hot !== '') data = data.filter(t => t.isHot === (columnFilters.hot === 'true'));
+            if (columnFilters.active !== '') data = data.filter(t => t.isActive === (columnFilters.active === 'true'));
+
+            return data;
+        }
+
+        function updateColumnFilterOptions() {
+            const data = getFilteredData();
+
+            // Get distinct values from filtered data
+            const titles = [...new Set(data.map(t => t.title))].sort();
+            const types = [...new Set(data.map(t => t.tripType))].filter(Boolean).sort();
+            const prices = [...new Set(data.map(t => t.price))].sort((a, b) => a - b);
+            const hotStatuses = [...new Set(data.map(t => t.isHot))];
+            const activeStatuses = [...new Set(data.map(t => t.isActive))];
+
+            const typeLabel = { DOMESTIC: 'ในประเทศ', INTERNATIONAL: 'ต่างประเทศ' };
+
+            // Update title dropdown
+            let sel = document.getElementById('colTitle');
+            sel.innerHTML = '<option value="">ทั้งหมด</option>' + titles.map(t => `<option value="${t}">${t}</option>`).join('');
+            sel.value = columnFilters.title;
+
+            // Update type dropdown
+            sel = document.getElementById('colType');
+            sel.innerHTML = '<option value="">ทั้งหมด</option>' + types.map(t => `<option value="${t}">${typeLabel[t] || t}</option>`).join('');
+            sel.value = columnFilters.type;
+
+            // Update price dropdown
+            sel = document.getElementById('colPrice');
+            sel.innerHTML = '<option value="">ทั้งหมด</option>' + prices.map(p => `<option value="${p}">${formatMoney(p)}</option>`).join('');
+            sel.value = columnFilters.price;
+
+            // Update hot dropdown
+            sel = document.getElementById('colHot');
+            sel.innerHTML = '<option value="">ทั้งหมด</option>';
+            if (hotStatuses.includes(true)) sel.innerHTML += '<option value="true">Hot</option>';
+            if (hotStatuses.includes(false)) sel.innerHTML += '<option value="false">ไม่ Hot</option>';
+            sel.value = columnFilters.hot;
+
+            // Update active dropdown
+            sel = document.getElementById('colActive');
+            sel.innerHTML = '<option value="">ทั้งหมด</option>';
+            if (activeStatuses.includes(true)) sel.innerHTML += '<option value="true">เปิด</option>';
+            if (activeStatuses.includes(false)) sel.innerHTML += '<option value="false">ปิด</option>';
+            sel.value = columnFilters.active;
+        }
+
+        function applyColumnFilters() {
+            columnFilters.title = document.getElementById('colTitle')?.value || '';
+            columnFilters.type = document.getElementById('colType')?.value || '';
+            columnFilters.price = document.getElementById('colPrice')?.value || '';
+            columnFilters.hot = document.getElementById('colHot')?.value || '';
+            columnFilters.active = document.getElementById('colActive')?.value || '';
+
+            filteredData = getFilteredData();
+            currentPage = 1;
+            updateColumnFilterOptions();
+            renderTrips();
+        }
+
+        function toggleSort(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            currentPage = 1;
+            renderTrips();
+        }
+
+        function updateSortIcons() {
+            document.querySelectorAll('[id^="sortIcon-"]').forEach(el => {
+                el.textContent = '';
+                el.style.opacity = '0.3';
+            });
+
+            if (sortColumn) {
+                const icon = document.getElementById(`sortIcon-${sortColumn}`);
+                if (icon) {
+                    icon.textContent = sortDirection === 'asc' ? '▲' : '▼';
+                    icon.style.opacity = '1';
+                    icon.style.color = '#0d6efd';
+                }
+            }
+        }
+
+        function getSortedData(data) {
+            if (!sortColumn) return data;
+
+            return data.sort((a, b) => {
+                let aVal = a[sortColumn];
+                let bVal = b[sortColumn];
+
+                // Handle null/undefined
+                if (aVal == null && bVal == null) return 0;
+                if (aVal == null) return sortDirection === 'asc' ? 1 : -1;
+                if (bVal == null) return sortDirection === 'asc' ? -1 : 1;
+
+                // Handle boolean values
+                if (typeof aVal === 'boolean' && typeof bVal === 'boolean') {
+                    aVal = aVal ? 1 : 0;
+                    bVal = bVal ? 1 : 0;
+                }
+
+                // Handle strings
+                if (typeof aVal === 'string' && typeof bVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                    return sortDirection === 'asc' ? aVal.localeCompare(bVal, 'th') : bVal.localeCompare(aVal, 'th');
+                }
+
+                // Handle numbers and dates
+                if (sortDirection === 'asc') {
+                    return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                } else {
+                    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                }
+            });
         }
 
         const typeLabel = { DOMESTIC: 'ในประเทศ', INTERNATIONAL: 'ต่างประเทศ' };
         const typeBadge = { DOMESTIC: 'primary', INTERNATIONAL: 'info' };
 
         function renderTrips() {
+            updateSortIcons();
+            const sortedData = getSortedData([...filteredData]);
             const tbody = document.getElementById('tripsBody');
             const startIdx = (currentPage - 1) * perPage;
-            const pagedData = filteredData.slice(startIdx, startIdx + perPage);
+            const pagedData = sortedData.slice(startIdx, startIdx + perPage);
 
-            if (!filteredData.length) {
+            if (!sortedData.length) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">ไม่พบข้อมูลทริป</td></tr>';
                 pagination.render({ totalRecords: 0, currentPage, perPage }); return;
             }
 
             tbody.innerHTML = pagedData.map((t, i) => `
         <tr>
-            <td>${startIdx + i + 1}</td>
+            <td>${i + 1}</td>
             <td>
                 <strong>${t.title}</strong>
                 ${t.imageUrl ? `<br><small class="text-primary"><i class="bi bi-image me-1"></i>รูปภาพ</small>` : ''}
@@ -401,7 +558,7 @@
             </td>
         </tr>`).join('');
 
-            pagination.render({ totalRecords: filteredData.length, currentPage, perPage });
+            pagination.render({ totalRecords: sortedData.length, currentPage, perPage });
         }
 
         async function toggleHot(id, isHot) {
@@ -503,7 +660,17 @@
                 }
 
                 modal.hide();
-                showToast('บันทึกสำเร็จ');
+                const tripName = document.getElementById('fTitle').value;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'บันทึกสำเร็จ',
+                        text: `ทริป ${tripName} บันทึกสำเร็จ`,
+                        confirmButtonText: 'ตกลง'
+                    });
+                } else {
+                    showToast(`บันทึกสำเร็จ (${tripName})`);
+                }
                 loadTrips();
             } catch (e) {
                 showToast(e.message, 'danger');
@@ -552,7 +719,7 @@
                     <td><strong>${r.roundname}</strong></td>
                     <td>${formatDateThai(r.deteroudestr)}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteRoudestackItem('${r.id}', ${r.isPending ? true : false})">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRoudestackItem('${r.id}', ${r.isPending ? true : false})">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -578,13 +745,20 @@
         }
 
         async function deleteRoudestackItem(id, isPending = false) {
-            confirmAction('ต้องการลบรอบเที่ยว/รอบป่านี้?', async () => {
+            const msg = isPending 
+                ? 'ยกเลิกการเพิ่มรอบเที่ยวนี้?' 
+                : 'ระวัง! การลบรอบนี้จะทำให้ "รอบรถ" และ "ที่นั่ง" ที่เปิดไว้หายไปด้วยทั้งหมด \nคุณแน่ใจว่าต้องการลบ?';
+
+            confirmAction(msg, async () => {
                 try {
                     if (isPending) {
-                        pendingRoudestacks = pendingRoudestacks.filter((_, i) => `_pending_${i}` !== id);
+                        // ลบด้วย index แทนเพื่อความแม่นยำสำหรับ pending items
+                        const idx = parseInt(id.replace('_pending_', ''));
+                        pendingRoudestacks.splice(idx, 1);
                     } else {
                         await API.roudeStack.delete(id);
-                        currentRoudestacks = currentRoudestacks.filter(r => r.id !== id);
+                        // ใช้ != เพื่อให้เปรียบเทียบได้ทั้ง string และ number
+                        currentRoudestacks = currentRoudestacks.filter(r => r.id != id);
                     }
                     renderRoudestackList();
                     showToast('ลบรอบเที่ยว/รอบป่าแล้ว');

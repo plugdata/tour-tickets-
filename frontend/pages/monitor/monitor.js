@@ -4,6 +4,7 @@
 const MONTH_TH = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
 let allRounds = [];
+let allRoudestacks = [];
 let currentRows = [];
 let currentBookings = [];
 let currentPaymentMap = {};
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initPage();
     cancelModal = new bootstrap.Modal(document.getElementById('cancelModal'));
     allRounds = await API.busRounds.list();
+    allRoudestacks = await API.roudeStack.list();
 
     document.addEventListener('click', e => {
         if (!e.target.closest('#tripDropdown') && e.target.id !== 'srchTrip')
@@ -47,19 +49,19 @@ function formatBirth(d) {
     return `${dt.getDate()} ${MONTH_TH[dt.getMonth() + 1]} ${dt.getFullYear() + 543}`;
 }
 /* ════════════════════════════════════════════════════════════════
-   ROUND SEARCH  —  Input 1: typeahead unique trips
-                    Input 2+3: cascade selects
+   ROUND SEARCH  —  Cascading filters: Trip → RoudeStack → BusNum → Date
 ════════════════════════════════════════════════════════════════ */
 let tripDropIdx = -1;
 let selectedTripId = null;
+let selectedRoudestackId = null;
 
-/* ── Input 1: แสดง unique trips ── */
+/* ── Input 1: แสดง unique Trips ── */
 function filterTripList() {
     const q = document.getElementById('srchTrip').value.toLowerCase().trim();
     const dropdown = document.getElementById('tripDropdown');
     tripDropIdx = -1;
 
-    // group allRounds by tripId → unique trips
+    // Group allRounds by tripId → unique trips
     const tripMap = new Map();
     allRounds.forEach(r => {
         if (!r.trip) return;
@@ -120,7 +122,7 @@ function handleTripKey(e) {
     }
 }
 
-/* ── เลือก trip → populate selBus ── */
+/* ── เลือก Trip → populate selRoudeStack ── */
 function selectTrip(tripId) {
     selectedTripId = tripId;
     const tripRounds = allRounds.filter(r => r.tripId === tripId);
@@ -131,45 +133,85 @@ function selectTrip(tripId) {
     document.getElementById('tripDropdown').classList.add('d-none');
 
     // reset downstream
+    resetSelRoudeStack();
+    resetSelBusNum();
     resetSelDate();
     document.getElementById('filterRound').value = '';
     showEmpty();
 
-    // populate selBus — unique by busNumber|startPoint|endPoint
-    const seen = new Map();
-    tripRounds.forEach(r => {
-        const key = `${r.busNumber}|${r.startPoint}|${r.endPoint}`;
-        if (!seen.has(key)) seen.set(key, r);
+    // populate selRoudeStack — unique roudestacks for this trip
+    const tripRoudeStacks = allRoudestacks.filter(rs => {
+        const rsRounds = allRounds.filter(r => r.roudeStackId === rs.id);
+        return rsRounds.some(r => r.tripId === tripId);
+    }).sort((a, b) => {
+        const aDate = new Date(a.deteroudestr);
+        const bDate = new Date(b.deteroudestr);
+        return aDate - bDate;
     });
 
-    const selBus = document.getElementById('selBus');
-    selBus.innerHTML = '<option value="">— เลือกรถ —</option>' +
-        [...seen.values()].map(r =>
-            `<option value="${r.busNumber}|${r.startPoint}|${r.endPoint}">` +
-            `รถ ${r.busNumber}  ·  ${r.startPoint} → ${r.endPoint}</option>`
+    const selRoudeStack = document.getElementById('selRoudeStack');
+    selRoudeStack.innerHTML = '<option value="">— เลือก —</option>' +
+        tripRoudeStacks.map(rs =>
+            `<option value="${rs.id}">${rs.roundname}</option>`
         ).join('');
-    selBus.disabled = false;
-    selBus.value = '';
+    selRoudeStack.disabled = false;
+    selRoudeStack.value = '';
 
-    // ถ้ามีรถคันเดียวให้ auto-select แล้ว populate selDate ทันที
-    if (seen.size === 1) {
-        selBus.selectedIndex = 1;
-        onSelBusChange();
+    // If only one RoudeStack, auto-select
+    if (tripRoudeStacks.length === 1) {
+        selRoudeStack.selectedIndex = 1;
+        onSelRoudestackChange();
     }
 }
 
-/* ── เลือก bus → populate selDate ── */
-function onSelBusChange() {
-    const busKey = document.getElementById('selBus').value;
+/* ── เลือก RoudeStack → populate selBusNum ── */
+function onSelRoudestackChange() {
+    const roudestackId = parseInt(document.getElementById('selRoudeStack').value);
+    resetSelBusNum();
     resetSelDate();
-    if (!busKey) return;
+    if (!roudestackId) return;
 
-    const [busNum, start, end] = busKey.split('|');
-    const filtered = allRounds.filter(r =>
+    selectedRoudestackId = roudestackId;
+
+    // Get unique bus numbers for this trip + RoudeStack
+    const rsRounds = allRounds.filter(r =>
         r.tripId === selectedTripId &&
-        String(r.busNumber) === busNum &&
-        r.startPoint === start &&
-        r.endPoint === end
+        r.roudeStackId === roudestackId
+    ).sort((a, b) => a.busNumber - b.busNumber);
+
+    const seen = new Set();
+    const uniqueBusNums = [];
+    rsRounds.forEach(r => {
+        if (!seen.has(r.busNumber)) {
+            seen.add(r.busNumber);
+            uniqueBusNums.push(r.busNumber);
+        }
+    });
+
+    const selBusNum = document.getElementById('selBusNum');
+    selBusNum.innerHTML = '<option value="">— เลือก —</option>' +
+        uniqueBusNums.map(busNum =>
+            `<option value="${busNum}">รถ ${busNum}</option>`
+        ).join('');
+    selBusNum.disabled = false;
+    selBusNum.value = '';
+
+    // If only one bus number, auto-select
+    if (uniqueBusNums.length === 1) {
+        selBusNum.selectedIndex = 1;
+        onSelBusNumChange();
+    }
+}
+
+/* ── เลือก bus number → populate selDate ── */
+function onSelBusNumChange() {
+    const busNum = document.getElementById('selBusNum').value;
+    resetSelDate();
+    if (!busNum) return;
+
+    const filtered = allRounds.filter(r =>
+        r.roudeStackId === selectedRoudestackId &&
+        String(r.busNumber) === String(busNum)
     ).sort((a, b) => new Date(a.departDate) - new Date(b.departDate));
 
     const selDate = document.getElementById('selDate');
@@ -205,6 +247,18 @@ function onSelDateChange() {
 }
 
 /* ── Helpers ── */
+function resetSelRoudeStack() {
+    const sel = document.getElementById('selRoudeStack');
+    sel.innerHTML = '<option value="">— เลือก —</option>';
+    sel.disabled = true;
+}
+
+function resetSelBusNum() {
+    const sel = document.getElementById('selBusNum');
+    sel.innerHTML = '<option value="">— เลือก —</option>';
+    sel.disabled = true;
+}
+
 function resetSelDate() {
     const sel = document.getElementById('selDate');
     sel.innerHTML = '<option value="">— เลือกวันที่ —</option>';
@@ -213,13 +267,13 @@ function resetSelDate() {
 
 function clearRound() {
     selectedTripId = null;
+    selectedRoudestackId = null;
     document.getElementById('filterRound').value = '';
     document.getElementById('srchTrip').value = '';
     document.getElementById('btnClearSelection').style.display = 'none';
     document.getElementById('tripDropdown').classList.add('d-none');
-    const selBus = document.getElementById('selBus');
-    selBus.innerHTML = '<option value="">— เลือกรถ —</option>';
-    selBus.disabled = true;
+    resetSelRoudeStack();
+    resetSelBusNum();
     resetSelDate();
     showEmpty();
 }
@@ -227,9 +281,10 @@ function clearRound() {
 /* ── URL param auto-load: ?roundId=X ── */
 function autoSelectRound(r) {
     selectTrip(r.tripId);
-    const key = `${r.busNumber}|${r.startPoint}|${r.endPoint}`;
-    document.getElementById('selBus').value = key;
-    onSelBusChange();
+    document.getElementById('selRoudeStack').value = r.roudeStackId;
+    onSelRoudestackChange();
+    document.getElementById('selBusNum').value = r.busNumber;
+    onSelBusNumChange();
     document.getElementById('selDate').value = r.id;
     onSelDateChange();
 }

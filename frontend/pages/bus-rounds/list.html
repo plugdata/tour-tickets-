@@ -133,32 +133,57 @@
                                 style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); font-weight: 600; border-bottom: 2px solid #dee2e6;">
                                 <tr style="height: 45px;">
                                     <th
-                                        style="width: 13%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle;">
-                                        <i class="bi bi-calendar3 me-2"></i>วันที่ออกเดินทาง
+                                        style="width: 13%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle; cursor: pointer; user-select: none;" onclick="toggleSort('departDate')">
+                                        <i class="bi bi-calendar3 me-2"></i>วันที่ออกเดินทาง <span id="sortIcon-departDate" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
                                     </th>
                                     <th
-                                        style="width: 12%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle;">
-                                        <i class="bi bi-bus-front me-2"></i>ตู่
+                                        style="width: 12%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle; cursor: pointer; user-select: none;" onclick="toggleSort('busNumber')">
+                                        <i class="bi bi-bus-front me-2"></i>ตู่ <span id="sortIcon-busNumber" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
                                     </th>
                                     <th
-                                        style="width: 16%; padding: 10px; border-right: 1px solid #e9ecef; text-align: left; vertical-align: middle;">
-                                        <i class="bi bi-map me-2"></i>ทริป
+                                        style="width: 16%; padding: 10px; border-right: 1px solid #e9ecef; text-align: left; vertical-align: middle; cursor: pointer; user-select: none;" onclick="toggleSort('tripTitle')">
+                                        <i class="bi bi-map me-2"></i>ทริป <span id="sortIcon-tripTitle" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
                                     </th>
                                     <th
                                         style="width: 18%; padding: 10px; border-right: 1px solid #e9ecef; text-align: left; vertical-align: middle;">
                                         <i class="bi bi-geo-alt me-2"></i>เส้นทาง
                                     </th>
                                     <th
-                                        style="width: 13%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle;">
-                                        <i class="bi bi-grid-1x2 me-2"></i>ที่นั่ง
+                                        style="width: 13%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle; cursor: pointer; user-select: none;" onclick="toggleSort('bookedSeats')">
+                                        <i class="bi bi-grid-1x2 me-2"></i>ที่นั่ง <span id="sortIcon-bookedSeats" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
                                     </th>
                                     <th
-                                        style="width: 12%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle;">
-                                        <i class="bi bi-flag-fill me-2"></i>สถานะ
+                                        style="width: 12%; padding: 10px; border-right: 1px solid #e9ecef; text-align: center; vertical-align: middle; cursor: pointer; user-select: none;" onclick="toggleSort('isOpen')">
+                                        <i class="bi bi-flag-fill me-2"></i>สถานะ <span id="sortIcon-isOpen" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span>
                                     </th>
                                     <th style="width: 16%; padding: 10px; text-align: center; vertical-align: middle;">
                                         <i class="bi bi-gear me-2"></i>การจัดการ
                                     </th>
+                                </tr>
+                                <tr class="table-filter-row" style="background: #f8f9fa; height: auto;">
+                                    <th style="padding: 4px; border-right: 1px solid #e9ecef;"></th>
+                                    <th style="padding: 4px; border-right: 1px solid #e9ecef;">
+                                        <input type="number" class="form-control form-control-sm" id="colBusNum" placeholder="ค้นหา..." oninput="applyColumnFilters()" min="1">
+                                    </th>
+                                    <th style="padding: 4px; border-right: 1px solid #e9ecef;"></th>
+                                    <th style="padding: 4px; border-right: 1px solid #e9ecef;">
+                                        <input type="text" class="form-control form-control-sm" id="colRoute" placeholder="ค้นหา..." oninput="applyColumnFilters()">
+                                    </th>
+                                    <th style="padding: 4px; border-right: 1px solid #e9ecef;">
+                                        <select class="form-select form-select-sm" id="colSeats" onchange="applyColumnFilters()" style="padding: 2px 4px;">
+                                            <option value="">ทั้งหมด</option>
+                                            <option value="full">เต็ม</option>
+                                            <option value="avail">ว่าง</option>
+                                        </select>
+                                    </th>
+                                    <th style="padding: 4px; border-right: 1px solid #e9ecef;">
+                                        <select class="form-select form-select-sm" id="colStatus" onchange="applyColumnFilters()" style="padding: 2px 4px;">
+                                            <option value="">ทั้งหมด</option>
+                                            <option value="open">เปิด</option>
+                                            <option value="closed">ปิด</option>
+                                        </select>
+                                    </th>
+                                    <th style="padding: 4px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="roundsTableBody">
@@ -273,6 +298,7 @@
         let pagination;
         let currentPage = 1, perPage = 9, filteredData = [];
         let currentViewMode = 'grid';
+        let sortColumn = '', sortDirection = 'asc';
 
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -468,6 +494,70 @@
             renderRounds();
         }
 
+        function toggleSort(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            updateSortIcons();
+            renderRounds(false);
+        }
+
+        function updateSortIcons() {
+            ['departDate', 'busNumber', 'tripTitle', 'bookedSeats', 'isOpen'].forEach(col => {
+                const icon = document.getElementById(`sortIcon-${col}`);
+                if (sortColumn === col) {
+                    icon.textContent = sortDirection === 'asc' ? '▲' : '▼';
+                    icon.style.opacity = '1.0';
+                } else {
+                    icon.textContent = '';
+                    icon.style.opacity = '0.3';
+                }
+            });
+        }
+
+        function getSortedData(data) {
+            if (!sortColumn) return data;
+
+            return [...data].sort((a, b) => {
+                let aVal, bVal;
+
+                if (sortColumn === 'departDate') {
+                    aVal = new Date(a.departDate);
+                    bVal = new Date(b.departDate);
+                } else if (sortColumn === 'busNumber') {
+                    aVal = a.busNumber || 0;
+                    bVal = b.busNumber || 0;
+                } else if (sortColumn === 'tripTitle') {
+                    aVal = (a.trip?.title || '').toLowerCase();
+                    bVal = (b.trip?.title || '').toLowerCase();
+                } else if (sortColumn === 'bookedSeats') {
+                    aVal = a.bookedSeats || 0;
+                    bVal = b.bookedSeats || 0;
+                } else if (sortColumn === 'isOpen') {
+                    aVal = a.isOpen ? 1 : 0;
+                    bVal = b.isOpen ? 1 : 0;
+                } else {
+                    return 0;
+                }
+
+                if (typeof aVal === 'string' && typeof bVal === 'string') {
+                    const cmp = aVal.localeCompare(bVal, 'th');
+                    return sortDirection === 'asc' ? cmp : -cmp;
+                }
+
+                if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+                if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        function applyColumnFilters() {
+            renderRounds(false);
+        }
+
         function handleTripFilterKey(e) {
             if (e.key === 'Escape') { hideTripDropdown(); }
             if (e.key === 'Enter') { hideTripDropdown(); renderRounds(); }
@@ -489,15 +579,16 @@
             const startQ = document.getElementById('startDate').value;
             const endQ = document.getElementById('endDate').value;
 
-            // Show empty state if no Trip is selected
-            if (!tripQ) {
+            // Show empty state if no Trip is selected AND no date range selected
+            if (!tripQ && !startQ && !endQ) {
                 const emptyMsg = `<div class="col-12 text-center py-5">
                     <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-                    <p class="text-muted mt-3 fs-5">โปรดเลือกชื่อทริปก่อนเพื่อดูรอบรถ</p>
+                    <p class="text-muted mt-3 fs-5">โปรดเลือกชื่อทริปหรือช่วงวันที่เพื่อดูรอบรถ</p>
                 </div>`;
                 document.getElementById('roundsGrid').innerHTML = emptyMsg;
                 document.getElementById('tableNoData').classList.remove('d-none');
                 document.getElementById('roundsTableBody').innerHTML = '';
+                updateSortIcons();
                 if (pagination) pagination.render({ totalRecords: 0, currentPage, perPage });
                 return;
             }
@@ -514,6 +605,27 @@
                 data = ThaiCalendar.filterByDateRange(data, 'departDate', startQ, endQ);
             }
 
+            // Apply column filters (table view only)
+            if (currentViewMode === 'table') {
+                const colBusNum = document.getElementById('colBusNum')?.value || '';
+                const colRoute = document.getElementById('colRoute')?.value.toLowerCase() || '';
+                const colSeats = document.getElementById('colSeats')?.value || '';
+                const colStatus = document.getElementById('colStatus')?.value || '';
+
+                if (colBusNum) data = data.filter(r => String(r.busNumber) === colBusNum);
+                if (colRoute) {
+                    data = data.filter(r => {
+                        const pickupPoints = typeof r.pickupPoints === 'string' ? JSON.parse(r.pickupPoints || '[]') : (r.pickupPoints || []);
+                        const allPoints = pickupPoints.map(p => p.name).join(' ').toLowerCase();
+                        return allPoints.includes(colRoute);
+                    });
+                }
+                if (colSeats === 'full') data = data.filter(r => r.bookedSeats >= r.totalSeats);
+                if (colSeats === 'avail') data = data.filter(r => r.bookedSeats < r.totalSeats);
+                if (colStatus === 'open') data = data.filter(r => r.isOpen);
+                if (colStatus === 'closed') data = data.filter(r => !r.isOpen);
+            }
+
             filteredData = data;
 
             if (!data.length) {
@@ -521,22 +633,28 @@
                 document.getElementById('tableNoData').classList.remove('d-none');
                 document.getElementById('roundsTableBody').innerHTML = '';
                 if (pagination) pagination.render({ totalRecords: 0, currentPage, perPage });
+                updateSortIcons();
                 return;
             }
 
             document.getElementById('tableNoData').classList.add('d-none');
+
+            // Apply sort to all data
+            const sortedData = getSortedData(data);
+
             const startIdx = (currentPage - 1) * perPage;
             let endIdx = startIdx + perPage;
-            const pagedData = data.slice(startIdx, endIdx);
+            const pagedData = sortedData.slice(startIdx, endIdx);
 
             // Render based on current view mode
             if (currentViewMode === 'grid') {
                 renderGridView(pagedData);
             } else {
                 renderTableView(pagedData);
+                updateSortIcons();
             }
 
-            if (pagination) pagination.render({ totalRecords: data.length, currentPage, perPage });
+            if (pagination) pagination.render({ totalRecords: sortedData.length, currentPage, perPage });
         }
 
         function renderGridView(pagedData) {
@@ -544,11 +662,12 @@
             let html = pagedData.map(r => {
                 const pct = Math.round((r.bookedSeats / r.totalSeats) * 100);
                 const isFull = r.bookedSeats >= r.totalSeats;
+                const dateRange = formatDateRange(r.departDate, r.duration);
                 return `<div class="col-md-6 col-xl-4">
             <div class="card h-100 ${!r.isOpen ? 'border-secondary opacity-75' : ''}">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex justify-content-between align-items-center bg-light">
                     <span class="fw-semibold"><i class="bi bi-bus-front me-1"></i>รถ${r.busNumber} — ${r.trip?.title || ''}</span>
-                    <span class="badge ${r.isOpen ? 'bg-success' : 'bg-secondary'}">${r.isOpen ? 'เปิดจอง' : 'ปิดจอง'}</span>
+                    <span class="badge bg-white text-primary border border-primary shadow-sm">${dateRange}</span>
                 </div>
                 <div class="card-body">
                     <div class="mb-1 text-primary small fw-bold">
@@ -564,7 +683,7 @@
             </div>
         ` : '';
                     })()}
-                    <div class="mb-2 text-muted small"><i class="bi bi-calendar me-1"></i>${formatDateTime(r.departDate)}</div>
+                    <div class="mb-2 text-muted small"><i class="bi bi-clock me-1"></i>เวลาออก: ${formatTime(r.departDate)} (${r.duration || '-'})</div>
                     ${r.extraPrice > 0 ? `<div class="mb-2 text-success small fw-semibold"><i class="bi bi-plus-circle me-1"></i>ราคาเริ่มต้นเพิ่ม: +${formatMoney(r.extraPrice)}</div>` : ''}
                     ${r.duration ? `<div class="mb-2 text-muted small"><i class="bi bi-clock me-1"></i>${r.duration}</div>` : ''}
                     <div class="mb-1 d-flex justify-content-between small">
@@ -619,7 +738,7 @@
 
                 return `<tr style="height: 50px; border-bottom: 1px solid #e9ecef; ${!r.isOpen ? 'background-color: #f8f9fa;' : 'background-color: #fff;'}">
             <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: center; font-weight: 500;">
-                <div class="text-dark">${formatDateTime(r.departDate)}</div>
+                <div class="text-primary fw-bold" style="font-size: 0.85rem;">${formatDateRange(r.departDate, r.duration, false)}</div>
             </td>
             <td style="padding: 12px 10px; border-right: 1px solid #e9ecef; text-align: center; font-weight: 600; font-size: 1.1rem;">
                 <i class="bi bi-bus-front me-2 text-info"></i><span class="text-primary">${r.busNumber}</span>
@@ -873,6 +992,7 @@
                 }
             }
 
+            document.getElementById('fSeats').value = 10; // ✅ ที่นั่งเริ่มต้น 10
             document.getElementById('pickupList').innerHTML = '';
             addPickupRow('ลานจอดรถ BTS หมอชิต', 0); // Default row
 
@@ -907,6 +1027,9 @@
                 document.getElementById('fStartDate').dataset.date = new Date(rs.deteroudestr).toISOString();
                 document.getElementById('fEndDate').value = '';
                 document.getElementById('fDuration').value = '';
+                
+                // ✅ เพิ่ม Auto Bus Number ตามรอบที่เลือก
+                updateNextBusNumber(roudestackId);
             }
         }
 
@@ -918,7 +1041,25 @@
 
             const endDate = new Date(endVal + 'T00:00:00');
             const startDate = new Date(startStr);
-            const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+            startDate.setHours(0, 0, 0, 0);
+            
+            // ✅ Check if End Date is before Start Date
+            if (endDate < startDate) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'วันที่ไม่ถูกต้อง',
+                    text: 'วันสิ้นสุดต้องไม่น้อยกว่าวันเริ่มต้น',
+                    confirmButtonText: 'ตกลง'
+                }).then(() => {
+                    document.getElementById('fEndDate').value = '';
+                    document.getElementById('fDuration').value = '-';
+                });
+                return;
+            }
+
+            // ✅ คำนวณแบบ n+1 (เช่น 5-7 นับเป็น 3 วัน)
+            const diffTime = endDate.getTime() - startDate.getTime();
+            const days = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1; // n+1
 
             let durationText = '';
             if (days === 1) durationText = '1 วัน';
@@ -931,15 +1072,18 @@
             document.getElementById('fDuration').value = durationText;
         }
 
-        function updateNextBusNumber() {
-            const tripId = parseInt(document.getElementById('fTripId').value);
-            if (!tripId) return;
+        function updateNextBusNumber(roudestackId) {
+            if (!roudestackId) {
+                roudestackId = parseInt(document.getElementById('fRoudestackId').value);
+            }
+            if (!roudestackId) return;
 
-            const sameTripRounds = allRounds.filter(r => r.tripId === tripId);
-            if (sameTripRounds.length === 0) {
+            // ✅ นับลำดับใหม่ตาม รอบ (RoudeStack) นั้นๆ
+            const sameStackRounds = allRounds.filter(r => r.roudeStackId === roudestackId);
+            if (sameStackRounds.length === 0) {
                 document.getElementById('fBusNum').value = 1;
             } else {
-                const numbers = sameTripRounds.map(r => r.busNumber || 0);
+                const numbers = sameStackRounds.map(r => r.busNumber || 0);
                 const maxNum = Math.max(...numbers);
                 document.getElementById('fBusNum').value = maxNum + 1;
             }
@@ -985,9 +1129,25 @@
             const startDateStr = document.getElementById('fStartDate').dataset.date;
             const endDateVal = document.getElementById('fEndDate').value;
             const timeVal = document.getElementById('fDepartTime').value;
+            const duration = document.getElementById('fDuration').value; // ✅ รับค่าระยะเวลา
 
             if (!roudestackId) return showToast('กรุณาเลือกรอบเที่ยว/รอบป่า', 'warning');
             if (!endDateVal) return showToast('กรุณาเลือกวันสิ้นสุด', 'warning');
+            
+            // ✅ ตรวจสอบระยะเวลาว่าถูกต้องหรือไม่
+            if (!duration || duration === '-' || duration === '') {
+                return Swal.fire({
+                    icon: 'warning',
+                    title: 'ข้อมูลไม่ครบถ้วน',
+                    text: 'กรุณาตรวจสอบวันสิ้นสุดเพื่อให้ระบบคำนวณระยะเวลาที่ถูกต้อง',
+                    confirmButtonText: 'ตกลง'
+                });
+            }
+
+            const startDate = new Date(startDateStr);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(endDateVal + 'T00:00:00');
+            if (endDate < startDate) return showToast('วันสิ้นสุดต้องมากกว่าหรือเท่ากับวันเริ่มต้น', 'warning');
 
             let departDateVal = new Date(startDateStr);
             if (timeVal && timeVal.match(/^\d{2}:\d{2}$/)) {

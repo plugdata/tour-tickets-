@@ -68,12 +68,12 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>#</th>
-                                    <th>ชื่อรายการ</th>
-                                    <th>คำอธิบาย</th>
-                                    <th>ระยะเวลา</th>
-                                    <th class="text-end">ราคา / หน่วย</th>
-                                    <th class="text-center">สถานะ</th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('id')" title="คลิกเพื่อจัดลำดับ"># <span id="sortIcon-id" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('name')" title="คลิกเพื่อจัดลำดับ">ชื่อรายการ <span id="sortIcon-name" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('description')" title="คลิกเพื่อจัดลำดับ">คำอธิบาย <span id="sortIcon-description" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="toggleSort('duration')" title="คลิกเพื่อจัดลำดับ">ระยะเวลา <span id="sortIcon-duration" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                    <th style="cursor: pointer; user-select: none; text-end;" onclick="toggleSort('price')" title="คลิกเพื่อจัดลำดับ">ราคา / หน่วย <span id="sortIcon-price" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
+                                    <th style="cursor: pointer; user-select: none; text-center;" onclick="toggleSort('isActive')" title="คลิกเพื่อจัดลำดับ">สถานะ <span id="sortIcon-isActive" style="display: inline-block; width: 16px; text-align: center; font-weight: bold; color: #0d6efd;"></span></th>
                                     <th class="text-center">จัดการ</th>
                                 </tr>
                             </thead>
@@ -149,6 +149,7 @@ let modal, allAddons = [];
 let pagination;
 let currentPage = 1, perPage = 10, filteredData = [];
 let allDurations = [];
+let sortColumn = '', sortDirection = 'asc';
 
 document.addEventListener('DOMContentLoaded', async () => {
     await initPage();
@@ -195,6 +196,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderAddons();
 });
 
+function toggleSort(column) {
+    if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortColumn = column;
+        sortDirection = 'asc';
+    }
+    currentPage = 1;
+    renderAddons(false);
+}
+
+function updateSortIcons() {
+    document.querySelectorAll('[id^="sortIcon-"]').forEach(el => {
+        el.textContent = '';
+        el.style.opacity = '0.3';
+    });
+
+    if (sortColumn) {
+        const icon = document.getElementById(`sortIcon-${sortColumn}`);
+        if (icon) {
+            icon.textContent = sortDirection === 'asc' ? '▲' : '▼';
+            icon.style.opacity = '1';
+            icon.style.color = '#0d6efd';
+        }
+    }
+}
+
+function getSortedData(data) {
+    if (!sortColumn) return data;
+
+    return data.sort((a, b) => {
+        let aVal = a[sortColumn];
+        let bVal = b[sortColumn];
+
+        if (aVal == null && bVal == null) return 0;
+        if (aVal == null) return sortDirection === 'asc' ? 1 : -1;
+        if (bVal == null) return sortDirection === 'asc' ? -1 : 1;
+
+        if (typeof aVal === 'boolean' && typeof bVal === 'boolean') {
+            aVal = aVal ? 1 : 0;
+            bVal = bVal ? 1 : 0;
+        }
+
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
+            return sortDirection === 'asc' ? aVal.localeCompare(bVal, 'th') : bVal.localeCompare(aVal, 'th');
+        }
+
+        if (sortDirection === 'asc') {
+            return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+        } else {
+            return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+        }
+    });
+}
+
 function renderAddons(resetPage = true) {
     if (resetPage) currentPage = 1;
 
@@ -212,17 +270,20 @@ function renderAddons(resetPage = true) {
     if (status === 'inactive') data = data.filter(a => !a.isActive);
 
     filteredData = data;
+    updateSortIcons();
     document.getElementById('countBadge').textContent = `${data.length} รายการ`;
     const tbody = document.getElementById('addonsBody');
 
-    if (!data.length) {
+    const sortedData = getSortedData([...data]);
+
+    if (!sortedData.length) {
         tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">ไม่พบรายการ</td></tr>';
         pagination.render({ totalRecords: 0, currentPage, perPage });
         return;
     }
 
     const startIdx = (currentPage - 1) * perPage;
-    const pagedData = data.slice(startIdx, startIdx + perPage);
+    const pagedData = sortedData.slice(startIdx, startIdx + perPage);
 
     tbody.innerHTML = pagedData.map((a, i) => {
         return `<tr class="${!a.isActive ? 'opacity-60' : ''}">
@@ -261,7 +322,7 @@ function renderAddons(resetPage = true) {
         </tr>`;
     }).join('');
 
-    pagination.render({ totalRecords: data.length, currentPage, perPage });
+    pagination.render({ totalRecords: sortedData.length, currentPage, perPage });
 }
 
 function openModal() {
