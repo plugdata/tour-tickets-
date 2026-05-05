@@ -174,7 +174,12 @@ router.put('/:id', authenticate, authorize('ADMIN'), async (req, res) => {
  */
 router.delete('/:id', authenticate, authorize('ADMIN'), async (req, res) => {
   try {
-    await prisma.roudeStack.delete({ where: { id: Number(req.params.id) } })
+    const stackId = Number(req.params.id)
+    // ✅ ลบรอบรถตู้ที่ผูกกับรอบเที่ยวนี้ก่อน (เพื่อความปลอดภัยและไม่ติด constraint)
+    await prisma.busRound.deleteMany({ where: { roudeStackId: stackId } })
+    // ✅ ลบรอบเที่ยว (ใช้ deleteMany เพื่อกัน Error ถ้าหา Record ไม่เจอ)
+    await prisma.roudeStack.deleteMany({ where: { id: stackId } })
+    
     res.status(204).send()
   } catch (e) {
     res.status(500).json({ message: e.message })
