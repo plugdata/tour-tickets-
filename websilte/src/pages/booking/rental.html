@@ -494,7 +494,13 @@
                 if (sessionData.perSeatAddons) selectedAddons = sessionData.perSeatAddons;
 
                 document.getElementById('loadingState').classList.add('d-none');
-                if (!addonsList.filter(a => a.isActive).length) {
+
+                // กรอง addon ตาม duration ของรอบ
+                const roundDuration = roundData?.duration || null;
+                const relevantAddons = addonsList.filter(a =>
+                    a.isActive && (!a.duration || !roundDuration || a.duration === roundDuration)
+                );
+                if (!relevantAddons.length) {
                     document.getElementById('noAddonsState').classList.remove('d-none');
                     return;
                 }
@@ -552,7 +558,11 @@
             const seat = (sessionData.selectedSeats || []).find(s => String(s.seatNumber) === String(sn));
             const displayName = seat ? ([seat.namePrefix, seat.firstName, seat.lastName].filter(Boolean).join(' ') || seat.passengerName) : `ที่นั่ง ${sn}`;
 
-            const activeAddons = addonsList.filter(a => a.isActive);
+            const roundDuration = roundData?.duration || null;
+            // แสดงเฉพาะ addon ที่ duration ตรงกับรอบ หรือไม่ได้กำหนด duration ไว้
+            const activeAddons = addonsList.filter(a =>
+                a.isActive && (!a.duration || !roundDuration || a.duration === roundDuration)
+            );
             const workQty = {};
             const cur = selectedAddons[sn] || {};
             activeAddons.forEach(a => workQty[a.id] = cur[a.id] || 0);

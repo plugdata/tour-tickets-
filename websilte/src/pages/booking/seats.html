@@ -885,7 +885,7 @@
 
       totalSeats = roundData.totalSeats || 9
 
-      const isFull = roundData.bookedSeats >= totalSeats
+      const isFull = roundData.bookedSeats >= (totalSeats - 2)   // ที่นั่งผู้โดยสาร = totalSeats - Staff - Driver
       const isOpen = roundData.isOpen && !isFull
       const d = new Date(roundData.departDate)
 
@@ -940,7 +940,8 @@
     // seatchart.js init
     // ════════════════════════════════════════════════════════════════
     function initSeatchart() {
-      const rows = Math.ceil(totalSeats / 3)   // 9 seats → 3 rows
+      const passengerSeats = totalSeats - 2   // ตัด Staff (1) + Driver (1) ออก
+      const rows = Math.ceil(passengerSeats / 3)
       const cols = 3
       const price = roundData?.trip?.price || 0
 
@@ -948,7 +949,6 @@
         map: {
           rows,
           columns: cols,
-          // Always use seat number as label
           seatLabel: (rowOrIdx, maybeCol) => String(idxToSeat(rowOrIdx, maybeCol)),
           indexer: { visible: false },
           rowIndexer: { visible: false },
@@ -966,10 +966,9 @@
         legendVisible: false
       })
 
-      // Force labels manually after init for seatchart v0.1.0 compatibility
-      console.log('[SEATS] Forcing numeric labels 2..', totalSeats + 1);
+      // Force labels 2..passengerSeats+1  (เช่น totalSeats=10 → seats 2..9)
       suppressCart = true
-      for (let n = 2; n <= totalSeats + 1; n++) {
+      for (let n = 2; n <= passengerSeats + 1; n++) {
         try {
           sc.setSeat(seatToIdx(n), { label: String(n) });
         } catch (e) { console.error('[SEATS] Failed to set label for seat', n, e); }
@@ -1111,6 +1110,8 @@
         const data = await apiFetch(`/seat-bookings/round/${roundId}`)
         const apiSeats = data.seats || {}
         totalSeats = data.totalSeats || totalSeats
+        // passengerSeats จาก API (totalSeats - 2) หรือคำนวณเอง
+        const pollPassengerSeats = data.passengerSeats ?? (totalSeats - 2)
 
         // Check if session expired and auto-refresh
         if (sessionToken && data.sessionExpired) {
@@ -1128,7 +1129,7 @@
 
         suppressCart = true   // prevent cartchange during programmatic updates
 
-        const lastSeat = totalSeats + 1
+        const lastSeat = totalSeats - 1   // totalSeats รวม Staff+Driver → passenger สูงสุด = totalSeats-1
         for (let n = 2; n <= lastSeat; n++) {
           const idx = seatToIdx(n)
           const apiInfo = apiSeats[n]
@@ -1174,10 +1175,10 @@
 
         suppressCart = false
 
-        // Update counter
+        // Update counter (แสดงเฉพาะที่นั่งผู้โดยสาร ไม่รวม Staff+Driver)
         const bookedCount = Object.values(apiSeats).filter(s => s.status === 'BOOKED').length
         document.getElementById('seatCountLabel').textContent =
-          `ว่าง ${totalSeats - bookedCount} / ${totalSeats} ที่นั่ง`
+          `ว่าง ${pollPassengerSeats - bookedCount} / ${pollPassengerSeats} ที่นั่ง`
 
         updateSummary()
       } catch (e) {

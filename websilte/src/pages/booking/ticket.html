@@ -212,7 +212,7 @@
                                         <div class="fw-bold"><i class="bi bi-wallet2 me-2 text-primary"></i>ชำระเฉพาะมัดจำ</div>
                                         <div class="text-primary fw-bold" id="depositAmt">-</div>
                                     </div>
-                                    <div class="text-muted x-small">มัดจำที่นั่ง + ค่าอุปกรณ์เช่าเต็มจำนวน</div>
+                                    <div class="text-muted x-small">ชำระมัดจำเพื่อจองที่นั่ง</div>
                                 </div>
                             </div>
                             <div class="col-12">
@@ -222,6 +222,34 @@
                                         <div class="text-success fw-bold" id="fullAmt">-</div>
                                     </div>
                                     <div class="text-muted x-small">ชำระยอดรวมทั้งหมดทันที</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deposit Remaining Notice -->
+                    <div id="depositNotice" class="d-none mb-4">
+                        <div class="alert mb-0" style="background:#fffbe6;border:1.5px solid #f59e0b;border-radius:12px;padding:1rem 1.1rem;">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="bi bi-exclamation-triangle-fill mt-1" style="color:#f59e0b;font-size:1.1rem;flex-shrink:0"></i>
+                                <div>
+                                    <div class="fw-bold mb-1" style="color:#92400e;font-size:.95rem;">ยอดที่ต้องชำระส่วนที่เหลือ</div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted" style="font-size:.88rem;">ยอดรวมทั้งหมด</span>
+                                        <span class="fw-bold" id="noticeGrand" style="color:#1a1a1a">-</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                        <span class="text-muted" style="font-size:.88rem;">หักมัดจำที่ชำระแล้ว</span>
+                                        <span class="fw-bold text-primary" id="noticeDeposit" style="font-size:.88rem">-</span>
+                                    </div>
+                                    <hr class="my-2" style="border-color:#f59e0b;opacity:.4">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold" style="color:#92400e;font-size:.95rem;">ยอดคงเหลือที่ต้องชำระ</span>
+                                        <span class="fw-bold fs-5" id="noticeRemain" style="color:#dc2626">-</span>
+                                    </div>
+                                    <div class="mt-2" style="font-size:.8rem;color:#92400e">
+                                        <i class="bi bi-clock me-1"></i>ต้องชำระให้ครบก่อนวันเดินทาง
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -499,12 +527,24 @@ function updatePayAmounts() {
         seatDeposit = Math.ceil((seatTotal + pickupTotal) * (window._depositVal || 0.3));
     }
 
-    //  "มัดจำค่าทริป + อุปกรณ์เต็ม" -> Add full addonTotal into the deposit amount
-    const totalDepositNeeded = seatDeposit + addonTotal;
+    // มัดจำเฉพาะค่าที่นั่ง ไม่รวมค่าอุปกรณ์
+    const totalDepositNeeded = seatDeposit;
 
     document.getElementById('depositAmt').textContent = `${Number(totalDepositNeeded).toLocaleString('th-TH')} บาท`;
     document.getElementById('fullAmt').textContent    = `${Number(grand).toLocaleString('th-TH')} บาท`;
     document.getElementById('payAmt').textContent     = `${Number(payType === 'DEPOSIT' ? totalDepositNeeded : grand).toLocaleString('th-TH')} บาท`;
+
+    // แสดง/ซ่อน box แจ้งยอดคงเหลือ
+    const notice = document.getElementById('depositNotice');
+    if (payType === 'DEPOSIT') {
+        const remain = grand - totalDepositNeeded;
+        document.getElementById('noticeGrand').textContent   = `${Number(grand).toLocaleString('th-TH')} บาท`;
+        document.getElementById('noticeDeposit').textContent = `- ${Number(totalDepositNeeded).toLocaleString('th-TH')} บาท`;
+        document.getElementById('noticeRemain').textContent  = `${Number(remain).toLocaleString('th-TH')} บาท`;
+        notice.classList.remove('d-none');
+    } else {
+        notice.classList.add('d-none');
+    }
 
     // Update totals in ticket summary
     renderPriceBreakdown();
