@@ -95,8 +95,22 @@
                     </div>
                 </div>
 
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs mb-3 border-bottom-0" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="activeTab" onclick="switchTab('active')" type="button" role="tab">
+                            <i class="bi bi-play-circle me-2"></i>รอบเปิดจอง
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="storyTab" onclick="switchTab('story')" type="button" role="tab">
+                            <i class="bi bi-archive me-2"></i>ประวัติรถ
+                        </button>
+                    </li>
+                </ul>
+
                 <!-- View Toggle Tabs & Export Buttons -->
-                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                <div id="activeControls" class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
                     <div class="d-flex gap-2">
                         <button class="btn btn-sm border-0 rounded-0 fw-semibold text-primary position-relative"
                             id="gridViewBtn" onclick="switchView('grid')" style="border-bottom: 3px solid #0d6efd;">
@@ -117,15 +131,17 @@
                     </div>
                 </div>
 
-                <!-- Grid View -->
-                <div id="gridContainer">
-                    <div class="row g-3" id="roundsGrid">
-                        <div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>
+                <!-- ACTIVE TAB CONTENT -->
+                <div id="activeContent">
+                    <!-- Grid View -->
+                    <div id="gridContainer">
+                        <div class="row g-3" id="roundsGrid">
+                            <div class="col-12 text-center py-4 text-muted">กำลังโหลด...</div>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Table View -->
-                <div id="tableContainer" class="d-none">
+                    <!-- Table View -->
+                    <div id="tableContainer" class="d-none">
                     <div class="table-responsive">
                         <table class="table table-hover" id="roundsTable"
                             style="font-size: 1rem; border-collapse: collapse;">
@@ -194,6 +210,29 @@
                         </table>
                     </div>
                     <div id="tableNoData" class="text-center py-4 text-muted d-none">ไม่พบรอบรถ</div>
+                </div>
+                </div>
+
+                <!-- STORY TAB CONTENT -->
+                <div id="storyContent" class="d-none">
+                    <!-- Search -->
+                    <div class="card mb-3">
+                        <div class="card-body py-2">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control border-start-0" id="historySearch"
+                                    placeholder="ค้นหาชื่อเที่ยว, ตู่, หรือผู้ลบ..." oninput="searchHistory()">
+                                <button class="btn btn-outline-secondary btn-sm px-2" onclick="clearHistorySearch()" title="ล้าง">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Story Container -->
+                    <div id="storyContainer" class="py-4">
+                        <div class="text-center py-5 text-muted">กำลังโหลด...</div>
+                    </div>
                 </div>
 
                 <div class="mt-4 pb-4">
@@ -298,6 +337,7 @@
         let pagination;
         let currentPage = 1, perPage = 9, filteredData = [];
         let currentViewMode = 'grid';
+        let currentTab = 'active';
         let sortColumn = '', sortDirection = 'asc';
 
 
@@ -1193,6 +1233,313 @@
             } catch (e) {
                 showToast('ลบล้มเหลว: ' + e.message, 'danger');
             }
+        }
+
+        // ===== TAB SWITCHING =====
+        function switchTab(tab) {
+            currentTab = tab;
+            currentPage = 1;
+
+            const activeTab = document.getElementById('activeTab');
+            const storyTab = document.getElementById('storyTab');
+            const activeContent = document.getElementById('activeContent');
+            const storyContent = document.getElementById('storyContent');
+            const activeControls = document.getElementById('activeControls');
+
+            if (tab === 'active') {
+                activeTab.classList.add('active');
+                storyTab.classList.remove('active');
+                activeContent.classList.remove('d-none');
+                storyContent.classList.add('d-none');
+                activeControls.classList.remove('d-none');
+                renderRounds(true);
+            } else {
+                activeTab.classList.remove('active');
+                storyTab.classList.add('active');
+                activeContent.classList.add('d-none');
+                storyContent.classList.remove('d-none');
+                activeControls.classList.add('d-none');
+                renderStory();
+            }
+        }
+
+        // ===== STORY VIEW =====
+        async function renderStory() {
+            const storyContainer = document.getElementById('storyContainer');
+            storyContainer.innerHTML = '<div class="text-center py-5 text-muted">กำลังโหลด...</div>';
+
+            try {
+                const logs = await API.busRounds.deleteLogs();
+
+                if (!logs || logs.length === 0) {
+                    storyContainer.innerHTML = `<div class="text-center py-5">
+                        <i class="bi bi-archive" style="font-size: 3rem; color: #ccc;"></i>
+                        <p class="text-muted mt-3 fs-5">ยังไม่มีประวัติรถที่ลบ</p>
+                    </div>`;
+                    return;
+                }
+
+                // Group by trip
+                const groupedByTrip = {};
+                logs.forEach(log => {
+                    if (!groupedByTrip[log.tripTitle]) {
+                        groupedByTrip[log.tripTitle] = [];
+                    }
+                    groupedByTrip[log.tripTitle].push(log);
+                });
+
+                // Render grouped view
+                let html = '';
+                Object.entries(groupedByTrip).forEach(([tripTitle, logs]) => {
+                    logs.sort((a, b) => (a.busNumber || 0) - (b.busNumber || 0));
+
+                    html += `<div class="mb-5">
+                        <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
+                            <h5 class="mb-0 text-dark fw-bold">
+                                <i class="bi bi-map me-2 text-info"></i>${tripTitle}
+                            </h5>
+                            <span class="badge bg-danger ms-2">${logs.length} รอบ</span>
+                        </div>
+                        <div class="row g-3">`;
+
+                    logs.forEach(log => {
+                        const info = log.roundInfo || {};
+                        const pickupPoints = typeof info.pickupPoints === 'string' ? JSON.parse(info.pickupPoints || '[]') : (info.pickupPoints || []);
+                        const pct = info.totalSeats ? Math.round((info.bookedSeats / info.totalSeats) * 100) : 0;
+                        const isFull = info.bookedSeats >= info.totalSeats;
+
+                        html += `<div class="col-md-6 col-xl-4">
+                            <div class="card h-100 border-danger border-2" style="cursor:pointer" onclick="showDeletedRoundDetail(${JSON.stringify(log).replace(/"/g, '&quot;')})">
+                                <div class="card-header bg-danger bg-opacity-10">
+                                    <span class="fw-semibold"><i class="bi bi-bus-front me-1"></i>รถ${log.busNumber}</span>
+                                    <span class="badge bg-danger float-end">ถูกลบแล้ว</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2 text-muted small">
+                                        <i class="bi bi-calendar me-1"></i>${formatDateRange(log.departDate, info.duration, false)}
+                                    </div>
+                                    <div class="mb-2 text-primary small fw-bold">
+                                        <i class="bi bi-geo-alt-fill me-1"></i>${info.startPoint || '-'}
+                                    </div>
+                                    ${pickupPoints.length > 1 ? `<div class="mb-2 ps-2 border-start text-muted" style="font-size: 0.75rem;">
+                                        ${pickupPoints.slice(1).map(p => `<div class="mb-1"><i class="bi bi-plus-circle me-1" style="font-size:0.6rem"></i>${p.name}</div>`).join('')}
+                                    </div>` : ''}
+                                    <div class="mb-3 small">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>ที่นั่ง</span>
+                                            <span class="fw-semibold ${isFull ? 'text-danger' : ''}">${info.bookedSeats}/${info.totalSeats}</span>
+                                        </div>
+                                        <div class="progress" style="height:6px">
+                                            <div class="progress-bar ${isFull ? 'bg-danger' : 'bg-success'}" style="width:${pct}%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="border-top pt-2">
+                                        <small class="text-muted">
+                                            <i class="bi bi-trash me-1"></i>ลบโดย: <strong>${log.deletedByName || log.deletedBy}</strong><br>
+                                            <i class="bi bi-clock me-1"></i>${formatDateTime(log.deletedAt)}
+                                        </small>
+                                    </div>
+                                    <div class="mt-2"><small class="text-info"><i class="bi bi-info-circle me-1"></i>คลิ๊กเพื่อดูรายละเอียด</small></div>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+
+                    html += `</div></div>`;
+                });
+
+                storyContainer.innerHTML = html;
+            } catch (e) {
+                console.error('Error loading history:', e);
+                storyContainer.innerHTML = `<div class="alert alert-danger">โหลดข้อมูลล้มเหลว: ${e.message}</div>`;
+            }
+        }
+
+        async function searchHistory() {
+            const q = document.getElementById('historySearch').value;
+            const storyContainer = document.getElementById('storyContainer');
+            storyContainer.innerHTML = '<div class="text-center py-5 text-muted">กำลังค้นหา...</div>';
+
+            try {
+                const logs = await API.busRounds.deleteLogs(q);
+
+                if (!logs || logs.length === 0) {
+                    storyContainer.innerHTML = `<div class="text-center py-5 text-muted">ไม่พบข้อมูล</div>`;
+                    return;
+                }
+
+                // Group by trip
+                const groupedByTrip = {};
+                logs.forEach(log => {
+                    if (!groupedByTrip[log.tripTitle]) {
+                        groupedByTrip[log.tripTitle] = [];
+                    }
+                    groupedByTrip[log.tripTitle].push(log);
+                });
+
+                // Render (same as renderStory)
+                let html = '';
+                Object.entries(groupedByTrip).forEach(([tripTitle, logs]) => {
+                    logs.sort((a, b) => (a.busNumber || 0) - (b.busNumber || 0));
+
+                    html += `<div class="mb-5">
+                        <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
+                            <h5 class="mb-0 text-dark fw-bold">
+                                <i class="bi bi-map me-2 text-info"></i>${tripTitle}
+                            </h5>
+                            <span class="badge bg-danger ms-2">${logs.length} รอบ</span>
+                        </div>
+                        <div class="row g-3">`;
+
+                    logs.forEach(log => {
+                        const info = log.roundInfo || {};
+                        const pickupPoints = typeof info.pickupPoints === 'string' ? JSON.parse(info.pickupPoints || '[]') : (info.pickupPoints || []);
+                        const pct = info.totalSeats ? Math.round((info.bookedSeats / info.totalSeats) * 100) : 0;
+                        const isFull = info.bookedSeats >= info.totalSeats;
+
+                        html += `<div class="col-md-6 col-xl-4">
+                            <div class="card h-100 border-danger border-2" style="cursor:pointer" onclick="showDeletedRoundDetail(${JSON.stringify(log).replace(/"/g, '&quot;')})">
+                                <div class="card-header bg-danger bg-opacity-10">
+                                    <span class="fw-semibold"><i class="bi bi-bus-front me-1"></i>รถ${log.busNumber}</span>
+                                    <span class="badge bg-danger float-end">ถูกลบแล้ว</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2 text-muted small">
+                                        <i class="bi bi-calendar me-1"></i>${formatDateRange(log.departDate, info.duration, false)}
+                                    </div>
+                                    <div class="mb-2 text-primary small fw-bold">
+                                        <i class="bi bi-geo-alt-fill me-1"></i>${info.startPoint || '-'}
+                                    </div>
+                                    ${pickupPoints.length > 1 ? `<div class="mb-2 ps-2 border-start text-muted" style="font-size: 0.75rem;">
+                                        ${pickupPoints.slice(1).map(p => `<div class="mb-1"><i class="bi bi-plus-circle me-1" style="font-size:0.6rem"></i>${p.name}</div>`).join('')}
+                                    </div>` : ''}
+                                    <div class="mb-3 small">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>ที่นั่ง</span>
+                                            <span class="fw-semibold ${isFull ? 'text-danger' : ''}">${info.bookedSeats}/${info.totalSeats}</span>
+                                        </div>
+                                        <div class="progress" style="height:6px">
+                                            <div class="progress-bar ${isFull ? 'bg-danger' : 'bg-success'}" style="width:${pct}%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="border-top pt-2">
+                                        <small class="text-muted">
+                                            <i class="bi bi-trash me-1"></i>ลบโดย: <strong>${log.deletedByName || log.deletedBy}</strong><br>
+                                            <i class="bi bi-clock me-1"></i>${formatDateTime(log.deletedAt)}
+                                        </small>
+                                    </div>
+                                    <div class="mt-2"><small class="text-info"><i class="bi bi-info-circle me-1"></i>คลิ๊กเพื่อดูรายละเอียด</small></div>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+
+                    html += `</div></div>`;
+                });
+
+                storyContainer.innerHTML = html;
+            } catch (e) {
+                console.error('Error searching:', e);
+                storyContainer.innerHTML = `<div class="alert alert-danger">ค้นหาล้มเหลว: ${e.message}</div>`;
+            }
+        }
+
+        function clearHistorySearch() {
+            document.getElementById('historySearch').value = '';
+            renderStory();
+        }
+
+        // ===== DELETED ROUND DETAIL MODAL =====
+        function showDeletedRoundDetail(log) {
+            const info = log.roundInfo || {};
+            const pickupPoints = typeof info.pickupPoints === 'string' ? JSON.parse(info.pickupPoints || '[]') : (info.pickupPoints || []);
+
+            const html = `
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">ข้อมูลรอบรถ</h6>
+                        <div class="mb-2">
+                            <label class="small text-muted">ทริป</label>
+                            <div class="fw-semibold">${log.tripTitle}</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small text-muted">หมายเลขรถ</label>
+                            <div class="fw-semibold">${log.busNumber}</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small text-muted">วันออกเดินทาง</label>
+                            <div class="fw-semibold">${formatDateThai(log.departDate)}</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small text-muted">ระยะเวลา</label>
+                            <div class="fw-semibold">${info.duration || '-'}</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small text-muted">จุดเริ่มต้น</label>
+                            <div class="fw-semibold">${info.startPoint || '-'}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">ที่นั่ง & ราคา</h6>
+                        <div class="mb-2">
+                            <label class="small text-muted">จำนวนที่นั่ง</label>
+                            <div class="fw-semibold">${info.totalSeats || '-'} ที่</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small text-muted">ที่นั่งที่จองแล้ว</label>
+                            <div class="fw-semibold">${info.bookedSeats || 0} ที่</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small text-muted">ราคาพิเศษ</label>
+                            <div class="fw-semibold">${info.extraPrice ? '฿' + info.extraPrice : '-'}</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small text-muted">สถานะ</label>
+                            <div><span class="badge ${info.isOpen ? 'bg-success' : 'bg-danger'}">${info.isOpen ? 'เปิด' : 'ปิด'}</span></div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2">จุดขึ้นโดยสาร</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ชื่อจุด</th>
+                                        <th class="text-end">ราคา</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${pickupPoints.map(p => `
+                                        <tr>
+                                            <td>${p.name}</td>
+                                            <td class="text-end">${p.price ? '฿' + p.price : '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2">ประวัติการลบ</h6>
+                        <div class="mb-2">
+                            <label class="small text-muted">ลบโดย</label>
+                            <div class="fw-semibold">${log.deletedByName || log.deletedBy}</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small text-muted">วันที่และเวลาลบ</label>
+                            <div class="fw-semibold">${formatDateTime(log.deletedAt)}</div>
+                        </div>
+                        ${log.deleteReason ? `
+                        <div class="mb-2">
+                            <label class="small text-muted">เหตุผลการลบ</label>
+                            <div class="fw-semibold">${log.deleteReason}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            showModal('รายละเอียดรอบรถที่ลบ', html, true);
         }
     </script>
 </body>

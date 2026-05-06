@@ -277,6 +277,41 @@ model CancelLog {
   cancelledAt          DateTime @default(now())
 }
 
+// ===== DELETE LOG (ประวัติการลบรอบรถ) =====
+model DeleteLog {
+  id              Int      @id @default(autoincrement())
+  busRoundId      Int
+  tripTitle       String
+  busNumber       Int
+  departDate      DateTime
+  roundInfo       Json?
+  deletedBy       String?
+  deletedByName   String?
+  deleteReason    String?
+  deletedAt       DateTime @default(now())
+
+  @@index([tripTitle])
+  @@index([deletedAt])
+}
+
+// ===== DELETE LOG ROUDE STACK (ประวัติการลบรอบเที่ยว) =====
+model DeleteLogRoudeStack {
+  id              Int      @id @default(autoincrement())
+  roudeStackId    Int
+  tripId          Int
+  tripTitle       String
+  roundname       String
+  deteroudestr    DateTime
+  stackInfo       Json?
+  deletedBy       String?
+  deletedByName   String?
+  deleteReason    String?
+  deletedAt       DateTime @default(now())
+
+  @@index([tripTitle])
+  @@index([deletedAt])
+}
+
 // ===== SEAT BOOKING (จองที่นั่งรายตัว + ข้อมูลผู้โดยสาร) =====
 model SeatBooking {
   id            Int       @id @default(autoincrement())

@@ -105,6 +105,46 @@ router.get('/trip/:tripId', async (req, res) => {
 
 /**
  * @swagger
+ * /api/bus-rounds/delete-logs:
+ *   get:
+ *     tags: [BusRounds]
+ *     summary: Get deleted bus rounds history
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *         description: Search by trip title, bus number, or deleted by
+ *     responses:
+ *       200: { description: List of deleted logs }
+ */
+router.get('/delete-logs', async (req, res) => {
+  try {
+    const { q } = req.query
+    const where = {}
+
+    if (q) {
+      where.OR = [
+        { tripTitle: { contains: q, mode: 'insensitive' } },
+        { busNumber: isNaN(q) ? undefined : Number(q) },
+        { deletedBy: { contains: q, mode: 'insensitive' } },
+        { deletedByName: { contains: q, mode: 'insensitive' } }
+      ].filter(x => x)
+    }
+
+    const logs = await prisma.deleteLog.findMany({
+      where,
+      orderBy: { deletedAt: 'desc' },
+      take: 100
+    })
+
+    res.json(logs)
+  } catch (e) {
+    res.status(500).json({ message: e.message })
+  }
+})
+
+/**
+ * @swagger
  * /api/bus-rounds:
  *   post:
  *     tags: [BusRounds]
@@ -191,9 +231,47 @@ router.put('/:id', authenticate, authorize('ADMIN'), async (req, res) => {
 
 router.delete('/:id', authenticate, authorize('ADMIN'), async (req, res) => {
   try {
-    await prisma.busRound.delete({
-      where: { id: Number(req.params.id) }
+    const busRoundId = Number(req.params.id)
+
+    // ดึงข้อมูล BusRound ก่อนลบ
+    const round = await prisma.busRound.findUnique({
+      where: { id: busRoundId },
+      include: { trip: true }
     })
+
+    if (!round) {
+      return res.status(404).json({ message: 'BusRound not found' })
+    }
+
+    // สร้าง DeleteLog record
+    await prisma.deleteLog.create({
+      data: {
+        busRoundId: round.id,
+        tripTitle: round.trip?.title || 'Unknown Trip',
+        busNumber: round.busNumber,
+        departDate: round.departDate,
+        roundInfo: {
+          busRoundId: round.id,
+          tripId: round.tripId,
+          roudeStackId: round.roudeStackId,
+          startPoint: round.startPoint,
+          totalSeats: round.totalSeats,
+          bookedSeats: round.bookedSeats,
+          duration: round.duration,
+          pickupPoints: round.pickupPoints,
+          extraPrice: round.extraPrice,
+          isOpen: round.isOpen
+        },
+        deletedBy: req.user?.username || 'unknown',
+        deletedByName: req.user?.name || 'Unknown User'
+      }
+    })
+
+    // ลบ BusRound
+    await prisma.busRound.delete({
+      where: { id: busRoundId }
+    })
+
     res.status(204).send()
   } catch (e) {
     res.status(500).json({ message: e.message })

@@ -59,6 +59,46 @@ router.get('/trip/:tripId', async (req, res) => {
 
 /**
  * @swagger
+ * /api/roudestack/delete-logs:
+ *   get:
+ *     tags: [RoudeStack]
+ *     summary: Get deleted roude stacks history
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *         description: Search by trip title, round name, or deleted by
+ *     responses:
+ *       200: { description: List of deleted logs }
+ */
+router.get('/delete-logs', async (req, res) => {
+  try {
+    const { q } = req.query
+    const where = {}
+
+    if (q) {
+      where.OR = [
+        { tripTitle: { contains: q, mode: 'insensitive' } },
+        { roundname: { contains: q, mode: 'insensitive' } },
+        { deletedBy: { contains: q, mode: 'insensitive' } },
+        { deletedByName: { contains: q, mode: 'insensitive' } }
+      ].filter(x => x)
+    }
+
+    const logs = await prisma.deleteLogRoudeStack.findMany({
+      where,
+      orderBy: { deletedAt: 'desc' },
+      take: 100
+    })
+
+    res.json(logs)
+  } catch (e) {
+    res.status(500).json({ message: e.message })
+  }
+})
+
+/**
+ * @swagger
  * /api/roudestack/{id}:
  *   get:
  *     tags: [RoudeStack]
@@ -175,11 +215,75 @@ router.put('/:id', authenticate, authorize('ADMIN'), async (req, res) => {
 router.delete('/:id', authenticate, authorize('ADMIN'), async (req, res) => {
   try {
     const stackId = Number(req.params.id)
-    // ✅ ลบรอบรถตู้ที่ผูกกับรอบเที่ยวนี้ก่อน (เพื่อความปลอดภัยและไม่ติด constraint)
+
+    // ดึงข้อมูล RoudeStack และ Trip ก่อนลบ
+    const stack = await prisma.roudeStack.findUnique({
+      where: { id: stackId },
+      include: { trip: true, busRounds: true }
+    })
+
+    if (!stack) {
+      return res.status(404).json({ message: 'RoudeStack not found' })
+    }
+
+    // สร้าง DeleteLogRoudeStack record
+    await prisma.deleteLogRoudeStack.create({
+      data: {
+        roudeStackId: stack.id,
+        tripId: stack.tripId,
+        tripTitle: stack.trip?.title || 'Unknown Trip',
+        roundname: stack.roundname,
+        deteroudestr: stack.deteroudestr,
+        stackInfo: {
+          roudeStackId: stack.id,
+          tripId: stack.tripId,
+          roundname: stack.roundname,
+          deteroudestr: stack.deteroudestr,
+          busRoundCount: stack.busRounds.length,
+          busRounds: stack.busRounds.map(br => ({
+            id: br.id,
+            busNumber: br.busNumber,
+            startPoint: br.startPoint,
+            totalSeats: br.totalSeats
+          }))
+        },
+        deletedBy: req.user?.username || 'unknown',
+        deletedByName: req.user?.name || 'Unknown User'
+      }
+    })
+
+    // สร้าง DeleteLog records สำหรับ BusRounds แต่ละตัว
+    for (const busRound of stack.busRounds) {
+      await prisma.deleteLog.create({
+        data: {
+          busRoundId: busRound.id,
+          tripTitle: stack.trip?.title || 'Unknown Trip',
+          busNumber: busRound.busNumber,
+          departDate: busRound.departDate,
+          roundInfo: {
+            busRoundId: busRound.id,
+            tripId: busRound.tripId,
+            roudeStackId: busRound.roudeStackId,
+            startPoint: busRound.startPoint,
+            totalSeats: busRound.totalSeats,
+            bookedSeats: busRound.bookedSeats,
+            duration: busRound.duration,
+            pickupPoints: busRound.pickupPoints,
+            extraPrice: busRound.extraPrice,
+            isOpen: busRound.isOpen
+          },
+          deletedBy: req.user?.username || 'unknown',
+          deletedByName: req.user?.name || 'Unknown User',
+          deleteReason: `Deleted with RoudeStack: ${stack.roundname}`
+        }
+      })
+    }
+
+    // ลบรอบรถตู้ที่ผูกกับรอบเที่ยวนี้ก่อน (เพื่อความปลอดภัยและไม่ติด constraint)
     await prisma.busRound.deleteMany({ where: { roudeStackId: stackId } })
-    // ✅ ลบรอบเที่ยว (ใช้ deleteMany เพื่อกัน Error ถ้าหา Record ไม่เจอ)
+    // ลบรอบเที่ยว (ใช้ deleteMany เพื่อกัน Error ถ้าหา Record ไม่เจอ)
     await prisma.roudeStack.deleteMany({ where: { id: stackId } })
-    
+
     res.status(204).send()
   } catch (e) {
     res.status(500).json({ message: e.message })

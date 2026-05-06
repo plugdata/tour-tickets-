@@ -84,6 +84,7 @@ const API = {
         create: (d) => api.post('/roudestack', d),
         update: (id, d) => api.put(`/roudestack/${id}`, d),
         delete: (id) => api.delete(`/roudestack/${id}`),
+        deleteLogs: (q = '') => api.get(`/roudestack/delete-logs${q ? '?q=' + encodeURIComponent(q) : ''}`),
     },
 
     // BusRounds
@@ -94,6 +95,7 @@ const API = {
         update: (id, d) => api.put(`/bus-rounds/${id}`, d),
         toggle: (id) => api.patch(`/bus-rounds/${id}/toggle`, {}),
         delete: (id) => api.delete(`/bus-rounds/${id}`),
+        deleteLogs: (q = '') => api.get(`/bus-rounds/delete-logs${q ? '?q=' + encodeURIComponent(q) : ''}`),
     },
 
     // Bookings

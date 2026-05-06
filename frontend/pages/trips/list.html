@@ -244,6 +244,42 @@
                                         <tbody id="roudestackBody"></tbody>
                                     </table>
                                 </div>
+                                <!-- RoudeStack Delete History -->
+                                <div class="col-12">
+                                    <div class="card mt-2 border-0 shadow-sm">
+                                        <div class="card-header bg-light" style="cursor:pointer" onclick="toggleRoudestackHistory()">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0"><i class="bi bi-history me-2"></i>ประวัติการลบรอบเที่ยว <span id="historyToggleIcon" class="ms-2"><i class="bi bi-chevron-up"></i></span></h6>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); loadRoudestackDeleteLogs()">
+                                                    <i class="bi bi-arrow-clockwise"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="roudestackHistoryContent" class="card-body p-2">
+                                            <div class="mb-2">
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                                    <input type="text" class="form-control border-start-0" id="roudestackHistorySearch"
+                                                        placeholder="ค้นหาชื่อทริป รอบ หรือผู้ลบ..." onkeyup="if(event.key==='Enter') searchRoudestackHistory()">
+                                                </div>
+                                            </div>
+                                            <table class="table table-sm table-hover mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>ชื่อทริป</th>
+                                                        <th>ชื่อรอบ</th>
+                                                        <th>วันออกเดินทาง</th>
+                                                        <th>ลบโดย</th>
+                                                        <th class="text-end">วันที่ลบ</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="roudestackDeleteHistoryBody">
+                                                    <tr><td colspan="5" class="text-center text-muted py-3">ไม่มีประวัติการลบ</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <!-- Tab: setting -->
@@ -281,6 +317,35 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
                     <button type="button" class="btn btn-primary" onclick="saveTrip()">บันทึก</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit RoudeStack Modal -->
+    <div class="modal fade" id="editRoudestackModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">แก้ไขรอบเที่ยว/รอบป่า</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <input type="hidden" id="editRsId">
+                        <div class="mb-3">
+                            <label class="form-label">ชื่อรอบเที่ยว <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editRsRoundname" placeholder="เช่น วันที่ 1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">วันออกเดินทาง <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editRsDeteoudestr" placeholder="เลือกวันที่" required readonly>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary" onclick="saveRoudestackEdit()">บันทึก</button>
                 </div>
             </div>
         </div>
@@ -719,6 +784,7 @@
                     <td><strong>${r.roundname}</strong></td>
                     <td>${formatDateThai(r.deteroudestr)}</td>
                     <td>
+                        ${!r.isPending ? `<button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="editRoudestackItem('${r.id}', '${r.roundname.replace(/'/g, "\\'")}', '${r.deteroudestr}')"><i class="bi bi-pencil"></i></button>` : ''}
                         <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRoudestackItem('${r.id}', ${r.isPending ? true : false})">
                             <i class="bi bi-trash"></i>
                         </button>
@@ -745,9 +811,9 @@
         }
 
         async function deleteRoudestackItem(id, isPending = false) {
-            const msg = isPending 
-                ? 'ยกเลิกการเพิ่มรอบเที่ยวนี้?' 
-                : 'ระวัง! การลบรอบนี้จะทำให้ "รอบรถ" และ "ที่นั่ง" ที่เปิดไว้หายไปด้วยทั้งหมด \nคุณแน่ใจว่าต้องการลบ?';
+            const msg = isPending
+                ? 'ยกเลิกการเพิ่มรอบเที่ยวนี้?'
+                : 'ระวัง! การลบรอบนี้จะทำให้ "รอบรถ" และ "ที่นั่ง" ที่เปิดไว้หายไปด้วยทั้งหมด\n\nข้อมูลจะถูกเก็บไว้ในประวัติการลบ\n\nคุณแน่ใจว่าต้องการลบ?';
 
             confirmAction(msg, async () => {
                 try {
@@ -759,11 +825,112 @@
                         await API.roudeStack.delete(id);
                         // ใช้ != เพื่อให้เปรียบเทียบได้ทั้ง string และ number
                         currentRoudestacks = currentRoudestacks.filter(r => r.id != id);
+                        loadRoudestackDeleteLogs(); // โหลดประวัติการลบใหม่
                     }
                     renderRoudestackList();
-                    showToast('ลบรอบเที่ยว/รอบป่าแล้ว');
+                    showToast('ลบรอบเที่ยว/รอบป่าแล้ว และเก็บไว้ในประวัติ');
                 } catch (e) { showToast(e.message, 'danger'); }
             });
+        }
+
+        // ===== RoudeStack Delete History Functions =====
+        let roudestackDeleteLogs = [];
+
+        async function loadRoudestackDeleteLogs() {
+            try {
+                const q = document.getElementById('roudestackHistorySearch')?.value?.trim() || '';
+                roudestackDeleteLogs = await API.roudeStack.deleteLogs(q);
+                renderRoudestackDeleteLogs();
+            } catch (e) {
+                console.error('Failed to load delete logs:', e);
+                roudestackDeleteLogs = [];
+            }
+        }
+
+        function renderRoudestackDeleteLogs() {
+            const container = document.getElementById('roudestackDeleteHistoryBody');
+            if (!container) return;
+
+            if (roudestackDeleteLogs.length === 0) {
+                container.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">ไม่มีประวัติการลบ</td></tr>';
+                return;
+            }
+
+            container.innerHTML = roudestackDeleteLogs.map(log => `
+                <tr>
+                    <td><strong>${log.tripTitle}</strong></td>
+                    <td>${log.roundname}</td>
+                    <td>${formatDateThai(log.deteroudestr)}</td>
+                    <td>${log.deletedByName || log.deletedBy || '-'}</td>
+                    <td><small class="text-muted">${formatDateThai(log.deletedAt)}</small></td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleRoudestackHistory() {
+            const content = document.getElementById('roudestackHistoryContent');
+            const icon = document.getElementById('historyToggleIcon');
+            if (content) {
+                content.classList.toggle('d-none');
+                if (icon) {
+                    if (content.classList.contains('d-none')) {
+                        icon.innerHTML = '<i class="bi bi-chevron-down"></i>';
+                    } else {
+                        icon.innerHTML = '<i class="bi bi-chevron-up"></i>';
+                    }
+                }
+            }
+        }
+
+        function searchRoudestackHistory() {
+            loadRoudestackDeleteLogs();
+        }
+
+        let editingRoudestackId = null;
+
+        function editRoudestackItem(id, roundname, deteroudestr) {
+            editingRoudestackId = id;
+            document.getElementById('editRsId').value = id;
+            document.getElementById('editRsRoundname').value = roundname;
+            document.getElementById('editRsDeteoudestr').value = deteroudestr.split('T')[0];
+
+            // Initialize date picker if not already done
+            if (!document.getElementById('editRsDeteoudestr')._flatpickr) {
+                ThaiCalendar.init('#editRsDeteoudestr', {});
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('editRoudestackModal'));
+            modal.show();
+        }
+
+        async function saveRoudestackEdit() {
+            const id = document.getElementById('editRsId').value;
+            const roundname = document.getElementById('editRsRoundname').value.trim();
+            const deteroudestr = document.getElementById('editRsDeteoudestr').value;
+
+            if (!roundname) { showToast('กรุณากรอกชื่อรอบเที่ยว', 'warning'); return; }
+            if (!deteroudestr) { showToast('กรุณาเลือกวันออกเดินทาง', 'warning'); return; }
+
+            try {
+                await API.roudeStack.update(id, {
+                    roundname,
+                    deteroudestr: new Date(deteroudestr).toISOString()
+                });
+
+                // Update local data
+                const stack = currentRoudestacks.find(r => r.id == id);
+                if (stack) {
+                    stack.roundname = roundname;
+                    stack.deteroudestr = deteroudestr;
+                }
+
+                renderRoudestackList();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editRoudestackModal'));
+                modal.hide();
+                showToast('แก้ไขรอบเที่ยวแล้ว');
+            } catch (e) {
+                showToast(e.message, 'danger');
+            }
         }
 
         async function savePendingRoudestacks(tripId) {
@@ -785,6 +952,7 @@
             document.getElementById('roudestackFormContainer').style.display = tripId ? 'block' : 'none';
             if (tripId) {
                 loadRoudestacks(tripId);
+                loadRoudestackDeleteLogs(); // โหลดประวัติการลบ
                 if (!document.getElementById('rsDeteoudestr')._flatpickr) {
                     ThaiCalendar.init('#rsDeteoudestr', {});
                 }
