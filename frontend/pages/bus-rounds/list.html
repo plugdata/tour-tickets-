@@ -475,7 +475,7 @@
             roudestackSel.disabled = false;
 
             // Filter RoudeStack by selected trip
-            const selectedTrip = trips.find(t => t.title.toLowerCase() === tripQ);
+            const selectedTrip = trips.find(t => t.title.toLowerCase().includes(tripQ));
             if (!selectedTrip) {
                 dd.classList.add('d-none');
                 return;
