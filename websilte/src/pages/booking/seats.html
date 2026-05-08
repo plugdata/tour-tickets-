@@ -892,46 +892,52 @@
       document.getElementById('hdrTitle').textContent =
         `${roundData.trip?.title || 'ทริป'} — รถคันที่ ${roundData.busNumber}`
       document.getElementById('hdrSub').textContent =
-        `${roundData.startPoint} → ${roundData.endPoint}` +
+        roundData.startPoint +
         (roundData.duration ? ` · ${roundData.duration}` : '')
       document.getElementById('hdrBadge').innerHTML =
         `<span class="badge ${isOpen ? 'bg-success' : 'bg-danger'}">
        ${isFull ? 'เต็มแล้ว' : isOpen ? 'เปิดจอง' : 'ปิดจอง'}</span>`
 
+      // ── คำนวณ date range จาก departDate + duration ──
+      const daysMatch = roundData.duration?.match(/(\d+)\s*วัน/)
+      const tripDays = daysMatch ? parseInt(daysMatch[1]) : 1
+      const dEnd = new Date(d)
+      dEnd.setDate(dEnd.getDate() + tripDays - 1)
+      const fmt = { day: 'numeric', month: 'short', year: '2-digit' }
+      const fmtNoYear = { day: 'numeric', month: 'short' }
+      const sameMonthYear = d.getMonth() === dEnd.getMonth() && d.getFullYear() === dEnd.getFullYear()
+      const dateRangeStr = tripDays <= 1
+        ? d.toLocaleDateString('th-TH', fmt)
+        : sameMonthYear
+          ? `${d.toLocaleDateString('th-TH', fmtNoYear)}–${dEnd.toLocaleDateString('th-TH', fmt)}`
+          : `${d.toLocaleDateString('th-TH', fmt)} – ${dEnd.toLocaleDateString('th-TH', fmt)}`
+
       document.getElementById('tripInfo').innerHTML = `
-    <div class="row g-2" style="font-size:.85rem">
-      <div class="col-sm-6">
-        <div class="text-muted small">ทริป</div>
-        <div class="fw-semibold">${roundData.trip?.title || '–'}</div>
+    <div class="row g-3" style="font-size:1rem">
+      <div class="col-12">
+        <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.5px">ทริป</div>
+        <div class="fw-bold" style="font-size:1.1rem;line-height:1.3">${roundData.trip?.title || '–'}</div>
       </div>
-      <div class="col-sm-6">
-        <div class="text-muted small">รถคันที่</div>
-        <div class="fw-semibold">${roundData.busNumber}</div>
+      <div class="col-6">
+        <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.5px">รอบวันที่</div>
+        <div class="fw-bold text-primary" style="font-size:1.05rem">${dateRangeStr}</div>
       </div>
-      <div class="col-sm-6">
-        <div class="text-muted small">จุดเริ่มต้น</div>
-        <div class="fw-semibold">${roundData.startPoint}</div>
+      <div class="col-6">
+        <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.5px">รถคันที่</div>
+        <div class="fw-semibold" style="font-size:1.05rem">คันที่ ${roundData.busNumber}</div>
       </div>
-      <div class="col-sm-6">
-        <div class="text-muted small">ปลายทาง</div>
-        <div class="fw-semibold">${roundData.endPoint}</div>
-      </div>
-      <div class="col-sm-6">
-        <div class="text-muted small">วันเดินทาง</div>
-        <div class="fw-semibold">${d.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-      </div>
-      <div class="col-sm-6">
-        <div class="text-muted small">เวลา</div>
-        <div class="fw-semibold">${d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</div>
+      <div class="col-6">
+        <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.5px">จุดขึ้นรถ</div>
+        <div class="fw-semibold" style="font-size:1rem">${roundData.startPoint}</div>
       </div>
       ${roundData.duration ? `
-      <div class="col-sm-6">
-        <div class="text-muted small">ระยะเวลา</div>
-        <div class="fw-semibold">${roundData.duration}</div>
+      <div class="col-6">
+        <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.5px">ระยะเวลา</div>
+        <div class="fw-semibold" style="font-size:1rem">${roundData.duration}</div>
       </div>` : ''}
-      <div class="col-12 mt-1 pt-2 border-top">
-        <div class="text-muted small">ราคา / คน</div>
-        <div class="fw-bold text-primary fs-5">${Number(roundData.trip?.price || 0).toLocaleString('th-TH')} บาท</div>
+      <div class="col-12 pt-2 border-top">
+        <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.5px">ราคา / คน</div>
+        <div class="fw-bold text-primary" style="font-size:1.4rem">${Number(roundData.trip?.price || 0).toLocaleString('th-TH')} <span style="font-size:.85rem;font-weight:500">บาท</span></div>
       </div>
     </div>`
     }

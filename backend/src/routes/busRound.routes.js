@@ -37,6 +37,7 @@ router.get('/', async (req, res) => {
       where,
       include: {
         trip: true,
+        roudeStack: true,
         _count: {
           select: {
             seatBookings: {

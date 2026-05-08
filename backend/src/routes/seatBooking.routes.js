@@ -50,7 +50,8 @@ router.get('/round/:roundId', async (req, res) => {
       }
     }
 
-    res.json({ roundId, totalSeats: round.totalSeats, seats: seatMap })
+    // ส่ง passengerSeats = totalSeats - 2 (ตัด Staff + Driver) ให้ frontend ใช้
+    res.json({ roundId, totalSeats: round.totalSeats, passengerSeats: round.totalSeats - 2, seats: seatMap })
   } catch (e) {
     res.status(500).json({ message: e.message })
   }

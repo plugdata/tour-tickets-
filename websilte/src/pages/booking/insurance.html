@@ -221,7 +221,13 @@
 
     <div id="mainContent" class="d-none">
 
-        <!-- Policy content -->
+        <div class="mb-4">
+            <h6 class="fw-bold text-dark mb-3 px-1"><i class="bi bi-person-fill-gear me-2 text-primary"></i>ระบุข้อมูลผู้รับประโยชน์</h6>
+            <!-- Per-passenger insurance forms -->
+            <div id="insuranceForms"></div>
+        </div>
+
+        <!-- Policy content — ย้ายมาก่อน consents -->
         <div class="premium-card mb-4 border-0" style="background: linear-gradient(135deg, #eff6ff 0%, #fff 100%); border: 1px solid #dbeafe !important;">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -239,12 +245,6 @@
             </div>
         </div>
 
-        <div class="mb-4">
-            <h6 class="fw-bold text-dark mb-3 px-1"><i class="bi bi-person-fill-gear me-2 text-primary"></i>ระบุข้อมูลผู้รับประโยชน์</h6>
-            <!-- Per-passenger insurance forms -->
-            <div id="insuranceForms"></div>
-        </div>
-
         <!-- Shared consents -->
         <div class="premium-card mb-4">
             <div class="premium-card-header">
@@ -256,12 +256,7 @@
                 <div id="conditionsList" class="d-flex flex-column gap-3 mb-4">
                     <div class="text-muted small text-center py-2"><span class="spinner-border spinner-border-sm me-1"></span>โหลดเงื่อนไข...</div>
                 </div>
-                <div>
-                    <label class="form-label">เงื่อนไขพิเศษ / ข้อตกลงเพิ่มเติม <span class="text-muted fw-normal">(ถ้ามี)</span></label>
-                    <textarea class="form-control" id="customConditions" rows="2"
-                        placeholder="ระบุเงื่อนไขพิเศษหรือโรคประจำตัว..."
-                        style="resize:vertical; min-height: 80px;"></textarea>
-                </div>
+
             </div>
         </div>
 
@@ -314,7 +309,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         roundData = all.find(r => r.id == sessionData.busRoundId);
 
         document.getElementById('hdrSub').textContent =
-            roundData ? `${roundData.trip?.title} · ${roundData.startPoint} → ${roundData.endPoint}` : '';
+            roundData ? `${roundData.trip?.title} · ${roundData.name || ''}` : '';
 
         // Load policy content + conditions
         try {
@@ -412,6 +407,98 @@ function renderInsuranceForms() {
                             data-seat="${sn}" placeholder="ระบุความสัมพันธ์..."
                             value="${s.beneficiaryRelationOther || ''}">
                     </div>
+
+                    <!-- ── รูปบัตรประชาชน ── -->
+                    <div class="col-12 mt-2">
+                        <div class="small fw-semibold text-muted mb-2">
+                            <i class="bi bi-card-image me-1 text-primary"></i>รูปถ่ายหน้าบัตรประชาชน
+                            <span class="text-danger">*</span>
+                        </div>
+                        <div class="p-3 rounded-3" style="background:#f8fafc;border:1.5px dashed #cbd5e1">
+                            <p class="text-muted small mb-3">
+                                <i class="bi bi-shield-lock me-1"></i>
+                                ข้อมูลของท่านจะถูกเก็บรักษาไว้เป็นความลับ
+                            </p>
+
+                            <!-- Preview -->
+                            <div id="idCardPreview_${sn}" class="mb-3"
+                                 style="${s.idCardImageUrl ? '' : 'display:none'}">
+                                <a href="${s.idCardImageUrl || '#'}" target="_blank"
+                                   class="badge bg-success text-decoration-none fs-6 p-2">
+                                    <i class="bi bi-check-circle me-1"></i>อัปโหลดแล้ว — คลิกดูไฟล์
+                                </a>
+                            </div>
+
+                            <!-- 2 ปุ่มแยก -->
+                            <div class="d-flex gap-2 flex-wrap align-items-center">
+
+                                <!-- ปุ่ม 1: แนบไฟล์ (ไม่บังคับใช้กล้อง) -->
+                                <label class="btn btn-sm btn-outline-secondary rounded-3 mb-0" style="cursor:pointer">
+                                    <i class="bi bi-paperclip me-1"></i>แนบไฟล์
+                                    <input type="file" class="ins-idcard-file d-none"
+                                           data-seat="${sn}" id="idFileInput_${sn}"
+                                           accept="image/*,application/pdf"
+                                           onchange="previewIdCard(this,'${sn}')">
+                                </label>
+
+                                <!-- ปุ่ม 2: เปิดกล้องถ่ายรูปโดยตรง -->
+                                <label class="btn btn-sm btn-outline-primary rounded-3 mb-0" style="cursor:pointer">
+                                    <i class="bi bi-camera-fill me-1"></i>ถ่ายรูปจากกล้อง
+                                    <input type="file" class="ins-idcard-camera d-none"
+                                           data-seat="${sn}" id="idCameraInput_${sn}"
+                                           accept="image/*"
+                                           capture="environment"
+                                           onchange="previewIdCard(this,'${sn}')">
+                                </label>
+
+                                <span class="text-muted small" id="idCardName_${sn}">
+                                    ${s.idCardImageUrl ? 'มีไฟล์แล้ว' : 'รองรับ JPG, PNG, PDF'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── โรคประจำตัว ── -->
+                    <div class="col-12 mt-2">
+                        <div class="small fw-semibold text-muted mb-2">
+                            <i class="bi bi-heart-pulse me-1 text-danger"></i>ข้อมูลสุขภาพ
+                        </div>
+                        <label class="form-label small">ท่านมีโรคประจำตัวหรือไม่ <span class="text-danger">*</span></label>
+                        <div class="d-flex gap-3 flex-wrap mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input ins-chronic" type="radio"
+                                    name="chronic_${sn}" data-seat="${sn}"
+                                    value="NONE" id="chronic_no_${sn}"
+                                    ${(s.chronicDisease||'NONE')==='NONE'?'checked':''}
+                                    onchange="toggleChronicDetail('${sn}')" required>
+                                <label class="form-check-label small" for="chronic_no_${sn}">ไม่มี</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input ins-chronic" type="radio"
+                                    name="chronic_${sn}" data-seat="${sn}"
+                                    value="HAS" id="chronic_yes_${sn}"
+                                    ${s.chronicDisease==='HAS'?'checked':''}
+                                    onchange="toggleChronicDetail('${sn}')">
+                                <label class="form-check-label small" for="chronic_yes_${sn}">มี ( กรุณาระบุด้านล่าง )</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input ins-chronic" type="radio"
+                                    name="chronic_${sn}" data-seat="${sn}"
+                                    value="OTHER" id="chronic_other_${sn}"
+                                    ${s.chronicDisease==='OTHER'?'checked':''}
+                                    onchange="toggleChronicDetail('${sn}')">
+                                <label class="form-check-label small" for="chronic_other_${sn}">อื่นๆ</label>
+                            </div>
+                        </div>
+                        <div id="chronicDetail_${sn}"
+                             style="${(s.chronicDisease==='HAS'||s.chronicDisease==='OTHER')?'':'display:none'}">
+                            <input type="text" class="form-control form-control-sm ins-chronic-detail"
+                                data-seat="${sn}"
+                                placeholder="ระบุโรคประจำตัว เช่น เบาหวาน ความดัน หัวใจ..."
+                                value="${s.chronicDiseaseDetail || ''}">
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>`;
@@ -420,6 +507,27 @@ function renderInsuranceForms() {
 
 function toggleOtherRel(sel, sn) {
     document.getElementById(`otherRel_${sn}`).classList.toggle('d-none', sel.value !== 'OTHER');
+}
+
+// ── Toggle chronic detail field ───────────────────────────────────────────────
+function toggleChronicDetail(sn) {
+    const val = document.querySelector(`.ins-chronic[data-seat="${sn}"]:checked`)?.value;
+    const detail = document.getElementById(`chronicDetail_${sn}`);
+    if (detail) detail.style.display = (val === 'HAS' || val === 'OTHER') ? '' : 'none';
+}
+
+
+// ── Preview ID card — sync ทั้ง 2 input ──────────────────────────────────────
+function previewIdCard(input, sn) {
+    if (!input.files[0]) return;
+    const file = input.files[0];
+    const nameEl = document.getElementById(`idCardName_${sn}`);
+    nameEl.textContent = `✓ ${file.name}`;
+    nameEl.className = 'text-success small fw-semibold';
+    // ล้าง input อีกตัวเพื่อไม่ให้สับสน
+    const otherId = input.id === `idFileInput_${sn}` ? `idCameraInput_${sn}` : `idFileInput_${sn}`;
+    const other = document.getElementById(otherId);
+    if (other) other.value = '';
 }
 
 // ── Render shared conditions ─────────────────────────────────────────────────
@@ -449,9 +557,6 @@ function renderConditions() {
         </div>`}).join('');
 
     // Custom conditions prefill
-    if (firstSeat.customConditions) {
-        document.getElementById('customConditions').value = firstSeat.customConditions;
-    }
 }
 function onConsentChange(cb) {
     const box = document.getElementById(`cb_${cb.dataset.id}`);
@@ -463,14 +568,25 @@ function onConsentChange(cb) {
 function collectInsuranceData() {
     const seats = sessionData.selectedSeats || [];
     return seats.map(s => {
-        const g = cls => document.querySelector(`.${cls}[data-seat="${s.seatNumber}"]`)?.value?.trim() || '';
+        const sn = s.seatNumber;
+        const g = cls => document.querySelector(`.${cls}[data-seat="${sn}"]`)?.value?.trim() || '';
+        const chronicVal = document.querySelector(`.ins-chronic[data-seat="${sn}"]:checked`)?.value || 'NONE';
         return {
-            seatNumber:             s.seatNumber,
-            emergencyName:          g('ins-emergency-name'),
-            emergencyPhone:         g('ins-emergency-phone'),
-            beneficiaryName:        g('ins-beneficiary-name'),
-            beneficiaryRelation:    g('ins-beneficiary-rel'),
+            seatNumber:               sn,
+            emergencyName:            g('ins-emergency-name'),
+            emergencyPhone:           g('ins-emergency-phone'),
+            beneficiaryName:          g('ins-beneficiary-name'),
+            beneficiaryRelation:      g('ins-beneficiary-rel'),
             beneficiaryRelationOther: g('ins-beneficiary-other') || null,
+            // new fields
+            idCardImageUrl:           s.idCardImageUrl || null,
+            idCardFile:               document.getElementById(`idCameraInput_${sn}`)?.files?.[0]
+                                   || document.getElementById(`idFileInput_${sn}`)?.files?.[0]
+                                   || null,
+            chronicDisease:           chronicVal,
+            chronicDiseaseDetail:     (chronicVal === 'HAS' || chronicVal === 'OTHER')
+                                        ? g('ins-chronic-detail') : null,
+            acknowledgeChronicRisk:   !!document.querySelector(`#ackChronic_${sn}`)?.checked,
         };
     });
 }
@@ -482,7 +598,6 @@ function collectConsents() {
         consent4WD:           !!document.querySelector('#cond_3')?.checked,
         consentDomesticOnly:  !!document.querySelector('#cond_4')?.checked,
         consentedConditionIds: Array.from(document.querySelectorAll('.consent-check:checked')).map(cb => Number(cb.dataset.id)),
-        customConditions: document.getElementById('customConditions').value.trim() || null,
     };
 }
 
@@ -490,11 +605,16 @@ function collectConsents() {
 function validate() {
     const ins = collectInsuranceData();
     for (const f of ins) {
-        if (!f.emergencyName)    return `กรุณากรอกชื่อผู้ติดต่อฉุกเฉิน ที่นั่ง ${f.seatNumber}`;
-        if (!f.emergencyPhone)   return `กรุณากรอกเบอร์ฉุกเฉิน ที่นั่ง ${f.seatNumber}`;
-        if (!f.beneficiaryName)  return `กรุณากรอกชื่อผู้รับประโยชน์ ที่นั่ง ${f.seatNumber}`;
+        if (!f.emergencyName)       return `กรุณากรอกชื่อผู้ติดต่อฉุกเฉิน ที่นั่ง ${f.seatNumber}`;
+        if (!f.emergencyPhone)      return `กรุณากรอกเบอร์ฉุกเฉิน ที่นั่ง ${f.seatNumber}`;
+        if (!f.beneficiaryName)     return `กรุณากรอกชื่อผู้รับประโยชน์ ที่นั่ง ${f.seatNumber}`;
         if (!f.beneficiaryRelation) return `กรุณาเลือกความสัมพันธ์ผู้รับประโยชน์ ที่นั่ง ${f.seatNumber}`;
+        if (!f.idCardFile && !f.idCardImageUrl)
+                                    return `กรุณาแนบรูปบัตรประชาชน ที่นั่ง ${f.seatNumber}`;
+        if ((f.chronicDisease === 'HAS' || f.chronicDisease === 'OTHER') && !f.chronicDiseaseDetail)
+                                    return `กรุณาระบุโรคประจำตัว ที่นั่ง ${f.seatNumber}`;
     }
+    
     let consentOk = true;
     document.querySelectorAll('.consent-check[data-required="true"]').forEach(cb => {
         if (!cb.checked) {
@@ -505,6 +625,20 @@ function validate() {
     });
     if (!consentOk) return 'กรุณายืนยันเงื่อนไขที่บังคับทั้งหมด';
     return null;
+}
+
+// ── Upload ID card images before save ────────────────────────────────────────
+async function uploadIdCards(insData) {
+    for (const f of insData) {
+        if (!f.idCardFile) continue;
+        const form = new FormData();
+        form.append('file', f.idCardFile);
+        const res = await fetch(API_BASE_URL + '/uploads', { method: 'POST', body: form });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'อัปโหลดรูปบัตรไม่สำเร็จ');
+        f.idCardImageUrl = data.url;
+        delete f.idCardFile; // ไม่ส่ง File object ไป session
+    }
 }
 
 // ── Navigate ─────────────────────────────────────────────────────────────────
@@ -532,11 +666,16 @@ async function goNext() {
         const insData  = collectInsuranceData();
         const consents = collectConsents();
 
+        // อัปโหลดรูปบัตรก่อน (ถ้ามีไฟล์ใหม่)
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังอัปโหลดรูปบัตร...';
+        await uploadIdCards(insData);
+
         const mergedSeats = (sessionData.selectedSeats || []).map(s => {
             const ins = insData.find(i => i.seatNumber === s.seatNumber) || {};
             return { ...s, ...ins, ...consents };
         });
 
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก...';
         await postJSON('/booking-sessions', {
             token: sessionToken, step: 3, selectedSeats: mergedSeats,
         });

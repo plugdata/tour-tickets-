@@ -96,6 +96,7 @@ model BusRound {
 
   busNumber         Int      @default(1)
   startPoint        String
+  endPoint          String   @default("")
   departDate        DateTime
   duration          String?
   totalSeats        Int
@@ -247,6 +248,14 @@ model InsuranceForm {
   beneficiaryRelation      String?
   beneficiaryRelationOther String?
 
+  // เอกสารประกอบ
+  idCardImageUrl        String?   // รูปถ่ายหน้าบัตรประชาชน (url จาก /uploads)
+
+  // ข้อมูลสุขภาพ
+  chronicDisease        String?   // NONE | HAS | OTHER
+  chronicDiseaseDetail  String?   // รายละเอียดโรคประจำตัว
+  acknowledgeChronicRisk Boolean @default(false)
+
   // เงื่อนไขความคุ้มครองและการยินยอม
   coverageAmount       Float   @default(1000000)
   consentPolicyRead    Boolean @default(false)
@@ -337,6 +346,8 @@ model SeatBooking {
 
   // ส่วน 2: ข้อมูลการเดินทาง / ฉุกเฉิน
   foodAllergy    String?
+  foodType       String?   // ALL | HALAL | VEGETARIAN | JAY | NO_BEEF | ALLERGY | OTHER
+  drinkAlcohol   Boolean?  // true=ดื่ม false=ไม่ดื่ม
   pickupPoint    String?
   dropoffPoint   String?
   emergencyName  String?

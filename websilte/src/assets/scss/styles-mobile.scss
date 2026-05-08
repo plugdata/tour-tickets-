@@ -1,0 +1,43 @@
+/* ════════════════════════════════════════════════════════════════════
+   MOBILE STYLES ONLY - Media queries for mobile devices
+   Keep this separate from desktop to avoid conflicts
+   ════════════════════════════════════════════════════════════════════ */
+
+@import 'variables';
+@import 'mixins';
+
+// ── Mobile Medium (max-width: 640px) ──
+@include mobile-md {
+  .ht-swiper .swiper-slide {
+    width: calc(82vw) !important;
+  }
+
+  .ht-img,
+  .ht-img-placeholder {
+    height: 160px;
+  }
+
+  .ht-seats-overlay {
+    display: none;
+  }
+
+  .ht-card-title {
+    font-size: 1rem;
+  }
+
+  .ht-price {
+    font-size: 1.25rem;
+  }
+
+  .ht-btn-book {
+    font-size: .78rem;
+    padding: .4rem .75rem;
+  }
+}
+
+// ── Mobile Extra Small (max-width: 400px) ──
+@include mobile-xs {
+  .ht-swiper .swiper-slide {
+    width: calc(90vw) !important;
+  }
+}

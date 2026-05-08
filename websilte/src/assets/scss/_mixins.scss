@@ -1,0 +1,128 @@
+/* ════════════════════════════════════════════════════════════════════
+   SCSS MIXINS - Responsive breakpoints and utilities
+   ════════════════════════════════════════════════════════════════════ */
+
+// ── Responsive Breakpoints ──
+$breakpoint-mobile-sm: 480px;   // Small phones (≤479px)
+$breakpoint-mobile: 768px;      // Mobile devices (≤767px)
+$breakpoint-tablet: 1024px;     // Tablets (≤1024px)
+$breakpoint-desktop: 1025px;    // Desktop (≥1025px)
+
+// ── Desktop/iPad First (Default) ──
+// ทุก styles ที่เป็น desktop/iPad เขียนแบบปกติ
+// ไม่ต้อง @media query
+
+// ── Tablet Responsive ──
+@mixin tablet {
+  @media(max-width: $breakpoint-tablet) {
+    @content;
+  }
+}
+
+// ── Mobile Responsive ──
+@mixin mobile {
+  @media(max-width: $breakpoint-mobile) {
+    @content;
+  }
+}
+
+// ── Mobile Small (Extra small) ──
+@mixin mobile-sm {
+  @media(max-width: $breakpoint-mobile-sm) {
+    @content;
+  }
+}
+
+// ── Mobile Medium (640px and down) ──
+@mixin mobile-md {
+  @media(max-width: 640px) {
+    @content;
+  }
+}
+
+// ── Mobile Small Extra (400px and down) ──
+@mixin mobile-xs {
+  @media(max-width: 400px) {
+    @content;
+  }
+}
+
+// ── Desktop Only ──
+@mixin desktop {
+  @media(min-width: $breakpoint-desktop) {
+    @content;
+  }
+}
+
+// ── Utility Mixins ──
+
+// Flexbox centered
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Flexbox between (space-between)
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// Smooth transition
+@mixin transition($property: all, $duration: 0.2s, $timing: ease) {
+  transition: $property $duration $timing;
+}
+
+// Text ellipsis
+@mixin text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Text clamp lines
+@mixin text-clamp($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Gradient background
+@mixin gradient($from, $to, $angle: 135deg) {
+  background: linear-gradient($angle, $from, $to);
+}
+
+// Box shadow
+@mixin shadow($level: 'md') {
+  @if $level == 'sm' {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  } @else if $level == 'md' {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  } @else if $level == 'lg' {
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55);
+  }
+}
+
+// Absolute positioning
+@mixin absolute-cover {
+  position: absolute;
+  inset: 0;
+}
+
+// Fixed positioning
+@mixin fixed-cover {
+  position: fixed;
+  inset: 0;
+}
+
+// Position with values
+@mixin position($position, $top: null, $right: null, $bottom: null, $left: null) {
+  position: $position;
+  @if $top { top: $top; }
+  @if $right { right: $right; }
+  @if $bottom { bottom: $bottom; }
+  @if $left { left: $left; }
+}

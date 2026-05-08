@@ -33,7 +33,9 @@ class AuthManager {
 
     async login(username, password, remember = false) {
         try {
-            const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:5000/api';
+            const apiUrl = typeof API_BASE_URL !== 'undefined'
+                ? API_BASE_URL
+                : `http://${window.location.hostname || 'localhost'}:5000/api`;
             const res = await fetch(`${apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

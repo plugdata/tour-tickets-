@@ -8,6 +8,13 @@ export const resources = {
     translation: {
       // ── Navbar ──
       nav_home:     'หน้าแรก',
+      nav_domestic: 'ทริปในประเทศ',
+      nav_international: 'ทริปต่างประเทศ',
+      nav_highlights: 'ความประทับใจ',
+      nav_gallery: 'แกลลอรี',
+      nav_services: 'บริการอื่นๆ',
+      nav_faq: 'คำถามที่พบบ่อย',
+      nav_contact: 'ติดต่อเรา',
       nav_book:     'จองทริป',
       nav_register: 'ลงทะเบียน',
       nav_lang:     'EN',
@@ -101,6 +108,13 @@ export const resources = {
     translation: {
       // ── Navbar ──
       nav_home:     'Home',
+      nav_domestic: 'Domestic Trips',
+      nav_international: 'International Trips',
+      nav_highlights: 'Highlights',
+      nav_gallery: 'Gallery',
+      nav_services: 'Services',
+      nav_faq: 'FAQ',
+      nav_contact: 'Contact',
       nav_book:     'Book Trip',
       nav_register: 'Register',
       nav_lang:     'TH',

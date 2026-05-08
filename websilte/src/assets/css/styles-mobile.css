@@ -1,0 +1,321 @@
+/* ════════════════════════════════════════════════════════════════════
+   MOBILE STYLES (max-width: 767px) - Phones and small devices
+   ════════════════════════════════════════════════════════════════════ */
+
+@media(max-width: 767px) {
+  /* ── Content spacing for fixed header (Mobile) ── */
+  .fire-section-wrapper,
+  .hero-section {
+    margin-top: 115px;
+  }
+
+  /* ── Navigation (Mobile) ── */
+  header.fixed-top {
+    width: 100%;
+  }
+
+  header.fixed-top nav.navbar {
+    width: 100%;
+    height: 56px;
+    padding: 0 !important;
+  }
+
+  header.fixed-top .container {
+    width: 100%;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px 8px 0px !important;
+  }
+
+  .navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 0;
+    margin-right: auto;
+    padding: 0 0 0 8px;
+    flex-shrink: 0;
+    height: 40px;
+  }
+
+  .logo-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 16px;
+    margin-right: 6px;
+  }
+
+  .logo-text {
+    display: none;
+  }
+
+  /* Hide desktop navigation */
+  .nav-desktop {
+    display: none !important;
+  }
+
+  /* Show mobile navigation */
+  .nav-mobile {
+    display: flex !important;
+    gap: 4px;
+    margin-left: auto;
+    align-items: center;
+  }
+
+  .nav-btn-circle {
+    font-size: 16px;
+    padding: 4px 4px;
+  }
+
+  .nav-hamburger {
+    font-size: 20px;
+    padding: 4px 4px;
+  }
+
+  .nav-btn-home,
+  .nav-btn-lang,
+  .nav-btn-book,
+  .nav-sep {
+    display: none;
+  }
+
+  /* ── Selection Menu (Mobile) ── */
+  .selection-menu {
+    top: 56px;
+    height: 59px;
+  }
+
+  .selection-menu-content {
+    padding: 0 12px;
+  }
+
+  .selection-menu-item {
+    padding: 0 12px;
+    font-size: 12px;
+    height: 59px;
+  }
+
+  /* ── Cards 65% width (Mobile) ── */
+  .row.g-4 > [class*='col-'] {
+    width: 65% !important;
+    margin: 0 auto;
+  }
+
+  .row.g-3 > [class*='col-'] {
+    width: 65% !important;
+    margin: 0 auto;
+  }
+
+  .blog-card,
+  .service-card {
+    margin: 0 auto;
+  }
+
+  /* ── Typography (Mobile) ── */
+  body {
+    font-size: 14px;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+
+  .section-subtitle {
+    font-size: 13px;
+  }
+
+  .ht-title {
+    font-size: 1.4rem;
+  }
+
+  .ht-sub {
+    font-size: 0.85rem;
+  }
+
+  /* ── Spacing (Mobile) ── */
+  .section {
+    padding: 36px 0 !important;
+  }
+
+  .page-content {
+    padding: 1rem 0.75rem;
+  }
+
+  .card {
+    padding: 0.75rem;
+  }
+
+  .card-body {
+    padding: 0.75rem;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+
+  /* ── Hero Section (Mobile) ── */
+  .hero-section {
+    min-height: 350px;
+    padding: 1.5rem 0;
+  }
+
+  .hero-content {
+    padding: 1.5rem 1rem;
+  }
+
+  .hero-content h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .btn-hero {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    gap: 0.5rem;
+  }
+
+  /* ── Blog Cards (Mobile) ── */
+  #blogGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .blog-image-container {
+    aspect-ratio: 4/3;
+  }
+
+  .blog-category {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .blog-title {
+    font-size: 1rem;
+  }
+
+  /* ── Service Cards (Mobile) ── */
+  .service-title {
+    font-size: 0.95rem;
+    padding: 1.25rem;
+  }
+
+  .service-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .service-text {
+    padding: 0 1.25rem 1.25rem;
+    font-size: 0.88rem;
+  }
+
+  /* ── HT Cards (Mobile) ── */
+  .ht-swiper .swiper-slide {
+    width: calc(82vw) !important;
+  }
+
+  .ht-img,
+  .ht-img-placeholder {
+    height: 160px;
+  }
+
+  .ht-seats-overlay {
+    display: none;
+  }
+
+  .ht-card-title {
+    font-size: 1rem;
+  }
+
+  .ht-card-desc {
+    font-size: 0.85rem;
+  }
+
+  .ht-price {
+    font-size: 1.25rem;
+  }
+
+  .ht-btn-book {
+    font-size: .78rem;
+    padding: .4rem .75rem;
+  }
+
+  /* ── Sidebar Layout (Mobile) ── */
+  .ht-section-layout {
+    flex-direction: column;
+  }
+
+  .ht-sidebar {
+    width: 100%;
+    padding: 0 0 1rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    margin-bottom: 1rem;
+  }
+
+  .ht-sidebar .ht-title {
+    font-size: 1.2rem;
+  }
+
+  /* ── Section Headers (Mobile) ── */
+  .ht-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+
+  .ht-filter-select {
+    width: 100%;
+    margin-top: 0.75rem;
+  }
+
+  /* ── Social Grid (Mobile) ── */
+  .social-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .social-item {
+    padding: 1.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  /* ── Faq (Mobile) ── */
+  .faq-question {
+    padding: 1.25rem;
+  }
+
+  .faq-question h5 {
+    font-size: 0.95rem;
+  }
+
+  .faq-icon {
+    font-size: 1rem;
+    margin-left: 0.75rem;
+  }
+
+  /* ── Cookie Notice (Mobile) ── */
+  .cookie-notice {
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+    padding: 1rem;
+  }
+
+  .cookie-text {
+    font-size: 0.85rem;
+  }
+
+  .btn-cookie {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+}

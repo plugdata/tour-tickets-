@@ -291,9 +291,9 @@
       grid-template-columns: 8px 1fr auto;
       align-items: center;
       gap: .6rem;
-      padding: .55rem .8rem;
-      border-radius: 10px;
-      margin-bottom: .35rem;
+      padding: .75rem .9rem;
+      border-radius: 12px;
+      margin-bottom: .45rem;
       cursor: pointer;
       transition: background .15s, border-color .15s;
       border: 1px solid rgba(255, 255, 255, .07);
@@ -329,7 +329,7 @@
     .round-row-top {
       display: flex;
       align-items: center;
-      gap: .45rem;
+      gap: .5rem;
       flex-wrap: nowrap;
       overflow: hidden;
     }
@@ -337,19 +337,28 @@
     .round-row-bot {
       display: flex;
       align-items: center;
-      gap: .4rem;
-      margin-top: .12rem;
+      gap: .55rem;
+      margin-top: .3rem;
     }
 
     .r-time-tag {
-      font-size: .78rem;
+      font-size: .95rem;
       font-weight: 700;
-      color: #e2e8f0;
+      color: #fff;
       white-space: nowrap;
     }
 
+    .r-trip-tag {
+      font-size: .82rem;
+      color: rgba(255, 255, 255, .55);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
     .r-route-tag {
-      font-size: .71rem;
+      font-size: .75rem;
       color: #94a3b8;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -358,14 +367,15 @@
     }
 
     .r-dur-tag {
-      font-size: .67rem;
-      color: #64748b;
+      font-size: .8rem;
+      color: rgba(255, 255, 255, .45);
       white-space: nowrap;
     }
 
     .r-seats-tag {
-      font-size: .67rem;
-      color: #64748b;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--primary);
       white-space: nowrap;
     }
 
@@ -1734,9 +1744,10 @@
           const isLow = !full && pct >= 60
           const dotCls = full ? 'dot-full' : isLow ? 'dot-low' : 'dot-ok'
           const dept = new Date(r.departDate)
-          const dateStr = dept.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
-          const timeStr = dept.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+          const dateStr = dept.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
           const price = trip ? Number(trip.price + (r.extraPrice || 0)) : 0
+          const passengerTotal = r.totalSeats - 1   // seat 1 = Staff, seats 2..totalSeats = ผู้โดยสาร
+          const passengerLeft = passengerTotal - r.bookedSeats
 
           const badgeHtml = full
             ? `<span class="round-badge badge-full">เสร็จ</span>`
@@ -1750,12 +1761,12 @@
           <div class="round-dot ${dotCls}"></div>
           <div class="round-info">
             <div class="round-row-top">
-              <span class="r-time-tag">${dateStr} · ${timeStr}</span>
-              <span class="r-route-tag"><i class="bi bi-geo-alt-fill" style="font-size:.58rem;color:var(--primary);margin-right:.2rem"></i>${r.startPoint} → ${r.endPoint}</span>
+              <span class="r-time-tag">${dateStr}</span>
+              <span class="r-trip-tag">${tripTitle}</span>
             </div>
             <div class="round-row-bot">
               ${r.duration ? `<span class="r-dur-tag"><i class="bi bi-clock" style="font-size:.6rem"></i> ${r.duration}</span>` : ''}
-              <span class="r-seats-tag">เหลือ ${left}/${r.totalSeats} ที่</span>
+              <span class="r-seats-tag"><i class="bi bi-person-fill" style="font-size:.65rem"></i> ${passengerLeft}/${passengerTotal}</span>
             </div>
           </div>
           ${badgeHtml}
@@ -2043,9 +2054,6 @@
         <i class="bi bi-chevron-left"></i>
       </button>
       <div style="padding-left: 2.2rem;">
-        <div class="bk-route-badge">
-          <i class="bi bi-geo-alt-fill"></i> ${round.startPoint} — ${round.endPoint}
-        </div>
         <div class="bk-trip-name">${trip?.title || 'ไม่มีชื่อทริป'}</div>
         <div class="bk-bus-info">
           <i class="bi bi-truck-front"></i> ยานพาหนะ: รถบัสคันที่ ${round.busNumber || 1}
@@ -2056,12 +2064,8 @@
     <!-- Brief Info Grid -->
     <div class="bk-info-grid">
       <div class="bk-info-item">
-        <div class="bk-info-label">วันที่เดินทาง</div>
-        <div class="bk-info-value">${dateStr}</div>
-      </div>
-      <div class="bk-info-item">
-        <div class="bk-info-label">เวลาเดินทาง</div>
-        <div class="bk-info-value">${timeStr} น.</div>
+        <div class="bk-info-label">ชื่อรอบ</div>
+        <div class="bk-info-value">${round.roudeStack?.roundname || '—'}</div>
       </div>
       <div class="bk-info-item">
         <div class="bk-info-label">ระยะเวลา</div>

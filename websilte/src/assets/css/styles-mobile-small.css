@@ -1,0 +1,202 @@
+/* ════════════════════════════════════════════════════════════════════
+   MOBILE SMALL STYLES (max-width: 479px) - Small phones
+   ════════════════════════════════════════════════════════════════════ */
+
+@media(max-width: 479px) {
+  /* ── Cards width adjustment (Very Small Mobile) ── */
+  .row.g-4 > [class*='col-'],
+  .row.g-3 > [class*='col-'] {
+    width: 80% !important;
+  }
+
+  /* ── Typography (Very Small Mobile) ── */
+  body {
+    font-size: 13px;
+  }
+
+  .section-title {
+    font-size: 16px;
+  }
+
+  .ht-title {
+    font-size: 1.2rem;
+  }
+
+  /* ── Spacing (Very Small Mobile) ── */
+  .section {
+    padding: 28px 0 !important;
+  }
+
+  .container {
+    padding: 0 0.875rem;
+  }
+
+  /* ── Hero Section (Very Small Mobile) ── */
+  .hero-section {
+    min-height: 300px;
+    padding: 1rem 0;
+  }
+
+  .hero-content {
+    padding: 1rem 0.875rem;
+  }
+
+  .hero-content h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .btn-hero {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.85rem;
+  }
+
+  /* ── Navigation (Very Small Mobile) ── */
+  header.fixed-top .container {
+    padding: 8px 8px 8px 0px !important;
+  }
+
+  .logo-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    margin-right: 4px;
+  }
+
+  .nav-btn-circle {
+    font-size: 14px;
+    padding: 3px 3px;
+  }
+
+  .nav-hamburger {
+    font-size: 18px;
+    padding: 3px 3px;
+  }
+
+  /* ── Blog Cards (Very Small Mobile) ── */
+  .blog-overlay {
+    padding: 1rem;
+  }
+
+  .blog-title {
+    font-size: 0.9rem;
+  }
+
+  /* ── HT Cards (Very Small Mobile) ── */
+  .ht-swiper .swiper-slide {
+    width: calc(90vw) !important;
+  }
+
+  .ht-img,
+  .ht-img-placeholder {
+    height: 140px;
+  }
+
+  .ht-body {
+    padding: 0.75rem 0.85rem 0.85rem;
+  }
+
+  .ht-card-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .ht-card-desc {
+    font-size: 0.78rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .ht-price {
+    font-size: 1.1rem;
+  }
+
+  .ht-btn-book {
+    font-size: .7rem;
+    padding: .35rem .6rem;
+  }
+
+  /* ── Service Cards (Very Small Mobile) ── */
+  .service-title {
+    font-size: 0.9rem;
+    padding: 1rem;
+  }
+
+  .service-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .service-text {
+    padding: 0 1rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  /* ── FAQ (Very Small Mobile) ── */
+  .faq-question {
+    padding: 1rem;
+  }
+
+  .faq-question h5 {
+    font-size: 0.9rem;
+  }
+
+  .faq-answer-content {
+    padding: 0 1rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* ── Social Grid (Very Small Mobile) ── */
+  .social-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .social-item {
+    padding: 1.25rem 0.5rem;
+  }
+
+  /* ── Section Headers (Very Small Mobile) ── */
+  .ht-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .ht-filter-select {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.875rem;
+  }
+
+  /* ── Footer (Very Small Mobile) ── */
+  .footer-text {
+    font-size: 0.75rem;
+  }
+
+  /* ── Cookie Notice (Very Small Mobile) ── */
+  .cookie-notice {
+    bottom: 0.75rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    padding: 0.875rem;
+  }
+
+  .cookie-icon {
+    width: 20px;
+    font-size: 1.2rem;
+    margin-top: 0;
+  }
+
+  .cookie-text {
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
+  .btn-cookie {
+    padding: 0.4rem 0.875rem;
+    font-size: 0.7rem;
+  }
+}

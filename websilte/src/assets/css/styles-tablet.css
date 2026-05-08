@@ -1,0 +1,174 @@
+/* ════════════════════════════════════════════════════════════════════
+   TABLET STYLES (768px - 1024px) - iPad and medium tablets
+   ════════════════════════════════════════════════════════════════════ */
+
+@media(min-width: 768px) and (max-width: 1024px) {
+  /* ── Content spacing for fixed header (Tablet) ── */
+  .fire-section-wrapper,
+  .hero-section {
+    margin-top: 115px;
+  }
+
+  /* ── Navigation (Tablet) ── */
+  header.fixed-top {
+    width: 100%;
+  }
+
+  header.fixed-top nav.navbar {
+    width: 100%;
+    height: 56px;
+    padding: 0 !important;
+  }
+
+  header.fixed-top .container {
+    width: 100%;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px 8px 0px !important;
+  }
+
+  .navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 0;
+    margin-right: auto;
+    padding: 0 0 0 8px;
+    flex-shrink: 0;
+    height: 40px;
+  }
+
+  .logo-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 16px;
+    margin-right: 6px;
+  }
+
+  .logo-text {
+    font-size: 13px;
+  }
+
+  .nav-desktop {
+    display: flex !important;
+    gap: 12px;
+    margin-left: auto;
+    align-items: center;
+  }
+
+  .nav-mobile {
+    display: none !important;
+  }
+
+  .nav-btn-circle {
+    font-size: 18px;
+    padding: 5px 5px;
+  }
+
+  .nav-hamburger {
+    font-size: 20px;
+    padding: 4px 4px;
+  }
+
+  /* ── Selection Menu (Tablet) ── */
+  .selection-menu {
+    top: 56px;
+    height: 59px;
+  }
+
+  .selection-menu-content {
+    padding: 0 12px;
+  }
+
+  .selection-menu-item {
+    padding: 0 14px;
+    font-size: 13px;
+    height: 59px;
+  }
+
+  /* ── Cards (Tablet) ── */
+  .row.g-4 > [class*='col-'] {
+    width: 80% !important;
+    margin: 0 auto;
+  }
+
+  .row.g-3 > [class*='col-'] {
+    width: 80% !important;
+    margin: 0 auto;
+  }
+
+  .blog-card,
+  .service-card {
+    margin: 0 auto;
+  }
+
+  /* ── Typography (Tablet) ── */
+  body {
+    font-size: 15px;
+  }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  .section-subtitle {
+    font-size: 14px;
+  }
+
+  /* ── Spacing (Tablet) ── */
+  .page-content {
+    padding: 1rem 0.875rem;
+  }
+
+  .card {
+    padding: 0.875rem;
+  }
+
+  .card-body {
+    padding: 0.875rem;
+  }
+
+  /* ── HT Cards (Tablet) ── */
+  .ht-swiper .swiper-slide {
+    width: calc(60vw) !important;
+  }
+
+  .ht-img,
+  .ht-img-placeholder {
+    height: 160px;
+  }
+
+  .ht-card-title {
+    font-size: 1.05rem;
+  }
+
+  .ht-price {
+    font-size: 1.35rem;
+  }
+
+  .ht-btn-book {
+    font-size: .82rem;
+    padding: .42rem .8rem;
+  }
+
+  /* ── Hero Section (Tablet) ── */
+  .hero-content h1 {
+    font-size: 2.2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.95rem;
+  }
+
+  /* ── Section Headers (Tablet) ── */
+  .ht-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ht-title {
+    font-size: 1.5rem;
+  }
+}

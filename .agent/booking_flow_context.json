@@ -1,0 +1,466 @@
+{
+  "title": "Booking Flow Context — จองรถตู้ทริปเที่ยว",
+  "description": "Full booking flow: 5 steps + status page. Session-based (token in URL). All steps share same session token.",
+  "base_url": "API_BASE_URL (config.js)",
+  "session_key": "?token={sessionToken} in URL query string",
+
+  "flow": [
+    {
+      "step": 0,
+      "name": "pre_entry",
+      "label": "เลือกทริป",
+      "url": "/trips",
+      "description": "User browses trip list and clicks 'จอง' → redirect to seats page",
+      "navigate_to": "/booking/seats?roundId={roundId}"
+    },
+    {
+      "step": 1,
+      "name": "seats",
+      "label": "เลือกที่นั่ง",
+      "url": "/booking/seats?roundId={roundId}&token={token?}",
+      "file": "seats.html",
+      "step_bar_state": { "seats": "active", "form": "", "insurance": "", "rental": "", "payment": "" },
+      "description": "แผนผังที่นั่งรถตู้ ใช้ seatchart.js — seat 2..N (ที่1=Staff, ที่2+=ผู้โดยสาร)",
+      "api_calls": [
+        "GET /bus-rounds → roundData (trip info, seats)",
+        "GET /seat-bookings/round/{roundId} → real-time seat status (polled every 5s)",
+        "POST /booking-sessions → create/resume session",
+        "POST /seat-bookings/hold → lock selected seats"
+      ],
+      "ui_elements": {
+        "seat_map": "seatchart.js grid (3 cols) — seat 2 to totalSeats-1",
+        "gender_modal": "Modal เลือกเพศ ชาย/หญิง per seat ก่อน confirm",
+        "clear_seats_btn": "ล้างที่นั่งทั้งหมด (rebuild seatchart)"
+      },
+      "seat_states": {
+        "available": "ว่าง (grey)",
+        "pending": "เลือกแล้ว รอเลือกเพศ (amber/yellow)",
+        "male": "ชาย confirmed (blue)",
+        "female": "หญิง confirmed (pink)",
+        "reserved": "จองแล้ว/ไม่ว่าง (disabled)"
+      },
+      "validation": [
+        "ต้องเลือกอย่างน้อย 1 ที่นั่ง",
+        "ทุกที่นั่งต้องระบุเพศ (ผ่าน gender modal)"
+      ],
+      "data_saved_to_session": {
+        "step": 1,
+        "selectedSeats": [{ "seatNumber": 2, "gender": "MALE|FEMALE" }],
+        "busRoundId": "int"
+      },
+      "navigate_to": "/booking/form?token={sessionToken}",
+      "navigate_back": "/trips",
+      "error_cases": [
+        "409 Conflict: ที่นั่งไม่ว่าง → refresh seat map",
+        "Session expired → clear token, re-poll"
+      ],
+      "test_scenario": "เลือกที่นั่ง 2 คน (ชาย ที่นั่ง 3, หญิง ที่นั่ง 5) → กด 'ดำเนินการต่อ'"
+    },
+    {
+      "step": 2,
+      "name": "form",
+      "label": "กรอกข้อมูลผู้โดยสาร",
+      "url": "/booking/form?token={token}",
+      "file": "form.html",
+      "step_bar_state": { "seats": "done", "form": "active", "insurance": "", "rental": "", "payment": "" },
+      "description": "ฟอร์มกรอกข้อมูลส่วนตัว per seat สำหรับออกกรมธรรม์ประกัน",
+      "api_calls": [
+        "GET /booking-sessions/{token} → sessionData",
+        "GET /bus-rounds → roundData (pickupPoints, price)",
+        "POST /booking-sessions → save passenger data (step=2)"
+      ],
+      "fields_per_seat": [
+        {
+          "field": "namePrefix",
+          "label": "คำนำหน้า",
+          "type": "select",
+          "required": true,
+          "options": ["นาย", "นาง", "นางสาว", "เด็กชาย", "เด็กหญิง"],
+          "selector": ".passenger-prefix[data-seat]"
+        },
+        {
+          "field": "firstName",
+          "label": "ชื่อจริง",
+          "type": "text",
+          "required": true,
+          "placeholder": "ชื่อจริง",
+          "selector": ".passenger-firstname[data-seat]"
+        },
+        {
+          "field": "lastName",
+          "label": "นามสกุล",
+          "type": "text",
+          "required": true,
+          "placeholder": "นามสกุล",
+          "selector": ".passenger-lastname[data-seat]"
+        },
+        {
+          "field": "nickname",
+          "label": "ชื่อเล่น",
+          "type": "text",
+          "required": true,
+          "placeholder": "ชื่อเล่น",
+          "selector": ".passenger-nickname[data-seat]"
+        },
+        {
+          "field": "nationalId",
+          "label": "เลขบัตรประชาชน",
+          "type": "text",
+          "required": true,
+          "maxlength": 13,
+          "pattern": "[0-9]{13}",
+          "placeholder": "0000000000000",
+          "selector": ".passenger-nationalid[data-seat]"
+        },
+        {
+          "field": "birthDate",
+          "label": "วันเกิด (ว/ด/พ.ศ.)",
+          "type": "thai-date-picker",
+          "required": true,
+          "note": "ThaiDropdown.init() — Buddhist Era calendar, maxDate=today",
+          "selector": ".passenger-birthdate[data-seat]"
+        },
+        {
+          "field": "bloodType",
+          "label": "หมู่เลือด",
+          "type": "select",
+          "required": true,
+          "options": ["A", "B", "AB", "O"],
+          "selector": ".passenger-bloodtype[data-seat]"
+        },
+        {
+          "field": "phone",
+          "label": "เบอร์โทรติดต่อ",
+          "type": "tel",
+          "required": true,
+          "minlength": 9,
+          "placeholder": "08x-xxx-xxxx",
+          "selector": ".passenger-phone[data-seat]"
+        },
+        {
+          "field": "foodAllergy",
+          "label": "แพ้อาหาร / ข้อจำกัด",
+          "type": "text",
+          "required": false,
+          "placeholder": "เช่น แพ้กุ้ง, ทานมังสวิรัติ",
+          "selector": ".passenger-allergy[data-seat]"
+        },
+        {
+          "field": "pickupPoint",
+          "label": "จุดรับ",
+          "type": "select",
+          "required": true,
+          "note": "Options from roundData.pickupPoints — may have price surcharge",
+          "selector": ".passenger-pickup[data-seat]"
+        }
+      ],
+      "summary_card": {
+        "shows": ["จำนวนที่นั่ง", "ราคา/คน", "รวมค่าที่นั่ง", "ค่าจุดรับรถเพิ่ม (if > 0)", "รวมทั้งหมด"],
+        "note": "ยังไม่รวมอุปกรณ์เช่าเสริม"
+      },
+      "validation": [
+        "คำนำหน้าต้องเลือก",
+        "ชื่อเล่นต้องกรอก",
+        "ชื่อ-นามสกุลต้องกรอก",
+        "เลขบัตรประชาชน 13 หลัก",
+        "วันเกิดต้องกรอก",
+        "หมู่เลือดต้องเลือก",
+        "เบอร์โทร >= 9 ตัว",
+        "จุดรับต้องเลือก"
+      ],
+      "data_saved_to_session": {
+        "step": 2,
+        "selectedSeats": "array with all passenger fields",
+        "customerData": { "mainName": "seats[0].passengerName", "mainPhone": "seats[0].phone" }
+      },
+      "navigate_to": "/booking/insurance?token={token}",
+      "navigate_back": "/booking/seats?roundId={busRoundId}&token={token}",
+      "test_data": {
+        "namePrefix": "นาย",
+        "firstName": "สมชาย",
+        "lastName": "ใจดี",
+        "nickname": "โจ",
+        "nationalId": "1234567890123",
+        "birthDate": "1990-05-15",
+        "bloodType": "O",
+        "phone": "0812345678",
+        "foodAllergy": "",
+        "pickupPoint": "BTS หมอชิต"
+      }
+    },
+    {
+      "step": 3,
+      "name": "insurance",
+      "label": "ข้อมูลประกันภัย",
+      "url": "/booking/insurance?token={token}",
+      "file": "insurance.html",
+      "step_bar_state": { "seats": "done", "form": "done", "insurance": "active", "rental": "", "payment": "" },
+      "description": "บันทึกข้อมูลประกันชีวิต วงเงิน 1,000,000 บาท — ผู้รับประโยชน์ + ผู้ติดต่อฉุกเฉิน",
+      "api_calls": [
+        "GET /booking-sessions/{token}",
+        "GET /bus-rounds",
+        "GET /insurance/policy-content → แสดงข้อความ/รูปกรมธรรม์",
+        "GET /insurance/conditions → เงื่อนไขที่ต้องยอมรับ",
+        "POST /booking-sessions → save insurance data (step=3)"
+      ],
+      "fields_per_seat": [
+        {
+          "field": "emergencyName",
+          "label": "ชื่อ-นามสกุล บุคคลติดต่อกรณีฉุกเฉิน",
+          "type": "text",
+          "required": true,
+          "selector": ".ins-emergency-name[data-seat]"
+        },
+        {
+          "field": "emergencyPhone",
+          "label": "เบอร์โทร (ฉุกเฉิน)",
+          "type": "tel",
+          "required": true,
+          "selector": ".ins-emergency-phone[data-seat]"
+        },
+        {
+          "field": "beneficiaryName",
+          "label": "ชื่อ-นามสกุลผู้รับประโยชน์",
+          "type": "text",
+          "required": true,
+          "selector": ".ins-beneficiary-name[data-seat]"
+        },
+        {
+          "field": "beneficiaryRelation",
+          "label": "ความสัมพันธ์ผู้รับประโยชน์",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "value": "LEGAL_HEIR", "label": "ทายาทตามกฎหมาย" },
+            { "value": "SPOUSE", "label": "คู่สมรส" },
+            { "value": "FATHER", "label": "บิดา" },
+            { "value": "MOTHER", "label": "มารดา" },
+            { "value": "CHILD", "label": "บุตร" },
+            { "value": "SIBLING", "label": "พี่น้อง" },
+            { "value": "OTHER", "label": "อื่นๆ (ระบุเอง)" }
+          ],
+          "selector": ".ins-beneficiary-rel[data-seat]"
+        },
+        {
+          "field": "beneficiaryRelationOther",
+          "label": "ความสัมพันธ์ (กรณีอื่นๆ)",
+          "type": "text",
+          "required": false,
+          "visible_when": "beneficiaryRelation === 'OTHER'",
+          "selector": ".ins-beneficiary-other[data-seat]"
+        }
+      ],
+      "shared_consents": {
+        "source": "GET /insurance/conditions",
+        "note": "Dynamic from DB — isRequired=true ต้องติ๊กก่อนไปต่อ",
+        "known_ids": {
+          "1": "อ่านข้อมูลความคุ้มครองของกรมธรรม์แล้ว (required)",
+          "2": "ยอมรับเงื่อนไขความคุ้มครอง (required)",
+          "3": "รับทราบ: ไม่คุ้มครองขณะโดยสารรถ 4WD",
+          "4": "รับทราบ: คุ้มครองเฉพาะในประเทศไทย"
+        }
+      },
+      "custom_conditions_field": {
+        "label": "เงื่อนไขพิเศษ / ข้อตกลงเพิ่มเติม (ถ้ามี)",
+        "type": "textarea",
+        "required": false,
+        "placeholder": "ระบุเงื่อนไขพิเศษหรือโรคประจำตัว...",
+        "id": "customConditions"
+      },
+      "navigate_to_rental": "/booking/rental?token={token}",
+      "navigate_to_skip_rental": "/booking/ticket?token={token}",
+      "popup_after_save": "SweetAlert2 — ถามว่าต้องการเพิ่มอุปกรณ์เช่าหรือไม่",
+      "navigate_back": "/booking/form?token={token}",
+      "test_data": {
+        "emergencyName": "นาง สมหญิง ใจดี",
+        "emergencyPhone": "0898765432",
+        "beneficiaryName": "นาย สมชาย ใจดี",
+        "beneficiaryRelation": "SPOUSE"
+      }
+    },
+    {
+      "step": 4,
+      "name": "rental",
+      "label": "เลือกอุปกรณ์เช่า",
+      "url": "/booking/rental?token={token}",
+      "file": "rental.html",
+      "step_bar_state": { "seats": "done", "form": "done", "insurance": "done", "rental": "active", "payment": "" },
+      "description": "Optional step — เลือกอุปกรณ์เช่าเพิ่มเติม per passenger",
+      "api_calls": [
+        "GET /booking-sessions/{token}",
+        "GET /addons/active → รายการอุปกรณ์",
+        "POST /booking-sessions → save addonsData"
+      ],
+      "optional": true,
+      "navigate_to": "/booking/ticket?token={token}",
+      "navigate_back": "/booking/insurance?token={token}"
+    },
+    {
+      "step": 5,
+      "name": "ticket",
+      "label": "ชำระเงิน / ตั๋ว",
+      "url": "/booking/ticket?token={token}",
+      "file": "ticket.html",
+      "step_bar_state": { "seats": "done", "form": "done", "insurance": "done", "rental": "done", "payment": "active" },
+      "description": "หน้าสรุปตั๋ว + ชำระเงิน — สร้าง booking จริงใน DB และอัพโหลดสลิป",
+      "api_calls": [
+        "GET /booking-sessions/{token}",
+        "GET /bus-rounds",
+        "GET /addons/active",
+        "GET /bank-accounts → แสดงบัญชีธนาคาร",
+        "POST /booking-sessions (step=3, addonsData) → save final addons",
+        "POST /bookings/guest → create booking record",
+        "POST /insurance → create insurance per seat (with real seatBookingId)",
+        "POST /uploads → upload slip image",
+        "PATCH /payments/guest/{token} → attach slipUrl",
+        "GET /bookings/guest/{token} → refresh booking status"
+      ],
+      "payment_options": [
+        {
+          "type": "DEPOSIT",
+          "label": "ชำระเฉพาะมัดจำ",
+          "amount": "seatTotal * depositRate (default 30%, or fixed per seat if > 100)"
+        },
+        {
+          "type": "FULL",
+          "label": "ชำระเต็มจำนวน",
+          "amount": "seatTotal + pickupTotal + addonTotal"
+        }
+      ],
+      "price_breakdown": {
+        "seatTotal": "seats.length × trip.price",
+        "pickupTotal": "sum of seat.pickupPrice (จากจุดรับ surcharge)",
+        "addonTotal": "sum of addon.price × quantity",
+        "grand": "seatTotal + pickupTotal + addonTotal"
+      },
+      "ticket_per_person": {
+        "shows": ["ชื่อผู้โดยสาร", "เบอร์โทร", "ที่นั่ง", "ค่าตั๋ว", "จุด pickup", "แพ้อาหาร", "QR code"],
+        "qr_url": "https://api.qrserver.com/v1/create-qr-code/?data=BOOKING:{bookingId}|SEAT:{seatNumber}"
+      },
+      "button_states": [
+        { "state": "ปกติ", "text": "ยืนยันการจองและแจ้งโอน", "class": "btn-primary" },
+        { "state": "จองแล้ว ยังไม่แนบสลิป", "text": "*** จองแล้ว ยังไม่แนบสลิป ***", "class": "btn-warning" },
+        { "state": "มัดจำเรียบร้อย", "text": "*** มัดจำเรียบร้อย ***", "class": "btn-info" },
+        { "state": "ชำระครบ", "text": "*** รายการสำเร็จ ***", "class": "btn-success" }
+      ],
+      "navigate_back": "/booking/insurance?token={token}"
+    }
+  ],
+
+  "status_page": {
+    "name": "status",
+    "label": "ตรวจสอบสถานะการจอง",
+    "url": "/booking/status?phone={phone}",
+    "file": "status.html",
+    "description": "ค้นหาการจองด้วยเบอร์โทร — แสดง pipeline progress และ resume link",
+    "api_calls": [
+      "GET /booking-sessions/by-phone?phone={phone}",
+      "GET /bus-rounds"
+    ],
+    "pipeline_steps": [
+      { "step": 1, "label": "เลือกที่นั่ง", "status": "รอเลือกที่นั่ง", "color": "secondary" },
+      { "step": 2, "label": "ข้อมูล", "status": "กรอกข้อมูล", "color": "warning" },
+      { "step": 3, "label": "ประกัน", "status": "บันทึกประกัน", "color": "info" },
+      { "step": 4, "label": "ชำระเงิน", "status": "รอชำระเงิน", "color": "primary" },
+      { "step": 5, "label": "ยืนยันแล้ว", "status": "ยืนยันแล้ว", "color": "success" }
+    ],
+    "resume_urls": {
+      "1": "/booking/seats?roundId={busRoundId}",
+      "2": "/booking/form?token={token}",
+      "3": "/booking/insurance?token={token}",
+      "4": "/booking/ticket?token={token}",
+      "5": "/booking/ticket?token={token}"
+    }
+  },
+
+  "session_object": {
+    "token": "uuid string",
+    "busRoundId": "int",
+    "step": "int 1-5",
+    "selectedSeats": [
+      {
+        "seatNumber": "int",
+        "gender": "MALE|FEMALE",
+        "namePrefix": "string",
+        "firstName": "string",
+        "lastName": "string",
+        "passengerName": "firstName + lastName",
+        "nickname": "string",
+        "nationalId": "string 13 digits",
+        "birthDate": "ISO date string",
+        "bloodType": "A|B|AB|O",
+        "phone": "string",
+        "foodAllergy": "string|null",
+        "pickupPoint": "string|null",
+        "pickupPrice": "number (surcharge)",
+        "emergencyName": "string",
+        "emergencyPhone": "string",
+        "beneficiaryName": "string",
+        "beneficiaryRelation": "LEGAL_HEIR|SPOUSE|FATHER|MOTHER|CHILD|SIBLING|OTHER",
+        "beneficiaryRelationOther": "string|null",
+        "consentPolicyRead": "boolean",
+        "consentTermsAccepted": "boolean",
+        "consent4WD": "boolean",
+        "consentDomesticOnly": "boolean",
+        "consentedConditionIds": "[int]",
+        "customConditions": "string|null"
+      }
+    ],
+    "customerData": { "mainName": "string", "mainPhone": "string" },
+    "addonsData": [{ "addonId": "int", "quantity": "int" }],
+    "bookingId": "int|null",
+    "expiresAt": "datetime"
+  },
+
+  "step_flow_summary": {
+    "happy_path": "trips → seats(1) → form(2) → insurance(3) → [rental(4)?] → ticket(5) → done",
+    "skip_rental": "insurance(3) → ticket(5) โดยตรง",
+    "resume": "status page ค้นด้วยเบอร์ → กด 'ดำเนินการต่อ' → resume จาก step ที่ค้างอยู่",
+    "back_navigation": {
+      "form → seats": "save state, goto /booking/seats",
+      "insurance → form": "save state, goto /booking/form",
+      "ticket → insurance": "goto /booking/insurance"
+    }
+  },
+
+  "test_messages": {
+    "seat_selection": "เลือกที่นั่ง 2 ที่นั่ง: ที่นั่งที่ 3 (ชาย) และที่นั่งที่ 5 (หญิง) ใน roundId=1",
+    "form_fill": "กรอกข้อมูลผู้โดยสาร 2 คน: นาย สมชาย ใจดี (เบอร์ 0812345678) และ นางสาว สมหญิง รักดี (เบอร์ 0898765432)",
+    "insurance_fill": "ผู้รับประโยชน์: นาง มารดา ใจดี (ความสัมพันธ์: มารดา), ผู้ติดต่อฉุกเฉิน: นาง พ่อ ใจดี 0811111111",
+    "payment_deposit": "เลือกชำระมัดจำ 30% → อัพโหลดสลิป → กดยืนยัน",
+    "payment_full": "เลือกชำระเต็มจำนวน → อัพโหลดสลิป → กดยืนยัน",
+    "status_check": "ค้นหาด้วยเบอร์โทร 0812345678 → เห็นรายการจอง step=4"
+  },
+
+  "error_messages_ui": {
+    "step1": [
+      "กรุณาเลือกที่นั่งในแผนผังเพื่อดำเนินการต่อ",
+      "⚠️ ที่นั่งบางที่ไม่ว่าง กรุณาเลือกที่นั่งใหม่",
+      "⏰ หมดเวลาเลือกที่นั่ง กรุณาเลือกใหม่"
+    ],
+    "step2": [
+      "กรุณาเลือกคำนำหน้า ที่นั่ง {n}",
+      "กรุณากรอกชื่อเล่น ที่นั่ง {n}",
+      "กรุณากรอกชื่อ-นามสกุล ที่นั่ง {n}",
+      "กรุณากรอกเลขบัตรประชาชน 13 หลัก ที่นั่ง {n}",
+      "กรุณากรอกวันเกิด ที่นั่ง {n}",
+      "กรุณาเลือกหมู่เลือด ที่นั่ง {n}",
+      "กรุณากรอกเบอร์โทรติดต่อ ที่นั่ง {n}",
+      "กรุณาเลือกจุดรับ ที่นั่ง {n}"
+    ],
+    "step3": [
+      "กรุณากรอกชื่อผู้ติดต่อฉุกเฉิน ที่นั่ง {n}",
+      "กรุณากรอกเบอร์ฉุกเฉิน ที่นั่ง {n}",
+      "กรุณากรอกชื่อผู้รับประโยชน์ ที่นั่ง {n}",
+      "กรุณาเลือกความสัมพันธ์ผู้รับประโยชน์ ที่นั่ง {n}",
+      "กรุณายืนยันเงื่อนไขที่บังคับทั้งหมด"
+    ]
+  },
+
+  "shared_js_helpers": {
+    "fetchJSON(path)": "GET API_BASE_URL+path → json",
+    "postJSON(path, body)": "POST API_BASE_URL+path → json (throws on !r.ok)",
+    "showToast(msg, type)": "Bootstrap toast bottom-right, auto-remove 4s",
+    "showError(msg)": "Replace loadingState with error + link กลับ /trips"
+  }
+}

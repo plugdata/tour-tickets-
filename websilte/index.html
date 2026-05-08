@@ -24,6 +24,77 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 
   <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* ── Status button ── */
+    .nav-btn-status {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      color: rgba(255, 255, 255, .75);
+      font-family: 'Kanit', sans-serif;
+      font-size: .82rem;
+      font-weight: 600;
+      text-decoration: none;
+      padding: .4rem .9rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .nav-btn-status:hover {
+      color: #00d9b4;
+      border-color: rgba(0, 217, 180, .4);
+      background: rgba(0, 217, 180, .07);
+    }
+
+    .nav-btn-status i {
+      color: #00d9b4;
+    }
+
+    /* ── Navbar nav links ── */
+    .nav-link-item {
+      color: rgba(255, 255, 255, 0.65);
+      font-family: 'Kanit', sans-serif;
+      font-size: .85rem;
+      font-weight: 500;
+      text-decoration: none;
+      padding: .35rem .65rem;
+      border-radius: 8px;
+      transition: color .2s, background .2s;
+      display: block;
+    }
+    .nav-link-item:hover {
+      color: #00d9b4;
+      background: rgba(0, 217, 180, .08);
+    }
+
+    .nav-link-item.active {
+      color: #00d9b4;
+      background: rgba(0, 217, 180, .14);
+    }
+
+    /* Mobile collapse menu background */
+    @media (max-width: 991.98px) {
+      #navMenu {
+        background: rgba(15, 23, 42, .97);
+        backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(255,255,255,.07);
+        padding: .5rem 0;
+        margin-top: .5rem;
+      }
+      #navMenu .navbar-nav {
+        gap: 0 !important;
+      }
+      .nav-link-item {
+        padding: .65rem 1rem;
+        border-radius: 0;
+        border-bottom: 1px solid rgba(255,255,255,.04);
+      }
+    }
+
     /* ── Announcement Bar ── */
     .announcement-bar {
       background: linear-gradient(90deg, #00d9b4, #00c4a0);
@@ -1011,29 +1082,69 @@
 
 <body>
 
-
   <!-- ── Header ── -->
   <header class="fixed-top">
     <!-- ── Navbar ── -->
     <nav class="navbar navbar-expand-lg">
       <div class="container">
+
+        <!-- Logo -->
         <a class="navbar-brand" href="/">
           <div class="logo-icon"><i class="bi bi-geo-alt"></i></div>
           <span>GUGA Travels</span>
         </a>
-        <div class="d-flex align-items-center gap-2">
-          <a href="/" class="nav-btn-home">
-            <span data-i18n="nav_home">หน้าแรก</span>
+
+        <!-- ── Right group (HTML ก่อน collapse → mobile อยู่แถวเดียวกับ logo ไม่ขยับ) ──
+             order-lg-3 = desktop เลื่อนไปขวาสุด -->
+        <div class="d-flex align-items-center gap-2 ms-auto order-lg-3">
+          <a href="/booking/status" class="nav-btn-status d-none d-lg-flex">
+            <i class="bi bi-search"></i> ตรวจสอบสถานะ
           </a>
-          <div class="nav-sep"></div>
-          <button class="nav-btn-circle">
-            <i class="bi bi-search"></i>
-          </button>
           <button id="langBtn" class="nav-btn-lang">
-            <i class="bi bi-globe"></i> EN
+            <i class="bi bi-globe"></i> <span id="langLabel">EN</span>
           </button>
-          <a href="/trips" class="nav-btn-book" data-i18n="nav_book">จองทริป</a>
+          <button class="navbar-toggler d-lg-none border-0 p-1" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#navMenu"
+                  aria-controls="navMenu" aria-expanded="false" aria-label="เมนู">
+            <i class="bi bi-list fs-3 text-white"></i>
+          </button>
         </div>
+
+        <!-- ── Collapse: nav links ── order-lg-2 = desktop อยู่ตรงกลาง -->
+        <div class="collapse navbar-collapse order-lg-2" id="navMenu">
+          <ul class="navbar-nav mx-auto gap-lg-1">
+            <li class="nav-item">
+              <a class="nav-link-item" href="#heroSection" data-nav-target="heroSection" data-i18n="nav_home">หน้าแรก</a>
+            </li>
+            <li class="nav-item" id="navItemDomestic">
+              <a class="nav-link-item" href="#domesticSection" data-nav-target="domesticSection" data-i18n="nav_domestic">ในประเทศ</a>
+            </li>
+            <li class="nav-item" id="navItemInternational">
+              <a class="nav-link-item" href="#intlSection" data-nav-target="intlSection" data-i18n="nav_international">ต่างประเทศ</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link-item" href="#blogSection" data-nav-target="blogSection" data-i18n="nav_highlights">ความประทับใจ</a>
+            </li>
+            <li class="nav-item" id="navItemGallery">
+              <a class="nav-link-item" href="#gallerySection" data-nav-target="gallerySection" data-i18n="nav_gallery">แกลลอรี</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link-item" href="#servicesSection" data-nav-target="servicesSection" data-i18n="nav_services">บริการอื่นๆ</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link-item" href="#faqWrap" data-nav-target="faqWrap" data-i18n="nav_faq">FAQ</a>
+            </li>
+            <li class="nav-item" id="navItemContact">
+              <a class="nav-link-item" href="#contactSection" data-nav-target="contactSection" data-i18n="nav_contact">ติดต่อเรา</a>
+            </li>
+            <li class="nav-item d-lg-none">
+              <a class="nav-link-item d-flex align-items-center gap-2" href="/booking/status">
+                <i class="bi bi-search" style="color:#00d9b4"></i> ตรวจสอบสถานะการจอง
+              </a>
+            </li>
+          </ul>
+        </div>
+
       </div>
     </nav>
 
@@ -1163,7 +1274,7 @@
 -->
 
   <!-- ── Blog / Inspiration ── -->
-  <section class="section section-alt">
+  <section class="section section-alt" id="blogSection">
     <div class="container">
       <h2 class="section-title" data-i18n="blog_title">ภาพความประทับใจ</h2>
       <p class="section-subtitle" data-i18n="blog_subtitle">บันทึกความทรงจำและรอยยิ้มจากการเดินทาง</p>
@@ -1212,7 +1323,7 @@
   </section>
 
   <!-- ── Services ── -->
-  <section class="section section-alt">
+  <section class="section section-alt" id="servicesSection">
     <div class="container">
       <h2 class="section-title" data-i18n="svc_title">บริการอื่นๆ</h2>
       <p class="section-subtitle" data-i18n="svc_subtitle">เราพร้อมดูแลคุณตั้งแต่ต้นจนจบการเดินทาง</p>
@@ -1331,7 +1442,7 @@
   </section> -->
 
   <!-- ── Social Contact ── -->
-  <section class="social-contact">
+  <section class="social-contact" id="contactSection">
     <div class="container">
       <h2 class="section-title" data-i18n="social_title">เริ่มต้นการเดินทางของคุณ</h2>
       <p class="section-subtitle" data-i18n="social_subtitle">เลือกช่องทางที่คุณสะดวกเพื่อสอบถามหรือจองบริการกับเรา</p>
@@ -1401,6 +1512,100 @@
 
   <!-- Swiper JS -->
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+  <script>
+    function getHeaderOffset() {
+      const header = document.querySelector('header.fixed-top')
+      return header ? header.offsetHeight + 16 : 96
+    }
+
+    function isVisibleSection(el) {
+      if (!el) return false
+      if (el.hidden) return false
+      if (el.style.display === 'none') return false
+      const computed = window.getComputedStyle(el)
+      return computed.display !== 'none' && computed.visibility !== 'hidden'
+    }
+
+    function scrollToHomeSection(sectionId) {
+      const section = document.getElementById(sectionId)
+      if (!section || !isVisibleSection(section)) return
+      const top = window.scrollY + section.getBoundingClientRect().top - getHeaderOffset()
+      window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' })
+    }
+
+    function updateHomeNavActive() {
+      const links = [...document.querySelectorAll('[data-nav-target]')]
+      const visibleLinks = links.filter(link => {
+        const item = link.closest('.nav-item')
+        return item && item.style.display !== 'none'
+      })
+      let activeId = 'heroSection'
+      let bestTop = -Infinity
+      const threshold = getHeaderOffset() + 24
+
+      visibleLinks.forEach(link => {
+        const section = document.getElementById(link.dataset.navTarget)
+        if (!section || !isVisibleSection(section)) return
+        const rect = section.getBoundingClientRect()
+        if (rect.top <= threshold && rect.top > bestTop) {
+          bestTop = rect.top
+          activeId = link.dataset.navTarget
+        }
+      })
+
+      links.forEach(link => {
+        link.classList.toggle('active', link.dataset.navTarget === activeId)
+      })
+    }
+
+    function refreshHomeNavVisibility() {
+      const toggle = (itemId, visible) => {
+        const item = document.getElementById(itemId)
+        if (!item) return
+        item.style.display = visible ? '' : 'none'
+      }
+
+      const domesticSection = document.getElementById('domesticSection')
+      const internationalSection = document.getElementById('intlSection')
+      const gallerySection = document.getElementById('gallerySection')
+      const contactSection = document.getElementById('contactSection')
+      const domesticCards = document.querySelectorAll('#domesticWrapper .ht-card').length
+      const internationalCards = document.querySelectorAll('#intlWrapper .ht-card').length
+      const galleryCards = document.querySelectorAll('#galleryGrid .gallery-card').length
+
+      toggle('navItemDomestic', isVisibleSection(domesticSection) && domesticCards > 0)
+      toggle('navItemInternational', isVisibleSection(internationalSection) && internationalCards > 0)
+      toggle('navItemGallery', isVisibleSection(gallerySection) && galleryCards > 0)
+      toggle('navItemContact', isVisibleSection(contactSection))
+
+      updateHomeNavActive()
+    }
+
+    function initHomeSectionNav() {
+      document.querySelectorAll('[data-nav-target]').forEach(link => {
+        link.addEventListener('click', (event) => {
+          const sectionId = link.dataset.navTarget
+          if (!sectionId) return
+          event.preventDefault()
+          scrollToHomeSection(sectionId)
+
+          const menu = document.getElementById('navMenu')
+          if (menu?.classList.contains('show')) {
+            bootstrap.Collapse.getOrCreateInstance(menu).hide()
+          }
+        })
+      })
+
+      window.addEventListener('scroll', updateHomeNavActive, { passive: true })
+      window.addEventListener('resize', updateHomeNavActive)
+      updateHomeNavActive()
+      refreshHomeNavVisibility()
+    }
+
+    window.__refreshHomeNav = refreshHomeNavVisibility
+    window.__initHomeSectionNav = initHomeSectionNav
+  </script>
 
   <!-- Trip Cards Controller + Detail Modal -->
   <script type="module">
@@ -1520,12 +1725,13 @@
         }
         const domEl = document.getElementById('domesticWrapper')
         const intlEl = document.getElementById('intlWrapper')
+        document.getElementById('domesticSection').style.display = domestic.length ? '' : 'none'
         domEl.innerHTML = domestic.length ? domestic.map(t => tripCard(t, homeRoundMap.get(t.id) || [])).join('') : emptySlide('ยังไม่มีทริปในประเทศ')
-        // Hide intl section if no data
         document.getElementById('intlSection').style.display = international.length ? '' : 'none'
         intlEl.innerHTML = international.length ? international.map(t => tripCard(t, homeRoundMap.get(t.id) || [])).join('') : emptySlide('ยังไม่มีทริปต่างประเทศ')
 
         if (window.__initSwipers) window.__initSwipers()
+        window.__refreshHomeNav?.()
         // Apply static i18n keys inside generated cards (per_person, view_detail)
         window.__applyI18n?.()
         // If user is already in EN mode, translate dynamic content

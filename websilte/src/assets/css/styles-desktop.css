@@ -1,0 +1,229 @@
+/* ════════════════════════════════════════════════════════════════════
+   DESKTOP STYLES (≥1025px) - Large screens
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Content spacing for fixed header (Desktop) ── */
+.fire-section-wrapper,
+.hero-section {
+  margin-top: 115px;
+}
+
+/* ── Mobile Navbar (Desktop) ── */
+header.fixed-top {
+  width: 100%;
+}
+
+header.fixed-top nav.navbar {
+  width: 100%;
+  height: 56px;
+  padding: 0 !important;
+}
+
+header.fixed-top .container {
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 8px 0px !important;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  margin-right: auto;
+  padding: 0 0 0 8px;
+  flex-shrink: 0;
+  height: 40px;
+}
+
+.logo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  font-size: 18px;
+  color: #00d9b4;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.logo-text {
+  font-family: 'Kanit', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.nav-desktop {
+  display: flex !important;
+  gap: 12px;
+  margin-left: auto;
+  align-items: center;
+}
+
+.nav-mobile {
+  display: none !important;
+  gap: 4px;
+  margin-left: auto;
+  align-items: center;
+}
+
+.nav-hamburger {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 6px 8px;
+  transition: color .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-hamburger:hover {
+  color: #00d9b4;
+}
+
+.nav-btn-circle {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 6px 8px;
+  transition: color .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-btn-circle:hover {
+  color: #00d9b4;
+}
+
+.nav-btn-home {
+  color: #fff;
+  text-decoration: none;
+  font-family: 'Sarabun', sans-serif;
+  font-size: 13px;
+  transition: color .2s;
+}
+
+.nav-btn-home:hover {
+  color: #00d9b4;
+}
+
+.nav-sep {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, .2);
+}
+
+.nav-btn-lang {
+  background: none;
+  border: none;
+  color: #fff;
+  font-family: 'Sarabun', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color .2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.nav-btn-lang:hover {
+  color: #00d9b4;
+}
+
+.nav-btn-book {
+  background: linear-gradient(135deg, #00d9b4, #00c4a0);
+  color: #000;
+  border: none;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all .2s;
+}
+
+.nav-btn-book:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 217, 180, .3);
+}
+
+/* ── Selection Menu (Desktop) ── */
+.selection-menu {
+  background: rgba(15, 20, 25, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  height: 59px;
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  z-index: 99;
+}
+
+.selection-menu::-webkit-scrollbar {
+  display: none;
+}
+
+.selection-menu-content {
+  display: flex;
+  gap: 0;
+  padding: 0 16px;
+  height: 100%;
+  white-space: nowrap;
+}
+
+.selection-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  height: 59px;
+  font-family: 'Sarabun', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, .7);
+  cursor: pointer;
+  transition: all .2s;
+  border-bottom: 3px solid transparent;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.selection-menu-item:hover {
+  color: #00d9b4;
+}
+
+.selection-menu-item.active {
+  color: #00d9b4;
+  border-bottom-color: #00d9b4;
+}
+
+/* ── HT Swiper (Desktop) ── */
+.ht-swiper .swiper-slide {
+  width: 280px !important;
+  height: auto;
+}

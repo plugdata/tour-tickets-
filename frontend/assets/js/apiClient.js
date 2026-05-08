@@ -3,7 +3,9 @@
  */
 class ApiClient {
     constructor() {
-        this.base = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:5000/api';
+        this.base = typeof API_BASE_URL !== 'undefined'
+            ? API_BASE_URL
+            : `http://${window.location.hostname || 'localhost'}:5000/api`;
     }
 
     headers(json = true) {

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Ticket Booking Workflow System</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 40px;
+      font-size: 28px;
+    }
+    .workflow-container {
+      background: #f9f9f9;
+      padding: 30px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    .row {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    .arrow {
+      font-size: 24px;
+      color: #667eea;
+      font-weight: bold;
+    }
+    .box {
+      padding: 20px;
+      border-radius: 8px;
+      border: 2px solid #1c1c1c;
+      text-align: center;
+      font-weight: bold;
+      min-width: 110px;
+      font-size: 13px;
+      transition: transform 0.2s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      min-height: 70px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .box:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .box.customer { background-color: #F0F0F0; }
+    .box.web { background-color: #E3F2FD; color: #1565C0; }
+    .box.session { background-color: #E3F2FD; color: #1565C0; }
+    .box.seat { background-color: #E3F2FD; color: #1565C0; }
+    .box.booking { background-color: #FFF3E0; color: #E65100; }
+    .box.insurance { background-color: #FFF3E0; color: #E65100; }
+    .box.payment { background-color: #FFF3E0; color: #E65100; }
+    .box.approval { background-color: #FCE4EC; color: #880E4F; }
+    .box.confirmed { background-color: #E8F5E9; color: #1B5E20; }
+    .box.rejected { background-color: #FFEBEE; color: #B71C1C; }
+    .box.email { background-color: #F0F0F0; }
+
+    .flow-chart {
+      background: #f5f5f5;
+      padding: 25px;
+      border-radius: 8px;
+      margin-top: 30px;
+    }
+    .flow-title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    .flow-text {
+      color: #555;
+      line-height: 1.8;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    .step {
+      margin-left: 20px;
+      padding: 8px 0;
+      border-left: 3px solid #667eea;
+      padding-left: 12px;
+    }
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .legend-item {
+      padding: 12px;
+      background: white;
+      border-left: 4px solid #667eea;
+      border-radius: 4px;
+      font-size: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .legend-item strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .diagram-note {
+      background: #E3F2FD;
+      border-left: 4px solid #1976D2;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #0D47A1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎫 Project Ticket Booking Workflow System</h1>
+
+    <div class="workflow-container">
+      <div class="flow-title">Main Workflow</div>
+
+      <!-- Row 1: Main flow -->
+      <div class="row">
+        <div class="box customer">👤<br>Customer</div>
+        <div class="arrow">→</div>
+        <div class="box web">🌐<br>Website</div>
+        <div class="arrow">→</div>
+        <div class="box session">⏱️<br>Session</div>
+        <div class="arrow">→</div>
+        <div class="box seat">🪑<br>Seat<br>Selection</div>
+        <div class="arrow">→</div>
+        <div class="box booking">📋<br>Booking<br>Entry</div>
+      </div>
+
+      <!-- Row 2: Insurance and Payment -->
+      <div class="row">
+        <div style="flex: 3;"></div>
+        <div style="text-align: center;">
+          <div class="arrow" style="writing-mode: vertical-rl; transform: rotate(180deg);">↓</div>
+        </div>
+        <div style="flex: 2;"></div>
+      </div>
+
+      <div class="row">
+        <div style="flex: 3;"></div>
+        <div class="box insurance">🛡️<br>Insurance<br>Form</div>
+        <div class="arrow">→</div>
+        <div class="box payment">💳<br>Payment<br>Notification</div>
+        <div style="flex: 2;"></div>
+      </div>
+
+      <!-- Row 3: Admin Approval -->
+      <div class="row">
+        <div style="flex: 2;"></div>
+        <div class="arrow">←</div>
+        <div class="box approval" style="min-height: 90px;">✓<br>Admin<br>Approval<br>(Backoffice)</div>
+        <div style="flex: 2;"></div>
+      </div>
+
+      <!-- Row 4: Outcomes -->
+      <div class="row">
+        <div style="flex: 1;"></div>
+        <div class="arrow">↙</div>
+        <div style="flex: 1;"></div>
+        <div class="arrow">↓</div>
+        <div style="flex: 1;"></div>
+        <div class="arrow">↘</div>
+        <div style="flex: 1;"></div>
+      </div>
+
+      <div class="row">
+        <div class="box confirmed">✅<br>Final Booking<br>Confirmed</div>
+        <div class="arrow">→</div>
+        <div class="box email">📧<br>Email/<br>SMS</div>
+        <div style="flex: 2;"></div>
+        <div class="box rejected">❌<br>Rejected /<br>Refund</div>
+      </div>
+    </div>
+
+    <div class="flow-chart">
+      <div class="flow-title">📊 Complete Process Flow</div>
+
+      <div class="flow-text"><strong>1. Customer Journey:</strong></div>
+      <div class="step">Customer accesses website → Creates booking session → Selects seats → Completes booking entry</div>
+
+      <div class="flow-text" style="margin-top: 15px;"><strong>2. Insurance & Payment:</strong></div>
+      <div class="step">Fills insurance form → Completes payment notification</div>
+
+      <div class="flow-text" style="margin-top: 15px;"><strong>3. Admin Review (Decision Point):</strong></div>
+      <div class="step">Backoffice admin reviews and approves/rejects booking</div>
+
+      <div class="flow-text" style="margin-top: 15px;"><strong>4. Final Steps:</strong></div>
+      <div class="step">✓ If Approved → Final booking confirmation → Send email/SMS notification to customer</div>
+      <div class="step">✗ If Rejected → Process refund and notify customer</div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <strong>🔵 Blue Boxes</strong><br>
+          Customer-facing steps (Website, Session, Seat Selection)
+        </div>
+        <div class="legend-item">
+          <strong>🟠 Orange Boxes</strong><br>
+          Booking details & payment processing
+        </div>
+        <div class="legend-item">
+          <strong>🔴 Pink Box</strong><br>
+          Admin review & approval decision point
+        </div>
+        <div class="legend-item">
+          <strong>🟢 Green Boxes</strong><br>
+          Successful booking confirmation
+        </div>
+      </div>
+
+      <div class="diagram-note">
+        💡 <strong>Key Point:</strong> The Admin Approval step is the critical decision point where bookings are either confirmed or rejected in the backoffice system.
+      </div>
+    </div>
+  </div>
+</body>
+</html>

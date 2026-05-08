@@ -36,6 +36,14 @@
 - ✓ Search functionality
 - ✓ Shows trip name, round name, date, deleted by
 
+### 4. **RoudeStack Search Partial Matching Bug (Fixed 2026-05-06)**
+- **Problem:** RoudeStack dropdown filter used exact match (`===`) while Trip filter used partial match (`.includes()`)
+- **Impact:** Could not search for partial trip names like "เขาเย็น อุ้มเปี้ยม" — only exact full name worked
+- **Root Cause:** Line 478 in bus-rounds/list.html used `t.title.toLowerCase() === tripQ` instead of `.includes(tripQ)`
+- **Solution:** Changed line 478 to use `.includes()` for partial matching
+- **File**: `frontend/pages/bus-rounds/list.html` (line 478)
+- **Git Commit**: `d64e0ec` - "fix: Enable partial matching in RoudeStack filter search"
+
 ---
 
 ## 📋 Requested Enhancements:

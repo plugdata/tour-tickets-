@@ -13,7 +13,9 @@ window.__initSwipers = initSwipers
 document.addEventListener('DOMContentLoaded', async () => {
   initNavbar()
   initCookieNotice()
+  window.__initHomeSectionNav?.()
   await loadHomepage()
+  window.__refreshHomeNav?.()
   initSwipers()
   initFAQ()
   // Re-apply static i18n keys, then translate dynamic API content

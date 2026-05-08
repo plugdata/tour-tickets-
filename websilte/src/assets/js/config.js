@@ -2,7 +2,18 @@
  * Ticket Backoffice - API Configuration
  */
 
-const API_BASE_URL = '/api';
+const getApiBaseUrl = () => {
+    const currentHost = window.location.hostname || 'localhost';
+    const currentPort = window.location.port;
+
+    if (currentPort === '5173') {
+        return '/api';
+    }
+
+    return `http://${currentHost}:5000/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Navigation menu
 const NAV_MENU = [

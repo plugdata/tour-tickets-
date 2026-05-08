@@ -4,20 +4,14 @@
 
 // Dynamic API base URL based on current host
 const getApiBaseUrl = () => {
-    const currentHost = window.location.hostname;
+    const currentHost = window.location.hostname || 'localhost';
     const currentPort = window.location.port;
 
-    // If running on production server
-    if (currentHost === '154.197.124.146') {
-        return `http://${currentHost}:5000/api`;
+    // Vite dev server (port 5173) — ใช้ relative path เพื่อให้ Vite proxy ทำงาน
+    if (currentPort === '5173') {
+        return '/api';
     }
 
-    // If running locally
-    if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
-        return `http://${currentHost}:${currentPort || 5000}/api`;
-    }
-
-    // Default fallback - assume port 5000
     return `http://${currentHost}:5000/api`;
 };
 

@@ -406,6 +406,8 @@ router.post('/guest', async (req, res) => {
           bloodType: seat.bloodType || null,
           idCardImageUrl: seat.idCardImageUrl || null,
           foodAllergy: seat.foodAllergy || null,
+          foodType: seat.foodType || null,
+          drinkAlcohol: seat.drinkAlcohol != null ? Boolean(seat.drinkAlcohol) : null,
           pickupPoint: seat.pickupPoint || null,
           dropoffPoint: seat.dropoffPoint || null,
           emergencyName: seat.emergencyName || null,

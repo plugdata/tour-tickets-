@@ -1,0 +1,32 @@
+/* ════════════════════════════════════════════════════════════════════
+   MAIN SCSS - Import all SCSS files in correct order
+   Compile this to CSS: sass scss/main.scss css/styles.css
+   ════════════════════════════════════════════════════════════════════ */
+
+// 1. Import utilities and configuration
+@import 'variables';
+@import 'mixins';
+
+// 2. Import desktop/iPad base styles (default)
+@import 'styles-desktop-ipad';
+
+// 3. Import mobile-only media queries
+@import 'styles-mobile';
+
+/*
+  SCSS Structure:
+
+  Level 1: Variables & Mixins
+    - _variables.scss (colors, fonts, spacing, z-index, transitions)
+    - _mixins.scss (responsive breakpoints, utility mixins)
+
+  Level 2: Desktop/iPad Styles (default)
+    - styles-desktop-ipad.scss (all base styles)
+    - Compiled for desktop-first approach
+    - No @media queries (they come in Level 3)
+
+  Level 3: Mobile Overrides
+    - styles-mobile.scss (only @media queries for mobile)
+    - Keeps mobile styles separate from desktop
+    - Uses mixins for clean breakpoints
+*/
