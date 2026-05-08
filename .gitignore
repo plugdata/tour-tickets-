@@ -1,5 +1,8 @@
 node_modules/
 .env
+*.env
+*.env.*
+websilte/.env.production
 backend/node_modules/
 backend/dev.db
 backend/migration_log*.txt
@@ -13,4 +16,3 @@ LuxeTravel/
 .DS_Store
 # Temporary files
 /tmp/
-
