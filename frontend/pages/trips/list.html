@@ -194,7 +194,13 @@
                                     <div id="imageUploadContainer"></div>
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label">ไฟล์/ลิงก์อธิบายทริป (PDF)</label>
+                                    <label class="form-label">
+                                        <i class="bi bi-link-45deg me-1"></i>ลิงก์รายละเอียดทริป
+                                        <small class="text-muted ms-1">(PDF, เอกสาร หรือ URL วิดีโอ YouTube / TikTok)</small>
+                                    </label>
+                                    <div class="mb-2">
+                                        <input type="text" class="form-control form-control-sm" id="fDocUrlManual" placeholder="หรือวางลิงก์วิดีโอ/เอกสารที่นี่">
+                                    </div>
                                     <div id="docUploadContainer"></div>
                                 </div>
                             </div>
@@ -647,6 +653,7 @@
             document.getElementById('fIsHot').checked = false;
             document.getElementById('fHotOrder').value = 99;
             document.getElementById('fTripType').value = 'DOMESTIC';
+            document.getElementById('fDocUrlManual').value = '';
             FileUpload.setExisting('', 'fImage');
             FileUpload.setExisting('', 'fDocUrl');
             pendingRoudestacks = [];
@@ -668,6 +675,7 @@
             document.getElementById('fIsHot').checked = t.isHot || false;
             document.getElementById('fHotOrder').value = t.hotOrder || 99;
             document.getElementById('fActive').checked = t.isActive;
+            document.getElementById('fDocUrlManual').value = t.docUrl || '';
             FileUpload.setExisting(t.imageUrl, 'fImage');
             FileUpload.setExisting(t.docUrl, 'fDocUrl');
             pendingRoudestacks = [];
@@ -696,7 +704,8 @@
                 const finalImages = [...existingImages, ...newImages].join(',');
 
                 const existingDocs = document.getElementById('fDocUrl').value.split(',').filter(x => x);
-                const finalDoc = [...existingDocs, ...newDocs][0] || ''; // Single doc expected
+                const manualDoc = document.getElementById('fDocUrlManual').value.trim();
+                const finalDoc = manualDoc || [...existingDocs, ...newDocs][0] || ''; // Prioritize manual link if provided
 
                 const data = {
                     title: document.getElementById('fTitle').value,

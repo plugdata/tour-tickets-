@@ -23,28 +23,6 @@
   <!-- Swiper CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 
-  <!-- PWA & Mobile Meta -->
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#00d9b4">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/826/826070.png">
-
-  <!-- JSON Editor -->
-  <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(reg => {
-          console.log('SW registered:', reg);
-        }).catch(err => {
-          console.log('SW registration failed:', err);
-        });
-      });
-    }
-  </script>
-
   <style>
     html {
       scroll-behavior: smooth;
@@ -78,7 +56,7 @@
 
     /* ── Navbar nav links ── */
     .nav-link-item {
-      color: #cbd5e1;
+      color: #fff;
       font-family: 'Kanit', sans-serif;
       font-size: .85rem;
       font-weight: 500;
@@ -99,7 +77,7 @@
     }
 
     .nav-btn-lang {
-      color: #cbd5e1 !important;
+      color: #fff !important;
     }
     .nav-btn-lang i {
       color: #00d9b4 !important;
@@ -644,160 +622,52 @@
     }
 
     @media(max-width:640px) {
-      body {
-        max-width: 460px; /* Slightly wider for better breathing room */
-        margin: 0 auto;
-        background: #000;
-        box-shadow: 0 0 80px rgba(0,0,0,0.9);
-        min-height: 100vh;
-        border-left: 1px solid rgba(255,255,255,0.03);
-        border-right: 1px solid rgba(255,255,255,0.03);
-      }
-
-      .ht-section {
-        padding: 35px 0 10px !important;
-      }
-
-      .ht-section .container {
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-      }
-
       .ht-swiper .swiper-slide {
-        width: 277px !important; 
-      }
-
-      .ht-card {
-        width: 277px;
-        height: 277px !important;
-        position: relative;
-        border-radius: 14px;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        background: var(--card-bg);
-      }
-
-      .ht-img-wrap {
-        height: 215px !important;
-        flex-shrink: 0;
+        width: calc(82vw) !important;
       }
 
       .ht-img,
       .ht-img-placeholder {
-        height: 215px !important;
-        width: 100%;
-        object-fit: cover;
+        height: 160px;
       }
 
-      .ht-body {
-        position: relative;
-        background: transparent;
-        padding: 0.7rem 0.85rem !important;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-      }
-
-      .ht-card-desc, 
-      .ht-seats-overlay,
-      .ht-card-meta,
-      .fire-subtitle {
-        display: none !important;
+      .ht-seats-overlay {
+        display: none;
       }
 
       .ht-title {
-        font-size: 1.3rem;
-        letter-spacing: -0.01em;
-      }
-
-      .ht-sub {
-        font-size: 0.75rem;
-        opacity: 0.5;
-        margin-top: 0.1rem;
+        font-size: 1.5rem;
       }
 
       .ht-header {
-        margin-bottom: 0.8rem;
-        gap: 0.5rem;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.75rem;
       }
 
       .ht-quick-select {
-        font-size: 0.78rem;
-        padding: 0.4rem 2rem 0.4rem 0.9rem;
-        border-radius: 10px;
-      }
-
-      .ht-card {
-        border-radius: 12px;
-      }
-
-      .ht-body {
-        padding: 0.7rem 0.8rem;
+        max-width: 100%;
+        width: 100%;
+        min-width: 100%;
+        font-size: 0.85rem;
+        padding: 0.5rem 2rem 0.5rem 1rem;
       }
 
       .ht-card-title {
-        font-size: 0.88rem;
-        margin-bottom: 0.25rem;
-        font-weight: 600;
-        color: #fff !important;
-        line-height: 1.4;
+        font-size: 1rem;
       }
 
       .ht-price {
-        font-size: 1.1rem;
-        color: var(--primary-green) !important;
-        font-weight: 800;
-        line-height: 1.4;
-      }
-
-      .ht-price small {
-        color: var(--text-gray);
-        font-size: 0.7rem;
+        font-size: 1.25rem;
       }
 
       .ht-btn-book {
-        display: none !important;
+        font-size: .78rem;
+        padding: .4rem .75rem;
       }
-
-      .ht-card-footer {
-        padding-top: 0;
-        border: none;
-        margin-top: 0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      /* Gallery/Blog mobile cleanup - more full width */
-      .section-title { font-size: 1.3rem; margin-bottom: 0.4rem; }
-      .section-subtitle { font-size: 0.75rem; margin-bottom: 1.2rem; opacity: 0.6; }
-      .g-4, .g-3 { --bs-gutter-x: 0.5rem; --bs-gutter-y: 0.75rem; }
-      
-      .row.g-4 > [class*='col-'],
-      .row.g-3 > [class*='col-'] {
-        width: 100% !important; 
-      }
-
-      /* Fix Blog Cards to 90% and Center on Mobile */
-      #blogGrid > [class*='col-'] {
-        width: 90% !important;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      .blog-card { border-radius: 10px; }
-      .blog-image-container { height: 160px; }
-      .blog-title { font-size: 0.88rem; }
-      .blog-overlay { padding: 1rem; }
-      
-      .gallery-thumb { aspect-ratio: 3/2; }
-      .gallery-info { padding: 0.4rem 0.2rem; }
-      .gallery-title { font-size: 0.82rem; }
 
       .td-content {
-        padding: 1.1rem 0.9rem 1.6rem;
+        padding: 1.2rem 1rem 1.8rem;
       }
     }
 
@@ -1499,48 +1369,30 @@
   <!-- ── Blog / Inspiration ── -->
   <section class="section section-alt" id="blogSection">
     <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-xl-10"> <!-- Squeeze container slightly on large screens -->
-          <h2 class="section-title" data-i18n="blog_title">ภาพความประทับใจ</h2>
-          <p class="section-subtitle" data-i18n="blog_subtitle">บันทึกความทรงจำและรอยยิ้มจากการเดินทาง</p>
-          <div class="row g-3 justify-content-center" id="blogGrid">
-            <!-- Placeholder 1 -->
-            <div class="col-lg-4">
-              <div class="blog-card">
-                <div class="blog-image-container">
-                  <img src="https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=800&h=500&fit=crop" alt=""
-                    class="blog-image">
-                  <div class="blog-overlay">
-                    <span class="blog-category"><i class="bi bi-tag"></i> Lifestyle</span>
-                    <h4 class="blog-title">บทความท่องเที่ยว</h4>
-                  </div>
-                </div>
+      <h2 class="section-title" data-i18n="blog_title">ภาพความประทับใจ</h2>
+      <p class="section-subtitle" data-i18n="blog_subtitle">บันทึกความทรงจำและรอยยิ้มจากการเดินทาง</p>
+      <div class="row g-4" id="blogGrid">
+        <!-- Placeholder ── replaced by loader -->
+        <div class="col-lg-6">
+          <div class="blog-card">
+            <div class="blog-image-container">
+              <img src="https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=800&h=500&fit=crop" alt=""
+                class="blog-image">
+              <div class="blog-overlay">
+                <span class="blog-category"><i class="bi bi-tag"></i> Lifestyle</span>
+                <h4 class="blog-title">บทความท่องเที่ยว</h4>
               </div>
             </div>
-            <!-- Placeholder 2 -->
-            <div class="col-lg-4">
-              <div class="blog-card">
-                <div class="blog-image-container">
-                  <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=500&fit=crop" alt=""
-                    class="blog-image">
-                  <div class="blog-overlay">
-                    <span class="blog-category"><i class="bi bi-tag"></i> Travel</span>
-                    <h4 class="blog-title">ประสบการณ์การเดินทาง</h4>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- Placeholder 3 (New) -->
-            <div class="col-lg-4">
-              <div class="blog-card">
-                <div class="blog-image-container">
-                  <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=500&fit=crop" alt=""
-                    class="blog-image">
-                  <div class="blog-overlay">
-                    <span class="blog-category"><i class="bi bi-tag"></i> Nature</span>
-                    <h4 class="blog-title">ความสุขของการพักผ่อน</h4>
-                  </div>
-                </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="blog-card">
+            <div class="blog-image-container">
+              <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=500&fit=crop" alt=""
+                class="blog-image">
+              <div class="blog-overlay">
+                <span class="blog-category"><i class="bi bi-tag"></i> Travel</span>
+                <h4 class="blog-title">ประสบการณ์การเดินทาง</h4>
               </div>
             </div>
           </div>
@@ -2293,16 +2145,11 @@
       document.getElementById('intlWrapper').innerHTML = htSkeleton(4)
       try {
         const now = new Date()
-        let [domestic, international, rounds] = await Promise.all([
+        const [domestic, international, rounds] = await Promise.all([
           apiFetch('/trips?type=DOMESTIC&active=true'),
           apiFetch('/trips?type=INTERNATIONAL&active=true'),
           apiFetch(`/bus-rounds?month=${now.getMonth()}&year=${now.getFullYear()}`),
         ])
-
-        if (window.__mockData) {
-          domestic = window.__mockData.domestic || domestic
-          international = window.__mockData.international || international
-        }
         homeRoundMap = new Map()
         for (const r of rounds) {
           if (!homeRoundMap.has(r.tripId)) homeRoundMap.set(r.tripId, [])
@@ -2405,61 +2252,6 @@
       </div>
     </div>
   </div>
-
-  <!-- ── Response Controller (JSON Editor) ── -->
-  <div id="responseController" style="display:none; position:fixed; top:0; right:0; width:400px; height:100vh; background:#1a2035; z-index:10000; padding:1rem; box-shadow:-5px 0 20px rgba(0,0,0,0.5); overflow-y:auto;">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="m-0 text-white">Response Controller</h5>
-      <button class="btn btn-sm btn-outline-light" onclick="toggleController()">Close</button>
-    </div>
-    <div id="jsonEditorHolder"></div>
-    <button class="btn btn-primary w-100 mt-3" onclick="saveResponse()">Apply & Refresh UI</button>
-    <p class="text-muted small mt-2">Edit trip data to test responsiveness across Desktop, Tablet, and Mobile.</p>
-  </div>
-
-  <script>
-    let editor = null;
-    function toggleController() {
-      const panel = document.getElementById('responseController');
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-      if (panel.style.display === 'block' && !editor) {
-        initEditor();
-      }
-    }
-
-    async function initEditor() {
-      const domestic = await fetch('/api/trips?type=DOMESTIC&active=true').then(r => r.json());
-      const international = await fetch('/api/trips?type=INTERNATIONAL&active=true').then(r => r.json());
-      
-      editor = new JSONEditor(document.getElementById('jsonEditorHolder'), {
-        schema: {
-          type: "object",
-          properties: {
-            domestic: { type: "array", items: { type: "object", properties: { title: { type: "string" }, price: { type: "number" } } } },
-            international: { type: "array", items: { type: "object", properties: { title: { type: "string" }, price: { type: "number" } } } }
-          }
-        },
-        theme: 'bootstrap5',
-        iconlib: 'fontawesome5',
-        startval: { domestic, international }
-      });
-    }
-
-    function saveResponse() {
-      const data = editor.getValue();
-      // Logic to override the trip rendering with this data
-      window.__mockData = data;
-      window.__loadHomeTripRows();
-      console.log("Mock data applied:", data);
-    }
-
-    // Keyboard shortcut: Shift + Alt + J to toggle
-    window.addEventListener('keydown', (e) => {
-      if (e.shiftKey && e.altKey && e.code === 'KeyJ') {
-        toggleController();
-      }
-    });
-  </script>
 
   <!-- i18n -->
   <script type="module" src="/src/i18n/i18n.js"></script>
