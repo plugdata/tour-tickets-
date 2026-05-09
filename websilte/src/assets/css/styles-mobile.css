@@ -218,35 +218,7 @@
   }
 
   /* ── HT Cards (Mobile) ── */
-  .ht-swiper .swiper-slide {
-    width: calc(82vw) !important;
-  }
-
-  .ht-img,
-  .ht-img-placeholder {
-    height: 160px;
-  }
-
-  .ht-seats-overlay {
-    display: none;
-  }
-
-  .ht-card-title {
-    font-size: 1rem;
-  }
-
-  .ht-card-desc {
-    font-size: 0.85rem;
-  }
-
-  .ht-price {
-    font-size: 1.25rem;
-  }
-
-  .ht-btn-book {
-    font-size: .78rem;
-    padding: .4rem .75rem;
-  }
+  /* Removed to avoid conflicts with landing.css */
 
   /* ── Sidebar Layout (Mobile) ── */
   .ht-section-layout {

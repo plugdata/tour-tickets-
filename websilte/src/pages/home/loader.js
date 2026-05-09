@@ -179,10 +179,11 @@ export async function loadFireTicker() {
   } catch (_) { }
 }
 
-// ── 3. Trips — handled by Trip Browser JS in index.html ──
+import { loadHomeTripRows } from './home-logic.js'
+
+// ── 3. Trips ──────────────────────────────────────────────
 export async function loadTrips() {
-  // Trip Browser (window.__loadTbData) is initialized directly in index.html
-  // Nothing to do here — kept for interface compatibility
+  await loadHomeTripRows()
 }
 
 // ── 4. Blog / Featured Content ────────────────────────────

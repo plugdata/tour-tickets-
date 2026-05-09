@@ -1,0 +1,74 @@
+{
+  "project": "GUGA Travels",
+  "version": "1.0.0",
+  "layout": {
+    "header": {
+      "components": ["Navbar", "LanguageSwitcher", "AnnouncementBar"],
+      "sticky": true
+    },
+    "sections": [
+      {
+        "id": "heroSection",
+        "name": "Hero Section",
+        "layout": "Full Width Background",
+        "elements": ["Title", "Subtitle", "CTA Button"]
+      },
+      {
+        "id": "fireSection",
+        "name": "Hot Trip Ticker",
+        "layout": "Container Sidebar + Swiper Area",
+        "elements": ["Badge", "Swiper Ticker"]
+      },
+      {
+        "id": "domesticSection",
+        "name": "Domestic Trips",
+        "layout": "Horizontal Swiper",
+        "config": {
+          "cardWidth": "277px",
+          "cardHeight": "277px",
+          "gap": "2px (mobile)"
+        }
+      },
+      {
+        "id": "intlSection",
+        "name": "International Trips",
+        "layout": "Horizontal Swiper"
+      },
+      {
+        "id": "blogSection",
+        "name": "Impression / Blog",
+        "layout": "Bootstrap Grid 3 Cols"
+      },
+      {
+        "id": "gallerySection",
+        "name": "Gallery",
+        "layout": "Image Grid"
+      },
+      {
+        "id": "servicesSection",
+        "name": "Services",
+        "layout": "3 Column Cards"
+      },
+      {
+        "id": "faqSection",
+        "name": "FAQ",
+        "layout": "Accordion List"
+      },
+      {
+        "id": "contactSection",
+        "name": "Social Contact",
+        "layout": "Social Icon Grid"
+      }
+    ],
+    "footer": {
+      "elements": ["Copyright", "Links"]
+    },
+    "modals": [
+      {
+        "id": "tripDetailModal",
+        "name": "Trip Detail Bottom Sheet",
+        "elements": ["HeroImage", "Title", "InfoGrid", "RoundsList", "BookingButton"]
+      }
+    ]
+  }
+}
