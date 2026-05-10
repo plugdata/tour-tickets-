@@ -567,6 +567,12 @@ html {
   margin-top: .5rem;
 }
 
+.ht-pill.active {
+  border-color: var(--primary-green, #00d9b4);
+  background: rgba(0, 217, 180, .15);
+  color: #fff;
+}
+
 .ht-swiper-area {
   flex: 1;
   min-width: 0;
