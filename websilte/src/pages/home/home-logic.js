@@ -12,7 +12,6 @@ const esc = s => (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replac
 let homeRoundMap = new Map()
 let tdSelectedRound = null
 let tdCurrentTrip = null
-const PILL_SELECTION_KEY = 'home_trip_pill_selection_v2'
 
 // ── card HTML ────────────────────────────────────────────
 export function htSkeleton(n) {
@@ -48,7 +47,7 @@ function tripCard(t, rounds) {
 
   return `
 <div class="swiper-slide">
-<div class="ht-card" data-trip-title="${esc((t.title || '').toLowerCase())}" onclick="window.__tdOpen(${t.id})">
+<div class="ht-card" onclick="window.__tdOpen(${t.id})">
   <div class="ht-img-wrap">
     ${t.imageUrl
       ? `<img src="${t.imageUrl}" class="ht-img" alt="${esc(t.title)}" loading="lazy">`
@@ -116,7 +115,6 @@ export async function loadHomeTripRows() {
     if (intlWrapper) intlWrapper.innerHTML = international.length ? international.map(t => tripCard(t, homeRoundMap.get(t.id) || [])).join('') : emptySlide('ยังไม่มีทริปต่างประเทศ')
 
     populateTripSelects(domestic, international)
-    bindDomesticTripSearch()
 
     if (window.__initSwipers) window.__initSwipers()
     window.__refreshHomeNav?.()
@@ -384,25 +382,10 @@ window.tdShareFb = function () {
 }
 
 function populateTripSelects(domestic, international) {
-  const readSelection = () => {
-    try {
-      return JSON.parse(localStorage.getItem(PILL_SELECTION_KEY) || '{}')
-    } catch {
-      return {}
-    }
-  }
-  const writeSelection = (next) => {
-    try {
-      localStorage.setItem(PILL_SELECTION_KEY, JSON.stringify(next))
-    } catch {}
-  }
-
   function fillPills(wrapId, countId, trips) {
     const wrap = document.getElementById(wrapId)
     const countEl = document.getElementById(countId)
     if (!wrap) return
-    const selection = readSelection()
-    const selectedTripId = selection[wrapId]
 
     // Update count
     if (countEl) countEl.textContent = trips.length
@@ -416,11 +399,9 @@ function populateTripSelects(domestic, international) {
       const rounds = homeRoundMap.get(t.id) || []
       const openRounds = rounds.filter(r => r.isOpen && (r.totalSeats - r.bookedSeats) > 0)
       const isFull = openRounds.length === 0
-      const isSelected = Number(selectedTripId) === Number(t.id)
       return `<button
-        class="ht-pill${isFull ? ' ht-pill-full' : ''}${isSelected ? ' active' : ''}"
-        data-trip-id="${t.id}"
-        onclick="window.__onTripPillClick(event, '${wrapId}', ${t.id})"
+        class="ht-pill${isFull ? ' ht-pill-full' : ''}"
+        onclick="if(window.__tdOpen) window.__tdOpen(${t.id})"
         title="${t.title}"
       >${t.title}${isFull ? ' <span class="ht-pill-tag">เต็ม</span>' : ''}</button>`
     }).join('')
@@ -428,58 +409,6 @@ function populateTripSelects(domestic, international) {
 
   fillPills('domesticPillWrap', 'domesticCount', domestic)
   fillPills('intlPillWrap', 'intlCount', international)
-}
-
-window.__onTripPillClick = function (event, wrapId, tripId) {
-  const wrap = document.getElementById(wrapId)
-  if (wrap) {
-    wrap.querySelectorAll('.ht-pill').forEach(el => el.classList.remove('active'))
-    event.currentTarget?.classList?.add('active')
-  }
-
-  try {
-    const selection = JSON.parse(localStorage.getItem(PILL_SELECTION_KEY) || '{}')
-    selection[wrapId] = Number(tripId)
-    localStorage.setItem(PILL_SELECTION_KEY, JSON.stringify(selection))
-  } catch {}
-
-  if (window.__tdOpen) window.__tdOpen(tripId)
-}
-
-function applyDomesticTripSearch() {
-  const input = document.getElementById('domesticTripSearch')
-  const query = (input?.value || '').trim().toLowerCase()
-  const slides = [...document.querySelectorAll('#domesticWrapper .swiper-slide')]
-  const pills = [...document.querySelectorAll('#domesticPillWrap .ht-pill')]
-  let matchCount = 0
-
-  slides.forEach(slide => {
-    const card = slide.querySelector('.ht-card')
-    const title = (card?.getAttribute('data-trip-title') || '').toLowerCase()
-    const visible = !query || title.includes(query)
-    slide.style.display = visible ? '' : 'none'
-    if (visible && card) matchCount += 1
-  })
-
-  pills.forEach(pill => {
-    const title = (pill.getAttribute('title') || pill.textContent || '').toLowerCase()
-    pill.style.display = (!query || title.includes(query)) ? '' : 'none'
-  })
-
-  const countEl = document.getElementById('domesticCount')
-  if (countEl) countEl.textContent = String(query ? matchCount : slides.length)
-}
-
-function bindDomesticTripSearch() {
-  const input = document.getElementById('domesticTripSearch')
-  if (!input) return
-  if (input.dataset.bound === '1') {
-    applyDomesticTripSearch()
-    return
-  }
-  input.dataset.bound = '1'
-  input.addEventListener('input', applyDomesticTripSearch)
-  applyDomesticTripSearch()
 }
 
 window.handleTripSelect = function (sel) {
@@ -647,3 +576,5 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 })
+
+
