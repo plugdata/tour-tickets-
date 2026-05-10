@@ -1,4 +1,5 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite' 
+
 import { resolve } from 'path'
 
 const urlRewrites = {
@@ -31,6 +32,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    hmr: { overlay: false },
     open: true,
     allowedHosts: 'all',
     proxy: {
