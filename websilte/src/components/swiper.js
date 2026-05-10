@@ -28,7 +28,7 @@ export function initSwipers() {
       prevEl: '.domestic-swiper .swiper-button-prev',
     },
     breakpoints: {
-      0: { spaceBetween: 4 },
+      0: { spaceBetween: 20 },
       640: { spaceBetween: 16 },
       1024: { spaceBetween: 20 }
     }
@@ -46,7 +46,7 @@ export function initSwipers() {
       prevEl: '.international-swiper .swiper-button-prev',
     },
     breakpoints: {
-      0: { spaceBetween: 4 },
+      0: { spaceBetween: 20 },
       640: { spaceBetween: 16 },
       1024: { spaceBetween: 20 }
     }
