@@ -30,15 +30,29 @@ router.get('/round/:roundId', async (req, res) => {
 
     const seatBookings = await prisma.seatBooking.findMany({
       where: { busRoundId: roundId },
-      include: { booking: { select: { id: true, status: true, payment: { select: { slipUrl: true } } } } }
+      select: { id: true, seatNumber: true, bookingId: true, gender: true, firstName: true, lastName: true, nickname: true, sessionToken: true, holdExpiresAt: true }
     })
+
+    // ดึง booking status + payment slipUrl ด้วย flat queries
+    const withBookingIds = seatBookings.filter(sb => sb.bookingId)
+    const bookingIdList = withBookingIds.map(sb => sb.bookingId)
+    const bookingStatuses = bookingIdList.length ? await prisma.booking.findMany({
+      where: { id: { in: bookingIdList } },
+      select: { id: true, status: true }
+    }) : []
+    const paymentSlips = bookingIdList.length ? await prisma.payment.findMany({
+      where: { bookingId: { in: bookingIdList } },
+      select: { bookingId: true, slipUrl: true }
+    }) : []
+    const bkStatusMap = Object.fromEntries(bookingStatuses.map(b => [b.id, b.status]))
+    const bkSlipMap   = Object.fromEntries(paymentSlips.map(p => [p.bookingId, p.slipUrl]))
 
     const seatMap = {}
     for (const sb of seatBookings) {
       let status = 'SELECTED' // temp hold (yellow)
       if (sb.bookingId) {
-        const isCancelled = sb.booking?.status === 'CANCELLED'
-        const hasSlip = sb.booking?.payment?.slipUrl != null
+        const isCancelled = bkStatusMap[sb.bookingId] === 'CANCELLED'
+        const hasSlip = !!bkSlipMap[sb.bookingId]
         status = (isCancelled || !hasSlip) ? 'AVAILABLE' : 'BOOKED'
       }
       const isBooked = !!sb.bookingId && status === 'BOOKED'
@@ -80,15 +94,43 @@ router.post('/hold', async (req, res) => {
     })
 
     // ── ปลดที่นั่งที่ "จอง" แล้วแต่ยังไม่แนบสลิป (ให้คนอื่นจองได้) ──
-    const bookedForSeats = await prisma.seatBooking.findMany({
-      where: { busRoundId, seatNumber: { in: seatNumbers }, bookingId: { not: null } },
-      include: { booking: { select: { status: true, payment: { select: { slipUrl: true } } } } }
+    // ใช้ 3 query แยกกัน (flat) แทน nested include เพื่อให้ทำงานได้ทุก Prisma version
+    const bookedSeatRows = await prisma.seatBooking.findMany({
+      where: { busRoundId: Number(busRoundId), seatNumber: { in: seatNumbers }, bookingId: { not: null } },
+      select: { id: true, seatNumber: true, bookingId: true }
     })
-    const releasableIds = bookedForSeats
-      .filter(sb => sb.booking?.status !== 'CANCELLED' && !sb.booking?.payment?.slipUrl)
-      .map(sb => sb.id)
-    if (releasableIds.length > 0) {
-      await prisma.seatBooking.deleteMany({ where: { id: { in: releasableIds } } })
+    console.log('[HOLD] bookedSeatRows:', JSON.stringify(bookedSeatRows))
+
+    if (bookedSeatRows.length > 0) {
+      const bookingIds = bookedSeatRows.map(s => s.bookingId)
+
+      // ดึง status ของแต่ละ booking
+      const bookingRows = await prisma.booking.findMany({
+        where: { id: { in: bookingIds } },
+        select: { id: true, status: true }
+      })
+      const statusMap = Object.fromEntries(bookingRows.map(b => [b.id, b.status]))
+
+      // ดึง slipUrl ของแต่ละ payment
+      const paymentRows = await prisma.payment.findMany({
+        where: { bookingId: { in: bookingIds } },
+        select: { bookingId: true, slipUrl: true }
+      })
+      const slipMap = Object.fromEntries(paymentRows.map(p => [p.bookingId, p.slipUrl]))
+
+      console.log('[HOLD] statusMap:', JSON.stringify(statusMap))
+      console.log('[HOLD] slipMap:', JSON.stringify(slipMap))
+
+      const releasableIds = bookedSeatRows
+        .filter(sb => statusMap[sb.bookingId] !== 'CANCELLED' && !slipMap[sb.bookingId])
+        .map(sb => sb.id)
+
+      console.log('[HOLD] releasableIds:', releasableIds)
+
+      if (releasableIds.length > 0) {
+        await prisma.seatBooking.deleteMany({ where: { id: { in: releasableIds } } })
+        console.log('[HOLD] released', releasableIds.length, 'no-slip seats')
+      }
     }
 
     // ตรวจสอบว่าที่นั่งว่างจริง (ที่นั่งไม่มีสลิปถูกปลดแล้ว เหลือเฉพาะ booking จริงหรือ hold ของคนอื่น)

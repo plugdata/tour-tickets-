@@ -301,23 +301,36 @@ router.post('/guest', async (req, res) => {
     }
 
     // ตรวจสอบที่นั่งว่าง (ไม่นับ hold ของ session เดียวกัน และไม่นับที่จองแต่ยังไม่แนบสลิป)
-    const allConflictCandidates = await prisma.seatBooking.findMany({
+    const seatNums = selectedSeats.map(s => s.seatNumber)
+    const candidateRows = await prisma.seatBooking.findMany({
       where: {
         busRoundId,
-        seatNumber: { in: selectedSeats.map(s => s.seatNumber) },
+        seatNumber: { in: seatNums },
         OR: [
           { bookingId: { not: null } },
           { bookingId: null, holdExpiresAt: { gt: new Date() }, sessionToken: { not: sessionToken } }
         ]
       },
-      include: { booking: { select: { status: true, payment: { select: { slipUrl: true } } } } }
+      select: { id: true, seatNumber: true, bookingId: true, sessionToken: true }
     })
-    // กรองเฉพาะ: booking จริง (มีสลิป) หรือ hold ของคนอื่น
-    const conflicts = allConflictCandidates.filter(sb => {
+
+    // flat queries แยก booking status และ payment slipUrl
+    const cBookingIds = candidateRows.filter(r => r.bookingId).map(r => r.bookingId)
+    const cBookings = cBookingIds.length ? await prisma.booking.findMany({
+      where: { id: { in: cBookingIds } }, select: { id: true, status: true }
+    }) : []
+    const cPayments = cBookingIds.length ? await prisma.payment.findMany({
+      where: { bookingId: { in: cBookingIds } }, select: { bookingId: true, slipUrl: true }
+    }) : []
+    const cStatusMap = Object.fromEntries(cBookings.map(b => [b.id, b.status]))
+    const cSlipMap   = Object.fromEntries(cPayments.map(p => [p.bookingId, p.slipUrl]))
+
+    const conflicts = candidateRows.filter(sb => {
       if (sb.bookingId) {
-        return sb.booking?.status !== 'CANCELLED' && !!sb.booking?.payment?.slipUrl
+        // นับ conflict เฉพาะ booking ที่ไม่ถูก cancel และมีสลิปแล้ว
+        return cStatusMap[sb.bookingId] !== 'CANCELLED' && !!cSlipMap[sb.bookingId]
       }
-      return true // active hold by another session
+      return true // hold ของคนอื่น = conflict
     })
 
     if (conflicts.length > 0) {
