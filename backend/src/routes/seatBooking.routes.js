@@ -89,27 +89,24 @@ router.post('/hold', async (req, res) => {
     const now = new Date()
     const holdExpiresAt = new Date(now.getTime() + 10 * 60 * 1000)
 
-    // ── 1. ลบ hold เก่าของ session นี้ ──
+    // ── 1. ลบ hold ทุก session สำหรับที่นั่งที่ต้องการ (hold ไม่ใช่ lock จริง)
+    //       และลบ hold เก่าของ session ตัวเองด้วย
     await prisma.seatBooking.deleteMany({
-      where: { busRoundId: bRId, sessionToken, bookingId: null }
+      where: {
+        busRoundId: bRId,
+        seatNumber: { in: seatNumbers },
+        bookingId: null   // ลบเฉพาะ hold (ไม่ลบ booking จริง)
+      }
     })
 
-    // ── 2. ดึง record ทั้งหมดที่อาจขวางที่นั่งที่ต้องการ ──
-    const allRows = await prisma.seatBooking.findMany({
-      where: { busRoundId: bRId, seatNumber: { in: seatNumbers } },
-      select: { id: true, seatNumber: true, bookingId: true, sessionToken: true, holdExpiresAt: true }
+    // ── 2. ดึง booking จริง (มี bookingId) ──
+    const bookedRows = await prisma.seatBooking.findMany({
+      where: { busRoundId: bRId, seatNumber: { in: seatNumbers }, bookingId: { not: null } },
+      select: { id: true, seatNumber: true, bookingId: true }
     })
-    console.log('[HOLD] allRows:', JSON.stringify(allRows))
+    console.log('[HOLD] bookedRows:', JSON.stringify(bookedRows))
 
-    // ── 3. แยก: rows ที่มี bookingId (จองแล้ว) vs hold ของ session อื่น ──
-    const bookedRows = allRows.filter(r => r.bookingId != null)
-    const otherHolds = allRows.filter(r =>
-      r.bookingId == null &&
-      r.sessionToken !== sessionToken &&
-      r.holdExpiresAt && new Date(r.holdExpiresAt) > now
-    )
-
-    // ── 4. ตรวจ booking ที่มี bookingId — ถ้ายังไม่มีสลิปให้ปลด ──
+    // ── 3. ตรวจ booking — ถ้ายังไม่มีสลิปให้ปลด ──
     if (bookedRows.length > 0) {
       const bIds = bookedRows.map(r => r.bookingId)
 
@@ -128,45 +125,30 @@ router.post('/hold', async (req, res) => {
       console.log('[HOLD] statusMap:', JSON.stringify(statusMap))
       console.log('[HOLD] slipMap:', JSON.stringify(slipMap))
 
-      // ปลด: ถ้า booking ไม่ถูก cancel และยังไม่มีสลิป
+      // ปลด booking ที่ยังไม่มีสลิป
       const releasable = bookedRows.filter(r =>
         statusMap[r.bookingId] !== 'CANCELLED' && !slipMap[r.bookingId]
       )
-      console.log('[HOLD] releasable (no-slip):', releasable.map(r => r.seatNumber))
-
       if (releasable.length > 0) {
         await prisma.seatBooking.deleteMany({ where: { id: { in: releasable.map(r => r.id) } } })
-        console.log('[HOLD] deleted no-slip seats:', releasable.map(r => r.seatNumber))
+        console.log('[HOLD] released no-slip seats:', releasable.map(r => r.seatNumber))
       }
 
-      // ที่นั่งที่ยังเป็น conflict จริง = มีสลิปแล้ว หรือ cancelled (แต่ cancelled จะถูก treat as available)
-      const stillBookedConflicts = bookedRows.filter(r =>
+      // conflict จริง = booking ที่มีสลิปแล้ว (ล็อกถาวร)
+      const hardLocked = bookedRows.filter(r =>
         statusMap[r.bookingId] !== 'CANCELLED' && !!slipMap[r.bookingId]
       )
-
-      if (stillBookedConflicts.length > 0 || otherHolds.length > 0) {
-        const debugList = [
-          ...stillBookedConflicts.map(r => ({ seatNumber: r.seatNumber, reason: 'จองแล้ว+มีสลิป', bookingId: r.bookingId })),
-          ...otherHolds.map(r => ({ seatNumber: r.seatNumber, reason: 'hold อยู่ (session อื่น)', expiresAt: r.holdExpiresAt }))
-        ]
-        console.log('[HOLD] 409 conflicts:', JSON.stringify(debugList))
+      if (hardLocked.length > 0) {
+        const debugList = hardLocked.map(r => ({
+          seatNumber: r.seatNumber, reason: 'จองแล้ว+มีสลิป', bookingId: r.bookingId
+        }))
+        console.log('[HOLD] 409 hard-locked:', JSON.stringify(debugList))
         return res.status(409).json({
           message: 'ที่นั่งไม่ว่าง',
-          takenSeats: debugList.map(d => d.seatNumber),
+          takenSeats: hardLocked.map(r => r.seatNumber),
           debug: debugList
         })
       }
-    } else if (otherHolds.length > 0) {
-      // ไม่มี booking แต่มี hold ของคนอื่น
-      const debugList = otherHolds.map(r => ({
-        seatNumber: r.seatNumber, reason: 'hold อยู่ (session อื่น)', expiresAt: r.holdExpiresAt
-      }))
-      console.log('[HOLD] 409 hold-only conflicts:', JSON.stringify(debugList))
-      return res.status(409).json({
-        message: 'ที่นั่งไม่ว่าง',
-        takenSeats: debugList.map(d => d.seatNumber),
-        debug: debugList
-      })
     }
 
     // ── 5. สร้าง hold ใหม่ ──
