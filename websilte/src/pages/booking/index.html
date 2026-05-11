@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>กำลังไปหน้าทริป…</title>
+  <!-- /booking = ทางเข้ากลุ่มจอง → ส่งต่อไป /trips ทันที -->
+  <meta http-equiv="refresh" content="0;url=/trips">
+  <script>
+    (function () {
+      var q = window.location.search || ''
+      window.location.replace('/trips' + q)
+    })()
+  </script>
+</head>
+<body>
+  <p style="font-family:system-ui,sans-serif;padding:1.5rem;color:#64748b">
+    กำลังพาไปหน้าเลือกทริป… ถ้าไม่เปลี่ยนหน้า <a href="/trips">คลิกที่นี่</a>
+  </p>
+</body>
+</html>

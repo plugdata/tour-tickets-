@@ -34,13 +34,13 @@
             margin:0 auto 6px; position:relative; z-index:1; font-size:.9rem;
         }
         .pipe-step.done .pipe-icon    { background:#198754; border-color:#198754; color:#fff; }
-        .pipe-step.active .pipe-icon  { background:#0d6efd; border-color:#0d6efd; color:#fff; }
-        .pipe-step.pending .pipe-icon { background:#fff; border-color:#adb5bd; color:#adb5bd; }
+        .pipe-step.active .pipe-icon  { background:#e9ecef; border-color:#adb5bd; color:#495057; }
+        .pipe-step.pending .pipe-icon { background:#fff; border-color:#dee2e6; color:#adb5bd; }
         .pipe-step.done::before    { background:#198754; }
         .pipe-step.active::before  { background:linear-gradient(to right,#198754,#dee2e6); }
-        .pipe-label { font-size:.72rem; color:#6c757d; font-weight:500; line-height:1.2; }
+        .pipe-label { font-size:.72rem; color:#adb5bd; font-weight:500; line-height:1.2; }
         .pipe-step.done .pipe-label   { color:#198754; font-weight:600; }
-        .pipe-step.active .pipe-label { color:#0d6efd; font-weight:700; }
+        .pipe-step.active .pipe-label { color:#6c757d; font-weight:600; }
         .seat-chip { display:inline-flex; align-items:center; gap:.35rem; background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:.25rem .5rem; font-size:.78rem; font-weight:600; }
         @media print { .no-print { display:none !important; } body { background:#fff; } }
     </style>
@@ -51,7 +51,7 @@
 <div class="brand-bar no-print">
     <i class="bi bi-bus-front text-primary fs-4"></i>
     <span style="font-size:1.1rem;font-weight:700;color:#0d6efd">ตรวจสอบสถานะการจอง</span>
-    <a href="/frontend/pages/trips/list.html" class="ms-auto btn btn-sm btn-outline-secondary">
+    <a href="/trips" class="ms-auto btn btn-sm btn-outline-secondary">
         <i class="bi bi-grid me-1"></i>ดูทริปทั้งหมด
     </a>
 </div>
@@ -83,13 +83,24 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/src/assets/js/config.js"></script>
 <script>
-// ── Pre-fill phone from URL / localStorage ────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+const SESSION_TOKEN_KEY = 'bk_session_token'
+
+// ── Pre-fill: token (URL หรือ localStorage ล่าสุด) → โหลด session ก่อน; หรือ phone จาก URL ──
+document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(location.search);
-    const phone = params.get('phone');
-    if (phone) {
-        document.getElementById('phoneInput').value = phone;
-        doSearch();
+    const phoneFromUrl = params.get('phone');
+    const tokenFromUrl = params.get('token');
+    const storedToken = localStorage.getItem(SESSION_TOKEN_KEY);
+    const token = tokenFromUrl || storedToken || null;
+
+    if (phoneFromUrl) {
+        document.getElementById('phoneInput').value = phoneFromUrl.replace(/[-\s]/g, '');
+        await doSearch();
+        return;
+    }
+    if (token) {
+        if (tokenFromUrl) localStorage.setItem(SESSION_TOKEN_KEY, tokenFromUrl);
+        await loadStatusByToken(token);
     }
 });
 
@@ -108,12 +119,14 @@ async function doSearch() {
     showHint('');
 
     try {
-        // Search sessions by phone
-        const sessions = await fetchJSON(`/booking-sessions/by-phone?phone=${encodeURIComponent(phone)}`);
-
-        // Also try to load busRounds for enriching trip info
-        let rounds = [];
-        try { rounds = await fetchJSON('/bus-rounds'); } catch {}
+        // ดึงข้อมูลรอบรถล่าสุดก่อนในลำดับคำขอ แล้วคู่กับ session (รันคู่ขนาน ลดเวลา stale)
+        const settled = await Promise.allSettled([
+            fetchJSON('/bus-rounds'),
+            fetchJSON(`/booking-sessions/by-phone?phone=${encodeURIComponent(phone)}`)
+        ]);
+        const rounds = settled[0].status === 'fulfilled' ? settled[0].value : [];
+        if (settled[1].status !== 'fulfilled') throw settled[1].reason;
+        const sessions = settled[1].value;
 
         renderResults(sessions, rounds, phone);
     } catch (e) {
@@ -123,6 +136,40 @@ async function doSearch() {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-search me-1"></i>ค้นหา';
     }
+}
+
+/** โหลดจาก token (ล่าสุดจาก URL หรือ localStorage): bus-rounds + session คู่ขนาน */
+async function loadStatusByToken(token) {
+    const resultsEl = document.getElementById('results');
+    resultsEl.innerHTML = `<div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>กำลังโหลดข้อมูลล่าสุด…</div>`;
+
+    const settled = await Promise.allSettled([
+        fetchJSON('/bus-rounds'),
+        fetchJSON('/booking-sessions/' + encodeURIComponent(token))
+    ]);
+    const rounds = settled[0].status === 'fulfilled' ? settled[0].value : [];
+
+    if (settled[1].status !== 'fulfilled') {
+        const err = settled[1].reason;
+        const st = err.status || 0;
+        if (localStorage.getItem(SESSION_TOKEN_KEY) === token) localStorage.removeItem(SESSION_TOKEN_KEY);
+        const msg = st === 410 ? 'ลิงก์จองหมดอายุแล้ว กรุณาค้นหาด้วยเบอร์โทร' : (st === 404 ? 'ไม่พบรายการจองจาก token นี้' : (err.message || 'โหลดไม่สำเร็จ'));
+        resultsEl.innerHTML = `<div class="alert alert-warning mt-3"><i class="bi bi-info-circle me-2"></i>${msg}</div>`;
+        return;
+    }
+
+    const session = settled[1].value;
+    localStorage.setItem(SESSION_TOKEN_KEY, token);
+
+    const phoneGuess = (session.customerData && session.customerData.mainPhone)
+        || (Array.isArray(session.selectedSeats) && session.selectedSeats[0] && session.selectedSeats[0].phone)
+        || '';
+    if (phoneGuess) {
+        document.getElementById('phoneInput').value = String(phoneGuess).replace(/[-\s]/g, '');
+    }
+
+    renderResults([session], rounds, phoneGuess || '—');
+    showHint('<i class="bi bi-key me-1"></i>แสดงจาก token ล่าสุด — ค้นหาด้วยเบอร์เพื่อดูรายการทั้งหมด', 'text-muted');
 }
 
 function showHint(msg, cls = 'text-muted') {
@@ -140,7 +187,7 @@ function renderResults(sessions, rounds, phone) {
             <div class="text-center py-5">
                 <i class="bi bi-inbox text-muted" style="font-size:3rem"></i>
                 <p class="text-muted mt-3">ไม่พบการจองสำหรับเบอร์ <strong>${phone}</strong></p>
-                <p class="text-muted small">ตรวจสอบเบอร์โทรอีกครั้ง หรือ <a href="/frontend/pages/trips/list.html">จองใหม่</a></p>
+                <p class="text-muted small">ตรวจสอบเบอร์โทรอีกครั้ง หรือ <a href="/trips">จองใหม่</a></p>
             </div>`;
         return;
     }
@@ -194,24 +241,27 @@ function renderBookingCard(session, rounds) {
     }).join('');
 
     // ── Step label & color ────────────────────────────────────────────────────
-    const STEP_LABEL = { 
-        1:'รอเลือกที่นั่ง', 
-        2:'กรอกข้อมูล', 
-        3:'บันทึกประกัน', 
-        4:'รอชำระเงิน', 
-        5:'ยืนยันแล้ว' 
+    const STEP_LABEL = {
+        1:'รอเลือกที่นั่ง',
+        2:'กรอกข้อมูล',
+        3:'บันทึกประกัน',
+        4:'รอชำระเงิน',
+        5:'ยืนยันแล้ว'
     };
-    const STEP_COLOR = { 1:'secondary', 2:'warning', 3:'info', 4:'primary', 5:'success' };
-    const STEP_ICON = { 
-        1:'⏳', 
-        2:'📋', 
-        3:'🛡️', 
-        4:'💳', 
-        5:'✅' 
+    const STEP_HEADER_ICON = {
+        1:'bi-geo-alt',
+        2:'bi-person-lines-fill',
+        3:'bi-shield-check',
+        4:'bi-credit-card-2-front',
+        5:'bi-check-circle-fill'
     };
     const stepLabel = STEP_LABEL[currentStep] || `ขั้นตอน ${currentStep}`;
-    const stepColor = STEP_COLOR[currentStep] || 'secondary';
-    const stepIcon = STEP_ICON[currentStep] || '•';
+    const headerBi = STEP_HEADER_ICON[currentStep] || 'bi-circle';
+    const bookingComplete = currentStep >= 5;
+    const statusBadgeClass = bookingComplete
+        ? 'bg-success text-white'
+        : 'bg-light text-secondary border border-secondary-subtle';
+    const statusBadgeIcon = bookingComplete ? 'bi-check-circle-fill' : 'bi-hourglass-split';
 
     // ── Format depart date ───────────────────────────────────────────────────
     let departStr = '-';
@@ -227,19 +277,20 @@ function renderBookingCard(session, rounds) {
         const style = isMale ? 'background:#cfe2ff;color:#084298' : 'background:#f8d7f0;color:#892b5d';
         const name = [s.namePrefix, s.firstName, s.lastName].filter(Boolean).join(' ')
                    || s.passengerName || `ที่นั่ง ${s.seatNumber}`;
+        const gIcon = isMale ? '<i class="bi bi-gender-male"></i>' : '<i class="bi bi-gender-female"></i>';
         return `<span class="seat-chip me-1 mb-1" style="${style}">
-            ${isMale?'♂':'♀'} ${s.seatNumber} · ${name}
+            ${gIcon} ${s.seatNumber} · ${name}
         </span>`;
     }).join('');
 
     // ── Resume link ───────────────────────────────────────────────────────────
     const resumePages = [
         null,
-        `/frontend/pages/booking/seats.html?roundId=${session.busRoundId}`,
-        `/frontend/pages/booking/form.html?token=${session.token}`,
-        `/frontend/pages/booking/insurance.html?token=${session.token}`,
-        `/frontend/pages/booking/ticket.html?token=${session.token}`,
-        `/frontend/pages/booking/ticket.html?token=${session.token}`,
+        `/booking/seats?roundId=${session.busRoundId}`,
+        `/booking/form?token=${session.token}`,
+        `/booking/insurance?token=${session.token}`,
+        `/booking/ticket?token=${session.token}`,
+        `/booking/ticket?token=${session.token}`,
     ];
     const resumeUrl = resumePages[currentStep] || resumePages[4];
     const isComplete = currentStep >= 4;
@@ -249,13 +300,19 @@ function renderBookingCard(session, rounds) {
         <div class="booking-card-header">
             <div class="d-flex align-items-start gap-2 flex-wrap justify-content-between">
                 <div class="flex-grow-1">
-                    <div class="fw-bold fs-5 mb-1">${stepIcon} ${trip?.title || `รอบรถ #${session.busRoundId || '-'}`}</div>
-                    ${round ? `<div class="text-muted small mb-1">🚌 ${round.startPoint} → ${round.endPoint} · รถคันที่ ${round.busNumber}</div>` : ''}
+                    <div class="fw-bold fs-5 mb-1 d-flex align-items-center gap-2">
+                        <i class="bi ${headerBi} text-secondary" style="font-size:1.15rem"></i>
+                        <span>${trip?.title || `รอบรถ #${session.busRoundId || '-'}`}</span>
+                    </div>
+                    ${round ? `<div class="text-muted small mb-1 d-flex align-items-start gap-2">
+                        <i class="bi bi-signpost-2 flex-shrink-0 mt-1"></i>
+                        <span>${round.startPoint} <i class="bi bi-arrow-right mx-1 small opacity-75"></i> ${round.endPoint} · รถคันที่ ${round.busNumber}</span>
+                    </div>` : ''}
                     <div class="text-muted small"><i class="bi bi-calendar3 me-1"></i>${departStr}</div>
                 </div>
                 <div class="text-end">
-                    <span class="badge bg-${stepColor} px-3 py-2" style="font-size:.85rem; white-space: nowrap;">
-                        <i class="bi bi-info-circle me-1"></i>${stepLabel}
+                    <span class="badge ${statusBadgeClass} px-3 py-2" style="font-size:.85rem; white-space: nowrap;">
+                        <i class="bi ${statusBadgeIcon} me-1"></i>${stepLabel}
                     </span>
                 </div>
             </div>
@@ -269,10 +326,10 @@ function renderBookingCard(session, rounds) {
 
             <!-- Payment Status Alert (if step 4) -->
             ${currentStep === 4 ? `
-            <div class="alert alert-warning d-flex align-items-start gap-2 mb-4">
-                <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0 mt-1"></i>
+            <div class="alert alert-light border border-secondary-subtle text-secondary d-flex align-items-start gap-2 mb-4">
+                <i class="bi bi-hourglass-split fs-5 flex-shrink-0 mt-1 text-secondary"></i>
                 <div>
-                    <strong>⏳ รอการชำระเงิน</strong>
+                    <strong class="text-dark">รอการชำระเงิน</strong>
                     <div class="small mt-1">กรุณาอัปโหลดสลิปการโอนเพื่อให้เราทำการยืนยันการจองของคุณ</div>
                 </div>
             </div>` : ''}
@@ -287,14 +344,14 @@ function renderBookingCard(session, rounds) {
             <!-- Contact -->
             <div class="row g-2 small mb-3 p-3 bg-light rounded-2">
                 <div class="col-sm-6">
-                    <div class="text-muted small">👤 ผู้จอง</div>
+                    <div class="text-muted small"><i class="bi bi-person me-1"></i>ผู้จอง</div>
                     <div class="fw-semibold">${cd.mainName || '-'}</div>
                 </div>
                 <div class="col-sm-3">
-                    <div class="text-muted small">📱 เบอร์โทร</div>
+                    <div class="text-muted small"><i class="bi bi-telephone me-1"></i>เบอร์โทร</div>
                     <div class="fw-semibold">${cd.mainPhone || '-'}</div>
                 </div>
-                ${cd.mainLine ? `<div class="col-sm-3"><div class="text-muted small">💬 LINE</div><div class="fw-semibold">${cd.mainLine}</div></div>` : ''}
+                ${cd.mainLine ? `<div class="col-sm-3"><div class="text-muted small"><i class="bi bi-chat-dots me-1"></i>LINE</div><div class="fw-semibold">${cd.mainLine}</div></div>` : ''}
             </div>
 
             <!-- Actions -->
@@ -331,8 +388,14 @@ function copyLink(encodedUrl) {
 
 async function fetchJSON(path) {
     const r = await fetch(API_BASE_URL + path);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();
+    let data = null;
+    try { data = await r.json(); } catch (_) { data = {}; }
+    if (!r.ok) {
+        const err = new Error(data.message || `HTTP ${r.status}`);
+        err.status = r.status;
+        throw err;
+    }
+    return data;
 }
 
 function showToast(msg, type='success') {

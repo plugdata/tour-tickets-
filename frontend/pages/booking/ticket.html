@@ -240,14 +240,6 @@
                         <div class="form-text mt-1 x-small text-muted"><i class="bi bi-info-circle"></i> ตรวจสอบยอดเงินให้ตรงกับที่เลือกก่อนโอน</div>
                     </div>
 
-                    <!-- Total -->
-                    <div class="p-3 bg-light border border-primary border-opacity-25 rounded-3 mb-4" style="background: rgba(13,110,253,0.03) !important;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold text-muted small">ยอดชำระตามประเภทที่เลือก</span>
-                            <span class="fw-bold text-primary fs-3" id="payAmt">-</span>
-                        </div>
-                    </div>
-
                     <button class="btn btn-primary w-100 btn-lg py-3 fw-bold rounded-3 shadow-sm mb-3" id="btnConfirm" onclick="confirmBooking()">
                         ยืนยันการจองและแจ้งโอน
                     </button>
@@ -277,6 +269,11 @@ let addonsList = [];
 let selectedAddons = {};  // { addonId: quantity }
 let payType = 'FULL';
 let DEPOSIT_RATE = 0.3; // มัดจำ 30%
+
+function fmtBahtHtml(n) {
+    const s = Number(n || 0).toLocaleString('th-TH');
+    return `${s} <strong>บาท</strong>`;
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     sessionToken = new URLSearchParams(location.search).get('token')
@@ -369,11 +366,12 @@ function renderTicket() {
     // Individual Tickets per Person
     const seats = sd.selectedSeats || [];
     const pricePerSeat = rd.trip?.price || 0;
+    const ticketLink = `${window.location.origin}/booking/ticket?token=${encodeURIComponent(sessionToken)}`;
+    const qrContent = encodeURIComponent(ticketLink);
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrContent}`;
     
     document.getElementById('individualTickets').innerHTML = seats.map((s, idx) => {
         const chipCls = s.gender === 'MALE' ? 'seat-chip-m' : 'seat-chip-f';
-        const qrContent = encodeURIComponent(`BOOKING:${sessionData.bookingId || 'PENDING'}|SEAT:${s.seatNumber}`);
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrContent}`;
         
         return `
             <div class="ticket-pass shadow-sm">
@@ -384,14 +382,16 @@ function renderTicket() {
                         <div>
                             <div class="badge bg-light text-dark mb-1" style="font-size: 0.65rem;">PASSENGER ${idx+1}</div>
                             <h6 class="fw-bold mb-0">${s.passengerName || 'ไม่ระบุชื่อ'}</h6>
-                            <div class="text-muted x-small">${s.phone || '-'}</div>
                         </div>
-                        <span class="${chipCls}">ที่นั่ง ${s.seatNumber}</span>
+                        <div class="text-end">
+                            <div class="text-muted x-small mb-1">${s.phone || '-'}</div>
+                            <span class="${chipCls}">ที่นั่ง ${s.seatNumber}</span>
+                        </div>
                     </div>
                     <div class="row g-2 mt-2">
                         <div class="col-6 border-end">
                             <div class="text-muted x-small">ค่าตั๋วเฉลี่ย</div>
-                            <div class="fw-bold text-primary">${Number(pricePerSeat + (s.pickupPrice || 0)).toLocaleString()}฿</div>
+                            <div class="fw-bold text-primary">${fmtBahtHtml(pricePerSeat + (s.pickupPrice || 0))}</div>
                         </div>
                         <div class="col-6 ps-3">
                             <div class="text-muted x-small">PICKUP</div>
@@ -401,8 +401,10 @@ function renderTicket() {
                     ${s.foodAllergy ? `<div class="mt-2 text-danger x-small"><i class="bi bi-exclamation-triangle me-1"></i>แพ้อาหาร: ${s.foodAllergy}</div>` : ''}
                 </div>
                 <div class="ticket-pass-qr">
-                    <img src="${qrUrl}" class="qr-img border p-1 bg-white mb-1" alt="QR">
-                    <div class="text-muted" style="font-size: 0.6rem;">SCAN TRACKING</div>
+                    <a href="${ticketLink}" target="_blank" rel="noopener">
+                        <img src="${qrUrl}" class="qr-img border p-1 bg-white mb-1" alt="QR">
+                    </a>
+                    <div class="text-muted" style="font-size: 0.6rem;">SCAN TO OPEN</div>
                 </div>
             </div>
         `;
@@ -421,7 +423,7 @@ function renderTicket() {
                             <span class="fw-bold">${addon.name}</span>
                             <span class="text-muted ms-1">(x${qty})</span>
                         </div>
-                        <div class="fw-bold text-success small">${Number(addon.price * qty).toLocaleString()}฿</div>
+                        <div class="fw-bold text-success small">${fmtBahtHtml(addon.price * qty)}</div>
                     </div>
                 `;
             }
@@ -442,22 +444,22 @@ function renderPriceBreakdown() {
     
     let breakdownHtml = `
         <div class="price-row">
-            <span class="text-muted">ตั๋วผู้โดยสาร (${seats.length} x ${Number(pricePerSeat).toLocaleString()})</span>
-            <span>${Number(seatTotal).toLocaleString()}฿</span>
+            <span class="text-muted">ตั๋วผู้โดยสาร (${seats.length} x ${Number(pricePerSeat).toLocaleString('th-TH')} บาท)</span>
+            <span>${fmtBahtHtml(seatTotal)}</span>
         </div>
         ${pickupTotal > 0 ? `
         <div class="price-row">
             <span class="text-muted">ส่วนต่างจุดรับ-ส่ง</span>
-            <span>${Number(pickupTotal).toLocaleString()}฿</span>
+            <span>${fmtBahtHtml(pickupTotal)}</span>
         </div>` : ''}
         ${addonTotal > 0 ? `
         <div class="price-row">
             <span class="text-muted">อุปกรณ์เช่าทั้งหมด</span>
-            <span>${Number(addonTotal).toLocaleString()}฿</span>
+            <span>${fmtBahtHtml(addonTotal)}</span>
         </div>` : ''}
         <div class="price-row total text-primary">
             <span>ยอดรวมสุทธิ</span>
-            <span>${Number(grand).toLocaleString()}฿</span>
+            <span>${fmtBahtHtml(grand)}</span>
         </div>
     `;
     document.getElementById('priceBreakdown').innerHTML = breakdownHtml;
@@ -502,9 +504,8 @@ function updatePayAmounts() {
     //  "มัดจำค่าทริป + อุปกรณ์เต็ม" -> Add full addonTotal into the deposit amount
     const totalDepositNeeded = seatDeposit + addonTotal;
 
-    document.getElementById('depositAmt').textContent = `${Number(totalDepositNeeded).toLocaleString('th-TH')} บาท`;
-    document.getElementById('fullAmt').textContent    = `${Number(grand).toLocaleString('th-TH')} บาท`;
-    document.getElementById('payAmt').textContent     = `${Number(payType === 'DEPOSIT' ? totalDepositNeeded : grand).toLocaleString('th-TH')} บาท`;
+    document.getElementById('depositAmt').innerHTML = fmtBahtHtml(totalDepositNeeded);
+    document.getElementById('fullAmt').innerHTML    = fmtBahtHtml(grand);
 
     // Update totals in ticket summary
     renderPriceBreakdown();

@@ -1,22 +1,22 @@
 import { createRouter } from '@nanostores/router'
 
-// Route definitions — path params ใช้ :paramName
+// ต้องตรงกับ path ที่ vite.config.js (urlRewrites) เสิร์ฟจริง — ใช้ query string ไม่ใช่ :param ใน path
 export const router = createRouter({
-  home:      '/',
-  booking:   '/booking',
-  form:      '/booking/form',
-  seats:     '/booking/seats/:roundId',
-  insurance: '/booking/insurance/:bookingId',
-  rental:    '/booking/rental/:bookingId',
-  ticket:    '/booking/ticket/:bookingId',
-  status:    '/booking/status/:bookingId',
+  home: '/',
+  booking: '/booking',
+  form: '/booking/form',
+  seats: '/booking/seats',
+  insurance: '/booking/insurance',
+  rental: '/booking/rental',
+  ticket: '/booking/ticket',
+  status: '/booking/status',
 })
 
 /**
  * Navigate to a route
  * @param {string} name - route name (e.g. 'seats')
- * @param {object} params - path params (e.g. { roundId: '42' })
- * @param {object} query  - query string params (e.g. { from: 'home' })
+ * @param {object} params - reserved for nanostores path segments (ว่างถ้าใช้แค่ query)
+ * @param {object} query  - query string params (เช่น roundId, token)
  */
 export function navigate(name, params = {}, query = {}) {
   const qs = new URLSearchParams(query).toString()
@@ -27,7 +27,6 @@ export function navigate(name, params = {}, query = {}) {
  * Get all URL params for the current page:
  * - path params from nanostores router
  * - query string params from window.location.search
- * Returns a plain object merged together.
  */
 export function getParams() {
   const page = router.get()
@@ -38,7 +37,6 @@ export function getParams() {
 
 /**
  * Subscribe to route changes
- * @param {function} callback - called with { route, params } on every change
  */
 export function onRouteChange(callback) {
   return router.subscribe((page) => {

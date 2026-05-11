@@ -3,6 +3,8 @@ import { resolve } from 'path'
 
 const urlRewrites = {
   '/trips': '/src/pages/trips/list.html',
+  '/booking': '/src/pages/booking/index.html',
+  '/booking/': '/src/pages/booking/index.html',
   '/booking/seats': '/src/pages/booking/seats.html',
   '/booking/form': '/src/pages/booking/form.html',
   '/booking/insurance': '/src/pages/booking/insurance.html',
@@ -54,6 +56,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        bookingHub: resolve(__dirname, 'src/pages/booking/index.html'),
         form: resolve(__dirname, 'src/pages/booking/form.html'),
         seats: resolve(__dirname, 'src/pages/booking/seats.html'),
         insurance: resolve(__dirname, 'src/pages/booking/insurance.html'),

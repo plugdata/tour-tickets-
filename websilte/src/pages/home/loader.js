@@ -132,6 +132,7 @@ export async function loadFireTicker() {
       price: `฿${Number(t.price || 0).toLocaleString()}`,
       date: '',
       link: '/trips',
+      tripId: t.id,
     }))
 
     // แปลง hot content (อาจมี trip ผูกอยู่)
@@ -142,6 +143,7 @@ export async function loadFireTicker() {
       price: c.trip ? `฿${Number(c.trip.price || 0).toLocaleString()}` : '',
       date: new Date(c.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }),
       link: '/trips',
+      tripId: c.trip?.id ?? null,
     }))
 
     let slides = [...tripSlides, ...contentSlides]
@@ -158,9 +160,15 @@ export async function loadFireTicker() {
     const wrapper = qs('.fire-swiper .swiper-wrapper')
     if (!wrapper) return
     const esc = s => (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
-    wrapper.innerHTML = slides.map(s => `
+    wrapper.innerHTML = slides.map(s => {
+      const openTrip = s.tripId != null
+        ? `event.preventDefault();event.stopPropagation();window.__tdOpen&&window.__tdOpen(${Number(s.tripId)})`
+        : `window.location.href='${s.link}'`
+      return `
       <div class="swiper-slide fire-slide">
-        <div class="fire-card" style="--bg:url('${s.bg}')" onclick="window.location.href='${s.link}'">
+        <div class="fire-card" style="--bg:url('${s.bg}');cursor:pointer" role="button" tabindex="0"
+             onclick="${openTrip}"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
           <div class="fire-card-overlay">
             <div class="fire-card-tag">
               <i class="bi bi-geo-alt-fill"></i>
@@ -175,7 +183,8 @@ export async function loadFireTicker() {
             </div>
           </div>
         </div>
-      </div>`).join('')
+      </div>`
+    }).join('')
   } catch (_) { }
 }
 

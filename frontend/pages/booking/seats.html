@@ -621,8 +621,9 @@ async function pollSeats() {
     const data     = await apiFetch(`/seat-bookings/round/${roundId}`)
     const apiSeats = data.seats || {}
     totalSeats     = data.totalSeats || totalSeats
+    const pollPassengerSeats = data.passengerSeats ?? totalSeats
 
-    const lastSeat = totalSeats + 1
+    const lastSeat = pollPassengerSeats + 1
     for (let n = 2; n <= lastSeat; n++) {
       if (myGenders[n] !== undefined) continue   // skip my confirmed seats
       if (pendingSeatNum === n) continue          // skip seat in modal
@@ -647,9 +648,12 @@ async function pollSeats() {
 
     renderSeatGrid()
 
-    const bookedCount = Object.values(apiSeats).filter(s => s.status === 'BOOKED').length
+    let bookedCount = 0
+    for (let n = 2; n <= lastSeat; n++) {
+      if (apiSeats[n]?.status === 'BOOKED') bookedCount++
+    }
     document.getElementById('seatCountLabel').textContent =
-      `ว่าง ${totalSeats - bookedCount} / ${totalSeats} ที่นั่ง`
+      `ว่าง ${pollPassengerSeats - bookedCount} / ${pollPassengerSeats} ที่นั่ง`
     document.getElementById('lastUpdate').textContent =
       new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 

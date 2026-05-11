@@ -1,44 +1,36 @@
 import { navigate, getParams } from './index.js'
 
-// Booking flow navigation helpers
+// Booking flow navigation helpers (URL ต้องตรงกับ Vite rewrite + หน้า HTML จริง)
 export const booking = {
-  /** ไปหน้า seats พร้อม roundId + query params */
+  /** ไปหน้า seats — roundId อยู่ใน query ตาม seats.html */
   toSeats(roundId, query = {}) {
-    navigate('seats', { roundId: String(roundId) }, query)
+    navigate('seats', {}, { ...query, roundId: String(roundId) })
   },
 
-  /** ไปหน้า form กรอกข้อมูลผู้โดยสาร */
   toForm(query = {}) {
     navigate('form', {}, query)
   },
 
-  /** ไปหน้า insurance */
-  toInsurance(bookingId, query = {}) {
-    navigate('insurance', { bookingId: String(bookingId) }, query)
+  toInsurance(query = {}) {
+    navigate('insurance', {}, query)
   },
 
-  /** ไปหน้า rental */
-  toRental(bookingId, query = {}) {
-    navigate('rental', { bookingId: String(bookingId) }, query)
+  toRental(query = {}) {
+    navigate('rental', {}, query)
   },
 
-  /** ไปหน้า ticket */
-  toTicket(bookingId, query = {}) {
-    navigate('ticket', { bookingId: String(bookingId) }, query)
+  toTicket(query = {}) {
+    navigate('ticket', {}, query)
   },
 
-  /** ไปหน้า status */
-  toStatus(bookingId, query = {}) {
-    navigate('status', { bookingId: String(bookingId) }, query)
+  toStatus(query = {}) {
+    navigate('status', {}, query)
   },
 }
 
 /**
- * อ่าน params ของหน้า booking ปัจจุบัน
- * รวม path params + query string
- *
- * ตัวอย่าง URL: /booking/seats/42?seatIds=1,2,3
- * → { roundId: '42', seatIds: '1,2,3' }
+ * อ่าน params ของหน้า booking ปัจจุบัน (path + query)
+ * ตัวอย่าง: /booking/seats?roundId=42&token=...
  */
 export function getBookingParams() {
   return getParams()

@@ -258,17 +258,21 @@
                         <h6 class="fw-bold small text-muted text-uppercase mb-2">สถานะการชำระเงินปัจจุบัน</h6>
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <span id="paymentStatusLabel" class="badge rounded-pill">สถานะ</span>
-                            <span id="paidAmtLabel" class="fw-bold text-dark">0฿</span>
+                            <span id="paidAmtLabel" class="fw-bold text-dark">0 <strong>บาท</strong></span>
                         </div>
                         <div id="paymentStatusDesc" class="x-small text-muted"></div>
                     </div>
 
-                    <!-- Total -->
-                    <div class="p-3 bg-light border border-primary border-opacity-25 rounded-3 mb-4" style="background: rgba(13,110,253,0.03) !important;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold text-muted small">ยอดชำระตามประเภทที่เลือก</span>
-                            <span class="fw-bold text-primary fs-3" id="payAmt">-</span>
-                        </div>
+                    <!-- หลังชำระเต็มจำนวน + แนบสลิปแล้ว: แนะนำแคปหน้าจอ (ไม่แสดงตอนมัดจำหรือก่อนแนบสลิป) -->
+                    <div id="paymentReceiptActions" class="d-none mb-3 no-print">
+                        <button type="button" class="btn btn-outline-secondary rounded-3 py-2 w-100" onclick="showScreenshotHowto()">
+                            <i class="bi bi-camera me-2"></i>วิธีแคปหน้าจอทั้งหมด
+                        </button>
+                        <p class="x-small text-muted mt-2 mb-0">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Windows <kbd class="small">Win</kbd>+<kbd class="small">Shift</kbd>+<kbd class="small">S</kbd>
+                            · macOS <kbd class="small">⌘</kbd>+<kbd class="small">Shift</kbd>+<kbd class="small">5</kbd>
+                        </p>
                     </div>
 
                     <button class="btn btn-primary w-100 btn-lg py-3 fw-bold rounded-3 shadow-sm mb-3" id="btnConfirm" onclick="confirmBooking()">
@@ -356,6 +360,12 @@ bookingService.subscribe((state) => {
 bookingService.start();
 // -----------------------------
 
+/** ยอดเงิน: เลขไทย + คำว่า บาท (เน้นตัวหนาในส่วน innerHTML) */
+function fmtBahtHtml(n) {
+    const s = Number(n || 0).toLocaleString('th-TH');
+    return `${s} <strong>บาท</strong>`;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     sessionToken = new URLSearchParams(location.search).get('token')
                 || localStorage.getItem(SESSION_COOKIE);
@@ -426,8 +436,19 @@ async function postAPI(path, body) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
     });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+    let data = null;
+    try {
+        data = await r.json();
+    } catch (_) {
+        // some endpoints might respond non-JSON error body
+        data = null;
+    }
+    if (!r.ok) {
+        const err = new Error((data && data.message) ? data.message : `HTTP ${r.status}`);
+        err.payload = data || {};
+        err.status = r.status;
+        throw err;
+    }
     return data;
 }
 
@@ -460,11 +481,12 @@ function renderTicket() {
     // Individual Tickets per Person
     const seats = sd.selectedSeats || [];
     const pricePerSeat = rd.trip?.price || 0;
+    const ticketLink = `${window.location.origin}/booking/ticket?token=${encodeURIComponent(sessionToken)}`;
+    const qrContent = encodeURIComponent(ticketLink);
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrContent}`;
     
     document.getElementById('individualTickets').innerHTML = seats.map((s, idx) => {
         const chipCls = s.gender === 'MALE' ? 'seat-chip-m' : 'seat-chip-f';
-        const qrContent = encodeURIComponent(`BOOKING:${sessionData.bookingId || 'PENDING'}|SEAT:${s.seatNumber}`);
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrContent}`;
         
         return `
             <div class="ticket-pass shadow-sm">
@@ -475,14 +497,16 @@ function renderTicket() {
                         <div>
                             <div class="badge bg-light text-dark mb-1" style="font-size: 0.65rem;">PASSENGER ${idx+1}</div>
                             <h6 class="fw-bold mb-0">${s.passengerName || 'ไม่ระบุชื่อ'}</h6>
-                            <div class="text-muted x-small">${s.phone || '-'}</div>
                         </div>
-                        <span class="${chipCls}">ที่นั่ง ${s.seatNumber}</span>
+                        <div class="text-end">
+                            <div class="text-muted x-small mb-1">${s.phone || '-'}</div>
+                            <span class="${chipCls}">ที่นั่ง ${s.seatNumber}</span>
+                        </div>
                     </div>
                     <div class="row g-2 mt-2">
                         <div class="col-6 border-end">
                             <div class="text-muted x-small">ค่าตั๋วเฉลี่ย</div>
-                            <div class="fw-bold text-primary">${Number(pricePerSeat + (s.pickupPrice || 0)).toLocaleString()}฿</div>
+                            <div class="fw-bold text-primary">${fmtBahtHtml(pricePerSeat + (s.pickupPrice || 0))}</div>
                         </div>
                         <div class="col-6 ps-3">
                             <div class="text-muted x-small">PICKUP</div>
@@ -492,8 +516,10 @@ function renderTicket() {
                     ${s.foodAllergy ? `<div class="mt-2 text-danger x-small"><i class="bi bi-exclamation-triangle me-1"></i>แพ้อาหาร: ${s.foodAllergy}</div>` : ''}
                 </div>
                 <div class="ticket-pass-qr">
-                    <img src="${qrUrl}" class="qr-img border p-1 bg-white mb-1" alt="QR">
-                    <div class="text-muted" style="font-size: 0.6rem;">SCAN TRACKING</div>
+                    <a href="${ticketLink}" target="_blank" rel="noopener">
+                        <img src="${qrUrl}" class="qr-img border p-1 bg-white mb-1" alt="QR">
+                    </a>
+                    <div class="text-muted" style="font-size: 0.6rem;">SCAN TO OPEN</div>
                 </div>
             </div>
         `;
@@ -512,7 +538,7 @@ function renderTicket() {
                             <span class="fw-bold">${addon.name}</span>
                             <span class="text-muted ms-1">(x${qty})</span>
                         </div>
-                        <div class="fw-bold text-success small">${Number(addon.price * qty).toLocaleString()}฿</div>
+                        <div class="fw-bold text-success small">${fmtBahtHtml(addon.price * qty)}</div>
                     </div>
                 `;
             }
@@ -534,22 +560,22 @@ function renderPriceBreakdown() {
 
     document.getElementById('priceBreakdown').innerHTML = `
         <div class="price-row">
-            <span class="text-muted">ค่าที่นั่ง (${seatsCount} × ${Number(pricePerSeat).toLocaleString()})</span>
-            <span>${Number(seatTotal).toLocaleString()}฿</span>
+            <span class="text-muted">ค่าที่นั่ง (${seatsCount} × ${Number(pricePerSeat).toLocaleString('th-TH')} บาท)</span>
+            <span>${fmtBahtHtml(seatTotal)}</span>
         </div>
         ${pickupTotal > 0 ? `
         <div class="price-row">
             <span class="text-muted">ส่วนต่างจุดรับ-ส่ง</span>
-            <span>${Number(pickupTotal).toLocaleString()}฿</span>
+            <span>${fmtBahtHtml(pickupTotal)}</span>
         </div>` : ''}
         ${addonTotal > 0 ? `
         <div class="price-row">
             <span class="text-muted"><i class="bi bi-bag-plus me-1 text-success"></i>อุปกรณ์เช่า</span>
-            <span>${Number(addonTotal).toLocaleString()}฿</span>
+            <span>${fmtBahtHtml(addonTotal)}</span>
         </div>` : ''}
         <div class="price-row total text-primary">
             <span>ยอดรวมสุทธิ</span>
-            <span>${Number(grand).toLocaleString()}฿</span>
+            <span>${fmtBahtHtml(grand)}</span>
         </div>`;
 }
 
@@ -565,15 +591,14 @@ function updatePayAmounts() {
     }
     const depositTotal = seatDeposit + addonTotal; // มัดจำ + ค่าอุปกรณ์
 
-    document.getElementById('depositAmt').textContent = `${Number(depositTotal).toLocaleString('th-TH')} บาท`;
-    document.getElementById('fullAmt').textContent    = `${Number(grand).toLocaleString('th-TH')} บาท`;
-    document.getElementById('payAmt').textContent     = `${Number(payType === 'DEPOSIT' ? depositTotal : grand).toLocaleString('th-TH')} บาท`;
+    document.getElementById('depositAmt').innerHTML = fmtBahtHtml(depositTotal);
+    document.getElementById('fullAmt').innerHTML    = fmtBahtHtml(grand);
 
     const depositBreakRow = document.getElementById('depositBreakRow');
     if (depositBreakRow) {
         depositBreakRow.innerHTML = addonTotal > 0
-            ? `มัดจำที่นั่ง ${Number(seatDeposit).toLocaleString()} + อุปกรณ์ ${Number(addonTotal).toLocaleString()} บาท`
-            : `มัดจำที่นั่ง ${Number(seatDeposit).toLocaleString()} บาท · ส่วนที่เหลือชำระก่อนเดินทาง`;
+            ? `มัดจำที่นั่ง ${fmtBahtHtml(seatDeposit)} + อุปกรณ์ ${fmtBahtHtml(addonTotal)}`
+            : `มัดจำที่นั่ง ${fmtBahtHtml(seatDeposit)} · ส่วนที่เหลือชำระก่อนเดินทาง`;
     }
 
     renderPriceBreakdown();
@@ -699,7 +724,17 @@ async function confirmBooking() {
         
     } catch (e) {
         console.error('Booking error:', e);
-        showToast(e.message || 'เกิดข้อผิดพลาด', 'danger');
+        const takenSeats = e?.payload?.takenSeats;
+        if (Array.isArray(takenSeats)) {
+            console.warn('[BOOKING 409] takenSeats:', takenSeats, 'status:', e?.status);
+        } else {
+            console.warn('[BOOKING 409] no takenSeats in payload. status:', e?.status);
+        }
+        if (Array.isArray(takenSeats) && takenSeats.length > 0) {
+            showToast(`${e.message || 'เกิดข้อผิดพลาด'} (ที่นั่ง: ${takenSeats.join(', ')})`, 'warning');
+        } else {
+            showToast(e.message || 'เกิดข้อผิดพลาด', 'danger');
+        }
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>ยืนยันการจองและแจ้งโอน';
     }
@@ -712,11 +747,29 @@ async function refreshBookingData() {
     } catch (e) { console.error('Refresh Error:', e.message); }
 }
 
+function showScreenshotHowto() {
+    Swal.fire({
+        icon: 'info',
+        title: 'แคปหน้าจอหรือเก็บหลักฐาน',
+        html: `
+            <div class="text-start small" style="line-height:1.55">
+                <p class="mb-2"><strong>พิมพ์ / PDF</strong><br>กดปุ่ม «พิมพ์หน้านี้» ด้านบน แล้วเลือกเครื่องพิมพ์เป็น <em>Microsoft Print to PDF</em> หรือ <em>Save as PDF</em></p>
+                <p class="mb-2"><strong>Windows — Snipping Tool</strong><br><kbd>Win</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> แล้วลากครอบ หรือเปิด Snipping Tool เลือกแคปทั้งหน้าจอ</p>
+                <p class="mb-2"><strong>macOS</strong><br><kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>5</kbd> เลือกจับภาพทั้งหน้าจอหรือบริเวณที่ต้องการ</p>
+                <p class="mb-0 text-muted">มือถือ: ใช้ปุ่มแคปหน้าจอของเครื่อง (หรือเมนูปุ่มลดเสียง+เปิดเครื่อง ตามรุ่น)</p>
+            </div>`,
+        confirmButtonText: 'เข้าใจแล้ว',
+        confirmButtonColor: '#0d6efd',
+        customClass: { popup: 'rounded-4', htmlContainer: 'text-start' }
+    });
+}
+
 function updateStatusUI(booking) {
     const btn = document.getElementById('btnConfirm');
     const payment = booking.payment;
     const reminder = document.getElementById('paymentReminder');
     const statusBox = document.getElementById('paymentStatusBox');
+    const receiptActions = document.getElementById('paymentReceiptActions');
     const slipInput = document.getElementById('slipFile');
     
     // XState: Recover state from server data
@@ -736,6 +789,7 @@ function updateStatusUI(booking) {
         btn.disabled = false;
         
         statusBox.classList.add('d-none');
+        if (receiptActions) receiptActions.classList.add('d-none');
 
         // SweetAlert Reminder (Only once per session)
         if (!window._payReminderShown) {
@@ -754,11 +808,16 @@ function updateStatusUI(booking) {
     else {
         reminder.classList.add('d-none');
         statusBox.classList.remove('d-none');
-        
+
         const isFull = payment.type === 'FULL' || payment.status === 'COMPLETED';
         const paidAmt = payment.amount || 0;
+
+        // วิธีแคปหน้าจอ: เฉพาะเมื่อชำระเต็มจำนวนและแนบสลิปแล้ว (ไม่โชว์ตอนชำระมัดจำอย่างเดียว)
+        if (receiptActions) {
+            receiptActions.classList.toggle('d-none', !isFull);
+        }
         
-        document.getElementById('paidAmtLabel').textContent = `${Number(paidAmt).toLocaleString()}฿`;
+        document.getElementById('paidAmtLabel').innerHTML = fmtBahtHtml(paidAmt);
         
         if (isFull) {
             // FULL PAYMENT SUCCESS

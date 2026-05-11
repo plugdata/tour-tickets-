@@ -1,6 +1,6 @@
 /**
  * Booking Flow API Test
- * ทดสอบ flow การจองที่นั่งทั้งหมด + re-booking + ตรวจบัตรประชาชนซ้ำ + slip orphan
+ * ทดสอบ flow การจองที่นั่งทั้งหมด + re-booking + เลขบัตรซ้ำ (อนุญาต) + slip orphan
  *
  * รัน: node test-booking-flow.js [roundId]
  */
@@ -210,13 +210,12 @@ async function run() {
     failStep('8', `User C ควรได้ 409 แต่ได้ ${r8.ok ? 200 : r8.status}`)
   }
 
-  // ─── STEP 9: ตรวจสอบ National ID ซ้ำ ────────────────────────────────────
-  section('STEP 9 — National ID ซ้ำ (คาด: 409 DUPLICATE_ID)')
+  // ─── STEP 9: เลขบัตรซ้ำกับผู้จองคนอื่นในรอบเดียวกัน — อนุญาต (ไม่ DUPLICATE_ID) ──
+  section('STEP 9 — National ID ซ้ำกับผู้จองอื่น (คาด: จองสำเร็จ 201)')
   if (availableSeats.length < 2) {
     warn('STEP 9: ข้ามเพราะไม่มีที่นั่งว่างพอ')
     results.push({ step: 9, pass: true })
   } else {
-    // User D พยายามจองที่นั่ง 2 ด้วยเลขบัตรเดียวกับ User B ที่จองไปแล้ว (มีสลิป)
     const sessD = await api('POST', '/booking-sessions', {
       busRoundId: ROUND_ID, step: 1,
       selectedSeats: [{ seatNumber: seat2, gender: 'MALE' }]
@@ -226,20 +225,18 @@ async function run() {
     })
     await api('POST', '/booking-sessions', {
       token: sessD.token, step: 2,
-      selectedSeats: [makePassenger(seat2, 'MALE', TEST_NATIONAL_ID)],  // เลขบัตรซ้ำ
+      selectedSeats: [makePassenger(seat2, 'MALE', TEST_NATIONAL_ID)],
       customerData: { mainName: 'ซ้ำ ไอดี', mainPhone: '0811111111' }
     })
     await api('POST', '/booking-sessions', { token: sessD.token, step: 3, addonsData: [] })
 
     const r9 = await apiSafe('POST', '/bookings/guest', { sessionToken: sessD.token, paymentType: 'DEPOSIT' })
-    if (!r9.ok && r9.data?.code === 'DUPLICATE_ID') {
-      pass('9', `ตรวจจับเลขบัตรซ้ำ ✓ — "${r9.message}"`)
-      dim(`duplicateIds: ${r9.data.duplicateIds?.join(', ')}`)
-    } else if (!r9.ok) {
-      warn(`STEP 9: error แต่ code ไม่ใช่ DUPLICATE_ID — ${r9.message} (${r9.data?.code})`)
-      results.push({ step: 9, pass: false, error: r9.message })
+    if (r9.ok && r9.data?.booking?.id) {
+      pass('9', `จองด้วยเลขบัตรซ้ำได้ ✓ booking #${r9.data.booking.id}`)
+    } else if (r9.data?.code === 'DUPLICATE_ID') {
+      failStep('9', 'ยังได้ DUPLICATE_ID — policy ควรอนุญาตเลขบัตรซ้ำ')
     } else {
-      failStep('9', 'ควร block เลขบัตรซ้ำ แต่จองผ่าน')
+      failStep('9', `คาด 201 แต่ได้ ${r9.status} — ${r9.message || r9.data?.message}`)
     }
   }
 

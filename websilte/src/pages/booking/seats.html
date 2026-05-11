@@ -745,6 +745,8 @@
     let pickedGender = null
     // flag: suppress cartchange during programmatic setSeat
     let suppressCart = false
+    /** snapshot จาก poll ล่าสุด — ใช้ตรวจก่อนคืนที่นั่งจาก session */
+    let lastApiSeats = {}
 
     // ════════════════════════════════════════════════════════════════
     // Coordinate helpers  (seats 2..N+1  →  row 0..R-1, col 0..2)
@@ -813,26 +815,6 @@
       roundId = new URLSearchParams(location.search).get('roundId')
       if (!roundId) { showError('ไม่พบ roundId ใน URL'); return }
 
-      // Resume existing session (404/410 → ล้าง token เก่า ไม่ throw)
-      if (sessionToken) {
-        try {
-          const r = await fetch(API_BASE_URL + '/booking-sessions/' + sessionToken)
-          if (r.status === 404 || r.status === 410) {
-            // token หมดอายุหรือไม่มีใน DB (เช่น หลัง DB reset)
-            console.log('[SEATS] Session token expired/invalid, cleared:', sessionToken);
-            sessionToken = null
-          } else if (r.ok) {
-            const sess = await r.json()
-            if (sess && sess.busRoundId == roundId && Array.isArray(sess.selectedSeats)) {
-              sess.selectedSeats.forEach(s => { myGenders[s.seatNumber] = s.gender })
-            }
-          }
-        } catch (e) {
-          console.log('[SEATS] Session token check failed, cleared:', sessionToken);
-          sessionToken = null;
-        }
-      }
-
       // Load round info first (need price for seatchart init)
       await loadRound()
 
@@ -843,8 +825,9 @@
       // Uses DOM capture phase — fires before seatchart's bubble listener on each seat element
       setupClickInterceptor()
 
-      // First poll (marks reserved seats, restores session)
+      // ดึงสถานะที่นั่งจากเซิร์ฟเวอร์ก่อน — แล้วค่อยคืนที่นั่งจาก session ถ้ายังว่างจริง
       await pollSeats()
+      await hydrateSessionFromLatestSeats()
 
       // Apply preselected seats passed from /trips mobile overlay (?presel=2:MALE,5:FEMALE)
       const preselParam = new URLSearchParams(location.search).get('presel')
@@ -885,7 +868,7 @@
 
       totalSeats = roundData.totalSeats || 9
 
-      const isFull = roundData.bookedSeats >= (totalSeats - 2)   // ที่นั่งผู้โดยสาร = totalSeats - Staff - Driver
+      const isFull = roundData.bookedSeats >= totalSeats   // totalSeats = ที่นั่งผู้โดยสารสูงสุด (เทียบกับ bookedSeats ใน DB)
       const isOpen = roundData.isOpen && !isFull
       const d = new Date(roundData.departDate)
 
@@ -951,7 +934,8 @@
     // seatchart.js init
     // ════════════════════════════════════════════════════════════════
     function initSeatchart() {
-      const passengerSeats = totalSeats - 2   // ตัด Staff (1) + Driver (1) ออก
+      // totalSeats จากรอบรถ = จำนวนที่นั่งผู้โดยสาร; เลขที่นั่งบนแผง = 2 .. passengerSeats+1 (เลข 1 ไม่เปิดจอง)
+      const passengerSeats = totalSeats
       const rows = Math.ceil(passengerSeats / 3)
       const cols = 3
       const price = roundData?.trip?.price || 0
@@ -977,7 +961,7 @@
         legendVisible: false
       })
 
-      // Force labels 2..passengerSeats+1  (เช่น totalSeats=10 → seats 2..9)
+      // Force labels 2..passengerSeats+1  (เช่น passenger 9 ที่ → เลขที่นั่ง 2..10)
       suppressCart = true
       for (let n = 2; n <= passengerSeats + 1; n++) {
         try {
@@ -1113,6 +1097,49 @@
       genderModal.hide()
     }
 
+    /**
+     * หลัง poll ล่าสุดแล้ว — โหลด session แล้วคืนที่นั่งเฉพาะที่ API ยัง AVAILABLE
+     * (ไม่ดึง session ก่อน poll เพื่อไม่ให้ state เก่าชนกับข้อมูลจองล่าสุด)
+     */
+    async function hydrateSessionFromLatestSeats() {
+      if (!sessionToken) return
+      try {
+        const r = await fetch(API_BASE_URL + '/booking-sessions/' + sessionToken)
+        if (r.status === 404 || r.status === 410) {
+          console.log('[SEATS] Session token expired/invalid, cleared:', sessionToken)
+          sessionToken = null
+          return
+        }
+        if (!r.ok) return
+        const sess = await r.json()
+        if (!sess || Number(sess.busRoundId) !== Number(roundId) || !Array.isArray(sess.selectedSeats)) return
+
+        suppressCart = true
+        try {
+          for (const s of sess.selectedSeats) {
+            const n = Number(s.seatNumber)
+            if (!Number.isFinite(n) || n < 2) continue
+            const api = lastApiSeats[n]
+            if (api && api.status === 'BOOKED') continue
+            const g = s.gender
+            if (g !== 'MALE' && g !== 'FEMALE') continue
+            const idx = seatToIdx(n)
+            const cur = sc.getSeat(idx)
+            if (!cur) continue
+            myGenders[n] = g
+            const type = g === 'MALE' ? 'male' : 'female'
+            sc.setSeat(idx, { state: 'selected', type, label: String(n) })
+          }
+        } finally {
+          suppressCart = false
+        }
+        updateSummary()
+      } catch (e) {
+        console.log('[SEATS] Session hydrate failed, cleared token:', sessionToken, e)
+        sessionToken = null
+      }
+    }
+
     // ════════════════════════════════════════════════════════════════
     // Live polling — update seat states from DB
     // ════════════════════════════════════════════════════════════════
@@ -1120,9 +1147,9 @@
       try {
         const data = await apiFetch(`/seat-bookings/round/${roundId}`)
         const apiSeats = data.seats || {}
+        lastApiSeats = apiSeats
         totalSeats = data.totalSeats || totalSeats
-        // passengerSeats จาก API (totalSeats - 2) หรือคำนวณเอง
-        const pollPassengerSeats = data.passengerSeats ?? (totalSeats - 2)
+        const pollPassengerSeats = data.passengerSeats ?? totalSeats
 
         // Check if session expired and auto-refresh
         if (sessionToken && data.sessionExpired) {
@@ -1140,7 +1167,7 @@
 
         suppressCart = true   // prevent cartchange during programmatic updates
 
-        const lastSeat = totalSeats - 1   // totalSeats รวม Staff+Driver → passenger สูงสุด = totalSeats-1
+        const lastSeat = pollPassengerSeats + 1   // เลขที่นั่งผู้โดยสารสูงสุดบนแผง (เริ่มที่ 2)
         for (let n = 2; n <= lastSeat; n++) {
           const idx = seatToIdx(n)
           const apiInfo = apiSeats[n]
@@ -1186,8 +1213,11 @@
 
         suppressCart = false
 
-        // Update counter (แสดงเฉพาะที่นั่งผู้โดยสาร ไม่รวม Staff+Driver)
-        const bookedCount = Object.values(apiSeats).filter(s => s.status === 'BOOKED').length
+        // นับจองจริงเฉพาะช่วงเลขที่นั่งผู้โดยสารบนแผง (สอดคล้องกับ pollPassengerSeats)
+        let bookedCount = 0
+        for (let n = 2; n <= lastSeat; n++) {
+          if (apiSeats[n]?.status === 'BOOKED') bookedCount++
+        }
         document.getElementById('seatCountLabel').textContent =
           `ว่าง ${pollPassengerSeats - bookedCount} / ${pollPassengerSeats} ที่นั่ง`
 

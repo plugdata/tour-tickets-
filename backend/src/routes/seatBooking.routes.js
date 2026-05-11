@@ -68,8 +68,8 @@ router.get('/round/:roundId', async (req, res) => {
       }
     }
 
-    // ส่ง passengerSeats = totalSeats - 2 (ตัด Staff + Driver) ให้ frontend ใช้
-    res.json({ roundId, totalSeats: round.totalSeats, passengerSeats: round.totalSeats - 2, seats: seatMap })
+    // totalSeats ใน DB = จำนวนที่นั่งผู้โดยสารสูงสุดต่อรอบ (สอดคล้องกับ booking.routes ที่เช็ค bookedSeats)
+    res.json({ roundId, totalSeats: round.totalSeats, passengerSeats: round.totalSeats, seats: seatMap })
   } catch (e) {
     res.status(500).json({ message: e.message })
   }

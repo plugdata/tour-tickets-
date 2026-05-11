@@ -290,30 +290,8 @@ router.post('/guest', async (req, res) => {
       return res.status(400).json({ message: 'Invalid session data' })
     }
 
-    // ── ตรวจเลขบัตรประชาชนซ้ำในรอบเดียวกัน ──
-    const nationalIds = selectedSeats.map(s => s.nationalId).filter(Boolean)
-    if (nationalIds.length > 0) {
-      const dupRows = await prisma.seatBooking.findMany({
-        where: { busRoundId, nationalId: { in: nationalIds }, bookingId: { not: null } },
-        select: { nationalId: true, seatNumber: true, bookingId: true }
-      })
-      if (dupRows.length > 0) {
-        const dupBIds = dupRows.map(r => r.bookingId)
-        const dupPayments = await prisma.payment.findMany({
-          where: { bookingId: { in: dupBIds } },
-          select: { bookingId: true, slipUrl: true }
-        })
-        const dupSlipMap = Object.fromEntries(dupPayments.map(p => [p.bookingId, p.slipUrl]))
-        const confirmed = dupRows.filter(r => !!dupSlipMap[r.bookingId])
-        if (confirmed.length > 0) {
-          return res.status(409).json({
-            message: 'เลขบัตรประชาชนซ้ำ — มีการจองในรอบนี้แล้ว',
-            code: 'DUPLICATE_ID',
-            duplicateIds: [...new Set(confirmed.map(r => r.nationalId))]
-          })
-        }
-      }
-    }
+    // เลขบัตรประชาชน: อนุญาตใช้ซ้ำข้ามการจองได้ (ไม่บล็อกที่ระดับ API)
+    // การป้องกันซ้ำซ้อนที่นั่งใช้ @@unique([busRoundId, seatNumber]) + logic ที่นั่งว่างด้านล่าง
 
     // ตรวจสอบรอบรถ
     const round = await prisma.busRound.findUnique({
