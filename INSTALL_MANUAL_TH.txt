@@ -1,0 +1,290 @@
+=====================================================================
+  คู่มือการติดตั้ง Tour Tickets Backend (ภาษาไทย)
+  วันที่: 30 เมษายน 2569
+=====================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  สารบัญ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. ความต้องการของระบบ
+  2. วิธีติดตั้ง (อัตโนมัติ)
+  3. วิธีติดตั้ง (ทีละขั้น)
+  4. อธิบายปัญหาที่เกิดขึ้นและสาเหตุ
+  5. โครงสร้างไฟล์
+  6. Credentials เริ่มต้น
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. ความต้องการของระบบ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  - Ubuntu 20.04 / 22.04 (หรือ Debian-based)
+  - Node.js v18 ขึ้นไป (แนะนำ v20 / v24)
+  - PostgreSQL 14 ขึ้นไป
+  - Python 3 (มักมีอยู่แล้วใน Ubuntu)
+  - สิทธิ์ sudo
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  2. วิธีติดตั้ง (อัตโนมัติ — แนะนำ)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  รันคำสั่งเดียวจบ:
+
+    bash install.sh
+
+  สคริปต์จะทำทุกอย่างให้อัตโนมัติ:
+    - ถามรหัสผ่าน PostgreSQL
+    - ตั้งรหัสผ่าน postgres
+    - สร้าง database
+    - สร้างไฟล์ .env
+    - ติดตั้ง npm packages
+    - generate Prisma client
+    - run migrations
+    - seed ข้อมูลตัวอย่าง
+    - สร้าง admin user
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  3. วิธีติดตั้ง (ทีละขั้น — สำหรับผู้ที่ต้องการควบคุมเอง)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ขั้นที่ 1 — ติดตั้ง PostgreSQL (ถ้ายังไม่มี)
+  -------------------------------------------------------
+    sudo apt update
+    sudo apt install -y postgresql postgresql-contrib
+
+  ขั้นที่ 2 — ตั้งรหัสผ่าน postgres
+  -------------------------------------------------------
+    sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'รหัสผ่านของคุณ';"
+
+  [!] สำคัญ: ถ้ารหัสผ่านมีอักขระพิเศษ เช่น @ ! # $
+      ต้องทำ URL Encoding ในไฟล์ .env (ดูข้อ 4.1)
+
+  ขั้นที่ 3 — สร้าง database
+  -------------------------------------------------------
+    PGPASSWORD='รหัสผ่าน' psql -U postgres -h localhost \
+      -c "CREATE DATABASE tour_tickets;"
+
+  ขั้นที่ 4 — เข้าโฟลเดอร์ backend และสร้าง .env
+  -------------------------------------------------------
+    cd /home/astra/tour-tickets/backend
+
+    สร้างไฟล์ .env (ตัวอย่างถ้าไม่มีอักขระพิเศษ):
+
+      DATABASE_URL="postgresql://postgres:รหัสผ่าน@localhost:5432/tour_tickets"
+      PORT=5000
+      JWT_SECRET=your_jwt_secret
+      NODE_ENV=development
+
+    ถ้ารหัสผ่านมีอักขระพิเศษ ให้ทำ URL Encode:
+      @  →  %40
+      !  →  %21
+      #  →  %23
+      $  →  %24
+      &  →  %26
+
+    ตัวอย่าง: รหัสผ่าน P@ssw0rd!2026
+      DATABASE_URL="postgresql://postgres:P%40ssw0rd%212026@localhost:5432/tour_tickets"
+
+  ขั้นที่ 5 — ติดตั้ง npm packages
+  -------------------------------------------------------
+    npm install
+
+  ขั้นที่ 6 — Generate Prisma Client
+  -------------------------------------------------------
+    npx prisma generate
+
+  ขั้นที่ 7 — ตรวจสอบ migration_lock.toml
+  -------------------------------------------------------
+    ตรวจไฟล์: prisma/migrations/migration_lock.toml
+    ต้องมีบรรทัด:  provider = "postgresql"
+
+    ถ้าเป็น "sqlite" ให้แก้เป็น "postgresql" ก่อน run migrate
+
+  ขั้นที่ 8 — Run Migrations
+  -------------------------------------------------------
+    npx prisma migrate deploy
+
+    ถ้าเกิดข้อผิดพลาดเรื่อง column ขาดหาย:
+      npx prisma migrate dev --name sync_schema
+
+  ขั้นที่ 9 — Seed ข้อมูล
+  -------------------------------------------------------
+    node src/seed.js
+
+  ขั้นที่ 10 — เริ่มเซิร์ฟเวอร์
+  -------------------------------------------------------
+    npm run dev
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  4. อธิบายปัญหาที่เกิดขึ้นและสาเหตุ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ──────────────────────────────────────────────────────────────
+  ปัญหาที่ 1: อักขระพิเศษในรหัสผ่านทำให้ต่อ Database ไม่ได้
+  ──────────────────────────────────────────────────────────────
+
+  ข้อความ error:
+    SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string
+    password authentication failed for user "postgres"
+
+  สาเหตุ:
+    DATABASE_URL คือ URL format เหมือนเว็บ เช่น:
+      postgresql://user:password@host:port/db
+
+    เครื่องหมาย @ ใน URL หมายถึง "แยก user:password กับ host"
+    ดังนั้นรหัสผ่าน P@ssw0rd!2026 จะถูกตีความผิดเป็น:
+      user    = postgres
+      password = P          (ตัด @ แรกที่เจอ)
+      host    = ssw0rd!2026@localhost  ← ผิด!
+
+    อักขระที่ต้อง encode:
+      @  →  %40   (ที่ทำให้เกิดปัญหาหลัก)
+      !  →  %21   (อาจทำให้ shell ตีความผิด)
+      #  →  %23
+      $  →  %24
+
+  วิธีแก้:
+    ใช้ URL Encoding ใน DATABASE_URL:
+      P@ssw0rd!2026  →  P%40ssw0rd%212026
+
+    หรือใช้ python3 encode อัตโนมัติ:
+      python3 -c "import urllib.parse; print(urllib.parse.quote('รหัสผ่าน', safe=''))"
+
+  ──────────────────────────────────────────────────────────────
+  ปัญหาที่ 2: migration_lock.toml ระบุ provider เป็น "sqlite"
+  ──────────────────────────────────────────────────────────────
+
+  ข้อความ error:
+    Error: P3019
+    The datasource provider `postgresql` specified in your schema
+    does not match the one specified in the migration_lock.toml, `sqlite`.
+
+  สาเหตุ:
+    โปรเจกต์นี้เดิมพัฒนาบนเครื่อง Windows โดยใช้ SQLite
+    (ไฟล์ dev.db) เพื่อความสะดวกในช่วง development
+    เมื่อย้ายมาใช้ PostgreSQL บน server ไฟล์ schema.prisma
+    ถูกเปลี่ยนเป็น postgresql แล้ว แต่ไฟล์ migration_lock.toml
+    ที่เก็บ provider เดิมไว้ยังไม่ได้อัพเดต
+
+    Prisma จึง reject migration เพราะ lock file ไม่ตรงกับ schema
+
+  วิธีแก้:
+    แก้ไฟล์ prisma/migrations/migration_lock.toml:
+      provider = "postgresql"   ← เปลี่ยนจาก "sqlite"
+
+  ──────────────────────────────────────────────────────────────
+  ปัญหาที่ 3: Migration SQL ใช้ syntax ของ SQLite ไม่ใช่ PostgreSQL
+  ──────────────────────────────────────────────────────────────
+
+  ข้อความ error:
+    ERROR: syntax error at or near "AUTOINCREMENT"
+
+  สาเหตุ:
+    ไฟล์ migration SQL ถูก generate ขณะที่ยังใช้ SQLite
+    SQLite ใช้ AUTOINCREMENT
+    PostgreSQL ใช้ SERIAL หรือ GENERATED ALWAYS AS IDENTITY
+
+    Migration เก่าที่ generate จาก SQLite จึงรันใน PostgreSQL ไม่ได้
+
+  วิธีแก้:
+    ลบ migration เก่าที่เป็น SQLite syntax ออก แล้ว
+    generate migration ใหม่จาก schema ปัจจุบัน:
+      npx prisma migrate dev --name init_setup
+
+  ──────────────────────────────────────────────────────────────
+  ปัญหาที่ 4: seed.js ไม่ได้เรียก main() — ทำให้ข้อมูลไม่ถูก seed
+  ──────────────────────────────────────────────────────────────
+
+  อาการ:
+    รัน node src/seed.js แล้ว trips ไม่มีในฐานข้อมูล
+    แต่ bus rounds seed พยายามหา trip อ้างอิงแล้วไม่เจอ:
+      ⚠️ ไม่พบทริป: ทริปเกาะสมุย 3 วัน 2 คืน
+
+  สาเหตุ:
+    ใน seed.js มีฟังก์ชัน 2 ตัว:
+      async function main()         ← seed trips, settings, contents
+      async function seedBusRounds() ← seed bus rounds (ต้องมี trips ก่อน)
+
+    บรรทัดท้ายไฟล์เรียกแค่:
+      seedBusRounds()   ← ไม่ได้เรียก main() ก่อน!
+
+    เลยทำให้ trips ไม่มีในฐานข้อมูลตอน seedBusRounds วิ่ง
+
+  วิธีแก้:
+    แก้บรรทัดท้าย seed.js ให้เรียก main() ก่อน:
+
+      // เดิม (ผิด)
+      seedBusRounds()
+        .catch(console.error)
+        .finally(() => prisma.$disconnect())
+
+      // แก้ (ถูก)
+      main()
+        .then(() => seedBusRounds())
+        .catch(console.error)
+        .finally(() => prisma.$disconnect())
+
+  ──────────────────────────────────────────────────────────────
+  ปัญหาที่ 5: Prisma Client ไม่ถูก generate
+  ──────────────────────────────────────────────────────────────
+
+  ข้อความ error:
+    Error: Cannot find module '.prisma/client/default'
+
+  สาเหตุ:
+    หลัง npm install Prisma จะติดตั้ง package แต่ไม่ได้
+    generate TypeScript/JavaScript client โดยอัตโนมัติ
+    ต้องรัน prisma generate เพื่อสร้าง client code
+    ที่ตรงกับ schema ก่อนจึงจะ import ได้
+
+  วิธีแก้:
+    npx prisma generate
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  5. โครงสร้างไฟล์
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  tour-tickets/
+  ├── install.sh                  ← สคริปต์ติดตั้งอัตโนมัติ
+  ├── INSTALL_MANUAL_TH.txt       ← คู่มือนี้
+  ├── backend/
+  │   ├── .env                    ← ตัวแปร environment (สร้างโดย install.sh)
+  │   ├── package.json
+  │   ├── prisma/
+  │   │   ├── schema.prisma       ← โครงสร้าง database
+  │   │   ├── prisma.config.ts    ← config Prisma
+  │   │   └── migrations/
+  │   │       └── migration_lock.toml  ← ต้องเป็น provider = "postgresql"
+  │   └── src/
+  │       ├── server.js           ← entry point
+  │       ├── app.js              ← Express routes
+  │       ├── seed.js             ← ข้อมูลตัวอย่าง
+  │       └── config/
+  │           └── prisma.js       ← Prisma client instance
+  └── frontend/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  6. Credentials เริ่มต้น
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ผู้ใช้ระบบ:
+    admin     / 12345   (role: ADMIN)
+    staff1    / 12345   (role: STUFF)
+    customer1 / 12345   (role: CUSTOMER)
+
+  URL:
+    API Server  →  http://localhost:5000
+    Swagger UI  →  http://localhost:5000/api-docs
+
+  Login endpoint:
+    POST http://localhost:5000/api/auth/login
+    Body: { "username": "admin", "password": "12345" }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  หมายเหตุ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  - ไฟล์ .env ไม่ควร commit ขึ้น Git (เพิ่มใน .gitignore)
+  - เปลี่ยนรหัสผ่าน default ก่อน deploy production
+  - สำหรับ production ให้ตั้ง NODE_ENV=production
+
+=====================================================================

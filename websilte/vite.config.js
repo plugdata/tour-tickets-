@@ -35,11 +35,11 @@ export default defineConfig({
     allowedHosts: 'all',
     proxy: {
       '/api': {
-        target: process.env.NODE_ENV === 'production' ? 'http://localhost:5000' : 'http://localhost:5000',
+        target: 'http://154.197.124.146:5000',
         changeOrigin: true,
       },
       '/uploads': {
-        target: process.env.NODE_ENV === 'production' ? 'http://localhost:5000' : 'http://localhost:5000',
+        target: 'http://154.197.124.146:5000',
         changeOrigin: true,
       },
     },

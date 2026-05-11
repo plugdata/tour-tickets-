@@ -509,17 +509,37 @@ html {
 }
 
 .ht-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   font-family: 'Kanit', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--primary-green);
-  line-height: 1;
+  line-height: 1.1;
 }
 
-.ht-price small {
+.ht-price-main {
+  display: flex;
+  align-items: baseline;
+  gap: .3rem;
+}
+
+.ht-price-value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--primary-green);
+}
+
+.ht-price-unit {
   font-size: .8rem;
   font-weight: 400;
   color: var(--text-gray);
+}
+
+.ht-deposit {
+  font-size: .72rem;
+  font-weight: 500;
+  color: #cbd5e1;
+  opacity: .8;
+  margin-top: .1rem;
 }
 
 .ht-btn-book {
@@ -717,18 +737,36 @@ html {
   }
 
   .ht-price {
-    display: block !important;
+    display: flex !important;
     visibility: visible !important;
-    font-size: 1.2rem;
-    color: var(--primary-green) !important;
-    font-weight: 800;
-    line-height: 1.4;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.1;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
   }
 
-  .ht-price small {
+  .ht-price-main {
+    display: flex;
+    align-items: baseline;
+    gap: .25rem;
+  }
+
+  .ht-price-value {
+    color: var(--primary-green) !important;
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  .ht-price-unit {
     color: var(--text-gray);
-    font-size: 0.7rem;
+    font-size: .7rem;
+  }
+
+  .ht-deposit {
+    color: #cbd5e1;
+    font-size: .65rem;
+    font-weight: 500;
+    opacity: .9;
   }
 
   .ht-btn-book {

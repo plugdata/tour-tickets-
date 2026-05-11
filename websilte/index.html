@@ -147,11 +147,10 @@
         <span data-i18n="hero_btn">เช็คทริปและจองทริป</span> <i class="bi bi-arrow-right"></i>
       </a>
     </div>
-    <!-- Scroll Indicator -->
-    <div class="hero-scroll-indicator">
+    <!-- <div class="hero-scroll-indicator">
       <span data-i18n="scroll_down">เลื่อนดูทริป</span>
       <i class="bi bi-chevron-down"></i>
-    </div>
+    </div> -->
   </section>
 
   <!-- ── Fire Section — Hot Content Ticker ── -->
@@ -194,18 +193,21 @@
           <h2 class="ht-title" data-i18n="domestic_title">ทริปในประเทศ</h2>
           <p class="ht-sub" data-i18n="domestic_subtitle">สัมผัสธรรมชาติที่ยอดเยี่ยมรอบตัวคุณ</p>
         </div>
-        <a href="/trips" class="ht-count-link" id="domesticCountLink">
+        <!--       <a href="/trips" class="ht-count-link" id="domesticCountLink">
           <span id="domesticCount">...</span> ทริป <i class="bi bi-arrow-right"></i>
-        </a>
+        </a> -->
+
+        <div class="ht-quick-select-wrap">
+          <select id="domesticQuickSelect" class="ht-quick-select" onchange="handleTripSelect(this)">
+            <option value="" selected disabled>เลือกทริปในประเทศ</option>
+          </select>
+        </div>
+        <div class="swiper ht-swiper domestic-swiper">
+          <div class="swiper-wrapper" id="domesticWrapper"></div>
+          <div class="swiper-button-next"></div>
+          <div class="swiper-button-prev"></div>
+        </div>
       </div>
-      <!-- Pill Filter -->
-      <div class="ht-pill-wrap" id="domesticPillWrap"></div>
-      <div class="swiper ht-swiper domestic-swiper">
-        <div class="swiper-wrapper" id="domesticWrapper"></div>
-        <div class="swiper-button-next"></div>
-        <div class="swiper-button-prev"></div>
-      </div>
-    </div>
   </section>
 
   <!-- ── ทริปต่างประเทศ ── -->
@@ -220,8 +222,11 @@
           <span id="intlCount">...</span> ทริป <i class="bi bi-arrow-right"></i>
         </a>
       </div>
-      <!-- Pill Filter -->
-      <div class="ht-pill-wrap" id="intlPillWrap"></div>
+      <div class="ht-quick-select-wrap">
+        <select id="intlQuickSelect" class="ht-quick-select" onchange="handleTripSelect(this)">
+          <option value="" selected disabled>เลือกทริปต่างประเทศ</option>
+        </select>
+      </div>
       <div class="swiper ht-swiper international-swiper">
         <div class="swiper-wrapper" id="intlWrapper"></div>
         <div class="swiper-button-next"></div>

@@ -2,6 +2,7 @@ import { apiFetch } from '/src/api/config.js'
 
 const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม']
+
 const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December']
 
@@ -75,7 +76,13 @@ function tripCard(t, rounds) {
     ${t.description ? `<p class="ht-card-desc" data-i18n-dyn data-th="${esc(t.description)}">${t.description}</p>` : ''}
 
     <div class="ht-card-footer">
-      <div class="ht-price">฿${Number(t.price).toLocaleString()}<small data-i18n="per_person"> / คน</small></div>
+      <div class="ht-price">
+        <div class="ht-price-main">
+          <span class="ht-price-value">฿${Number(t.price).toLocaleString()}</span>
+          <span class="ht-price-unit">/ คน</span>
+        </div>
+        ${t.deposit ? `<div class="ht-deposit">มัดจำ ฿${Number(t.deposit).toLocaleString()}</div>` : ''}
+      </div>
       <button class="ht-btn-book" onclick="event.stopPropagation();window.__tdOpen(${t.id})">
         <i class="bi bi-info-circle me-1"></i><span data-i18n="view_detail">รายละเอียด</span>
       </button>
@@ -382,33 +389,30 @@ window.tdShareFb = function () {
 }
 
 function populateTripSelects(domestic, international) {
-  function fillPills(wrapId, countId, trips) {
-    const wrap = document.getElementById(wrapId)
+  function fillSelect(selectId, countId, trips, placeholder) {
+    const select = document.getElementById(selectId)
     const countEl = document.getElementById(countId)
-    if (!wrap) return
+    if (!select) return
 
-    // Update count
     if (countEl) countEl.textContent = trips.length
 
+    const defaultOption = `<option value="" selected disabled>${placeholder}</option>`
+
     if (!trips.length) {
-      wrap.innerHTML = '<span class="ht-pill ht-pill-empty">ยังไม่มีทริปเปิดรับ</span>'
+      select.innerHTML = defaultOption + '<option value="" disabled>ยังไม่มีทริปเปิดรับ</option>'
       return
     }
 
-    wrap.innerHTML = trips.map(t => {
+    select.innerHTML = defaultOption + trips.map(t => {
       const rounds = homeRoundMap.get(t.id) || []
       const openRounds = rounds.filter(r => r.isOpen && (r.totalSeats - r.bookedSeats) > 0)
       const isFull = openRounds.length === 0
-      return `<button
-        class="ht-pill${isFull ? ' ht-pill-full' : ''}"
-        onclick="if(window.__tdOpen) window.__tdOpen(${t.id})"
-        title="${t.title}"
-      >${t.title}${isFull ? ' <span class="ht-pill-tag">เต็ม</span>' : ''}</button>`
+      return `<option value="${t.id}" ${isFull ? 'data-full="1"' : ''}>${t.title}${isFull ? ' (เต็ม)' : ''}</option>`
     }).join('')
   }
 
-  fillPills('domesticPillWrap', 'domesticCount', domestic)
-  fillPills('intlPillWrap', 'intlCount', international)
+  fillSelect('domesticQuickSelect', 'domesticCount', domestic, 'เลือกทริปในประเทศ')
+  fillSelect('intlQuickSelect', 'intlCount', international, 'เลือกทริปต่างประเทศ')
 }
 
 window.handleTripSelect = function (sel) {
@@ -576,5 +580,3 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 })
-
-
