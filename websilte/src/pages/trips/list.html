@@ -342,15 +342,20 @@
     }
 
     .r-time-tag {
-      font-size: .95rem;
+      font-size: .76rem;
       font-weight: 700;
-      color: #fff;
+      color: #dbe7ff;
+      background: rgba(15, 33, 60, .9);
+      border-radius: 8px;
+      padding: .18rem .5rem;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .r-trip-tag {
-      font-size: .82rem;
-      color: rgba(255, 255, 255, .55);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -373,10 +378,15 @@
     }
 
     .r-seats-tag {
-      font-size: .82rem;
-      font-weight: 600;
+      font-size: .86rem;
+      font-weight: 700;
       color: var(--primary);
       white-space: nowrap;
+      margin-left: auto;
+    }
+
+    .r-seats-tag.is-full {
+      color: #ff6b6b;
     }
 
     .dot-ok {
@@ -440,6 +450,18 @@
       background: rgba(255, 159, 67, .15);
       color: #ff9f43;
       border: 1px solid rgba(255, 159, 67, .3);
+    }
+
+    .round-badge-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: .22rem;
+      flex-shrink: 0;
+    }
+
+    .round-badge-wrap .r-seats-tag {
+      margin-left: 0;
     }
 
     /* Skeleton */
@@ -1612,6 +1634,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
     import { apiFetch } from '/src/api/config.js'
+    import { getSettings } from '/src/api/settings.js'
 
     // ════════════════════════════════════════════════════════════
     // BOOKING FLOW:
@@ -1664,6 +1687,15 @@
     }
     window.onMonthChange = () => { curMonth = +monthSel.value; updateDisplay(); loadData() }
     updateDisplay()
+
+    async function syncBrandNameFromHome() {
+      try {
+        const s = await getSettings()
+        if (!s?.site_name) return
+        const logoTextEl = document.querySelector('.lp-logo-text')
+        if (logoTextEl) logoTextEl.textContent = s.site_name
+      } catch (_) { }
+    }
 
     // ════════════════════════════════════════════════════════════
     // [STEP 0] LOAD ROUNDS — แสดงรายการรอบออกเดินทางในเดือนนั้น
@@ -1729,13 +1761,6 @@
       let html = ''
       for (const [tripId, { trip, rounds: tRounds }] of grouped) {
         const tripTitle = trip?.title || `ทริป #${tripId}`
-        const isIntl = trip?.tripType === 'INTERNATIONAL'
-
-        html += `<div class="list-divider">
-      <span style="color:${isIntl ? '#ff9f43' : 'var(--primary)'}">
-        <i class="bi bi-${isIntl ? 'globe' : 'flag-fill'} me-1"></i>${tripTitle}
-      </span>
-    </div>`
 
         for (const r of tRounds) {
           const left = r.totalSeats - r.bookedSeats
@@ -1745,15 +1770,15 @@
           const dotCls = full ? 'dot-full' : isLow ? 'dot-low' : 'dot-ok'
           const dept = new Date(r.departDate)
           const dateStr = dept.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
-          const price = trip ? Number(trip.price + (r.extraPrice || 0)) : 0
+          const roundName = r.roundname || r.roudeStack?.roundname || dateStr
           const passengerTotal = r.totalSeats - 1   // seat 1 = Staff, seats 2..totalSeats = ผู้โดยสาร
           const passengerLeft = passengerTotal - r.bookedSeats
 
-          const badgeHtml = full
-            ? `<span class="round-badge badge-full">เสร็จ</span>`
-            : isLow
-              ? `<span class="round-badge badge-low">ใกล้เต็ม</span>`
-              : `<span class="round-badge badge-price">฿${price.toLocaleString()}</span>`
+          const badgeHtml = `<div class="round-badge-wrap">
+                   <span class="round-badge ${passengerLeft <= 0 ? 'badge-full' : 'badge-price'}">
+                     ${passengerLeft <= 0 ? 'เต็ม' : `ที่ว่าง ${passengerLeft}/${passengerTotal}`}
+                   </span>
+                 </div>`
 
           html += `
         <div class="round-row${full ? ' is-full' : ''}" id="rr-${r.id}"
@@ -1761,12 +1786,8 @@
           <div class="round-dot ${dotCls}"></div>
           <div class="round-info">
             <div class="round-row-top">
-              <span class="r-time-tag">${dateStr}</span>
+              <span class="r-time-tag">${roundName}</span>
               <span class="r-trip-tag">${tripTitle}</span>
-            </div>
-            <div class="round-row-bot">
-              ${r.duration ? `<span class="r-dur-tag"><i class="bi bi-clock" style="font-size:.6rem"></i> ${r.duration}</span>` : ''}
-              <span class="r-seats-tag"><i class="bi bi-person-fill" style="font-size:.65rem"></i> ${passengerLeft}/${passengerTotal}</span>
             </div>
           </div>
           ${badgeHtml}
@@ -2197,6 +2218,7 @@
     } else {
       loadData()
     }
+    syncBrandNameFromHome()
   </script>
 </body>
 

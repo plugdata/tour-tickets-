@@ -31,9 +31,10 @@ export function htSkeleton(n) {
 }
 
 function tripCard(t, rounds) {
-  const next = rounds.find(r => r.isOpen && (r.totalSeats - r.bookedSeats) > 0) || rounds[0]
-  const seated = next ? (next.totalSeats - next.bookedSeats) : null
-  const pct = next ? Math.round(next.bookedSeats / next.totalSeats * 100) : 0
+  const next = rounds.find(r => r.isOpen && (r.totalSeats - 1 - r.bookedSeats) > 0) || rounds[0]
+  const pTotal = next ? Math.max(1, next.totalSeats - 1) : 1
+  const seated = next ? Math.max(0, pTotal - next.bookedSeats) : null
+  const pct = next ? Math.round(next.bookedSeats / pTotal * 100) : 0
   const fillCls = pct >= 100 ? 'full' : pct >= 70 ? 'low' : 'ok'
 
   const deptTH = next
@@ -44,7 +45,7 @@ function tripCard(t, rounds) {
     : ''
 
   const loc = t.country || (t.tripType === 'INTERNATIONAL' ? 'ต่างประเทศ' : 'ไทย')
-  const seatTxt = seated !== null ? `เหลือ ${seated}/${next?.totalSeats}` : ''
+  const seatTxt = seated !== null ? `เหลือ ${seated}/${pTotal}` : ''
 
   return `
 <div class="swiper-slide">
@@ -279,7 +280,7 @@ function tdRenderRounds(rounds, stacks = []) {
               <i class="bi bi-clock-history me-1" style="color:#a0aec0"></i>
               <span data-i18n-dyn data-th="${esc(dsTH)}">${dsTH}</span>
             </div>
-            <div class="td-round-meta" data-i18n-dyn data-th="${esc(s.roundname)}">${s.roundname}</div>
+            <div>${s.roundname}</div>
           </div>
           <div style="text-align:right">
             <span class="td-full-tag" style="background:rgba(160,174,192,.1);color:#a0aec0;border-color:rgba(160,174,192,.2)"
@@ -313,35 +314,31 @@ function tdRenderRounds(rounds, stacks = []) {
     return
   }
   const rows = upcoming.map(r => {
-    const d = new Date(r.departDate)
-    const dsTH = d.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
-    const dsEN = d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
-    const tsTH = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
-    const tsEN = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    const left = r.totalSeats - r.bookedSeats
-    const pct = Math.round(r.bookedSeats / r.totalSeats * 100)
+    const roundName = r.roundname || r.roudeStack?.roundname || tdCurrentTrip?.title || '-'
+    const tripName = tdCurrentTrip?.title || ''
+    
+    const pTotal = Math.max(1, r.totalSeats - 1)
+    const left = Math.max(0, pTotal - r.bookedSeats)
+    const pct = Math.round(r.bookedSeats / pTotal * 100)
     const full = left <= 0 || !r.isOpen
     const cls = pct >= 90 ? 'td-seats-full' : pct >= 60 ? 'td-seats-low' : 'td-seats-ok'
-    const sPoint = r.startPoint && r.startPoint !== 'undefined' ? r.startPoint : ''
-    const ePoint = r.endPoint && r.endPoint !== 'undefined' ? r.endPoint : ''
-    const dur = r.duration && r.duration !== 'undefined' ? r.duration : ''
-    const route = `${sPoint}${ePoint ? ' → ' + ePoint : ''}${dur ? ' · ' + dur : ''}`
     return `
   <div class="td-round-item${full ? ' full' : ''}" data-rid="${r.id}"
        onclick="${full ? '' : `window.__tdSelectRound(${r.id})`}">
     <div>
       <div class="td-round-date">
         <i class="bi bi-calendar3 me-1" style="color:#00d9b4"></i>
-        <span data-i18n-dyn data-th="${esc(dsTH)}" data-en="${esc(dsEN)}">${dsTH}</span>
-        · <span data-i18n-dyn data-th="${esc(tsTH)}" data-en="${esc(tsEN)}">${tsTH}</span>
+        <span>${roundName}</span>
       </div>
-      <div class="td-round-meta" data-i18n-dyn data-th="${esc(route)}">${route}</div>
+      <div class="round-row-bot">
+        <div>${tripName}</div>
+      </div>
     </div>
     <div style="text-align:right">
       ${full
         ? `<span class="td-full-tag" data-i18n-dyn data-th="เต็มแล้ว">เต็มแล้ว</span>`
         : `<div style="font-size:.7rem;color:#a0aec0"
-              data-i18n-dyn data-th="เหลือ ${left}/${r.totalSeats}">เหลือ ${left}/${r.totalSeats}</div>
+              data-i18n-dyn data-th="เหลือ ${left}/${pTotal}">เหลือ ${left}/${pTotal}</div>
            <div class="td-seats-bar"><div class="td-seats-fill ${cls}" style="width:${pct}%"></div></div>`}
     </div>
   </div>`
