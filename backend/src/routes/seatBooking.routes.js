@@ -47,9 +47,11 @@ router.get('/round/:roundId', async (req, res) => {
     const bkStatusMap = Object.fromEntries(bookingStatuses.map(b => [b.id, b.status]))
     const bkSlipMap   = Object.fromEntries(paymentSlips.map(p => [p.bookingId, p.slipUrl]))
 
+    // แผนที่สาธารณะ: ไม่แสดง hold (sessionToken / bookingId=null) เป็นสีเหลือง
+    // ล็อกจริงเฉพาะเมื่อมี Payment.slipUrl แล้ว (ดูกฎใน POST /hold)
     const seatMap = {}
     for (const sb of seatBookings) {
-      let status = 'SELECTED' // temp hold (yellow)
+      let status = 'AVAILABLE'
       if (sb.bookingId) {
         const isCancelled = bkStatusMap[sb.bookingId] === 'CANCELLED'
         const hasSlip = !!bkSlipMap[sb.bookingId]

@@ -1281,7 +1281,18 @@
     // ════════════════════════════════════════════════════════════════
     // Next: save session → navigate (first come first served — no hold)
     // ════════════════════════════════════════════════════════════════
+    let goNextBusy = false
+
     async function goNext() {
+      if (goNextBusy) return
+      goNextBusy = true
+      const btnNext = document.getElementById('btnNext')
+      const prevBtnHtml = btnNext ? btnNext.innerHTML : ''
+      if (btnNext) {
+        btnNext.disabled = true
+        btnNext.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังดำเนินการ...'
+      }
+
       const cart = sc.getCart()
       const seenNums = new Set()
 
@@ -1309,6 +1320,11 @@
         genderModal.show()
 
         showToast(`กรุณาเลือกเพศในที่นั่งที่เลือก`, 'warning');
+        goNextBusy = false
+        if (btnNext) {
+          btnNext.disabled = Object.keys(myGenders).length === 0
+          btnNext.innerHTML = prevBtnHtml
+        }
         return
       }
 
@@ -1348,10 +1364,16 @@
           console.log('[SEATS] Seats conflict detected, refreshing seat status');
           showToast('⚠️ ที่นั่งบางที่ไม่ว่าง กรุณาเลือกที่นั่งใหม่', 'warning');
           await pollSeats(); // Refresh to show updated seat status
-          return;
         } else {
           showToast(e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่', 'danger')
           await pollSeats() // refresh to show any conflicts
+        }
+      } finally {
+        goNextBusy = false
+        if (btnNext) {
+          const cnt = Object.keys(myGenders).length
+          btnNext.disabled = cnt === 0
+          btnNext.innerHTML = prevBtnHtml
         }
       }
     }
@@ -1385,6 +1407,11 @@
     }
 
     function showToast(msg, type = 'warning') {
+      const now = Date.now()
+      if (showToast._lastMsg === msg && now - (showToast._lastAt || 0) < 2800) return
+      showToast._lastMsg = msg
+      showToast._lastAt = now
+
       const id = 't' + Date.now()
       document.getElementById('toastC').insertAdjacentHTML('beforeend', `
     <div id="${id}" class="toast align-items-center text-bg-${type} border-0 show rounded-3 mb-2">
