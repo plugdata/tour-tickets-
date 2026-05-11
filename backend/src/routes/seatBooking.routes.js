@@ -30,16 +30,18 @@ router.get('/round/:roundId', async (req, res) => {
 
     const seatBookings = await prisma.seatBooking.findMany({
       where: { busRoundId: roundId },
-      include: { booking: { select: { id: true, status: true } } }
+      include: { booking: { select: { id: true, status: true, payment: { select: { slipUrl: true } } } } }
     })
 
     const seatMap = {}
     for (const sb of seatBookings) {
       let status = 'SELECTED' // temp hold (yellow)
       if (sb.bookingId) {
-        status = sb.booking?.status === 'CANCELLED' ? 'AVAILABLE' : 'BOOKED'
+        const isCancelled = sb.booking?.status === 'CANCELLED'
+        const hasSlip = sb.booking?.payment?.slipUrl != null
+        status = (isCancelled || !hasSlip) ? 'AVAILABLE' : 'BOOKED'
       }
-      const isBooked = !!sb.bookingId
+      const isBooked = !!sb.bookingId && status === 'BOOKED'
       seatMap[sb.seatNumber] = {
         seatNumber: sb.seatNumber,
         status,
@@ -77,7 +79,19 @@ router.post('/hold', async (req, res) => {
       where: { busRoundId, sessionToken, bookingId: null }
     })
 
-    // ตรวจสอบว่าที่นั่งว่างจริง (ไม่มี booking หรือ hold ที่ยังไม่หมดอายุ)
+    // ── ปลดที่นั่งที่ "จอง" แล้วแต่ยังไม่แนบสลิป (ให้คนอื่นจองได้) ──
+    const bookedForSeats = await prisma.seatBooking.findMany({
+      where: { busRoundId, seatNumber: { in: seatNumbers }, bookingId: { not: null } },
+      include: { booking: { select: { status: true, payment: { select: { slipUrl: true } } } } }
+    })
+    const releasableIds = bookedForSeats
+      .filter(sb => sb.booking?.status !== 'CANCELLED' && !sb.booking?.payment?.slipUrl)
+      .map(sb => sb.id)
+    if (releasableIds.length > 0) {
+      await prisma.seatBooking.deleteMany({ where: { id: { in: releasableIds } } })
+    }
+
+    // ตรวจสอบว่าที่นั่งว่างจริง (ที่นั่งไม่มีสลิปถูกปลดแล้ว เหลือเฉพาะ booking จริงหรือ hold ของคนอื่น)
     const conflicts = await prisma.seatBooking.findMany({
       where: {
         busRoundId,

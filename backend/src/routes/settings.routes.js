@@ -43,7 +43,9 @@ router.get('/', async (req, res) => {
     rows.forEach(r => { map[r.key] = r.value ?? '' })
     res.json(map)
   } catch (e) {
-    res.status(500).json({ message: e.message })
+    // Fallback to defaults so public pages can still render
+    console.warn('[settings] fallback to defaults:', e.message)
+    res.json({ ...DEFAULTS })
   }
 })
 
@@ -53,7 +55,8 @@ router.get('/:key', async (req, res) => {
     const row = await prisma.siteSetting.findUnique({ where: { key: req.params.key } })
     res.json({ key: req.params.key, value: row?.value ?? DEFAULTS[req.params.key] ?? null })
   } catch (e) {
-    res.status(500).json({ message: e.message })
+    console.warn('[settings:key] fallback to default:', e.message)
+    res.json({ key: req.params.key, value: DEFAULTS[req.params.key] ?? null })
   }
 })
 

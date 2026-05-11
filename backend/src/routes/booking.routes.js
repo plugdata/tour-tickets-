@@ -300,20 +300,24 @@ router.post('/guest', async (req, res) => {
       return res.status(400).json({ message: 'Bus round not available' })
     }
 
-    // ตรวจสอบที่นั่งว่าง (แต่ไม่นับที่นั่งที่ hold โดย session เดียวกัน)
-    const conflicts = await prisma.seatBooking.findMany({
+    // ตรวจสอบที่นั่งว่าง (ไม่นับ hold ของ session เดียวกัน และไม่นับที่จองแต่ยังไม่แนบสลิป)
+    const allConflictCandidates = await prisma.seatBooking.findMany({
       where: {
         busRoundId,
         seatNumber: { in: selectedSeats.map(s => s.seatNumber) },
         OR: [
           { bookingId: { not: null } },
-          { 
-            bookingId: null, 
-            holdExpiresAt: { gt: new Date() },
-            sessionToken: { not: sessionToken } // ไม่นับ hold ของ session อื่น
-          }
+          { bookingId: null, holdExpiresAt: { gt: new Date() }, sessionToken: { not: sessionToken } }
         ]
+      },
+      include: { booking: { select: { status: true, payment: { select: { slipUrl: true } } } } }
+    })
+    // กรองเฉพาะ: booking จริง (มีสลิป) หรือ hold ของคนอื่น
+    const conflicts = allConflictCandidates.filter(sb => {
+      if (sb.bookingId) {
+        return sb.booking?.status !== 'CANCELLED' && !!sb.booking?.payment?.slipUrl
       }
+      return true // active hold by another session
     })
 
     if (conflicts.length > 0) {
