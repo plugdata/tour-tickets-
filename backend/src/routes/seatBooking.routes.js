@@ -85,35 +85,42 @@ router.post('/hold', async (req, res) => {
       return res.status(400).json({ message: 'busRoundId, seatNumbers[], sessionToken required' })
     }
 
+    const bRId = Number(busRoundId)
     const now = new Date()
-    const holdExpiresAt = new Date(now.getTime() + 10 * 60 * 1000) // 10 นาที
+    const holdExpiresAt = new Date(now.getTime() + 10 * 60 * 1000)
 
-    // ลบ hold เก่าของ session นี้ในรอบนี้
+    // ── 1. ลบ hold เก่าของ session นี้ ──
     await prisma.seatBooking.deleteMany({
-      where: { busRoundId, sessionToken, bookingId: null }
+      where: { busRoundId: bRId, sessionToken, bookingId: null }
     })
 
-    // ── ปลดที่นั่งที่ "จอง" แล้วแต่ยังไม่แนบสลิป (ให้คนอื่นจองได้) ──
-    // ใช้ 3 query แยกกัน (flat) แทน nested include เพื่อให้ทำงานได้ทุก Prisma version
-    const bookedSeatRows = await prisma.seatBooking.findMany({
-      where: { busRoundId: Number(busRoundId), seatNumber: { in: seatNumbers }, bookingId: { not: null } },
-      select: { id: true, seatNumber: true, bookingId: true }
+    // ── 2. ดึง record ทั้งหมดที่อาจขวางที่นั่งที่ต้องการ ──
+    const allRows = await prisma.seatBooking.findMany({
+      where: { busRoundId: bRId, seatNumber: { in: seatNumbers } },
+      select: { id: true, seatNumber: true, bookingId: true, sessionToken: true, holdExpiresAt: true }
     })
-    console.log('[HOLD] bookedSeatRows:', JSON.stringify(bookedSeatRows))
+    console.log('[HOLD] allRows:', JSON.stringify(allRows))
 
-    if (bookedSeatRows.length > 0) {
-      const bookingIds = bookedSeatRows.map(s => s.bookingId)
+    // ── 3. แยก: rows ที่มี bookingId (จองแล้ว) vs hold ของ session อื่น ──
+    const bookedRows = allRows.filter(r => r.bookingId != null)
+    const otherHolds = allRows.filter(r =>
+      r.bookingId == null &&
+      r.sessionToken !== sessionToken &&
+      r.holdExpiresAt && new Date(r.holdExpiresAt) > now
+    )
 
-      // ดึง status ของแต่ละ booking
+    // ── 4. ตรวจ booking ที่มี bookingId — ถ้ายังไม่มีสลิปให้ปลด ──
+    if (bookedRows.length > 0) {
+      const bIds = bookedRows.map(r => r.bookingId)
+
       const bookingRows = await prisma.booking.findMany({
-        where: { id: { in: bookingIds } },
+        where: { id: { in: bIds } },
         select: { id: true, status: true }
       })
       const statusMap = Object.fromEntries(bookingRows.map(b => [b.id, b.status]))
 
-      // ดึง slipUrl ของแต่ละ payment
       const paymentRows = await prisma.payment.findMany({
-        where: { bookingId: { in: bookingIds } },
+        where: { bookingId: { in: bIds } },
         select: { bookingId: true, slipUrl: true }
       })
       const slipMap = Object.fromEntries(paymentRows.map(p => [p.bookingId, p.slipUrl]))
@@ -121,66 +128,51 @@ router.post('/hold', async (req, res) => {
       console.log('[HOLD] statusMap:', JSON.stringify(statusMap))
       console.log('[HOLD] slipMap:', JSON.stringify(slipMap))
 
-      const releasableIds = bookedSeatRows
-        .filter(sb => statusMap[sb.bookingId] !== 'CANCELLED' && !slipMap[sb.bookingId])
-        .map(sb => sb.id)
+      // ปลด: ถ้า booking ไม่ถูก cancel และยังไม่มีสลิป
+      const releasable = bookedRows.filter(r =>
+        statusMap[r.bookingId] !== 'CANCELLED' && !slipMap[r.bookingId]
+      )
+      console.log('[HOLD] releasable (no-slip):', releasable.map(r => r.seatNumber))
 
-      console.log('[HOLD] releasableIds:', releasableIds)
-
-      if (releasableIds.length > 0) {
-        await prisma.seatBooking.deleteMany({ where: { id: { in: releasableIds } } })
-        console.log('[HOLD] released', releasableIds.length, 'no-slip seats')
+      if (releasable.length > 0) {
+        await prisma.seatBooking.deleteMany({ where: { id: { in: releasable.map(r => r.id) } } })
+        console.log('[HOLD] deleted no-slip seats:', releasable.map(r => r.seatNumber))
       }
-    }
 
-    // ตรวจสอบว่าที่นั่งว่างจริง (ที่นั่งไม่มีสลิปถูกปลดแล้ว เหลือเฉพาะ booking จริงหรือ hold ของคนอื่น)
-    const conflicts = await prisma.seatBooking.findMany({
-      where: {
-        busRoundId,
-        seatNumber: { in: seatNumbers },
-        OR: [
-          { bookingId: { not: null } },
-          { bookingId: null, holdExpiresAt: { gt: now } }
+      // ที่นั่งที่ยังเป็น conflict จริง = มีสลิปแล้ว หรือ cancelled (แต่ cancelled จะถูก treat as available)
+      const stillBookedConflicts = bookedRows.filter(r =>
+        statusMap[r.bookingId] !== 'CANCELLED' && !!slipMap[r.bookingId]
+      )
+
+      if (stillBookedConflicts.length > 0 || otherHolds.length > 0) {
+        const debugList = [
+          ...stillBookedConflicts.map(r => ({ seatNumber: r.seatNumber, reason: 'จองแล้ว+มีสลิป', bookingId: r.bookingId })),
+          ...otherHolds.map(r => ({ seatNumber: r.seatNumber, reason: 'hold อยู่ (session อื่น)', expiresAt: r.holdExpiresAt }))
         ]
-      }
-    })
-
-    const takenSeats = conflicts.map(s => s.seatNumber)
-    if (takenSeats.length > 0) {
-      // ตรวจสอบว่ามี hold เก่าของ session เดิมหรือไม่
-      const existingHolds = await prisma.seatBooking.findMany({
-        where: {
-          busRoundId,
-          sessionToken,
-          bookingId: null,
-          holdExpiresAt: { gt: now }
-        }
-      })
-
-      // ถ้ามี hold เก่า ให้ยกเลิกทั้งหมดก่อนสร้างใหม่
-      if (existingHolds.length > 0) {
-        console.log(`[SEAT_BOOKING] Auto-cancelling ${existingHolds.length} existing holds for session ${sessionToken}`)
-        await prisma.seatBooking.deleteMany({
-          where: {
-            busRoundId,
-            sessionToken,
-            bookingId: null
-          }
+        console.log('[HOLD] 409 conflicts:', JSON.stringify(debugList))
+        return res.status(409).json({
+          message: 'ที่นั่งไม่ว่าง',
+          takenSeats: debugList.map(d => d.seatNumber),
+          debug: debugList
         })
       }
-
-      return res.status(409).json({ 
-        message: 'ที่นั่งไม่ว่าง', 
-        takenSeats,
-        autoCancelled: existingHolds.length > 0 ? existingHolds.length : undefined,
-        sessionToken
+    } else if (otherHolds.length > 0) {
+      // ไม่มี booking แต่มี hold ของคนอื่น
+      const debugList = otherHolds.map(r => ({
+        seatNumber: r.seatNumber, reason: 'hold อยู่ (session อื่น)', expiresAt: r.holdExpiresAt
+      }))
+      console.log('[HOLD] 409 hold-only conflicts:', JSON.stringify(debugList))
+      return res.status(409).json({
+        message: 'ที่นั่งไม่ว่าง',
+        takenSeats: debugList.map(d => d.seatNumber),
+        debug: debugList
       })
     }
 
-    // สร้าง hold ใหม่
+    // ── 5. สร้าง hold ใหม่ ──
     await prisma.seatBooking.createMany({
       data: seatNumbers.map(sn => ({
-        busRoundId,
+        busRoundId: bRId,
         seatNumber: sn,
         gender: gender || null,
         sessionToken,
@@ -188,8 +180,10 @@ router.post('/hold', async (req, res) => {
       }))
     })
 
+    console.log('[HOLD] success — held seats:', seatNumbers, 'session:', sessionToken)
     res.json({ success: true, expiresAt: holdExpiresAt, sessionToken })
   } catch (e) {
+    console.error('[HOLD] error:', e.message)
     res.status(500).json({ message: e.message })
   }
 })
