@@ -105,6 +105,18 @@ router.patch('/guest/:sessionToken', async (req, res) => {
       return res.status(404).json({ message: 'Valid booking session not found' });
     }
 
+    // ── ตรวจว่า SeatBooking ยังอยู่ (ที่นั่งไม่ถูกจองโดยคนอื่น) ──
+    const seatBookings = await prisma.seatBooking.findMany({
+      where: { bookingId: session.bookingId },
+      select: { id: true, seatNumber: true }
+    });
+    if (seatBookings.length === 0) {
+      return res.status(409).json({
+        message: 'ที่นั่งของคุณถูกจองโดยผู้อื่นแล้ว กรุณาเลือกที่นั่งใหม่อีกครั้ง',
+        code: 'SEAT_TAKEN'
+      });
+    }
+
     const payment = await prisma.payment.findFirst({
       where: { bookingId: session.bookingId }
     });

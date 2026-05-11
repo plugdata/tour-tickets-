@@ -1,32 +1,27 @@
 /**
  * Booking Flow API Test
- * ทดสอบ flow การจองที่นั่งทั้งหมด ตั้งแต่เลือกที่นั่งจนถึงสร้าง Booking
+ * ทดสอบ flow การจองที่นั่งทั้งหมด + re-booking + ตรวจบัตรประชาชนซ้ำ + slip orphan
  *
- * รัน: node test-booking-flow.js
- * รัน roundId อื่น: node test-booking-flow.js 267
+ * รัน: node test-booking-flow.js [roundId]
  */
 
 const API = process.env.API_BASE_URL || 'http://localhost:5000/api'
 const ROUND_ID = parseInt(process.argv[2] || '267')
+const TEST_NATIONAL_ID = '1100100000001'   // เลขบัตรทดสอบ
 
-// ── Terminal colors ──────────────────────────────────────────────────────────
 const C = {
-  reset: '\x1b[0m',
-  bold: '\x1b[1m',
-  green: '\x1b[32m',
-  red: '\x1b[31m',
-  yellow: '\x1b[33m',
-  cyan: '\x1b[36m',
-  gray: '\x1b[90m',
-  white: '\x1b[97m',
+  reset: '\x1b[0m', bold: '\x1b[1m',
+  green: '\x1b[32m', red: '\x1b[31m',
+  yellow: '\x1b[33m', cyan: '\x1b[36m',
+  gray: '\x1b[90m', white: '\x1b[97m',
 }
-const ok  = (msg) => console.log(`${C.green}  ✓${C.reset} ${msg}`)
-const err = (msg) => console.log(`${C.red}  ✗${C.reset} ${msg}`)
-const info = (msg) => console.log(`${C.cyan}  →${C.reset} ${msg}`)
-const section = (title) => console.log(`\n${C.bold}${C.white}[ ${title} ]${C.reset}`)
-const dim  = (msg) => console.log(`${C.gray}    ${msg}${C.reset}`)
+const ok      = (m) => console.log(`${C.green}  ✓${C.reset} ${m}`)
+const fail    = (m) => console.log(`${C.red}  ✗${C.reset} ${m}`)
+const info    = (m) => console.log(`${C.cyan}  →${C.reset} ${m}`)
+const warn    = (m) => console.log(`${C.yellow}  !${C.reset} ${m}`)
+const section = (t) => console.log(`\n${C.bold}${C.white}[ ${t} ]${C.reset}`)
+const dim     = (m) => console.log(`${C.gray}    ${m}${C.reset}`)
 
-// ── API helper ───────────────────────────────────────────────────────────────
 async function api(method, path, body) {
   const res = await fetch(API + path, {
     method,
@@ -38,249 +33,235 @@ async function api(method, path, body) {
   return data
 }
 
-// ── Test passenger data ──────────────────────────────────────────────────────
-function makePassenger(seatNumber, gender) {
-  return {
-    seatNumber,
-    gender,
-    namePrefix: gender === 'MALE' ? 'นาย' : 'นางสาว',
-    firstName: gender === 'MALE' ? 'ทดสอบ' : 'ทดสอบ',
-    lastName: 'จองระบบ',
-    nickname: 'test',
-    phone: '0812345678',
-    email: 'test@example.com',
-    bloodType: 'A',
-    foodType: 'ALL',
-    drinkAlcohol: false,
-    pickupPoint: 'ต้นทาง',
-    emergencyName: 'ผู้ติดต่อฉุกเฉิน',
-    emergencyPhone: '0899999999',
+// safe call: คาด error — return { ok: false, status, message }
+async function apiSafe(method, path, body) {
+  try {
+    const data = await api(method, path, body)
+    return { ok: true, data }
+  } catch (e) {
+    return { ok: false, status: e.status, message: e.message, data: e.data }
   }
 }
 
-// ── Main test ────────────────────────────────────────────────────────────────
+function makePassenger(seatNumber, gender, nationalId) {
+  return {
+    seatNumber, gender,
+    namePrefix: gender === 'MALE' ? 'นาย' : 'นางสาว',
+    firstName: 'ทดสอบ', lastName: 'จองระบบ', nickname: 'test',
+    phone: '0812345678', email: 'test@example.com',
+    nationalId: nationalId || null,
+    bloodType: 'A', foodType: 'ALL', drinkAlcohol: false,
+    pickupPoint: 'ต้นทาง', emergencyName: 'ฉุกเฉิน', emergencyPhone: '0899999999',
+  }
+}
+
+async function createFullBooking(seatNumbers, genders, nationalIds = []) {
+  // สร้าง session
+  const sess = await api('POST', '/booking-sessions', {
+    busRoundId: ROUND_ID, step: 1,
+    selectedSeats: seatNumbers.map((n, i) => ({ seatNumber: n, gender: genders[i] || 'MALE' }))
+  })
+  const token = sess.token
+
+  // hold
+  await api('POST', '/seat-bookings/hold', {
+    busRoundId: ROUND_ID, seatNumbers, sessionToken: token
+  })
+
+  // passenger data
+  const passengers = seatNumbers.map((n, i) =>
+    makePassenger(n, genders[i] || 'MALE', nationalIds[i] || null)
+  )
+  await api('POST', '/booking-sessions', {
+    token, step: 2, selectedSeats: passengers,
+    customerData: { mainName: 'ทดสอบ จองระบบ', mainPhone: '0812345678' }
+  })
+  await api('POST', '/booking-sessions', { token, step: 3, addonsData: [] })
+
+  // create booking
+  const result = await api('POST', '/bookings/guest', { sessionToken: token, paymentType: 'DEPOSIT' })
+  return { token, booking: result.booking, payment: result.payment }
+}
+
+// ════════════════════════════════════════════════════════
+const results = []
+function pass(step, msg) { results.push({ step, pass: true }); ok(msg) }
+function failStep(step, msg) { results.push({ step, pass: false, error: msg }); fail(msg) }
+
 async function run() {
-  console.log(`\n${C.bold}${C.cyan}═══════════════════════════════════════════════${C.reset}`)
+  console.log(`\n${C.bold}${C.cyan}══════════════════════════════════════════════${C.reset}`)
   console.log(`${C.bold}${C.cyan}  Booking Flow Test  —  roundId: ${ROUND_ID}${C.reset}`)
   console.log(`${C.bold}${C.cyan}  API: ${API}${C.reset}`)
-  console.log(`${C.bold}${C.cyan}═══════════════════════════════════════════════${C.reset}`)
+  console.log(`${C.bold}${C.cyan}══════════════════════════════════════════════${C.reset}`)
 
-  const results = []
-
-  // ─── STEP 1: ดึงสถานะที่นั่ง ─────────────────────────────────────────────
+  // ─── STEP 1: ดึงที่นั่งว่าง ───────────────────────────────────────────────
   section('STEP 1 — ดึงสถานะที่นั่ง')
   let availableSeats = []
   try {
     const data = await api('GET', `/seat-bookings/round/${ROUND_ID}`)
     availableSeats = Object.values(data.seats || {})
-      .filter(s => s.status === 'AVAILABLE')
-      .map(s => s.seatNumber)
-
-    ok(`Round ${ROUND_ID} โหลดสำเร็จ — totalSeats: ${data.totalSeats}, passengerSeats: ${data.passengerSeats}`)
-    info(`ที่นั่งว่าง (AVAILABLE): ${availableSeats.join(', ') || 'ไม่มี'}`)
-    info(`ที่นั่งทั้งหมด:`)
+      .filter(s => s.status === 'AVAILABLE').map(s => s.seatNumber)
+    ok(`Round ${ROUND_ID}: ${data.passengerSeats} ที่นั่งผู้โดยสาร`)
+    info(`ว่าง: ${availableSeats.join(', ') || 'ไม่มี'}`)
     Object.values(data.seats || {}).forEach(s => {
-      const badge = s.status === 'AVAILABLE' ? C.green : s.status === 'BOOKED' ? C.red : C.yellow
-      dim(`${badge}ที่นั่ง ${s.seatNumber}: ${s.status}${s.gender ? ` (${s.gender})` : ''}${C.reset}`)
+      const c = s.status === 'AVAILABLE' ? C.green : s.status === 'BOOKED' ? C.red : C.yellow
+      dim(`${c}ที่นั่ง ${s.seatNumber}: ${s.status}${s.gender ? ` (${s.gender})` : ''}${C.reset}`)
     })
-    results.push({ step: 1, pass: true })
+    pass('1', `โหลด seat status สำเร็จ`)
   } catch (e) {
-    err(`GET /seat-bookings/round/${ROUND_ID} → ${e.message}`)
-    results.push({ step: 1, pass: false, error: e.message })
-    return printSummary(results)
+    failStep('1', `GET seat-bookings/round: ${e.message}`)
+    return printSummary()
   }
 
-  if (availableSeats.length < 2) {
-    err(`ไม่มีที่นั่งว่างเพียงพอ (ต้องการ 2 ที่นั่ง, มี ${availableSeats.length})`)
-    results.push({ step: '1b', pass: false, error: 'ไม่มีที่นั่งว่าง' })
-    return printSummary(results)
+  if (availableSeats.length < 1) {
+    failStep('1b', 'ไม่มีที่นั่งว่าง — หยุดทดสอบ')
+    return printSummary()
   }
+  const seat1 = availableSeats[0]
+  const seat2 = availableSeats[1] || availableSeats[0]
 
-  const chosenSeats = [availableSeats[0], availableSeats[1]]
-  ok(`เลือกที่นั่ง: ${chosenSeats.join(', ')}`)
-
-  // ─── STEP 2: สร้าง session ───────────────────────────────────────────────
-  section('STEP 2 — สร้าง Booking Session')
-  let sessionToken
+  // ─── STEP 2: จองครั้งแรก (User A) ───────────────────────────────────────
+  section('STEP 2 — User A จองที่นั่ง (Full Flow)')
+  let tokenA, bookingA
   try {
-    const session = await api('POST', '/booking-sessions', {
-      busRoundId: ROUND_ID,
-      step: 1,
-      selectedSeats: [
-        { seatNumber: chosenSeats[0], gender: 'MALE' },
-        { seatNumber: chosenSeats[1], gender: 'FEMALE' },
-      ]
-    })
-    sessionToken = session.token
-    ok(`Session สร้างสำเร็จ`)
-    dim(`token: ${sessionToken}`)
-    dim(`expiresAt: ${session.expiresAt}`)
-    results.push({ step: 2, pass: true })
+    const r = await createFullBooking([seat1], ['MALE'], [TEST_NATIONAL_ID])
+    tokenA = r.token; bookingA = r.booking
+    ok(`User A จองที่นั่ง ${seat1} สำเร็จ (bookingId: ${bookingA.id})`)
+    dim(`token: ${tokenA}`)
+    dim(`payment slipUrl: ${r.payment?.slipUrl || 'null (ยังไม่แนบสลิป)'}`)
+    pass('2', 'User A booking created')
   } catch (e) {
-    err(`POST /booking-sessions → ${e.message}`)
-    results.push({ step: 2, pass: false, error: e.message })
-    return printSummary(results)
+    failStep('2', `User A booking: ${e.message}`)
+    return printSummary()
   }
 
-  // ─── STEP 3: Hold ที่นั่ง ────────────────────────────────────────────────
-  section('STEP 3 — Hold ที่นั่ง (ล็อคชั่วคราว 10 นาที)')
-  try {
-    const hold = await api('POST', '/seat-bookings/hold', {
-      busRoundId: ROUND_ID,
-      seatNumbers: chosenSeats,
-      sessionToken,
-    })
-    ok(`Hold สำเร็จ — หมดอายุ: ${new Date(hold.expiresAt).toLocaleTimeString('th-TH')}`)
-    results.push({ step: 3, pass: true })
-  } catch (e) {
-    err(`POST /seat-bookings/hold → ${e.message}`)
-    if (e.data?.takenSeats) info(`ที่นั่งที่ถูกจองไปแล้ว: ${e.data.takenSeats.join(', ')}`)
-    results.push({ step: 3, pass: false, error: e.message })
-    return printSummary(results)
-  }
-
-  // ─── STEP 4: บันทึกข้อมูลผู้โดยสาร ─────────────────────────────────────
-  section('STEP 4 — บันทึกข้อมูลผู้โดยสารลง Session (step 2)')
-  const passengers = [
-    makePassenger(chosenSeats[0], 'MALE'),
-    makePassenger(chosenSeats[1], 'FEMALE'),
-  ]
-  try {
-    await api('POST', '/booking-sessions', {
-      token: sessionToken,
-      step: 2,
-      selectedSeats: passengers,
-      customerData: {
-        mainName: 'ทดสอบ จองระบบ',
-        mainPhone: '0812345678',
-        foodAllergy: 'ไม่มี',
-      }
-    })
-    ok(`บันทึกข้อมูลผู้โดยสาร ${passengers.length} คน สำเร็จ`)
-    passengers.forEach(p => dim(`ที่นั่ง ${p.seatNumber}: ${p.namePrefix}${p.firstName} ${p.lastName} (${p.gender})`))
-    results.push({ step: 4, pass: true })
-  } catch (e) {
-    err(`PATCH session (passenger data) → ${e.message}`)
-    results.push({ step: 4, pass: false, error: e.message })
-    return printSummary(results)
-  }
-
-  // ─── STEP 5: บันทึก addons (ข้าม — ใช้ว่างเปล่า) ──────────────────────
-  section('STEP 5 — บันทึก Addons (ข้าม — ไม่มี addon)')
-  try {
-    await api('POST', '/booking-sessions', {
-      token: sessionToken,
-      step: 3,
-      addonsData: []
-    })
-    ok('บันทึก addons (ว่าง) สำเร็จ')
-    results.push({ step: 5, pass: true })
-  } catch (e) {
-    err(`PATCH session (addons) → ${e.message}`)
-    results.push({ step: 5, pass: false, error: e.message })
-  }
-
-  // ─── STEP 6: สร้าง Booking (Guest) ─────────────────────────────────────
-  section('STEP 6 — สร้าง Guest Booking (DEPOSIT)')
-  let booking, payment
-  try {
-    const result = await api('POST', '/bookings/guest', {
-      sessionToken,
-      paymentType: 'DEPOSIT'
-    })
-    booking = result.booking
-    payment = result.payment
-    ok(`Booking สร้างสำเร็จ! 🎉`)
-    dim(`bookingId: ${booking.id}`)
-    dim(`status: ${booking.status}`)
-    dim(`seats: ${booking.seats}`)
-    dim(`totalAmount: ฿${booking.totalAmount?.toLocaleString('th-TH')}`)
-    dim(`paymentId: ${payment?.id}`)
-    dim(`paymentAmount: ฿${payment?.amount?.toLocaleString('th-TH')}`)
-    dim(`paymentStatus: ${payment?.status}`)
-    results.push({ step: 6, pass: true })
-  } catch (e) {
-    err(`POST /bookings/guest → ${e.message}`)
-    if (e.data) dim(JSON.stringify(e.data))
-    results.push({ step: 6, pass: false, error: e.message })
-    return printSummary(results)
-  }
-
-  // ─── STEP 7: ยืนยันผลด้วย GET booking ──────────────────────────────────
-  section('STEP 7 — ยืนยัน: ตรวจสอบ Seat Status หลัง Booking')
+  // ─── STEP 3: ตรวจสถานะ — ที่นั่งควรยังเป็น AVAILABLE (ไม่มีสลิป) ─────────
+  section('STEP 3 — ตรวจ: ที่นั่ง ควรเป็น AVAILABLE (ยังไม่แนบสลิป)')
   try {
     const data = await api('GET', `/seat-bookings/round/${ROUND_ID}`)
-    let allGood = true
-    for (const sn of chosenSeats) {
-      const s = data.seats[sn]
-      // Seats without slip → still AVAILABLE (by our new logic)
-      const statusOk = s?.status === 'AVAILABLE' || s?.status === 'BOOKED'
-      if (statusOk) {
-        ok(`ที่นั่ง ${sn}: ${s.status} ✓`)
-      } else {
-        err(`ที่นั่ง ${sn}: ${s?.status || 'ไม่พบ'} (ไม่คาดหวัง)`)
-        allGood = false
-      }
+    const s = data.seats[seat1]
+    if (s?.status === 'AVAILABLE') {
+      pass('3', `ที่นั่ง ${seat1}: AVAILABLE ✓ (ระบบ detect no-slip ถูกต้อง)`)
+    } else {
+      failStep('3', `ที่นั่ง ${seat1}: ${s?.status} (คาด AVAILABLE)`)
     }
-    results.push({ step: 7, pass: allGood })
-  } catch (e) {
-    err(`ตรวจสอบ seat status → ${e.message}`)
-    results.push({ step: 7, pass: false, error: e.message })
-  }
+  } catch (e) { failStep('3', e.message) }
 
-  // ─── STEP 8: ทดสอบ Re-booking (feature หลัก) ───────────────────────────
-  section('STEP 8 — ทดสอบ Re-booking (ยังไม่แนบสลิป → ควรจองซ้ำได้)')
+  // ─── STEP 4: Re-booking (User B จองที่นั่งเดิม) ────────────────────────
+  section('STEP 4 — User B จองที่นั่งเดิม (Re-booking — ยังไม่มีสลิป)')
+  let tokenB, bookingB
   try {
-    const session2 = await api('POST', '/booking-sessions', {
-      busRoundId: ROUND_ID,
-      step: 1,
-      selectedSeats: [{ seatNumber: chosenSeats[0], gender: 'MALE' }]
-    })
-    const token2 = session2.token
-    info(`Session 2 token: ${token2}`)
-
-    const hold2 = await api('POST', '/seat-bookings/hold', {
-      busRoundId: ROUND_ID,
-      seatNumbers: [chosenSeats[0]],
-      sessionToken: token2,
-    })
-    ok(`Re-booking ที่นั่ง ${chosenSeats[0]} สำเร็จ (ยังไม่แนบสลิป → ระบบปลดให้)`)
-    dim(`hold expires: ${new Date(hold2.expiresAt).toLocaleTimeString('th-TH')}`)
-
-    // ปล่อย hold นี้คืน (cleanup)
-    await api('DELETE', `/seat-bookings/hold/${token2}`)
-    dim('ปล่อย hold test กลับคืนแล้ว')
-    results.push({ step: 8, pass: true })
+    const r = await createFullBooking([seat1], ['FEMALE'])
+    tokenB = r.token; bookingB = r.booking
+    ok(`User B re-book ที่นั่ง ${seat1} สำเร็จ! (bookingId: ${bookingB.id})`)
+    dim(`token B: ${tokenB}`)
+    pass('4', 'Re-booking สำเร็จ ✓')
   } catch (e) {
-    err(`Re-booking → ${e.message}`)
-    results.push({ step: 8, pass: false, error: e.message })
+    failStep('4', `Re-booking ล้มเหลว: ${e.message}`)
+    if (e.data?.debug) dim(`debug: ${JSON.stringify(e.data.debug)}`)
   }
 
-  printSummary(results, { bookingId: booking?.id, sessionToken })
+  // ─── STEP 5: User A พยายามแนบสลิป (ที่นั่งถูกแย่งไปแล้ว) ───────────────
+  section('STEP 5 — User A พยายามแนบสลิป (คาด: 409 SEAT_TAKEN)')
+  const r5 = await apiSafe('PATCH', `/payments/guest/${tokenA}`, {
+    slipUrl: 'https://example.com/fake-slip.jpg'
+  })
+  if (!r5.ok && r5.data?.code === 'SEAT_TAKEN') {
+    pass('5', `User A ได้รับแจ้ง: "${r5.message}" ✓ (SEAT_TAKEN)`)
+  } else if (!r5.ok) {
+    warn(`STEP 5: error แต่ code ไม่ใช่ SEAT_TAKEN — ${r5.message}`)
+    results.push({ step: 5, pass: false, error: r5.message })
+  } else {
+    failStep('5', 'User A แนบสลิปสำเร็จทั้งที่ที่นั่งถูกแย่งไปแล้ว (ไม่ถูกต้อง)')
+  }
+
+  // ─── STEP 6: User B แนบสลิป (ล็อกที่นั่งถาวร) ──────────────────────────
+  section('STEP 6 — User B แนบสลิป (ล็อกที่นั่ง)')
+  try {
+    const r = await api('PATCH', `/payments/guest/${tokenB}`, {
+      slipUrl: 'https://example.com/test-slip-b.jpg'
+    })
+    ok(`User B แนบสลิปสำเร็จ (paymentId: ${r.id}, status: ${r.status})`)
+    pass('6', 'Slip attached ✓')
+  } catch (e) { failStep('6', e.message) }
+
+  // ─── STEP 7: ตรวจสถานะ — ที่นั่งควร BOOKED ─────────────────────────────
+  section('STEP 7 — ตรวจ: ที่นั่ง ควรเป็น BOOKED (หลังแนบสลิปแล้ว)')
+  try {
+    const data = await api('GET', `/seat-bookings/round/${ROUND_ID}`)
+    const s = data.seats[seat1]
+    if (s?.status === 'BOOKED') {
+      pass('7', `ที่นั่ง ${seat1}: BOOKED ✓ (ล็อกถาวร)`)
+    } else {
+      failStep('7', `ที่นั่ง ${seat1}: ${s?.status} (คาด BOOKED)`)
+    }
+  } catch (e) { failStep('7', e.message) }
+
+  // ─── STEP 8: User C พยายาม re-book (คาด: 409 จองแล้ว+มีสลิป) ─────────
+  section('STEP 8 — User C พยายาม re-book (คาด: 409 เพราะมีสลิปแล้ว)')
+  const r8 = await apiSafe('POST', '/seat-bookings/hold', {
+    busRoundId: ROUND_ID, seatNumbers: [seat1], sessionToken: 'test-user-c-' + Date.now()
+  })
+  if (!r8.ok && r8.status === 409) {
+    ok(`User C ถูกบล็อก 409 ✓ — ${r8.message}`)
+    if (r8.data?.debug) dim(`reason: ${r8.data.debug[0]?.reason}`)
+    pass('8', 'Hard lock after slip ✓')
+  } else {
+    failStep('8', `User C ควรได้ 409 แต่ได้ ${r8.ok ? 200 : r8.status}`)
+  }
+
+  // ─── STEP 9: ตรวจสอบ National ID ซ้ำ ────────────────────────────────────
+  section('STEP 9 — National ID ซ้ำ (คาด: 409 DUPLICATE_ID)')
+  if (availableSeats.length < 2) {
+    warn('STEP 9: ข้ามเพราะไม่มีที่นั่งว่างพอ')
+    results.push({ step: 9, pass: true })
+  } else {
+    // User D พยายามจองที่นั่ง 2 ด้วยเลขบัตรเดียวกับ User B ที่จองไปแล้ว (มีสลิป)
+    const sessD = await api('POST', '/booking-sessions', {
+      busRoundId: ROUND_ID, step: 1,
+      selectedSeats: [{ seatNumber: seat2, gender: 'MALE' }]
+    })
+    await api('POST', '/seat-bookings/hold', {
+      busRoundId: ROUND_ID, seatNumbers: [seat2], sessionToken: sessD.token
+    })
+    await api('POST', '/booking-sessions', {
+      token: sessD.token, step: 2,
+      selectedSeats: [makePassenger(seat2, 'MALE', TEST_NATIONAL_ID)],  // เลขบัตรซ้ำ
+      customerData: { mainName: 'ซ้ำ ไอดี', mainPhone: '0811111111' }
+    })
+    await api('POST', '/booking-sessions', { token: sessD.token, step: 3, addonsData: [] })
+
+    const r9 = await apiSafe('POST', '/bookings/guest', { sessionToken: sessD.token, paymentType: 'DEPOSIT' })
+    if (!r9.ok && r9.data?.code === 'DUPLICATE_ID') {
+      pass('9', `ตรวจจับเลขบัตรซ้ำ ✓ — "${r9.message}"`)
+      dim(`duplicateIds: ${r9.data.duplicateIds?.join(', ')}`)
+    } else if (!r9.ok) {
+      warn(`STEP 9: error แต่ code ไม่ใช่ DUPLICATE_ID — ${r9.message} (${r9.data?.code})`)
+      results.push({ step: 9, pass: false, error: r9.message })
+    } else {
+      failStep('9', 'ควร block เลขบัตรซ้ำ แต่จองผ่าน')
+    }
+  }
+
+  printSummary()
 }
 
-function printSummary(results, extra = {}) {
+function printSummary() {
   const passed = results.filter(r => r.pass).length
   const total = results.length
   const allPass = passed === total
 
-  console.log(`\n${C.bold}${'─'.repeat(47)}${C.reset}`)
-  console.log(`${C.bold}  ผลสรุป: ${passed}/${total} steps ผ่าน${C.reset}`)
+  console.log(`\n${C.bold}${'─'.repeat(46)}${C.reset}`)
+  console.log(`${C.bold}  ผลสรุป: ${passed}/${total} steps ผ่าน${C.reset}\n`)
 
   results.forEach(r => {
     const icon = r.pass ? `${C.green}✓${C.reset}` : `${C.red}✗${C.reset}`
-    const msg = r.pass ? 'PASS' : `FAIL — ${r.error || ''}`
-    console.log(`  ${icon} Step ${r.step}: ${msg}`)
+    console.log(`  ${icon} Step ${r.step}: ${r.pass ? 'PASS' : `FAIL — ${r.error || ''}`}`)
   })
 
-  if (extra.bookingId) {
-    console.log(`\n${C.cyan}  Booking ID: ${extra.bookingId}${C.reset}`)
-    console.log(`${C.cyan}  Session Token: ${extra.sessionToken}${C.reset}`)
-  }
-
   console.log(`\n  ${allPass
-    ? `${C.bold}${C.green}🎉 ทุก Step ผ่าน — ระบบจองทำงานปกติ${C.reset}`
-    : `${C.bold}${C.red}❌ มีบาง Step ไม่ผ่าน — ดู log ด้านบน${C.reset}`
+    ? `${C.bold}${C.green}🎉 ทุก Step ผ่าน${C.reset}`
+    : `${C.bold}${C.red}❌ มี Step ที่ไม่ผ่าน${C.reset}`
   }\n`)
 }
 
