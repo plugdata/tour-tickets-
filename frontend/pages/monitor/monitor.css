@@ -131,7 +131,27 @@ body { font-family: 'Sarabun', sans-serif !important; font-size: 15px; backgroun
 
 .sc-divider { border-bottom: 1.5px dashed #e4e6ef; margin: 0 0 6px; }
 
-.sc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
+.sc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    align-content: start;
+}
+
+/* หัวการ์ดแผนที่ — เลือกจำนวนช่องผู้โดยสาร */
+.seatmap-card .card-header .seatmap-cap-select {
+    width: auto;
+    min-width: 5.5rem;
+    max-width: 7rem;
+    font-size: .72rem;
+    line-height: 1.2;
+    padding-top: 0.15rem;
+    padding-bottom: 0.15rem;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.35);
+}
+.seatmap-card .card-header .seatmap-cap-select option { color: #1e293b; }
 
 .sc-cell {
     display: flex; flex-direction: column;
@@ -251,9 +271,69 @@ body { font-family: 'Sarabun', sans-serif !important; font-size: 15px; backgroun
 .booking-table tr.s-cancelled td { background: #fafafa; opacity: .5; }
 .booking-table tbody tr:hover td { background: #f1f5f9 !important; }
 
+.payment-trip-dep-hint { opacity: 0.95; }
+
+.pay-status-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    align-items: center;
+}
+
+.pay-ic {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    line-height: 1;
+    cursor: default;
+}
+
+.pay-ic.ok { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+.pay-ic.warn { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+.pay-ic.pending { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.pay-ic.muted { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
+.pay-ic.danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+.pay-ic-policy,
+.policy-ic-link {
+    cursor: pointer;
+    text-decoration: none !important;
+    color: inherit;
+}
+
+.policy-ic-link:focus-visible {
+    outline: 2px solid #1cb8a0;
+    outline-offset: 2px;
+}
+
 .col-div  { border-left: 2px solid #1cb8a0 !important; }
 .col-link { white-space: nowrap; }
 .cell-id  { font-family: monospace; font-size: .68rem; color: #64748b; }
+
+.addon-list-cell .addon-row + .addon-row {
+    margin-top: 0.45rem;
+    padding-top: 0.45rem;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.booking-table td.addon-list-cell {
+    vertical-align: top;
+    max-width: 280px;
+}
+
+.booking-table td.cash-slip-col {
+    vertical-align: middle;
+    max-width: 120px;
+}
+
+.cash-slip-btn {
+    font-size: 0.75rem;
+}
 
 .paid-full    { color: #059669; font-weight: 700; }
 .paid-partial { color: #d97706; font-weight: 700; }
@@ -439,6 +519,23 @@ body { font-family: 'Sarabun', sans-serif !important; font-size: 15px; backgroun
         white-space: nowrap !important;
         border-bottom: 0.5pt solid #e2e8f0 !important;
         color: #1a2340 !important;
+    }
+
+    .booking-table td.addon-list-cell {
+        white-space: normal !important;
+        vertical-align: top !important;
+    }
+
+    .booking-table td.cash-slip-col {
+        white-space: normal !important;
+    }
+
+    .pay-status-strip { gap: 2px !important; flex-wrap: nowrap !important; }
+    .pay-ic {
+        width: 4.2mm !important;
+        height: 4.2mm !important;
+        font-size: 4.5pt !important;
+        border-radius: 1mm !important;
     }
 
     .booking-table tr { page-break-inside: avoid; }

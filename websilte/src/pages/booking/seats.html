@@ -728,7 +728,9 @@
 
     let roundId = null
     let roundData = null
-    let totalSeats = 9           // overwritten from API
+    /** ช่องผู้โดยสารบนแผง seatchart (เลข 2 .. chartPassengerSlots+1) — ตั้งตอน load; poll ไม่ทับด้วย totalSeats ดิบจาก API คนละความหมาย */
+    let chartPassengerSlots = 9
+    let totalSeats = 9           // mirror chartPassengerSlots หลัง load (compat โค้ดเดิม)
     let sc = null        // Seatchart instance
     let genderModal
     let pollInterval = null
@@ -866,9 +868,16 @@
       roundData = all.find(r => r.id == roundId)
       if (!roundData) { showError('ไม่พบรอบรถนี้'); throw new Error('not found') }
 
-      totalSeats = roundData.totalSeats || 9
+      chartPassengerSlots = Math.max(1, (Number(roundData.totalSeats) || 10) - 1)  // seat 1 = driver/staff
+      const qsCap = new URLSearchParams(location.search).get('chartSeats')
+      if (qsCap != null) {
+        const c = parseInt(qsCap, 10)
+        if (Number.isFinite(c) && c >= 1 && c <= 60) chartPassengerSlots = c
+      }
+      totalSeats = chartPassengerSlots
 
-      const isFull = roundData.bookedSeats >= totalSeats   // totalSeats = ที่นั่งผู้โดยสารสูงสุด (เทียบกับ bookedSeats ใน DB)
+      const busCap = Math.max(1, (Number(roundData.totalSeats) || 10) - 1)
+      const isFull = roundData.bookedSeats >= busCap
       const isOpen = roundData.isOpen && !isFull
       const d = new Date(roundData.departDate)
 
@@ -934,8 +943,8 @@
     // seatchart.js init
     // ════════════════════════════════════════════════════════════════
     function initSeatchart() {
-      // totalSeats จากรอบรถ = จำนวนที่นั่งผู้โดยสาร; เลขที่นั่งบนแผง = 2 .. passengerSeats+1 (เลข 1 ไม่เปิดจอง)
-      const passengerSeats = totalSeats
+      // เลขที่นั่งบนแผง = 2 .. chartPassengerSlots+1 (ไม่ผูกกับ totalSeats ดิบจาก poll)
+      const passengerSeats = chartPassengerSlots
       const rows = Math.ceil(passengerSeats / 3)
       const cols = 3
       const price = roundData?.trip?.price || 0
@@ -1148,8 +1157,8 @@
         const data = await apiFetch(`/seat-bookings/round/${roundId}`)
         const apiSeats = data.seats || {}
         lastApiSeats = apiSeats
-        totalSeats = data.totalSeats || totalSeats
-        const pollPassengerSeats = data.passengerSeats ?? totalSeats
+        // อย่าใช้ data.totalSeats ทับจำนวนช่องแผง — ทำให้ seatchart (สร้างจาก loadRound) ไม่ตรงกับลูป poll (เคยเห็นเลขไหลถึง 13)
+        const pollPassengerSeats = chartPassengerSlots
 
         // Check if session expired and auto-refresh
         if (sessionToken && data.sessionExpired) {

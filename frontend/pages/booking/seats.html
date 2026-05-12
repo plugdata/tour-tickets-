@@ -517,13 +517,14 @@ function seatHtml(n) {
 }
 
 function renderSeatGrid() {
-  const rows = Math.ceil(totalSeats / 3)
+  const passengerCount = totalSeats - 1  // seat 1 = driver/staff, passengers start at 2
+  const rows = Math.ceil(passengerCount / 3)
   let html = ''
   for (let row = 0; row < rows; row++) {
     html += '<div class="seat-row">'
     for (let col = 0; col < 3; col++) {
       const n = row * 3 + col + 2
-      html += (n <= totalSeats + 1) ? seatHtml(n) : '<div style="width:70px;height:70px"></div>'
+      html += (n <= totalSeats) ? seatHtml(n) : '<div style="width:70px;height:70px"></div>'
     }
     html += '</div>'
   }
@@ -620,8 +621,7 @@ async function pollSeats() {
   try {
     const data     = await apiFetch(`/seat-bookings/round/${roundId}`)
     const apiSeats = data.seats || {}
-    totalSeats     = data.totalSeats || totalSeats
-    const pollPassengerSeats = data.passengerSeats ?? totalSeats
+    const pollPassengerSeats = Number(data.passengerSeats ?? roundData?.totalSeats ?? totalSeats) || 9
 
     const lastSeat = pollPassengerSeats + 1
     for (let n = 2; n <= lastSeat; n++) {

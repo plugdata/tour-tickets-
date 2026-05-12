@@ -10,6 +10,10 @@ let currentBookings = [];
 let currentPaymentMap = {};
 let cancelModal;
 let pendingCancelId = null;
+/** รอบที่กำลังดู + snapshot ที่นั่ง (เดียวกับหน้าจอง) — ใช้ปรับแผง/เลือกจำนวนช่อง */
+let currentMonitorRound = null;
+let currentSeatRoundSnap = null;
+let seatMapCapSelectRoundId = null;
 
 /* ════════════════════════════════════════════════════════════════
    INIT
@@ -294,6 +298,14 @@ function showEmpty() {
     document.getElementById('mainPanel').classList.add('d-none');
     document.getElementById('emptyState').style.display = '';
     currentRows = [];
+    currentMonitorRound = null;
+    currentSeatRoundSnap = null;
+    seatMapCapSelectRoundId = null;
+    const wrap = document.getElementById('seatMapCapWrap');
+    if (wrap) {
+        wrap.classList.add('d-none');
+        wrap.classList.remove('d-flex');
+    }
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -306,14 +318,21 @@ async function loadMonitor() {
     document.getElementById('emptyState').style.display = 'none';
 
     try {
-        const [rounds, bookings, allPayments] = await Promise.all([
+        const [rounds, bookings, allPayments, seatSnap] = await Promise.all([
             API.busRounds.list(),
             API.bookings.byRound(roundId),
-            API.payments.list()
+            API.payments.list(),
+            API.seatBookings.byRound(roundId).catch(() => null)
         ]);
 
         const round = rounds.find(r => r.id === Number(roundId));
-        updateTripStrip(round);
+        if (!round) {
+            showToast('ไม่พบรอบรถ', 'danger');
+            showEmpty();
+            return;
+        }
+        currentMonitorRound = round;
+        currentSeatRoundSnap = seatSnap;
 
         // Build payment map
         const paymentMap = {};
@@ -345,7 +364,10 @@ async function loadMonitor() {
             const activeTotal = activePayments.reduce((s, p) => s + parseFloat(p.amount || 0), 0);
             
             const remaining = Math.max(0, bTotal - activeTotal);
-            const totalPaidAny = activeTotal;
+            const totalPaidActive = activeTotal;
+            const depositPaidSum = activePayments
+                .filter(p => p.type === 'DEPOSIT')
+                .reduce((s, p) => s + parseFloat(p.amount || 0), 0);
 
             const depositPay = activePayments.find(p => p.type === 'DEPOSIT') || activePayments[0] || null;
             const remainPay = activePayments.find(p => p.type === 'FULL') || (activePayments.length > 1 ? activePayments[1] : null);
@@ -358,16 +380,26 @@ async function loadMonitor() {
             const isFullPay = activePayments.some(p => p.type === 'FULL') || (remaining <= 0 && activeTotal > 0);
 
             const addons = b.bookingAddons || [];
-            const rowData = { 
-                booking: b, 
-                depositAmt: totalPaidAny, 
+            const cashPaymentSlips = activePayments
+                .filter(p => p.slipUrl)
+                .map(p => ({
+                    slipUrl: String(p.slipUrl).trim(),
+                    type: p.type,
+                    amount: parseFloat(p.amount || 0),
+                    status: p.status
+                }));
+            const rowData = {
+                booking: b,
+                depositPaidSum,
+                totalPaidActive,
                 confirmedTotal: confirmedAmt,
-                remaining, 
-                depSlipText, 
+                remaining,
+                depSlipText,
                 remSlipText,
                 isPendingPayment,
                 isFullPay,
-                addons 
+                addons,
+                cashPaymentSlips
             };
 
             const seats = b.seatBookings || [];
@@ -394,7 +426,8 @@ async function loadMonitor() {
         updateTripStrip(round, rows);
         const reqDep = round.trip?.deposit || 0;
         renderTable(rows, reqDep);
-        renderSeatMap(round);
+        setupSeatMapCapSelect(round, seatSnap);
+        renderSeatMap(round, seatSnap);
         renderApproval(bookings, paymentMap, reqDep);
 
     } catch (e) { showToast('โหลดล้มเหลว: ' + e.message, 'danger'); }
@@ -420,17 +453,21 @@ function updateTripStrip(round, rows = []) {
     if (rows.length > 0) {
         const activeRows = rows.filter(r => r.seat && r.booking.status !== 'CANCELLED');
         const bookedCount = activeRows.length;
-        const totalSeats = round.totalSeats || 0;
-        const remaining = Math.max(0, totalSeats - bookedCount);
+        const cap = resolveMonitorMapPassengerSlots(round, currentSeatRoundSnap);
+        const remaining = Math.max(0, cap - bookedCount);
 
         const uniqueIds = [...new Set(rows.map(r => r.booking.id))];
         const getRow = (id) => rows.find(r => r.booking.id === id);
         const totalRevenue = uniqueIds.reduce((s, id) => s + parseFloat(getRow(id).booking.totalAmount || 0), 0);
-        const totalDeposit = uniqueIds.reduce((s, id) => s + parseFloat(getRow(id).depositAmt || 0), 0);
+        const totalDeposit = uniqueIds.reduce((s, id) => s + parseFloat(getRow(id).depositPaidSum || 0), 0);
 
         document.getElementById('bannerPax').textContent = `${bookedCount} คน / เหลือ ${remaining}`;
         document.getElementById('bannerRevenue').textContent = formatMoney(totalRevenue);
         document.getElementById('bannerDeposit').textContent = formatMoney(totalDeposit);
+    } else {
+        const cap = resolveMonitorMapPassengerSlots(round, currentSeatRoundSnap);
+        const paxEl = document.getElementById('bannerPax');
+        if (paxEl) paxEl.textContent = `0 คน / เหลือ ${cap}`;
     }
 
     const today = new Date();
@@ -453,6 +490,110 @@ function renderKPI(rows) { }
 /* ════════════════════════════════════════════════════════════════
    TAB 1 — ตารางผู้โดยสาร
 ════════════════════════════════════════════════════════════════ */
+function escapeHtmlAttr(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function isSafeHttpUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    const u = url.trim();
+    return /^https?:\/\//i.test(u) || (u.startsWith('/') && !u.startsWith('//'));
+}
+
+/** สลิปเงินสดจาก Payment.slipUrl (มัดจำ / ชำระเต็ม) */
+function formatCashSlipHtml(slips) {
+    const list = slips || [];
+    if (!list.length) return '<span class="text-muted">-</span>';
+    const typeLab = t => (t === 'DEPOSIT' ? 'มัดจำ' : t === 'FULL' ? 'ชำระเต็ม' : (t || 'ชำระ'));
+    const stLab = s => (s === 'CONFIRMED' ? 'ยืนยันแล้ว' : s === 'PENDING' ? 'รอตรวจ' : s === 'REJECTED' ? 'ปฏิเสธ' : (s || ''));
+    const btns = list.map((p, idx) => {
+        const title = `${typeLab(p.type)} ${formatMoney(p.amount)} — ${stLab(p.status)} — เปิดสลิป`;
+        const tEsc = escapeHtmlAttr(title);
+        if (!isSafeHttpUrl(p.slipUrl)) {
+            return `<span class="badge bg-light text-danger border" style="font-size:.62rem;" title="URL สลิปไม่ถูกต้อง">!</span>`;
+        }
+        const href = escapeHtmlAttr(p.slipUrl.trim());
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary py-0 px-1 cash-slip-btn" title="${tEsc}"><i class="bi bi-file-earmark-image"></i><span class="d-none d-xxl-inline text-muted ms-1" style="font-size:.58rem;">${idx + 1}</span></a>`;
+    }).join('');
+    return `<div class="d-flex flex-wrap gap-1 justify-content-center align-items-center cash-slip-cell">${btns}</div>`;
+}
+
+function policyInsuranceCellHtml(b, f) {
+    const policyStatus = f?.insuranceForm?.status || 'NONE';
+    const href = `../bookings/view.html?id=${b.id}&fromRound=${b.busRoundId}`;
+    const map = {
+        NONE: { bi: 'bi-circle', cls: 'muted', title: 'ยังไม่มีกรมธรรม์ — คลิกเปิดการจอง' },
+        DRAFT: { bi: 'bi-file-earmark-text', cls: 'muted', title: 'ร่างกรมธรรม์ — คลิกแก้ไข/ดูการจอง' },
+        SUBMITTED: { bi: 'bi-hourglass-split', cls: 'pending', title: 'ส่งแล้ว รอตรวจ — คลิกดูการจอง' },
+        ISSUED: { bi: 'bi-check-circle-fill', cls: 'ok', title: 'ออกกรมธรรม์แล้ว — คลิกดูรายละเอียด' },
+        REJECTED: { bi: 'bi-x-octagon-fill', cls: 'danger', title: 'ไม่ผ่าน — คลิกดูการจอง' }
+    };
+    const meta = map[policyStatus] || { bi: 'bi-question-circle', cls: 'muted', title: String(policyStatus) };
+    return `<a href="${href}" target="_blank" rel="noopener" class="policy-ic-link pay-ic pay-ic-policy ${meta.cls}" title="${meta.title}"><i class="bi ${meta.bi}"></i></a>`;
+}
+
+function payStatusStripHtml(r, tripDepositRequired) {
+    const req = Number(tripDepositRequired) || 0;
+    const conf = r.confirmedTotal || 0;
+    const depSlipOk = r.depSlipText && r.depSlipText !== '-';
+    const remSlipOk = r.remSlipText && r.remSlipText !== '-';
+    const rem = Math.max(0, r.remaining || 0);
+    const paidAll = rem <= 0 && (r.totalPaidActive || 0) > 0;
+    const icons = [];
+
+    if (req > 0) {
+        const okTrip = conf >= req;
+        const titleTrip = okTrip
+            ? `ครบมัดจำตามทริปแล้ว (ยืนยันแล้ว ≥ ${formatMoney(req)})`
+            : r.isPendingPayment
+                ? `มียอดรอตรวจ — เกณฑ์ทริป ${formatMoney(req)} (ยืนยันแล้ว ${formatMoney(conf)})`
+                : `ยังไม่ครบมัดจำที่ยืนยันแล้ว — เกณฑ์ ${formatMoney(req)} / ยืนยัน ${formatMoney(conf)}`;
+        const cls = okTrip ? 'ok' : r.isPendingPayment ? 'pending' : 'warn';
+        const bi = okTrip ? 'bi-patch-check-fill' : r.isPendingPayment ? 'bi-hourglass-split' : 'bi-patch-minus';
+        icons.push(`<span class="pay-ic ${cls}" title="${titleTrip}"><i class="bi ${bi}"></i></span>`);
+    } else {
+        icons.push(`<span class="pay-ic muted" title="ทริปนี้ไม่กำหนดมัดจำ"><i class="bi bi-dash-lg"></i></span>`);
+    }
+
+    icons.push(`<span class="pay-ic ${depSlipOk ? 'ok' : 'muted'}" title="${depSlipOk ? 'มีหลักฐาน / สลิปมัดจำ' : 'ยังไม่มีสลิปมัดจำ'}"><i class="bi bi-file-earmark-image"></i></span>`);
+
+    const payTitle = paidAll
+        ? 'ชำระครบยอดสุทธิแล้ว'
+        : rem > 0
+            ? `ยังค้างชำระ ${formatMoney(rem)}`
+            : 'ยังไม่มีรายการชำระ';
+    icons.push(`<span class="pay-ic ${paidAll ? 'ok' : rem > 0 ? 'warn' : 'muted'}" title="${payTitle}"><i class="bi ${paidAll ? 'bi-check2-circle' : 'bi-wallet2'}"></i></span>`);
+
+    const remSlipTitle = remSlipOk
+        ? 'มีหลักฐานส่วนที่เหลือ'
+        : paidAll
+            ? 'ไม่มีสลิปแยกส่วนที่เหลือ (อาจชำระครั้งเดียว)'
+            : rem > 0
+                ? 'ยังไม่มีสลิปส่วนที่เหลือ'
+                : '-';
+    const remSlipCls = remSlipOk ? 'ok' : paidAll ? 'muted' : rem > 0 ? 'warn' : 'muted';
+    icons.push(`<span class="pay-ic ${remSlipCls}" title="${remSlipTitle}"><i class="bi bi-receipt-cutoff"></i></span>`);
+
+    return `<div class="pay-status-strip" role="group" aria-label="สถานะการชำระเงิน">${icons.join('')}</div>`;
+}
+
+function payStatusLegend(r, tripDepositRequired) {
+    const req = Number(tripDepositRequired) || 0;
+    const parts = [];
+    if (req > 0) {
+        parts.push((r.confirmedTotal || 0) >= req ? 'ครบเกณฑ์มัดจำทริป' : r.isPendingPayment ? 'รอตรวจ(เกณฑ์ทริป)' : 'ยังไม่ครบเกณฑ์มัดจำทริป');
+    } else parts.push('ไม่กำหนดมัดจำทริป');
+    parts.push(r.depSlipText && r.depSlipText !== '-' ? 'มีหลักฐานมัดจำ' : 'ไม่มีสลิปมัดจำ');
+    parts.push((r.remaining || 0) <= 0 && (r.totalPaidActive || 0) > 0 ? 'ชำระครบยอดสุทธิ' : `ค้าง ${formatMoney(Math.max(0, r.remaining || 0))}`);
+    parts.push(r.remSlipText && r.remSlipText !== '-' ? 'มีหลักฐานส่วนที่เหลือ' : 'ไม่มีสลิปส่วนที่เหลือ');
+    return parts.join(' | ');
+}
+
 function renderTable(rows, requiredDeposit = 0) {
     if (!rows.length) {
         document.getElementById('monitorBody').innerHTML =
@@ -467,7 +608,7 @@ function renderTable(rows, requiredDeposit = 0) {
             : `<span class="badge badge-pending">รอยืนยัน</span>`;
 
     document.getElementById('monitorBody').innerHTML = rows.map((r, i) => {
-        const { seat: f, booking: b, depositAmt, remaining, depSlipText, remSlipText, confirmedTotal, addons, isPendingPayment, isFullPay } = r;
+        const { seat: f, booking: b, depositPaidSum, totalPaidActive, remaining, addons } = r;
 
         const pickup = f?.pickupPoint || b.busRound?.startPoint || '-';
         const dropoff = f?.dropoffPoint || b.busRound?.endPoint || '-';
@@ -482,54 +623,47 @@ function renderTable(rows, requiredDeposit = 0) {
         const nick = f?.nickname || '-';
         const phone = f?.phone || b.user?.phone || '-';
 
-        const depAmt = isFullPay
-            ? `<div class="paid-full" style="font-size:.65rem; line-height:1.2;">ชำระเงินเต็มจำนวน<br><small class="text-muted" style="font-size:.6rem;">(${formatMoney(depositAmt)})</small></div>`
-            : (depositAmt > 0 ? `<span class="paid-partial">${formatMoney(depositAmt)}</span>` : '<span class="text-muted">-</span>');
-        
-        const depSlip = depSlipText !== '-' ? `<code style="font-size:.68rem;">${depSlipText}</code>` : '<span class="text-muted">-</span>';
+        const depIncomingCell = depositPaidSum > 0
+            ? `<span class="fw-semibold">${formatMoney(depositPaidSum)}</span>`
+            : '<span class="text-muted">-</span>';
+
+        const payIncomingCell = totalPaidActive > 0
+            ? `<span class="fw-semibold">${formatMoney(totalPaidActive)}</span>`
+            : '<span class="text-muted">-</span>';
+
         const remAmt = remaining > 0
             ? `<span class="unpaid">${formatMoney(remaining)}</span>` : `<span class="paid-full">ครบ</span>`;
-        const remSlip = remSlipText !== '-' ? `<code style="font-size:.68rem;">${remSlipText}</code>` : '<span class="text-muted">-</span>';
 
         // Only show addon on the first seat of this booking
         const isFirstSeat = !i || rows[i - 1].booking.id !== b.id;
 
         let addonSum = 0;
-        let a1 = '<span class="text-muted">-</span>', a2 = '<span class="text-muted">-</span>', aTotal = '<span class="text-muted">-</span>';
+        let addonsHtml = '<span class="text-muted">-</span>';
+        let aTotal = '<span class="text-muted">-</span>';
 
         if (isFirstSeat) {
             addons.forEach(a => addonSum += (a.price || 0) * (a.quantity || 1));
 
             const getAddonText = (a) => {
-                if (!a) return '<span class="text-muted">-</span>';
+                if (!a) return '';
                 const price = a.price || 0;
                 const qty = a.quantity || 1;
                 const total = price * qty;
-                return `<strong>${a.addon?.name || ''}</strong><br>
-                        <small class="text-muted" style="font-size:.67rem;">${formatMoney(price)} × ${qty} = ${formatMoney(total)}</small>`;
+                return `<div class="addon-row"><strong>${a.addon?.name || ''}</strong><br>
+                        <small class="text-muted" style="font-size:.67rem;">${formatMoney(price)} × ${qty} = ${formatMoney(total)}</small></div>`;
             };
 
-            a1 = getAddonText(addons[0]);
-            a2 = getAddonText(addons[1]);
-            if (addons.length > 2) {
-                // Combine remaining into a2 or show a hint
-                a2 += `<br><small class="text-primary">+ อีก ${addons.length - 2} รายการ</small>`;
-            }
+            addonsHtml = addons.length
+                ? addons.map(getAddonText).join('')
+                : '<span class="text-muted">-</span>';
             aTotal = addonSum > 0 ? `<span class="fw-bold text-primary">${formatMoney(addonSum)}</span>` : '<span class="text-muted">-</span>';
         }
+
+        const cashSlipCell = isFirstSeat ? formatCashSlipHtml(r.cashPaymentSlips) : '<span class="text-muted">-</span>';
 
         const isCancelled = b.status === 'CANCELLED';
         const isConfirmed = b.status === 'CONFIRMED';
         const rowCls = isCancelled ? 's-cancelled' : isConfirmed ? 's-confirmed' : 's-pending';
-
-        const policyStatus = f?.insuranceForm?.status || 'NONE';
-        const policyLabel = {
-            'NONE': '<span class="text-muted" style="font-size:.65rem;">-</span>',
-            'DRAFT': '<span class="badge bg-light text-muted border" style="font-size:.65rem;">ร่าง</span>',
-            'SUBMITTED': '<span class="badge" style="background:#fff7ed;color:#c2410c;border:1px solid #ffedd5;font-size:.65rem;">รอตรวจ</span>',
-            'ISSUED': '<span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #dcfce7;font-size:.65rem;">ออกแล้ว</span>',
-            'REJECTED': '<span class="badge bg-danger-subtle text-danger" style="font-size:.65rem;">ไม่ผ่าน</span>'
-        }[policyStatus] || `<span class="badge bg-secondary" style="font-size:.65rem;">${policyStatus}</span>`;
 
         const actionBtns = isCancelled
             ? `<span class="text-muted small">-</span>`
@@ -541,14 +675,6 @@ function renderTable(rows, requiredDeposit = 0) {
                    onclick="openCancelModal(${b.id})" title="ยกเลิกการจอง">
                    <i class="bi bi-x-lg"></i>
                </button>`;
-
-        const hasDepositLabel = r.confirmedTotal >= requiredDeposit && requiredDeposit > 0
-            ? `<i class="bi bi-check-circle-fill text-success"></i>`
-            : r.isPendingPayment
-                ? `<i class="bi bi-hourglass-split text-warning" title="รอตรวจสอบยอด"></i>`
-                : depositAmt > 0
-                    ? `<i class="bi bi-exclamation-circle-fill text-warning" title="ยอดเงินยังไม่ยืนยัน"></i>`
-                    : `<i class="bi bi-circle text-muted"></i>`;
 
         return `<tr class="${rowCls}">
             <td class="text-center no-print" style="vertical-align:middle;">
@@ -566,15 +692,15 @@ function renderTable(rows, requiredDeposit = 0) {
             <td class="cell-id">${natId}</td>
             <td class="text-center">${age}</td><td>${birth}</td>
             <td>${nick}</td><td>${phone}</td>
-            <td class="text-center">${policyLabel}</td>
-            <td class="text-center col-div">${hasDepositLabel}</td>
-            <td class="text-end">${depAmt}</td><td>${depSlip}</td>
-            <td class="text-end">${remAmt}</td><td>${remSlip}</td>
+            <td class="text-center align-middle">${policyInsuranceCellHtml(b, f)}</td>
+            <td class="text-end col-div">${depIncomingCell}</td>
+            <td class="text-end">${payIncomingCell}</td>
+            <td class="text-end">${remAmt}</td>
             <td class="text-end fw-bold">${formatMoney(b.totalAmount)}</td>
-            <td class="col-div" style="line-height:1.2;">${a1}</td>
-            <td style="line-height:1.2;">${a2}</td>
+            <td class="text-center align-middle">${payStatusStripHtml(r, requiredDeposit)}</td>
+            <td class="col-div addon-list-cell" style="line-height:1.25;">${addonsHtml}</td>
             <td class="text-end fw-bold text-primary">${aTotal}</td>
-            <td><span class="text-muted">-</span></td>
+            <td class="text-center align-middle cash-slip-col">${cashSlipCell}</td>
             <td class="text-center col-div col-link no-print">
                 <a href="../bookings/view.html?id=${b.id}&fromRound=${b.busRoundId}" class="btn btn-sm btn-outline-primary py-0 px-2"
                    title="ดูรายละเอียด" target="_blank"><i class="bi bi-receipt"></i></a>
@@ -586,12 +712,128 @@ function renderTable(rows, requiredDeposit = 0) {
 
 /* ════════════════════════════════════════════════════════════════
    SEAT MAP PANEL (left)
+   - เลขผู้โดยสารเริ่มที่ 2 — สูตรเดียวกับ frontend/pages/booking/seats.html renderSeatGrid
+   - จำนวนช่อง: ใช้ GET /seat-bookings/round/:id (เดียวกับหน้าจอง) + ปรับได้จาก dropdown (localStorage)
+   - แบ่งหลายคัน: floor/rem; รวมแผงเมื่อมีแค่ 1 คันที่ active
 ════════════════════════════════════════════════════════════════ */
-function renderSeatMap(round) {
+
+function monitorSeatPassengerStorageKey(rid) {
+    return `monitorSeatPassengerSlots_${rid}`;
+}
+
+function getMonitorStoredPassengerSlots(roundId) {
+    if (!roundId) return null;
+    const v = localStorage.getItem(monitorSeatPassengerStorageKey(roundId));
+    if (v == null || v === '') return null;
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) && n >= 1 && n <= 99 ? n : null;
+}
+
+function clearMonitorStoredPassengerSlots(roundId) {
+    localStorage.removeItem(monitorSeatPassengerStorageKey(roundId));
+}
+
+/** จำนวนช่องผู้โดยสารบนแผง — seat 1 = driver/staff, ผู้โดยสารเริ่มที่ 2 */
+function resolveMonitorMapPassengerSlots(round, seatSnap) {
+    const apiBase = Math.max(1, (Number(seatSnap?.passengerSeats ?? seatSnap?.totalSeats ?? round?.totalSeats) || 10) - 1);
+    const stored = getMonitorStoredPassengerSlots(round?.id);
+    return stored != null ? stored : apiBase;
+}
+
+function setupSeatMapCapSelect(round, seatSnap) {
+    const wrap = document.getElementById('seatMapCapWrap');
+    const sel = document.getElementById('seatMapCapSelect');
+    if (!wrap || !sel || !round) return;
+
+    wrap.classList.remove('d-none');
+    wrap.classList.add('d-flex');
+
+    const apiBase = Math.max(1, (Number(seatSnap?.passengerSeats ?? seatSnap?.totalSeats ?? round.totalSeats) || 10) - 1);
+    const stored = getMonitorStoredPassengerSlots(round.id);
+    const rebuild = seatMapCapSelectRoundId !== round.id;
+    seatMapCapSelectRoundId = round.id;
+
+    if (rebuild) {
+        const lo = Math.max(1, apiBase - 6);
+        const hi = Math.min(60, apiBase + 8);
+        sel.innerHTML = '';
+        const opt0 = document.createElement('option');
+        opt0.value = '';
+        opt0.textContent = `ตามรอบ (${apiBase})`;
+        sel.appendChild(opt0);
+        for (let i = lo; i <= hi; i++) {
+            const o = document.createElement('option');
+            o.value = String(i);
+            o.textContent = `${i} ช่อง`;
+            sel.appendChild(o);
+        }
+    }
+
+    if (stored != null) {
+        const match = [...sel.options].some(o => o.value === String(stored));
+        if (match) sel.value = String(stored);
+        else {
+            const o = document.createElement('option');
+            o.value = String(stored);
+            o.textContent = `${stored} ช่อง (บันทึก)`;
+            sel.appendChild(o);
+            sel.value = String(stored);
+        }
+    } else {
+        sel.value = '';
+    }
+}
+
+function onSeatMapCapSelectChange() {
+    const sel = document.getElementById('seatMapCapSelect');
+    if (!sel || !currentMonitorRound) return;
+    if (sel.value === '') clearMonitorStoredPassengerSlots(currentMonitorRound.id);
+    else {
+        const n = parseInt(sel.value, 10);
+        if (Number.isFinite(n) && n >= 1 && n <= 99)
+            localStorage.setItem(monitorSeatPassengerStorageKey(currentMonitorRound.id), String(n));
+    }
+    renderSeatMap(currentMonitorRound, currentSeatRoundSnap);
+}
+
+const MONITOR_FIRST_PAX_SEAT = 2;
+
+function monitorSlotsPerVan(totalPassengers, vanCount, vanIndex) {
+    const t = Math.max(0, Math.floor(Number(totalPassengers)) || 0);
+    const vc = Math.max(1, Math.floor(Number(vanCount)) || 1);
+    if (!t) return 0;
+    const base = Math.floor(t / vc);
+    const rem = t % vc;
+    return base + (vanIndex < rem ? 1 : 0);
+}
+
+/** Mirror: seats.html renderSeatGrid — row*3+col+firstSeat, n <= firstSeat + count - 1 */
+function monitorSeatNumbersForPassengerCount(passengerCount, firstSeat = MONITOR_FIRST_PAX_SEAT) {
+    const t = Math.max(0, Math.floor(Number(passengerCount)) || 0);
+    if (!t) return [];
+    const nums = [];
+    const rows = Math.ceil(t / 3);
+    const lastN = firstSeat + t - 1;
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < 3; col++) {
+            const n = row * 3 + col + firstSeat;
+            if (n <= lastN) nums.push(n);
+        }
+    }
+    return nums;
+}
+
+function renderSeatMap(round, seatSnap) {
     const el = document.getElementById('seatMapContent');
     if (!round) { el.innerHTML = '<div class="text-muted small text-center py-3">ไม่พบข้อมูล</div>'; return; }
 
-    const totalSeats = round.totalSeats;
+    const apiPassengerSlots = Math.max(1, (Number(seatSnap?.passengerSeats ?? seatSnap?.totalSeats ?? round.totalSeats) || 10) - 1);
+    const passengerSeats = resolveMonitorMapPassengerSlots(round, seatSnap);
+    el.dataset.apiPassengerSlots = String(apiPassengerSlots);
+    el.dataset.mapPassengerSlots = String(passengerSeats);
+    el.title = passengerSeats !== apiPassengerSlots
+        ? `แผง ${passengerSeats} ช่อง (รอบรถในระบบ ${apiPassengerSlots} — ปรับจากหัวการ์ด)`
+        : '';
 
     // Build vanOrder → seatNumber → { gender, name, cancelled }
     const vanData = {};
@@ -608,12 +850,23 @@ function renderSeatMap(round) {
         };
     }
 
-    const vans = Object.keys(vanData).map(Number).sort((a, b) => a - b);
-    if (!vans.length) vans.push(1);
-    const perVan = Math.ceil(totalSeats / vans.length);
+    const allVanKeys = Object.keys(vanData).map(Number).sort((a, b) => a - b);
+    if (!allVanKeys.length) allVanKeys.push(1);
+
+    const activeVanSet = new Set(
+        currentRows
+            .filter(r => r.seat && r.booking.status !== 'CANCELLED')
+            .map(r => r.seat.vanOrder || 1)
+    );
+    const collapseToSingleGrid = activeVanSet.size <= 1 && allVanKeys.length > 1;
+    const vanPanels = collapseToSingleGrid ? [allVanKeys[0]] : allVanKeys;
+    const mergedSeats = {};
+    if (collapseToSingleGrid) {
+        for (const vk of allVanKeys) Object.assign(mergedSeats, vanData[vk] || {});
+    }
 
     const booked = currentRows.filter(r => r.seat && r.booking.status !== 'CANCELLED').length;
-    document.getElementById('seatOccupancy').textContent = `${booked}/${totalSeats}`;
+    document.getElementById('seatOccupancy').textContent = `${booked}/${passengerSeats}`;
 
     const seatCell = (s, info) => {
         if (!info) return `<div class="sc-cell" title="ว่าง — ที่นั่ง ${s}">
@@ -631,10 +884,14 @@ function renderSeatMap(round) {
             <span class="sc-name">${displayName}</span></div>`;
     };
 
-    const vansHtml = vans.map((van, vi) => {
-        const seats = vanData[van] || {};
-        const cells = Array.from({ length: perVan }, (_, i) => seatCell(i + 1, seats[i + 1])).join('');
-        const label = vans.length > 1 ? `<div class="text-muted small fw-semibold mb-2 text-center">รถตู้คันที่ ${van}</div>` : '';
+    const vansHtml = vanPanels.map((van, vi) => {
+        const seats = collapseToSingleGrid ? mergedSeats : (vanData[van] || {});
+        const slotsThisVan = monitorSlotsPerVan(passengerSeats, vanPanels.length, vi);
+        const nums = monitorSeatNumbersForPassengerCount(slotsThisVan);
+        const cells = nums.map(n => seatCell(n, seats[n])).join('');
+        const label = !collapseToSingleGrid && vanPanels.length > 1
+            ? `<div class="text-muted small fw-semibold mb-2 text-center">รถตู้คันที่ ${van}</div>`
+            : '';
         return `${vi > 0 ? '<hr class="my-3">' : ''}
         ${label}
         <div class="sc-windshield"></div>
@@ -870,16 +1127,30 @@ function buildPassengerExport() {
     if (!currentRows.length) return null;
     const headers = [
         '#', 'สถานะ', 'จุดขึ้นรถ', 'จุดลงรถ', 'รถ#', 'นั่ง#',
-        'คำนำ', 'ชื่อ', 'นามสกุล', 'เลขบัตร', 'อายุ', 'วันเกิด', 'ชื่อเล่น', 'โทรศัพท์',
-        'มัดจำ', 'ยอดมัดจำ', 'สลิปมัดจำ', 'ยอดคงเหลือ', 'สลิปส่วนที่เหลือ', 'รวม',
-        'ของเช่า 1', 'ของเช่า 2', 'รวมค่าเช่า', 'สลิปทริป'
+        'คำนำ', 'ชื่อ', 'นามสกุล', 'เลขบัตร', 'อายุ', 'วันเกิด', 'ชื่อเล่น', 'โทรศัพท์', 'กรมธรรม์',
+        'ยอดมัดจำเข้ามา', 'ยอดชำระเข้ามา(สะสม)', 'คงเหลือ', 'ยอดสุทธิ', 'สถานะสรุป',
+        'รายการของเช่า (ทั้งหมด)', 'รวมค่าเช่า', 'สลิปเงินสดชำระเงิน (ลิงก์)'
     ];
     const data = currentRows.map((r, i) => {
-        const { seat: f, booking: b, depositAmt, remaining, depSlipText, remSlipText, addons } = r;
+        const { seat: f, booking: b, depositPaidSum, totalPaidActive, remaining, addons } = r;
+        const tripDep = b.busRound?.trip?.deposit || 0;
 
         const isFirstSeat = !i || currentRows[i - 1].booking.id !== b.id;
         let addonSum = 0;
         if (isFirstSeat) addons.forEach(a => addonSum += (a.price || 0) * (a.quantity || 1));
+
+        const policyStatus = f?.insuranceForm?.status || 'NONE';
+
+        const addonsPlain = isFirstSeat && addons.length
+            ? addons.map(a => {
+                const t = (a.price || 0) * (a.quantity || 1);
+                return `${(a.addon?.name || '').trim()} ×${a.quantity || 1} = ${t}`;
+            }).join(' | ')
+            : '';
+
+        const cashSlipUrls = isFirstSeat && r.cashPaymentSlips?.length
+            ? r.cashPaymentSlips.filter(s => isSafeHttpUrl(s.slipUrl)).map(s => s.slipUrl.trim()).join('; ')
+            : '';
 
         return [
             i + 1, b.status,
@@ -894,14 +1165,15 @@ function buildPassengerExport() {
             f ? formatBirth(f.birthDate) : '',
             f?.nickname || '',
             f?.phone || b.user?.phone || '',
-            depositAmt >= (b.busRound?.trip?.deposit || 0) ? 'Y' : 'N',
-            depositAmt || 0, depSlipText !== '-' ? depSlipText : '',
-            remaining > 0 ? remaining : 0, remSlipText !== '-' ? remSlipText : '',
+            policyStatus,
+            depositPaidSum || 0,
+            totalPaidActive || 0,
+            remaining > 0 ? remaining : 0,
             b.totalAmount,
-            addons[0] ? `${addons[0].addon?.name || ''} x${addons[0].quantity} (${(addons[0].price || 0) * (addons[0].quantity || 1)})` : '',
-            addons[1] ? `${addons[1].addon?.name || ''} x${addons[1].quantity} (${(addons[1].price || 0) * (addons[1].quantity || 1)})` : '',
+            payStatusLegend(r, tripDep),
+            addonsPlain,
             addonSum || '',
-            ''
+            cashSlipUrls
         ];
     });
     return [headers, ...data];
@@ -963,7 +1235,12 @@ function exportExcel() {
     const pData = buildPassengerExport();
     if (pData) {
         const ws = XLSX.utils.aoa_to_sheet(pData);
-        ws['!cols'] = [{ wch: 4 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 5 }, { wch: 5 }, { wch: 6 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 4 }, { wch: 12 }, { wch: 8 }, { wch: 12 }];
+        ws['!cols'] = [
+            { wch: 4 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 5 }, { wch: 5 },
+            { wch: 6 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 4 }, { wch: 12 }, { wch: 8 }, { wch: 12 }, { wch: 8 },
+            { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 40 },
+            { wch: 48 }, { wch: 10 }, { wch: 36 }
+        ];
         XLSX.utils.book_append_sheet(wb, ws, 'ผู้โดยสาร');
     }
 
