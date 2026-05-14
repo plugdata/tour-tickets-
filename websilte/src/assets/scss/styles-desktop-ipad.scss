@@ -513,13 +513,25 @@
 }
 
 @keyframes htShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @keyframes fire-pulse {
-  0%, 100% { box-shadow: 0 0 12px rgba(255, 69, 0, .5); }
-  50% { box-shadow: 0 0 24px rgba(255, 69, 0, .7); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(255, 69, 0, .5);
+  }
+
+  50% {
+    box-shadow: 0 0 24px rgba(255, 69, 0, .7);
+  }
 }
 
 // ── Trip Detail Modal ──

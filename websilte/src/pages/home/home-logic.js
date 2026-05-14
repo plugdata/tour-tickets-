@@ -277,10 +277,10 @@ export async function tdOpen(tripId) {
         descEl.textContent = rawDesc
         descEl.setAttribute('data-i18n-dyn', '')
         descEl.setAttribute('data-th', rawDesc)
-        descEl.removeAttribute('hidden')
+        descEl.setAttribute('hidden', '')
         if (descToggle) {
-          descToggle.classList.add('is-open')
-          descToggle.setAttribute('aria-expanded', 'true')
+          descToggle.classList.remove('is-open')
+          descToggle.setAttribute('aria-expanded', 'false')
         }
       } else {
         descEl.removeAttribute('data-i18n-dyn')

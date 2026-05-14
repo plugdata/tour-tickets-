@@ -8,14 +8,121 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family:'Sarabun',sans-serif; background:#f0f4f8; min-height:100vh; }
-        .brand-bar { background:#fff; border-bottom:3px solid #0d6efd; padding:.75rem 1.5rem; display:flex; align-items:center; gap:.75rem; }
-        .search-box { max-width:500px; margin:2rem auto; }
-        .filter-bar { max-width:680px; margin:1.5rem auto 2rem; display:flex; gap:.75rem; flex-wrap: wrap; align-items:center; }
+        body { font-family:'Sarabun',sans-serif; background:#1a2332; min-height:100vh; }
+        /* ธีมเดียวกับ navbar หน้าหลัก (rgba(15,20,25,0.95) + เน้น #00d9b4) */
+        .brand-bar {
+            background: rgba(15, 20, 25, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: none;
+            padding: .75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+        .brand-bar .brand-bar-icon { color: #00d9b4; }
+        .brand-bar .brand-bar-title { font-size: 1.1rem; font-weight: 700; color: #fff; letter-spacing: .02em; }
+        .brand-bar .brand-bar-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            color: #fff;
+            font-size: .88rem;
+            font-weight: 600;
+            text-decoration: none;
+            padding: .5rem 1.1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: transparent;
+            transition: color .2s, border-color .2s, background .2s;
+        }
+        .brand-bar .brand-bar-btn:hover {
+            color: #00d9b4;
+            border-color: rgba(0, 217, 180, 0.45);
+            background: rgba(0, 217, 180, 0.08);
+        }
+        .brand-bar .brand-bar-btn i { color: #00d9b4; }
+        .btn-back-site {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            width: 100%;
+            font-weight: 700;
+            font-size: 1.05rem;
+            padding: .85rem 1.25rem;
+            border-radius: 12px;
+            border: none;
+            color: #0f172a;
+            text-decoration: none;
+            background: linear-gradient(135deg, #00d9b4, #00c4a0);
+            box-shadow: 0 4px 14px rgba(0, 217, 180, 0.35);
+            transition: filter .15s, box-shadow .15s, transform .12s;
+        }
+        .btn-back-site:hover {
+            color: #0f172a;
+            filter: brightness(1.06);
+            box-shadow: 0 6px 22px rgba(0, 217, 180, 0.45);
+        }
+        .btn-back-site:active { transform: scale(0.99); }
+        .search-box {
+            max-width: 720px;
+            width: 100%;
+            margin: 2.5rem auto;
+        }
+        .search-box .card {
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .search-box .card-body {
+            padding: 2rem 2.25rem;
+        }
+        @media (min-width: 992px) {
+            .search-box .card-body {
+                padding: 2.25rem 2.75rem;
+            }
+        }
+        .search-box .status-search-title {
+            font-size: 1.35rem;
+            line-height: 1.35;
+            margin-bottom: 0.75rem;
+        }
+        .search-box .status-search-lead {
+            font-size: 1.05rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            color: #64748b;
+        }
+        .search-box .status-search-row {
+            gap: 0.75rem !important;
+        }
+        .search-box .status-search-row .form-control {
+            min-height: 52px;
+            font-size: 1.05rem;
+        }
+        .search-box .status-search-row .btn {
+            min-height: 52px;
+            padding-left: 1.75rem;
+            padding-right: 1.75rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+        .search-box #searchHint {
+            font-size: 0.95rem;
+            margin-top: 1rem !important;
+        }
+        .search-box .status-search-footer {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+        }
+        .search-box .btn-back-site {
+            font-size: 1.1rem;
+            padding: 1rem 1.5rem;
+        }
+        .filter-bar { max-width:720px; margin:1.5rem auto 2rem; display:flex; gap:.75rem; flex-wrap: wrap; align-items:center; }
         .filter-btn { padding:.5rem .75rem; font-size:.85rem; border-radius:20px; border:1px solid #dee2e6; background:#fff; cursor:pointer; transition:all .2s; }
         .filter-btn:hover { border-color:#0d6efd; background:#f0f7ff; }
         .filter-btn.active { background:#0d6efd; color:#fff; border-color:#0d6efd; }
-        .results-wrap { max-width:680px; margin:0 auto 4rem; }
+        .results-wrap { max-width:720px; margin:0 auto 4rem; }
         .booking-card { background:#fff; border-radius:.75rem; border:1px solid #dee2e6; margin-bottom:1.25rem; overflow:hidden; transition:all .2s; }
         .booking-card:hover { border-color:#0d6efd; box-shadow:0 4px 12px rgba(13,110,253,0.1); }
         .booking-card-header { padding:1rem 1.25rem; border-bottom:1px solid #f0f0f0; }
@@ -49,14 +156,11 @@
 
 <!-- Brand bar -->
 <div class="brand-bar no-print">
-    <i class="bi bi-bus-front text-primary fs-4"></i>
-    <span style="font-size:1.1rem;font-weight:700;color:#0d6efd">ตรวจสอบสถานะการจอง</span>
+    <i class="bi bi-bus-front brand-bar-icon fs-4"></i>
+    <span class="brand-bar-title">ตรวจสอบสถานะการจอง</span>
     <div class="ms-auto d-flex gap-2">
-        <a href="/" class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-house me-1"></i>หน้าหลัก
-        </a>
-        <a href="/trips" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-grid me-1"></i>ดูทริปทั้งหมด
+        <a href="/trips" class="brand-bar-btn">
+            <i class="bi bi-grid"></i>ดูทริปทั้งหมด
         </a>
     </div>
 </div>
@@ -65,18 +169,23 @@
 <div class="search-box px-3 no-print">
     <div class="card shadow-sm">
         <div class="card-body">
-            <h5 class="fw-bold mb-1"><i class="bi bi-search me-2 text-primary"></i>ค้นหาด้วยเบอร์โทรศัพท์</h5>
-            <p class="text-muted small mb-3">กรอกเบอร์โทรที่ใช้ตอนจอง เพื่อดูสถานะการจองของคุณ</p>
-            <div class="d-flex gap-2">
-                <input type="tel" class="form-control" id="phoneInput"
+            <h5 class="fw-bold status-search-title"><i class="bi bi-search me-2 text-primary"></i>ตรวจสอบสถานะการจองด้วยเบอร์โทรศัพท์</h5>
+            <p class="status-search-lead mb-0">กรอกเบอร์โทรที่ใช้ตอนจอง เพื่อดูสถานะการจองของคุณ</p>
+            <div class="d-flex flex-column flex-sm-row status-search-row mt-4">
+                <input type="tel" class="form-control form-control-lg flex-grow-1" id="phoneInput"
                     placeholder="08x-xxx-xxxx" maxlength="10" inputmode="tel"
                     onkeydown="if(event.key==='Enter')doSearch()">
-                <button class="btn btn-primary px-4" onclick="doSearch()" id="btnSearch">
+                <button class="btn btn-primary btn-lg flex-shrink-0" onclick="doSearch()" id="btnSearch">
                     <i class="bi bi-search me-1"></i>ค้นหา
                 </button>
             </div>
-            <div id="searchHint" class="form-text mt-1">
+            <div id="searchHint" class="form-text">
                 <i class="bi bi-info-circle me-1"></i>เบอร์โทรที่ใช้ในขั้นตอน "ข้อมูลผู้จอง"
+            </div>
+            <div class="border-top status-search-footer">
+                <a href="/" class="btn-back-site">
+                    <i class="bi bi-house-door"></i>กลับสู่เว็บไซต์
+                </a>
             </div>
         </div>
     </div>

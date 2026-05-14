@@ -487,7 +487,8 @@
                 const all = await fetchJSON('/bus-rounds');
                 roundData = all.find(r => r.id == sessionData.busRoundId);
                 if (roundData) {
-                    document.getElementById('hdrSub').textContent = `${roundData.trip?.title} | ${roundData.startPoint} → ${roundData.endPoint}`;
+                    const sp = String(roundData.startPoint || '').replace(/^\s*ลานจอดรถ\s*/u, '').trim()
+                    document.getElementById('hdrSub').textContent = `${roundData.trip?.title} | ${sp} → ${roundData.endPoint}`;
                 }
 
                 addonsList = await fetchJSON('/addons/active').catch(() => []);

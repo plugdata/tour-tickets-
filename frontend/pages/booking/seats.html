@@ -639,12 +639,12 @@
           <div class="premium-card mb-4">
             <div class="premium-card-header">
               <span class="fw-bold text-dark">
-                <i class="bi bi-check-circle-fill me-2 text-primary"></i>ที่นั่งที่เลือกแล้ว
+                <i class="bi bi-check-circle-fill me-2 text-primary"></i>ที่นั่งที่เลือก
               </span>
             </div>
-            <div class="card-body p-4" id="selectedInfo">
-              <div class="text-center py-3">
-                <i class="bi bi-cursor-fill text-light display-4 mb-2 d-block"></i>
+            <div class="card-body p-3 py-3" id="selectedInfo">
+              <div class="text-center py-2">
+                <i class="bi bi-cursor-fill text-light display-4 mb-1 d-block"></i>
                 <p class="text-muted small mb-0 fw-medium">กรุณาเลือกที่นั่งในแผนผังเพื่อดำเนินการต่อ</p>
               </div>
             </div>
@@ -948,22 +948,21 @@
         <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.5px">รถคันที่</div>
         <div class="fw-semibold" style="font-size:1.05rem">คันที่ ${roundData.busNumber}</div>
       </div>
-      <div class="col-6">
-        <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.5px">จุดขึ้นรถ</div>
-        <div class="fw-semibold" style="font-size:1rem">${roundData.startPoint}</div>
-      </div>
       ${roundData.duration ? `
       <div class="col-6">
         <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.5px">ระยะเวลา</div>
         <div class="fw-semibold" style="font-size:1rem">${roundData.duration}</div>
       </div>` : ''}
       <div class="col-12 pt-2 border-top">
-        <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.5px">ราคา / คน</div>
-        <div class="fw-bold text-primary" style="font-size:1.4rem">${Number(roundData.trip?.price || 0).toLocaleString('th-TH')} <span style="font-size:.85rem;font-weight:500">บาท</span></div>
-        ${roundData.trip?.deposit ? `
-        <div class="text-muted mt-2" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.5px">ราคามัดจำทริป</div>
-        <div class="fw-semibold" style="font-size:1.05rem">฿${Number(roundData.trip.deposit).toLocaleString('th-TH')}</div>
-        ` : ''}
+        <div class="d-flex flex-nowrap align-items-center gap-2 gap-sm-3 ps-3" style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin">
+          <span class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">ราคา/ที่นั่ง</span>
+          <span class="fw-bold text-primary" style="font-size:1.25rem;line-height:1.2;white-space:nowrap">${Number(roundData.trip?.price || 0).toLocaleString('th-TH')} <span style="font-size:.82rem;font-weight:500">บาท</span></span>
+          ${roundData.trip?.deposit ? `
+          <span class="text-muted d-none d-sm-inline" aria-hidden="true">|</span>
+          <span class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">ราคามัดจำทริป</span>
+          <span class="fw-semibold text-dark" style="font-size:1.05rem;white-space:nowrap">฿${Number(roundData.trip.deposit).toLocaleString('th-TH')}</span>
+          ` : ''}
+        </div>
       </div>
     </div>`
     }
@@ -1280,8 +1279,8 @@
       const info = document.getElementById('selectedInfo')
       if (!count) {
         info.innerHTML = `
-      <div class="text-center py-4">
-        <i class="bi bi-hand-index text-light display-6 d-block mb-2"></i>
+      <div class="text-center py-2">
+        <i class="bi bi-hand-index text-light display-6 d-block mb-1"></i>
         <p class="text-muted small mb-0 fw-medium">คลิกที่นั่งในแผนผังเพื่อเลือกที่นั่ง</p>
       </div>`
         return
@@ -1297,20 +1296,15 @@
       }).join('')
 
       info.innerHTML = `
-    <div class="d-flex flex-wrap gap-2 mb-4">${chips}</div>
-    <div class="p-3 rounded-4 bg-light bg-opacity-50 border border-white shadow-sm">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="text-muted fw-bold" style="font-size: .85rem;">${count} ที่นั่ง × ${price.toLocaleString('th-TH')} บาท</span>
-        <button class="btn btn-sm btn-outline-danger px-3 py-2 rounded-pill fw-bold d-flex align-items-center gap-2 shadow-sm bg-white" 
+    <div class="d-flex flex-wrap gap-2 mb-2">${chips}</div>
+    <div class="p-2 rounded-4 bg-light bg-opacity-50 border border-white shadow-sm">
+      <div class="d-flex justify-content-start align-items-center">
+        <button class="btn btn-sm btn-outline-danger px-3 py-1 rounded-pill fw-bold d-flex align-items-center gap-2 shadow-sm bg-white" 
           onclick="clearAllSeats()" 
           style="font-size: .8rem; transition: all 0.2s;">
           <i class="bi bi-trash3-fill"></i>
           <span>ล้างที่นั่งทั้งหมด</span>
         </button>
-      </div>
-      <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-        <span class="fw-bold text-dark">รวมยอดสุทธิ</span>
-        <span class="fw-bold text-primary fs-4">${(price * count).toLocaleString('th-TH')} บาท</span>
       </div>
     </div>`
     }

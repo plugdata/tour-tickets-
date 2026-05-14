@@ -1410,41 +1410,6 @@
       justify-content: center;
     }
 
-    .bk-btn-details {
-      width: 100%;
-      padding: 0.65rem 1rem;
-      font-family: 'Kanit', sans-serif;
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: #1e40af;
-      background: #fff;
-      border: 2px solid #93c5fd;
-      border-radius: 14px;
-      cursor: pointer;
-      transition: background 0.15s, box-shadow 0.15s;
-    }
-
-    .bk-btn-details:hover {
-      background: #eff6ff;
-      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.15);
-    }
-
-    .bk-btn-details.bk-btn-details--toggle {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.45rem;
-    }
-
-    .bk-btn-details-chevron {
-      font-size: 0.85rem;
-      transition: transform 0.2s ease;
-    }
-
-    .bk-btn-details.is-open .bk-btn-details-chevron {
-      transform: rotate(180deg);
-    }
-
     .bk-trip-details-wrap {
       margin: 0 1.2rem 0.75rem;
     }
@@ -1457,7 +1422,7 @@
     }
 
     .bk-trip-details-panel {
-      margin-top: 0.65rem;
+      margin-top: 0;
       padding: 0.9rem 1.05rem;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -2040,38 +2005,18 @@
       return `<div class="bk-trip-details-stack">${blocks.join('')}</div>`
     }
 
-    /** คลิกแล้วขยาย/ย่อรายละเอียดใน card เดียวกัน (ไม่ใช้ popup) */
-    window.toggleTripDetailsPanel = async function (tripId, btn) {
+    /** โหลดรายละเอียดทริปใน card — แสดงในแผงเลื่อนได้ (ไม่มีปุ่มเปิด/ปิด) */
+    async function loadTripDetailsPanel(tripId, wrap) {
       const tid = Number(tripId) > 0 ? Number(tripId) : (selTrip?.id || 0)
-      if (!tid || !btn) return
-      const wrap = btn.closest('.bk-trip-details-wrap')
-      if (!wrap) return
+      if (!tid || !wrap) return
       const panel = wrap.querySelector('.bk-trip-details-panel')
-      const label = btn.querySelector('.bk-btn-details-label')
       if (!panel) return
-
-      const opening = panel.hidden
-      if (!opening) {
-        panel.hidden = true
-        btn.classList.remove('is-open')
-        btn.setAttribute('aria-expanded', 'false')
-        if (label) label.textContent = 'รายละเอียดทริป'
-        return
-      }
-
-      panel.hidden = false
-      btn.classList.add('is-open')
-      btn.setAttribute('aria-expanded', 'true')
-      if (label) label.textContent = 'ซ่อนรายละเอียด'
-
-      if (wrap.dataset.loaded === '1') return
 
       panel.innerHTML = '<p class="bk-trip-details-loading">กำลังโหลด...</p>'
       try {
         const t = await apiFetch(`/trips/${tid}`)
         if (!wrap.isConnected) return
         panel.innerHTML = buildTripDetailsHtml(t)
-        wrap.dataset.loaded = '1'
       } catch (e) {
         if (!wrap.isConnected) return
         panel.innerHTML = `<p class="bk-trip-details-error">${escapeTripHtml(e?.message || String(e))}</p>`
@@ -2558,7 +2503,8 @@
       const price = trip ? Number(trip.price + (round.extraPrice || 0)) : 0
       const deposit = trip?.deposit || 0
 
-      document.getElementById(targetId).innerHTML = `
+      const cardEl = document.getElementById(targetId)
+      cardEl.innerHTML = `
     <!-- Formal Header -->
     <div class="bk-header-main">
       <button class="bk-back" style="position:absolute; left:1rem; top:1.2rem;" onclick="deselectRound()">
@@ -2575,7 +2521,7 @@
     <!-- Brief Info Grid -->
     <div class="bk-info-grid">
       <div class="bk-info-item">
-        <div class="bk-info-label">ชื่อรอบ</div>
+        <div class="bk-info-label">รอบวันที่</div>
         <div class="bk-info-value">${round.roudeStack?.roundname || '—'}</div>
       </div>
       <div class="bk-info-item">
@@ -2583,7 +2529,7 @@
         <div class="bk-info-value">${round.duration || '—'}</div>
       </div>
       <div class="bk-info-item">
-        <div class="bk-info-label">เหลือ</div>
+        <div class="bk-info-label">ว่างที่</div>
         <div class="bk-info-value">${left} / ${passengerCap}</div>
       </div>
     </div>
@@ -2592,12 +2538,7 @@
 
     ${trip?.id ? `
     <div class="bk-trip-details-wrap bk-trip-details-wrap--prefooter">
-      <button type="button" class="bk-btn-details bk-btn-details--toggle" aria-expanded="false"
-              onclick="toggleTripDetailsPanel(${trip.id}, this)">
-        <span class="bk-btn-details-label">รายละเอียดทริป</span>
-        <i class="bi bi-chevron-down bk-btn-details-chevron" aria-hidden="true"></i>
-      </button>
-      <div class="bk-trip-details-panel" hidden></div>
+      <div class="bk-trip-details-panel" role="region" aria-label="รายละเอียดทริป"></div>
     </div>` : ''}
 
       <div class="bk-footer-premium">
@@ -2612,6 +2553,10 @@
           </span>
         </button>
       </div>`
+      if (trip?.id) {
+        const wrap = cardEl.querySelector('.bk-trip-details-wrap')
+        if (wrap) void loadTripDetailsPanel(trip.id, wrap)
+      }
     }
 
     function refreshSelGrid() {

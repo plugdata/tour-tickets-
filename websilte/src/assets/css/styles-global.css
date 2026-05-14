@@ -13,7 +13,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
 }
@@ -440,7 +441,7 @@ section {
 .blog-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,.2) 0%, rgba(0,0,0,.8) 100%);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, .2) 0%, rgba(0, 0, 0, .8) 100%);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -888,13 +889,25 @@ footer {
 }
 
 @keyframes htShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @keyframes fire-pulse {
-  0%, 100% { box-shadow: 0 0 12px rgba(255, 69, 0, .5); }
-  50% { box-shadow: 0 0 24px rgba(255, 69, 0, .7); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(255, 69, 0, .5);
+  }
+
+  50% {
+    box-shadow: 0 0 24px rgba(255, 69, 0, .7);
+  }
 }
 
 /* ── Trip Detail Modal (td-*) ── */
@@ -1426,6 +1439,7 @@ footer {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

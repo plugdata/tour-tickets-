@@ -566,7 +566,7 @@
                 <!-- Payment Section -->
                 <div class="col-lg-5 no-print">
                     <div class="summary-card shadow-sm sticky-lg-top" style="top: 80px;">
-                        <h5 class="fw-bold mb-4">สรุปค่าใช้จ่ายทั้งหมด</h5>
+                        <h5 class="fw-bold mb-4">สรุปค่าใช้จ่าย</h5>
 
                         <div id="priceBreakdown" class="mb-4">
                             <!-- Rendered by JS -->
@@ -577,7 +577,7 @@
                                 style="letter-spacing:.02em">กรุณาเลือกชำระเงิน</label>
                             <div class="row g-2">
                                 <div class="col-12">
-                                    <div class="pay-option" id="payDeposit" onclick="selectPayType('DEPOSIT')">
+                                    <div class="pay-option selected" id="payDeposit" onclick="selectPayType('DEPOSIT')">
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <div class="fw-bold"><i
                                                     class="bi bi-wallet2 me-2 text-primary"></i>ชำระเฉพาะมัดจำ</div>
@@ -587,7 +587,7 @@
                                     </div>
                                 </div>
                                 <div class="col-12">
-                                    <div class="pay-option selected" id="payFull" onclick="selectPayType('FULL')">
+                                    <div class="pay-option" id="payFull" onclick="selectPayType('FULL')">
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <div class="fw-bold"><i
                                                     class="bi bi-cash-coin me-2 text-success"></i>ชำระเต็มจำนวน</div>
@@ -661,7 +661,7 @@
         let guestBooking = null;
         let addonsList = [];
         let selectedAddons = {};  // { addonId: quantity }
-        let payType = 'FULL';
+        let payType = 'DEPOSIT';
         let DEPOSIT_RATE = 0.3; // มัดจำ 30%
 
         function fmtBahtHtml(n) {
@@ -867,7 +867,6 @@
                             <h6 class="fw-bold mb-0">${s.passengerName || 'ไม่ระบุชื่อ'}</h6>
                         </div>
                         <div class="text-end">
-                            <div class="text-muted x-small mb-1">${s.phone || '-'}</div>
                             <span class="${chipCls}">ที่นั่ง ${s.seatNumber}</span>
                         </div>
                     </div>
@@ -877,8 +876,8 @@
                             <div class="fw-bold text-primary">${fmtBahtHtml(seatLineTotal)}</div>
                         </div>
                         <div class="col-6 ps-3">
-                            <div class="text-muted x-small">จุดรับ-ส่ง</div>
-                            <div class="small fw-semibold text-truncate">${s.pickupPoint || 'จุดจอดหลัก'}</div>
+                            <div class="text-muted x-small">เบอร์โทรศัพท์</div>
+                            <div class="small fw-semibold text-break">${s.phone || '–'}</div>
                         </div>
                     </div>
                     ${s.foodAllergy ? `<div class="mt-2 text-danger x-small"><i class="bi bi-exclamation-triangle me-1"></i>แพ้อาหาร: ${s.foodAllergy}</div>` : ''}
@@ -1125,7 +1124,7 @@
                 .join('<br>');
             const phones = [...new Set(seats.map((s) => s.phone).filter(Boolean))];
             const phoneLine = escapeHtml(phones.length ? phones.join(' / ') : '—');
-            const pt = guestBooking?.payment?.type || payType || 'FULL';
+            const pt = guestBooking?.payment?.type || payType || 'DEPOSIT';
             const payLabel = pt === 'DEPOSIT' ? 'มัดจำ' : 'เต็มจำนวน';
             const { seatTotal, addonTotal, pickupTotal, grand } = calcTotals();
             const seatsCount = sessionData.selectedSeats?.length || 0;
