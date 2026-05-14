@@ -76,7 +76,7 @@
              order-lg-3 = desktop เลื่อนไปขวาสุด -->
         <div class="d-flex align-items-center gap-2 ms-auto order-lg-3">
           <a href="/booking/status" class="nav-btn-status d-none d-lg-flex">
-            <i class="bi bi-search"></i> ตรวจสอบสถานะ
+            <i class="bi bi-search"></i><span data-i18n="nav_status">ตรวจสอบสถานะการจอง</span>
           </a>
           <button id="langBtn" class="nav-btn-lang"><i class="bi bi-globe"></i> EN</button>
           <button class="navbar-toggler d-lg-none border-0 p-1" type="button" data-bs-toggle="collapse"
@@ -117,7 +117,7 @@
             </li>
             <li class="nav-item d-lg-none">
               <a class="nav-link-item d-flex align-items-center gap-2" href="/booking/status">
-                <i class="bi bi-search" style="color:#00d9b4"></i> ตรวจสอบสถานะการจอง
+                <i class="bi bi-search" style="color:#00d9b4"></i><span data-i18n="nav_status">ตรวจสอบสถานะการจอง</span>
               </a>
             </li>
           </ul>
@@ -203,7 +203,7 @@
 
         <div class="ht-quick-select-wrap">
           <select id="domesticQuickSelect" class="ht-quick-select" onchange="handleTripSelect(this)">
-            <option value="" selected disabled>เลือกทริปในประเทศ</option>
+            <option value="" selected disabled>รายการทริปทั้งหมด</option>
           </select>
         </div>
         <div class="swiper ht-swiper domestic-swiper">

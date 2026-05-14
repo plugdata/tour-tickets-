@@ -531,7 +531,7 @@ function populateTripSelects(domestic, international) {
     }).join('')
   }
 
-  fillSelect('domesticQuickSelect', 'domesticCount', domestic, 'เลือกทริปในประเทศ')
+  fillSelect('domesticQuickSelect', 'domesticCount', domestic, 'รายการทริปทั้งหมด')
   fillSelect('intlQuickSelect', 'intlCount', international, 'เลือกทริปต่างประเทศ')
 }
 
