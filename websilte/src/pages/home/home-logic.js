@@ -73,7 +73,7 @@ function tripCard(t, rounds) {
     : ''
 
   const loc = t.country || (t.tripType === 'INTERNATIONAL' ? 'ต่างประเทศ' : 'ไทย')
-  const seatTxt = seated !== null ? `เหลือ ${seated}/${pTotal}` : ''
+  const seatTxt = seated !== null ? `ว่าง ${seated}/${pTotal}` : ''
 
   return `
 <div class="swiper-slide">
@@ -271,23 +271,28 @@ export async function tdOpen(tripId) {
 
     const rawDesc = (trip.description || '').trim()
     if (descEl) {
+      const descBlock = document.getElementById('tdDescBlock')
+      const descToggle = document.getElementById('tdDescToggle')
       if (rawDesc) {
         descEl.textContent = rawDesc
         descEl.setAttribute('data-i18n-dyn', '')
         descEl.setAttribute('data-th', rawDesc)
+        descEl.removeAttribute('hidden')
+        if (descToggle) {
+          descToggle.classList.add('is-open')
+          descToggle.setAttribute('aria-expanded', 'true')
+        }
       } else {
         descEl.removeAttribute('data-i18n-dyn')
         descEl.removeAttribute('data-th')
         descEl.innerHTML = '<span data-i18n="modal_desc_empty">ยังไม่มีรายละเอียดเพิ่มเติม</span>'
+        descEl.setAttribute('hidden', '')
+        if (descToggle) {
+          descToggle.classList.remove('is-open')
+          descToggle.setAttribute('aria-expanded', 'false')
+        }
       }
-      descEl.setAttribute('hidden', '')
-      const descBlock = document.getElementById('tdDescBlock')
-      const descToggle = document.getElementById('tdDescToggle')
       if (descBlock) descBlock.style.display = 'block'
-      if (descToggle) {
-        descToggle.classList.remove('is-open')
-        descToggle.setAttribute('aria-expanded', 'false')
-      }
     }
 
     if (summaryEl) {
@@ -381,7 +386,7 @@ function tdRenderRounds(rounds, stacks = []) {
   const rows = upcoming.map(r => {
     const roundName = r.roundname || r.roudeStack?.roundname || tdCurrentTrip?.title || '-'
     const tripName = tdCurrentTrip?.title || ''
-    
+
     const pTotal = Math.max(1, r.totalSeats - 1)
     const left = Math.max(0, pTotal - r.bookedSeats)
     const pct = Math.round(r.bookedSeats / pTotal * 100)
@@ -403,7 +408,7 @@ function tdRenderRounds(rounds, stacks = []) {
       ${full
         ? `<span class="td-full-tag" data-i18n-dyn data-th="เต็มแล้ว">เต็มแล้ว</span>`
         : `<div style="font-size:.7rem;color:#a0aec0"
-              data-i18n-dyn data-th="เหลือ ${left}/${pTotal}">เหลือ ${left}/${pTotal}</div>
+              data-i18n-dyn data-th="ว่าง ${left}/${pTotal}">ว่าง ${left}/${pTotal}</div>
            <div class="td-seats-bar"><div class="td-seats-fill ${cls}" style="width:${pct}%"></div></div>`}
     </div>
   </div>`

@@ -10,26 +10,22 @@
   "nav_book": "Book Trip",
   "nav_register": "Register",
   "nav_lang": "TH",
-
+  "nav_status": "Check booking status",
   "hero_title": "Grow Up, Go Anywhere",
   "hero_subtitle": "Grow up, Go anywhere — explore the world, embrace nature, create new experiences with a professional team that cares for you throughout your journey.",
   "hero_btn": "Browse & Book Trips",
   "hero_badge": "Articles & Announcements",
-
   "fire_hot": "Hot Trips",
   "fire_subtitle": "Latest updates — Book early, go first!",
-
   "domestic_title": "Domestic Trips",
   "domestic_subtitle": "Discover breathtaking nature right in your backyard",
   "view_all_trips": "View All Trips",
   "filter_placeholder": "Filter by region...",
   "price_from": "Starting from",
   "view_detail": "View Details",
-
   "intl_title": "International Trips",
   "intl_subtitle": "Cross borders to the very best destinations",
   "view_all": "View All Trips →",
-
   "feat1_title": "Experienced Team",
   "feat1_text": "Our experienced team handles every detail to ensure your safety, comfort, and a truly memorable travel experience.",
   "feat2_title": "Delicious Food, Guaranteed",
@@ -38,13 +34,10 @@
   "feat3_text": "Meet new friends, build shared memories — it's more than just a trip.",
   "feat4_title": "Eco-Conscious Travel",
   "feat4_text": "Travel that respects nature and local communities, reducing environmental impact.",
-
   "blog_title": "Moments to Remember",
   "blog_subtitle": "Memories and smiles captured from every journey",
-
   "gallery_title": "Gallery",
   "gallery_subtitle": "Beautiful photos from past trips",
-
   "svc_title": "Other Services",
   "svc_subtitle": "We care for you from start to finish of every journey",
   "svc1_title": "Private Trip Packages",
@@ -53,7 +46,6 @@
   "svc2_text": "Tents, sleeping bags & hiking gear — brands NH, Mobi Garden at great prices.",
   "svc3_title": "Corporate & Group Trips",
   "svc3_text": "Trip planning for organizations, including Team Building activities.",
-
   "faq_title": "Frequently Asked Questions",
   "faq_subtitle": "Questions about your trip — we have the answers",
   "faq1_q": "No hiking experience? Can I still join a trip?",
@@ -66,10 +58,8 @@
   "faq4_a": "Meeting points are usually in Bangkok or at the trip's starting province. Our team will notify you in advance.",
   "faq5_q": "Is there gear rental available (tent, sleeping bag)?",
   "faq5_a": "Yes! We offer full gear rental — tents, sleeping bags, and other hiking equipment at reasonable prices.",
-
   "social_title": "Start Your Journey",
   "social_subtitle": "Choose your preferred channel to enquire or book our services",
-
   "per_person": "/ person",
   "modal_duration": "Duration",
   "modal_price_from": "Starting price",
@@ -81,7 +71,6 @@
   "modal_desc_show": "Show trip details",
   "modal_desc_hide": "Hide trip details",
   "modal_desc_empty": "No extra trip description yet.",
-
   "cookie_text": "This website uses cookies to provide you with the best experience.",
   "cookie_policy": "Privacy Policy",
   "cookie_btn": "Accept & Continue"
