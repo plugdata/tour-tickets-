@@ -53,6 +53,7 @@
       z-index: 1;
       display: flex;
       height: 100vh;
+      min-height: 0;
     }
 
     /* ════════════════════════════
@@ -135,6 +136,7 @@
       justify-content: space-between;
       padding: .4rem .85rem;
       margin-bottom: .5rem;
+      height: 55px;
     }
 
     .ctrl-row button {
@@ -180,6 +182,167 @@
 
     .ctrl-select option {
       background: #1e2837;
+    }
+
+    /* ── Custom month picker (แทน select) ── */
+    .month-picker-wrap {
+      position: relative;
+      margin-bottom: .5rem;
+    }
+
+    .month-picker-bar {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: .35rem;
+      padding: .55rem .65rem .6rem;
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 11px;
+      height: 60px;
+    }
+
+    .month-picker-step {
+      flex-shrink: 0;
+      align-self: center;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--primary);
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+
+    .month-picker-step:hover {
+      background: rgba(0, 217, 180, .12);
+      color: #5fffe8;
+    }
+
+    .month-picker-center {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .12rem;
+      padding: .2rem .35rem;
+      margin: 0;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: center;
+      cursor: pointer;
+      transition: background .15s ease;
+    }
+
+    .month-picker-center:hover {
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .month-picker-center:focus {
+      outline: none;
+    }
+
+    .month-picker-center:focus-visible {
+      box-shadow: 0 0 0 2px rgba(0, 217, 180, .45);
+    }
+
+    .month-picker-hint {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      font-family: 'Kanit', sans-serif;
+      font-size: .58rem;
+      font-weight: 700;
+      color: #34d399;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .month-picker-hint i {
+      font-size: .65rem;
+      opacity: .95;
+    }
+
+    .month-picker-title-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .35rem;
+      width: 100%;
+      pointer-events: none;
+    }
+
+    .month-picker-name {
+      font-family: 'Kanit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: .02em;
+      line-height: 1.15;
+      text-align: center;
+    }
+
+    .month-picker-caret {
+      font-size: .78rem;
+      color: rgba(255, 255, 255, .75);
+      flex-shrink: 0;
+    }
+
+    .month-picker-panel {
+      margin-top: .45rem;
+      padding: .65rem .65rem .7rem;
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 11px;
+    }
+
+    .month-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .4rem;
+    }
+
+    .month-grid-cell {
+      font-family: 'Kanit', sans-serif;
+      font-size: .72rem;
+      font-weight: 600;
+      padding: .52rem .35rem;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, .05);
+      color: #e8eef5;
+      cursor: pointer;
+      text-align: center;
+      line-height: 1.25;
+      transition: background .15s, border-color .15s, color .15s, transform .1s;
+    }
+
+    .month-grid-cell:hover {
+      background: rgba(255, 255, 255, .1);
+      border-color: rgba(255, 255, 255, .14);
+    }
+
+    .month-grid-cell.is-active {
+      background: linear-gradient(135deg, var(--primary), #00c4a0);
+      border-color: rgba(0, 217, 180, .45);
+      color: #fff;
+      font-weight: 800;
+      box-shadow: 0 4px 14px rgba(0, 217, 180, .25);
+    }
+
+    .month-grid-cell:active {
+      transform: scale(0.98);
     }
 
     .search-row {
@@ -521,31 +684,54 @@
     ════════════════════════════ */
     .rp {
       flex: 1;
+      min-width: 0;
+      min-height: 0;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 1.5rem 2.5rem;
+      justify-content: flex-start;
+      padding: 1.5rem 2.5rem 2.25rem;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, .28) transparent;
     }
 
-    /* White booking card */
+    .rp::-webkit-scrollbar {
+      width: 7px;
+    }
+
+    .rp::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, .22);
+      border-radius: 10px;
+    }
+
+    .rp::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    /* White booking card — ความสูงตามเนื้อหา; เลื่อนทั้งคอลัมน์ขวาใน .rp (desktop) */
     .bk-card {
       width: 100%;
-      max-width: 320px;
-      max-height: calc(100vh - 3rem);
+      max-width: 400px;
+      flex-shrink: 0;
       background: #fff;
       border-radius: 28px;
       box-shadow: 0 32px 80px rgba(0, 0, 0, .6), 0 0 0 1px rgba(255, 255, 255, .12);
-      overflow-y: auto;
       overflow-x: hidden;
+      overflow-y: visible;
       color: #1a2232;
       font-family: 'Sarabun', sans-serif;
       display: flex;
       flex-direction: column;
-      scrollbar-width: none;
     }
 
-    .bk-card::-webkit-scrollbar {
-      display: none;
+    /* ยังไม่เลือกรอบ: จัดการ์ดให้อยู่กลางแนวตั้งของคอลัมน์ขวา แล้วเลื่อนลงเล็กน้อย */
+    .bk-card:has(> .bk-empty) {
+      margin-top: auto;
+      margin-bottom: auto;
+      transform: translateY(clamp(1.5rem, 6vh, 4.5rem));
     }
 
     .bk-empty {
@@ -1150,7 +1336,8 @@
 
     .bk-bus-info {
       font-size: .75rem;
-      color: #94a3b8;
+      color: rgba(15, 15, 16, 1);
+      background-color: rgba(255, 255, 255, 1);
       display: flex;
       align-items: center;
       gap: .4rem;
@@ -1217,41 +1404,6 @@
       font-weight: 700;
     }
 
-    .bk-pricing-section {
-      margin: 0 1.2rem 1rem;
-      padding: 1.2rem;
-      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-      border-radius: 20px;
-      border: 1px solid #e2e8f0;
-    }
-
-    .bk-price-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: .2rem;
-    }
-
-    .bk-price-label {
-      font-size: .75rem;
-      font-weight: 600;
-      color: #64748b;
-    }
-
-    .bk-price-main-val {
-      font-family: 'Kanit', sans-serif;
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: #00d9b4;
-    }
-
-    .bk-deposit-sub {
-      font-size: .65rem;
-      color: #94a3b8;
-      text-align: right;
-      font-weight: 500;
-    }
-
     .bk-actions-row {
       margin: 0 1.2rem 0.75rem;
       display: flex;
@@ -1306,10 +1458,31 @@
 
     .bk-trip-details-panel {
       margin-top: 0.65rem;
-      padding: 0.75rem 0.85rem;
+      padding: 0.9rem 1.05rem;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 14px;
+      /* เลื่อนเฉพาะกล่องรายละเอียด — ไม่ให้การ์ดยืดยาวเกินจอ */
+      max-height: min(42vh, 280px);
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+    }
+
+    .bk-trip-details-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .bk-trip-details-panel::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.35);
+      border-radius: 10px;
+    }
+
+    .bk-trip-details-panel::-webkit-scrollbar-track {
+      background: transparent;
     }
 
     .bk-trip-details-panel[hidden] {
@@ -1350,12 +1523,12 @@
     .bk-desc-block {
       background: #fff;
       border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 1rem 1.1rem;
+      border-radius: 18px;
+      padding: 1.2rem 1.25rem;
     }
 
     .bk-desc-title {
-      font-size: .62rem;
+      font-size: .72rem;
       font-weight: 700;
       color: #64748b;
       text-transform: uppercase;
@@ -1363,7 +1536,7 @@
       display: flex;
       align-items: center;
       gap: .35rem;
-      margin-bottom: .6rem;
+      margin-bottom: .75rem;
     }
 
     .bk-desc-title i {
@@ -1371,9 +1544,9 @@
     }
 
     .bk-desc-body {
-      font-size: .83rem;
-      color: #475569;
-      line-height: 1.7;
+      font-size: .92rem;
+      color: #334155;
+      line-height: 1.82;
       margin: 0;
       white-space: pre-line;
     }
@@ -1488,42 +1661,129 @@
       color: #ef4444;
     }
 
+    /* แถบ CTA แนวนอน: ซ้ายราคา + มัดจำ / ขวาปุ่มเขียว (ตามดีไซน์อ้างอิง) */
     .bk-btn-booking {
       width: 100%;
-      padding: .9rem;
-      margin: 1rem 0;
-      border-radius: 16px;
+      padding: .82rem .95rem;
+      margin: 0;
+      border-radius: 18px;
       border: none;
-      background: linear-gradient(135deg, #1e293b, #0f172a);
+      background: #0c1222;
       color: #fff;
       font-family: 'Kanit', sans-serif;
-      font-weight: 700;
-      font-size: .95rem;
       cursor: pointer;
-      transition: all .25s ease;
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: .65rem;
+      box-shadow: 0 6px 20px rgba(8, 12, 24, 0.35);
+      text-align: left;
+      min-height: 3.25rem;
+    }
+
+    .bk-btn-booking-side--info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: .08rem;
+    }
+
+    .bk-btn-booking-tag {
+      font-size: .6rem;
+      font-weight: 700;
+      color: #34d399;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .bk-btn-booking-price {
+      font-family: 'Kanit', sans-serif;
+      font-size: 1.28rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .bk-btn-booking-deposit {
+      font-size: .62rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.68);
+      line-height: 1.35;
+      margin-top: .12rem;
+      max-width: 100%;
+    }
+
+    .bk-btn-booking-side--action {
+      flex-shrink: 0;
       display: flex;
       align-items: center;
+    }
+
+    .bk-btn-booking-pill {
+      display: inline-flex;
+      align-items: center;
       justify-content: center;
-      gap: .6rem;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+      gap: .32rem;
+      padding: .58rem .72rem;
+      border-radius: 14px;
+      background: #10b981;
+      color: #0f172a;
+      font-size: .68rem;
+      font-weight: 800;
+      line-height: 1.2;
+      white-space: nowrap;
+      pointer-events: none;
     }
 
-    .bk-btn-booking:hover {
+    .bk-btn-booking-pill i {
+      font-size: .85rem;
+      font-weight: 900;
+      margin-left: .05rem;
+    }
+
+    .bk-btn-booking:not(:disabled):hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.3);
-      background: linear-gradient(135deg, #334155, #1e293b);
+      box-shadow: 0 10px 28px rgba(8, 12, 24, 0.45);
+      background: #111827;
     }
 
-    .bk-btn-booking:active {
+    .bk-btn-booking:not(:disabled):hover .bk-btn-booking-pill {
+      background: #059669;
+      color: #fff;
+    }
+
+    .bk-btn-booking:not(:disabled):active {
       transform: translateY(0);
     }
 
     .bk-btn-booking:disabled {
-      background: #e2e8f0;
-      color: #94a3b8;
+      background: #e8ecf1;
       cursor: not-allowed;
       transform: none;
       box-shadow: none;
+    }
+
+    .bk-btn-booking:disabled .bk-btn-booking-tag {
+      color: #64748b;
+    }
+
+    .bk-btn-booking:disabled .bk-btn-booking-price {
+      color: #475569;
+    }
+
+    .bk-btn-booking:disabled .bk-btn-booking-deposit {
+      color: #94a3b8;
+    }
+
+    .bk-btn-booking:disabled .bk-btn-booking-pill {
+      background: #cbd5e1;
+      color: #64748b;
     }
 
     /* ─ Responsive ─ */
@@ -1610,13 +1870,24 @@
           <span class="ctrl-label" id="yearDisplay">2026</span>
           <button onclick="changeYear(1)"><i class="bi bi-chevron-right"></i></button>
         </div>
-        <div class="ctrl-row">
-          <button onclick="changeMonth(-1)"><i class="bi bi-chevron-left"></i></button>
-          <span class="ctrl-label">
-            <select id="monthSelect" class="ctrl-select" onchange="onMonthChange()"></select>
-            <i class="bi bi-chevron-down" style="font-size:.65rem;opacity:.55"></i>
-          </span>
-          <button onclick="changeMonth(1)"><i class="bi bi-chevron-right"></i></button>
+        <div class="month-picker-wrap" id="monthPickerWrap">
+          <div class="month-picker-bar">
+            <button type="button" class="month-picker-step" aria-label="เดือนก่อน" onclick="changeMonth(-1)"><i
+                class="bi bi-chevron-left"></i></button>
+            <button type="button" class="month-picker-center" id="monthPickerToggle" aria-expanded="false"
+              aria-haspopup="listbox" aria-label="เปิดหรือปิดตารางเดือน" onclick="toggleMonthPickerPanel()">
+              <span class="month-picker-hint"><i class="bi bi-calendar3" aria-hidden="true"></i> เลือกเดือน</span>
+              <span class="month-picker-title-line">
+                <span class="month-picker-name" id="monthPickerName">มกราคม</span>
+                <i class="bi bi-chevron-down month-picker-caret" id="monthPickerToggleIcon" aria-hidden="true"></i>
+              </span>
+            </button>
+            <button type="button" class="month-picker-step" aria-label="เดือนถัดไป" onclick="changeMonth(1)"><i
+                class="bi bi-chevron-right"></i></button>
+          </div>
+          <div class="month-picker-panel" id="monthPickerPanel" hidden role="listbox" aria-label="เลือกเดือน">
+            <div class="month-picker-grid" id="monthPickerGrid"></div>
+          </div>
         </div>
         <div class="search-row">
           <input id="searchInput" class="search-input" type="text" placeholder="ค้นหาทริป หรือ อย่างอื่น...">
@@ -1763,9 +2034,6 @@
       for (const c of posts) {
         blocks.push(`<div class="bk-desc-block"><div class="bk-desc-title"><i class="bi bi-file-text"></i> ${escapeTripHtml(c.title)}</div>${c.body ? `<p class="bk-desc-body">${escapeTripHtml(c.body)}</p>` : ''}</div>`)
       }
-      if (t.country) {
-        blocks.push(`<div class="bk-desc-block"><p class="bk-desc-body"><strong>ประเทศ/พื้นที่</strong> ${escapeTripHtml(t.country)}</p></div>`)
-      }
       if (!blocks.length) {
         blocks.push('<div class="bk-desc-block"><p class="bk-desc-body">ยังไม่มีรายละเอียดเพิ่มเติมสำหรับทริปนี้</p></div>')
       }
@@ -1827,26 +2095,87 @@
     let selTrip = null  // current trip object
     let selTarget = null  // 'mobile' | 'desktop'
 
-    // ── month select ──────────────────────────────────────────
-    const monthSel = document.getElementById('monthSelect')
-    MONTHS_TH.forEach((m, i) => {
-      const o = document.createElement('option')
-      o.value = i; o.textContent = m; monthSel.appendChild(o)
-    })
+    // ── custom month picker ───────────────────────────────────
+    let monthPickerOpen = false
+
+    function closeMonthPickerPanel() {
+      monthPickerOpen = false
+      const p = document.getElementById('monthPickerPanel')
+      const btn = document.getElementById('monthPickerToggle')
+      const icon = document.getElementById('monthPickerToggleIcon')
+      if (p) p.hidden = true
+      if (btn) btn.setAttribute('aria-expanded', 'false')
+      if (icon) {
+        icon.classList.remove('bi-chevron-up')
+        icon.classList.add('bi-chevron-down')
+      }
+    }
+
+    window.toggleMonthPickerPanel = function () {
+      monthPickerOpen = !monthPickerOpen
+      const p = document.getElementById('monthPickerPanel')
+      const btn = document.getElementById('monthPickerToggle')
+      const icon = document.getElementById('monthPickerToggleIcon')
+      if (!p || !btn || !icon) return
+      p.hidden = !monthPickerOpen
+      btn.setAttribute('aria-expanded', monthPickerOpen ? 'true' : 'false')
+      icon.classList.toggle('bi-chevron-down', !monthPickerOpen)
+      icon.classList.toggle('bi-chevron-up', monthPickerOpen)
+    }
+
+    window.pickMonth = function (m) {
+      const idx = Number(m)
+      if (idx < 0 || idx > 11) return
+      if (idx === curMonth) {
+        closeMonthPickerPanel()
+        return
+      }
+      curMonth = idx
+      closeMonthPickerPanel()
+      updateDisplay()
+      loadData()
+    }
+
+    function buildMonthGrid() {
+      const grid = document.getElementById('monthPickerGrid')
+      if (!grid) return
+      grid.innerHTML = MONTHS_TH.map((name, i) =>
+        `<button type="button" role="option" class="month-grid-cell" data-month="${i}" onclick="pickMonth(${i})">${name}</button>`
+      ).join('')
+    }
+
+    function syncMonthPickerUi() {
+      const nameEl = document.getElementById('monthPickerName')
+      if (nameEl) nameEl.textContent = MONTHS_TH[curMonth]
+      document.querySelectorAll('.month-grid-cell').forEach((el) => {
+        const i = +el.dataset.month
+        const on = i === curMonth
+        el.classList.toggle('is-active', on)
+        el.setAttribute('aria-selected', on ? 'true' : 'false')
+      })
+    }
 
     function updateDisplay() {
       document.getElementById('yearDisplay').textContent = curYear
-      monthSel.value = curMonth
+      syncMonthPickerUi()
     }
 
     window.changeYear = d => { curYear += d; updateDisplay(); loadData() }
     window.changeMonth = d => {
+      closeMonthPickerPanel()
       curMonth += d
       if (curMonth < 0) { curMonth = 11; curYear-- }
       if (curMonth > 11) { curMonth = 0; curYear++ }
-      updateDisplay(); loadData()
+      updateDisplay()
+      loadData()
     }
-    window.onMonthChange = () => { curMonth = +monthSel.value; updateDisplay(); loadData() }
+
+    buildMonthGrid()
+    document.addEventListener('click', (e) => {
+      const wrap = document.getElementById('monthPickerWrap')
+      if (!monthPickerOpen || !wrap) return
+      if (!wrap.contains(e.target)) closeMonthPickerPanel()
+    })
     updateDisplay()
 
     async function syncBrandNameFromHome() {
@@ -2259,18 +2588,6 @@
       </div>
     </div>
 
-    <!-- Pricing Summary -->
-    <div class="bk-pricing-section">
-      <div class="bk-price-row">
-        <div class="bk-price-label">ค่าบริการต่อท่าน</div>
-        <div class="bk-price-main-val">฿${price.toLocaleString()}</div>
-      </div>
-      ${deposit ? `
-      <div class="bk-deposit-sub">
-        ชำระมัดจำเพียง ฿${Number(deposit).toLocaleString()} ต่อที่นั่ง
-      </div>` : ''}
-    </div>
-
     <div id="selBar" style="display:none; padding:1rem 1.2rem; background:#f0fdf4; border-top:1px solid #d1fae5; justify-content:space-between; align-items:center;"></div>
 
     ${trip?.id ? `
@@ -2284,8 +2601,15 @@
     </div>` : ''}
 
       <div class="bk-footer-premium">
-        <button class="bk-btn-booking" ${full ? 'disabled' : ''} onclick="seatProceed(${round.id})">
-          ${full ? 'ที่นั่งเต็มแล้ว' : '<i class="bi bi-ticket-perforated-fill"></i> จองทริปนี้เลย'}
+        <button type="button" class="bk-btn-booking" ${full ? 'disabled' : ''} onclick="seatProceed(${round.id})">
+          <span class="bk-btn-booking-side bk-btn-booking-side--info">
+            <span class="bk-btn-booking-tag">ค่าบริการต่อท่าน</span>
+            <span class="bk-btn-booking-price">฿${price.toLocaleString()}</span>
+            ${deposit ? `<span class="bk-btn-booking-deposit">ชำระมัดจำเพียง ฿${Number(deposit).toLocaleString()} ต่อที่นั่ง</span>` : ''}
+          </span>
+          <span class="bk-btn-booking-side bk-btn-booking-side--action">
+            <span class="bk-btn-booking-pill">${full ? 'ที่นั่งเต็มแล้ว' : 'จองทริปนี้เลย<i class="bi bi-arrow-right" aria-hidden="true"></i>'}</span>
+          </span>
         </button>
       </div>`
     }
