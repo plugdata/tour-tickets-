@@ -307,7 +307,7 @@ function showEmpty() {
         wrap.classList.remove('d-flex');
     }
 }
-
+ 
 /* ════════════════════════════════════════════════════════════════
    LOAD MONITOR  —  fetch + render all views
 ════════════════════════════════════════════════════════════════ */
@@ -353,16 +353,16 @@ async function loadMonitor() {
             // Fetch payments: prefer the one included in booking, then supplement from global map
             const payments = [];
             if (b.payment) payments.push(b.payment);
-            
+
             const fromMap = paymentMap[bIdAsNum] || [];
             fromMap.forEach(p => {
                 if (!payments.find(x => x.id === p.id)) payments.push(p);
             });
-            
+
             // For display balance: subtract all ACTIVE payments (CONFIRMED or PENDING)
             const activePayments = payments.filter(p => p.status !== 'REJECTED');
             const activeTotal = activePayments.reduce((s, p) => s + parseFloat(p.amount || 0), 0);
-            
+
             const remaining = Math.max(0, bTotal - activeTotal);
             const totalPaidActive = activeTotal;
             const depositPaidSum = activePayments
@@ -371,23 +371,41 @@ async function loadMonitor() {
 
             const depositPay = activePayments.find(p => p.type === 'DEPOSIT') || activePayments[0] || null;
             const remainPay = activePayments.find(p => p.type === 'FULL') || (activePayments.length > 1 ? activePayments[1] : null);
-            
+
             const depSlipText = depositPay?.slipUrl ? 'มีสลิป' : (depositPay?.slipRef || '-');
             const remSlipText = remainPay?.slipUrl ? 'มีสลิป' : (remainPay?.slipRef || '-');
-            
+
             const isPendingPayment = activePayments.some(p => p.status === 'PENDING');
             const confirmedAmt = activePayments.filter(p => p.status === 'CONFIRMED').reduce((s, p) => s + parseFloat(p.amount || 0), 0);
             const isFullPay = activePayments.some(p => p.type === 'FULL') || (remaining <= 0 && activeTotal > 0);
 
             const addons = b.bookingAddons || [];
-            const cashPaymentSlips = activePayments
-                .filter(p => p.slipUrl)
-                .map(p => ({
-                    slipUrl: String(p.slipUrl).trim(),
-                    type: p.type,
-                    amount: parseFloat(p.amount || 0),
-                    status: p.status
-                }));
+            // รวม slips จาก PaymentSlip[] (ใหม่) + slipUrl fallback (เก่า)
+            const cashPaymentSlips = [];
+            for (const p of activePayments) {
+                const slipRows = Array.isArray(p.slips) && p.slips.length ? p.slips : null;
+                if (slipRows) {
+                    // มี PaymentSlip rows → ใช้แทน slipUrl ตรง
+                    slipRows.forEach(s => cashPaymentSlips.push({
+                        slipUrl: String(s.url || '').trim(),
+                        slipType: s.slipType || 'DEPOSIT',
+                        sequence: s.sequence || 1,
+                        type: p.type,
+                        amount: parseFloat(p.amount || 0),
+                        status: p.status
+                    }));
+                } else if (p.slipUrl) {
+                    // fallback: payment มีแค่ slipUrl (ก่อน migrate)
+                    cashPaymentSlips.push({
+                        slipUrl: String(p.slipUrl).trim(),
+                        slipType: p.type === 'FULL' ? 'REMAINING' : 'DEPOSIT',
+                        sequence: cashPaymentSlips.length + 1,
+                        type: p.type,
+                        amount: parseFloat(p.amount || 0),
+                        status: p.status
+                    });
+                }
+            }
             const rowData = {
                 booking: b,
                 depositPaidSum,
@@ -505,20 +523,32 @@ function isSafeHttpUrl(url) {
     return /^https?:\/\//i.test(u) || (u.startsWith('/') && !u.startsWith('//'));
 }
 
-/** สลิปเงินสดจาก Payment.slipUrl (มัดจำ / ชำระเต็ม) */
+/** สลิปเงินสดจาก cashPaymentSlips — รองรับ slipType (DEPOSIT / REMAINING) */
 function formatCashSlipHtml(slips) {
     const list = slips || [];
     if (!list.length) return '<span class="text-muted">-</span>';
-    const typeLab = t => (t === 'DEPOSIT' ? 'มัดจำ' : t === 'FULL' ? 'ชำระเต็ม' : (t || 'ชำระ'));
-    const stLab = s => (s === 'CONFIRMED' ? 'ยืนยันแล้ว' : s === 'PENDING' ? 'รอตรวจ' : s === 'REJECTED' ? 'ปฏิเสธ' : (s || ''));
+
+    const typeColor = t => t === 'REMAINING' ? '#198754' : '#0d6efd';
+    const typeLab   = t => t === 'REMAINING' ? 'ส่วนที่เหลือ' : t === 'DEPOSIT' ? 'มัดจำ' : (t === 'FULL' ? 'ชำระเต็ม' : (t || 'ชำระ'));
+    const stLab     = s => s === 'CONFIRMED' ? 'ยืนยันแล้ว' : s === 'PENDING' ? 'รอตรวจ' : s === 'REJECTED' ? 'ปฏิเสธ' : (s || '');
+
     const btns = list.map((p, idx) => {
-        const title = `${typeLab(p.type)} ${formatMoney(p.amount)} — ${stLab(p.status)} — เปิดสลิป`;
-        const tEsc = escapeHtmlAttr(title);
+        const label = typeLab(p.slipType || p.type);
+        const title = `#${p.sequence || idx + 1} ${label} ${formatMoney(p.amount)} — ${stLab(p.status)} — เปิดสลิป`;
+        const tEsc  = escapeHtmlAttr(title);
+        const color = typeColor(p.slipType || (p.type === 'FULL' ? 'REMAINING' : 'DEPOSIT'));
+
         if (!isSafeHttpUrl(p.slipUrl)) {
             return `<span class="badge bg-light text-danger border" style="font-size:.62rem;" title="URL สลิปไม่ถูกต้อง">!</span>`;
         }
         const href = escapeHtmlAttr(p.slipUrl.trim());
-        return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary py-0 px-1 cash-slip-btn" title="${tEsc}"><i class="bi bi-file-earmark-image"></i><span class="d-none d-xxl-inline text-muted ms-1" style="font-size:.58rem;">${idx + 1}</span></a>`;
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer"
+            class="btn btn-sm py-0 px-1 cash-slip-btn"
+            style="border:1.5px solid ${color};color:${color};"
+            title="${tEsc}">
+            <i class="bi bi-file-earmark-image"></i>
+            <span class="ms-1" style="font-size:.58rem;font-weight:700;">${label}</span>
+        </a>`;
     }).join('');
     return `<div class="d-flex flex-wrap gap-1 justify-content-center align-items-center cash-slip-cell">${btns}</div>`;
 }
@@ -597,11 +627,11 @@ function payStatusLegend(r, tripDepositRequired) {
 function renderTable(rows, requiredDeposit = 0) {
     if (!rows.length) {
         document.getElementById('monitorBody').innerHTML =
-            '<tr><td colspan="26" class="text-center py-5 text-muted">ยังไม่มีการจองในรอบนี้</td></tr>';
+            '<tr><td colspan="25" class="text-center py-5 text-muted">ยังไม่มีการจองในรอบนี้</td></tr>';
         return;
     }
 
-        const statusBadge = s => s === 'CONFIRMED'
+    const statusBadge = s => s === 'CONFIRMED'
         ? `<span class="badge badge-confirmed">ยืนยันแล้ว</span>`
         : s === 'CANCELLED'
             ? `<span class="badge badge-cancelled">ยกเลิก</span>`
@@ -611,7 +641,6 @@ function renderTable(rows, requiredDeposit = 0) {
         const { seat: f, booking: b, depositPaidSum, totalPaidActive, remaining, addons } = r;
 
         const pickup = f?.pickupPoint || b.busRound?.startPoint || '-';
-        const dropoff = f?.dropoffPoint || b.busRound?.endPoint || '-';
         const vanNo = f?.vanOrder ?? '-';
         const seatNo = f?.seatNumber ?? '-';
         const prefix = f?.namePrefix || '-';
@@ -665,15 +694,14 @@ function renderTable(rows, requiredDeposit = 0) {
         const isConfirmed = b.status === 'CONFIRMED';
         const rowCls = isCancelled ? 's-cancelled' : isConfirmed ? 's-confirmed' : 's-pending';
 
-        const actionBtns = isCancelled
-            ? `<span class="text-muted small">-</span>`
-            : `<button class="btn btn-sm btn-success py-0 px-2 me-1" ${isConfirmed ? 'disabled' : ''}
+        const actionBtns = `
+               <button class="btn btn-sm btn-success py-0 px-2 me-1" ${isConfirmed || isCancelled ? 'disabled' : ''}
                    onclick="approveBookingAndInsurance(${b.id}, ${f?.id || 'null'})" title="อนุมัติการจองและกรมธรรม์">
                    <i class="bi bi-check-lg"></i>
                </button>
-               <button class="btn btn-sm btn-outline-danger py-0 px-2"
-                   onclick="openCancelModal(${b.id})" title="ยกเลิกการจอง">
-                   <i class="bi bi-x-lg"></i>
+               <button class="btn btn-sm btn-danger py-0 px-2"
+                   onclick="deleteBooking(${b.id})" title="ลบข้อมูลการจองออกจากระบบ">
+                   <i class="bi bi-trash me-1"></i>ลบ
                </button>`;
 
         return `<tr class="${rowCls}">
@@ -682,9 +710,9 @@ function renderTable(rows, requiredDeposit = 0) {
             </td>
             <td class="text-muted" style="font-size:.7rem;">${i + 1}</td>
             <td class="text-center">${statusBadge(b.status)}</td>
-            <td>${pickup}</td><td>${dropoff}</td>
+            <td>${pickup}</td>
             <td class="text-center">
-                <span class="seat-chip">${b.busRound?.busNumber || '-'}${f?.vanOrder > 1 ? '.'+f.vanOrder : ''}</span>
+                <span class="seat-chip">${b.busRound?.busNumber || '-'}${f?.vanOrder > 1 ? '.' + f.vanOrder : ''}</span>
             </td>
             <td class="text-center"><span class="seat-chip">${seatNo}</span></td>
             <td class="col-div">${prefix}</td>
@@ -869,11 +897,8 @@ function renderSeatMap(round, seatSnap) {
     document.getElementById('seatOccupancy').textContent = `${booked}/${passengerSeats}`;
 
     const seatCell = (s, info) => {
-        if (!info) return `<div class="sc-cell" title="ว่าง — ที่นั่ง ${s}">
+        if (!info || info.cancelled) return `<div class="sc-cell" title="ว่าง — ที่นั่ง ${s}">
             <span style="font-size:.7rem;opacity:.4;">○</span>
-            <span class="sc-num">${s}</span></div>`;
-        if (info.cancelled) return `<div class="sc-cell cancelled" title="ยกเลิก">
-            <span style="font-size:.65rem;">✕</span>
             <span class="sc-num">${s}</span></div>`;
         const cls = info.gender === 'MALE' ? 'male' : info.gender === 'FEMALE' ? 'female' : 'booked';
         const icon = info.gender === 'MALE' ? '♂' : info.gender === 'FEMALE' ? '♀' : '●';
@@ -911,7 +936,6 @@ function renderSeatMap(round, seatSnap) {
                 <div><span class="sc-dot" style="background:#dbeafe;border-color:#93c5fd;"></span><span>♂ ชาย</span></div>
                 <div><span class="sc-dot" style="background:#fce7f3;border-color:#f9a8d4;"></span><span>♀ หญิง</span></div>
                 <div><span class="sc-dot" style="background:#d1fae5;border-color:#6ee7b7;"></span><span>จอง</span></div>
-                <div><span class="sc-dot" style="background:#f8f9fa;border-color:#adb5bd;border-style:dashed;opacity:.5;"></span><span>ยกเลิก</span></div>
             </div>
         </div>`;
 }
@@ -938,16 +962,16 @@ function renderApproval(bookings, paymentMap, requiredDeposit = 0) {
     el.innerHTML = bookings.map((b, i) => {
         const payments = paymentMap[b.id] || [];
         const seats = b.seatBookings || [];
-        
+
         // Use all active payments for display balance logic
         const activePays = payments.filter(p => p.status !== 'REJECTED');
         const paidTotal = activePays.reduce((s, p) => s + parseFloat(p.amount || 0), 0);
         const confirmedAmt = activePays.filter(p => p.status === 'CONFIRMED').reduce((s, p) => s + parseFloat(p.amount || 0), 0);
         const remaining = Math.max(0, parseFloat(b.totalAmount || 0) - paidTotal);
-        
+
         const depositAmt = activePays.filter(p => p.type === 'DEPOSIT' && p.status === 'CONFIRMED')
             .reduce((s, p) => s + parseFloat(p.amount || 0), 0);
-        
+
         const seatCount = seats.filter(s => s.seatNumber > 0).length;
 
         const isCancelled = b.status === 'CANCELLED';
@@ -960,15 +984,14 @@ function renderApproval(bookings, paymentMap, requiredDeposit = 0) {
                 ? `<span class="badge badge-confirmed">ยืนยันแล้ว</span>`
                 : `<span class="badge badge-pending">รอยืนยัน</span>`;
 
-        const actionBtns = isCancelled
-            ? `<span class="text-muted small">-</span>`
-            : `<button class="btn btn-sm btn-success py-0 px-2 me-1 ${isConfirmed ? 'disabled' : ''}"
+        const actionBtns = `
+               <button class="btn btn-sm btn-success py-0 px-2 me-1 ${isConfirmed || isCancelled ? 'disabled' : ''}"
                    onclick="confirmBooking(${b.id})" title="อนุมัติ">
                    <i class="bi bi-check-lg"></i> อนุมัติ
                </button>
-               <button class="btn btn-sm btn-outline-danger py-0 px-2"
-                   onclick="openCancelModal(${b.id})" title="ยกเลิก">
-                   <i class="bi bi-x-lg"></i>
+               <button class="btn btn-sm btn-danger py-0 px-2"
+                   onclick="deleteBooking(${b.id})" title="ลบข้อมูลการจองออกจากระบบ">
+                   <i class="bi bi-trash me-1"></i>ลบ
                </button>`;
 
         /* ── ชื่อผู้จอง (คนชำระเงิน) ── */
@@ -1080,6 +1103,22 @@ async function confirmCancel() {
     } catch (e) { showToast(e.message, 'danger'); }
 }
 
+async function deleteBooking(id) {
+    if (!confirm(`ลบการจอง #${id} ออกจากระบบ?\n\nข้อมูลจะถูกลบถาวร ไม่สามารถกู้คืนได้`)) return;
+    try {
+        // ยกเลิกก่อน (ถ้ายังไม่ถูกยกเลิก) แล้วลบ
+        const booking = currentBookings.find(b => b.id === id);
+        if (booking && booking.status !== 'CANCELLED') {
+            await API.bookings.updateStatus(id, 'CANCELLED');
+        }
+        await API.bookings.delete(id);
+        showToast(`ลบการจอง #${id} สำเร็จ`);
+        await loadMonitor();
+    } catch (e) {
+        showToast('ลบไม่สำเร็จ: ' + (e.message || 'เกิดข้อผิดพลาด'), 'danger');
+    }
+}
+
 /* ════════════════════════════════════════════════════════════════
    PRINT  —  เปิดหน้า report แยก
 ════════════════════════════════════════════════════════════════ */
@@ -1126,7 +1165,7 @@ function printSelected() {
 function buildPassengerExport() {
     if (!currentRows.length) return null;
     const headers = [
-        '#', 'สถานะ', 'จุดขึ้นรถ', 'จุดลงรถ', 'รถ#', 'นั่ง#',
+        '#', 'สถานะ', 'จุดขึ้นรถ', 'รถ#', 'นั่ง#',
         'คำนำ', 'ชื่อ', 'นามสกุล', 'เลขบัตร', 'อายุ', 'วันเกิด', 'ชื่อเล่น', 'โทรศัพท์', 'กรมธรรม์',
         'ยอดมัดจำเข้ามา', 'ยอดชำระเข้ามา(สะสม)', 'คงเหลือ', 'ยอดสุทธิ', 'สถานะสรุป',
         'รายการของเช่า (ทั้งหมด)', 'รวมค่าเช่า', 'สลิปเงินสดชำระเงิน (ลิงก์)'
@@ -1155,7 +1194,6 @@ function buildPassengerExport() {
         return [
             i + 1, b.status,
             f?.pickupPoint || b.busRound?.startPoint || '',
-            f?.dropoffPoint || b.busRound?.endPoint || '',
             b.busRound?.busNumber || '', f?.seatNumber ?? '',
             f?.namePrefix || '',
             f?.firstName || b.user?.name || '',
@@ -1236,7 +1274,7 @@ function exportExcel() {
     if (pData) {
         const ws = XLSX.utils.aoa_to_sheet(pData);
         ws['!cols'] = [
-            { wch: 4 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 5 }, { wch: 5 },
+            { wch: 4 }, { wch: 10 }, { wch: 14 }, { wch: 5 }, { wch: 5 },
             { wch: 6 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 4 }, { wch: 12 }, { wch: 8 }, { wch: 12 }, { wch: 8 },
             { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 40 },
             { wch: 48 }, { wch: 10 }, { wch: 36 }

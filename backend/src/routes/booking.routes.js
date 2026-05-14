@@ -544,4 +544,26 @@ router.get('/guest/:sessionToken', async (req, res) => {
 });
 
 
+router.delete('/:id', authenticate, authorize('ADMIN', 'STUFF'), async (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    if (!id) return res.status(400).json({ message: 'invalid id' })
+    const booking = await prisma.booking.findUnique({ where: { id } })
+    if (!booking) return res.status(404).json({ message: 'ไม่พบการจอง' })
+    if (booking.status !== 'CANCELLED') return res.status(400).json({ message: 'ลบได้เฉพาะการจองที่ยกเลิกแล้วเท่านั้น' })
+    await prisma.insuranceForm.deleteMany({ where: { bookingId: id } })
+    await prisma.bookingAddon.deleteMany({ where: { bookingId: id } })
+    await prisma.payment.deleteMany({ where: { bookingId: id } })
+    const seatCount = await prisma.seatBooking.count({ where: { bookingId: id } })
+    await prisma.seatBooking.deleteMany({ where: { bookingId: id } })
+    await prisma.booking.delete({ where: { id } })
+    if (seatCount > 0) {
+      await prisma.busRound.update({ where: { id: booking.busRoundId }, data: { bookedSeats: { decrement: seatCount } } }).catch(() => {})
+    }
+    res.json({ success: true, message: `ลบการจอง #${id} สำเร็จ` })
+  } catch (e) {
+    res.status(500).json({ message: e.message })
+  }
+})
+
 module.exports = router

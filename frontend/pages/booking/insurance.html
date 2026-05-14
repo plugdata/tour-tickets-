@@ -151,6 +151,16 @@ let conditions   = [];
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+    const insFormsEl = document.getElementById('insuranceForms')
+    if (insFormsEl) {
+        insFormsEl.addEventListener('input', (e) => {
+            const t = e.target
+            if (!t.classList || !t.classList.contains('ins-emergency-phone')) return
+            const d = String(t.value).replace(/\D/g, '').slice(0, 10)
+            if (t.value !== d) t.value = d
+        })
+    }
+
     sessionToken = new URLSearchParams(location.search).get('token')
                 || localStorage.getItem(SESSION_KEY);
     if (!sessionToken) { showError('ไม่พบ session'); return; }
@@ -235,8 +245,9 @@ function renderInsuranceForms() {
                     <div class="col-md-5">
                         <label class="form-label small">เบอร์โทร <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control ins-emergency-phone"
-                            data-seat="${sn}" required placeholder="08x-xxx-xxxx" inputmode="tel"
-                            value="${s.emergencyPhone || ''}">
+                            data-seat="${sn}" required maxlength="10" inputmode="numeric"
+                            placeholder="08x-xxx-xxxx"
+                            value="${String(s.emergencyPhone || '').replace(/\D/g, '').slice(0, 10)}">
                     </div>
                     <!-- Beneficiary -->
                     <div class="col-12 mt-1"><div class="small fw-semibold text-muted mb-1"><i class="bi bi-person-heart me-1 text-purple"></i>ผู้รับประโยชน์</div></div>
@@ -331,7 +342,8 @@ function validate() {
     const ins = collectInsuranceData();
     for (const f of ins) {
         if (!f.emergencyName)    return `กรุณากรอกชื่อผู้ติดต่อฉุกเฉิน ที่นั่ง ${f.seatNumber}`;
-        if (!f.emergencyPhone)   return `กรุณากรอกเบอร์ฉุกเฉิน ที่นั่ง ${f.seatNumber}`;
+        const ep = String(f.emergencyPhone || '').replace(/\D/g, '')
+        if (ep.length < 9 || ep.length > 10) return `กรุณากรอกเบอร์ฉุกเฉิน 9-10 หลัก ที่นั่ง ${f.seatNumber}`;
         if (!f.beneficiaryName)  return `กรุณากรอกชื่อผู้รับประโยชน์ ที่นั่ง ${f.seatNumber}`;
         if (!f.beneficiaryRelation) return `กรุณาเลือกความสัมพันธ์ผู้รับประโยชน์ ที่นั่ง ${f.seatNumber}`;
     }

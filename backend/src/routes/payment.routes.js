@@ -29,7 +29,8 @@ router.get('/', authenticate, authorize('ADMIN', 'STUFF'), async (req, res) => {
           seatBookings: true
         } 
       },
-      user: { select: { id: true, name: true, phone: true } }
+      user: { select: { id: true, name: true, phone: true } },
+      slips: { orderBy: { createdAt: 'asc' } }
     }
   })
   res.json(payments)
@@ -93,48 +94,54 @@ router.post('/', authenticate, async (req, res) => {
  *       200: { description: Updated }
  */
 router.patch('/guest/:sessionToken', async (req, res) => {
-  const { sessionToken } = req.params;
-  const { slipUrl } = req.body;
+  const { sessionToken } = req.params
+  const { slipUrl, isRemainingPayment = false, totalAmount } = req.body
 
   try {
-    const session = await prisma.bookingSession.findUnique({
-      where: { token: sessionToken }
-    });
+    const session = await prisma.bookingSession.findUnique({ where: { token: sessionToken } })
+    if (!session || !session.bookingId) return res.status(404).json({ message: 'Valid booking session not found' })
 
-    if (!session || !session.bookingId) {
-      return res.status(404).json({ message: 'Valid booking session not found' });
-    }
-
-    // ── ตรวจว่า SeatBooking ยังอยู่ (ที่นั่งไม่ถูกจองโดยคนอื่น) ──
     const seatBookings = await prisma.seatBooking.findMany({
-      where: { bookingId: session.bookingId },
-      select: { id: true, seatNumber: true }
-    });
+      where: { bookingId: session.bookingId }, select: { id: true, seatNumber: true }
+    })
     if (seatBookings.length === 0) {
-      return res.status(409).json({
-        message: 'ที่นั่งของคุณถูกจองโดยผู้อื่นแล้ว กรุณาเลือกที่นั่งใหม่อีกครั้ง',
-        code: 'SEAT_TAKEN'
-      });
+      return res.status(409).json({ message: 'ที่นั่งของคุณถูกจองโดยผู้อื่นแล้ว กรุณาเลือกที่นั่งใหม่อีกครั้ง', code: 'SEAT_TAKEN' })
     }
 
-    const payment = await prisma.payment.findFirst({
-      where: { bookingId: session.bookingId }
-    });
+    const payment = await prisma.payment.findFirst({ where: { bookingId: session.bookingId } })
+    if (!payment) return res.status(404).json({ message: 'Payment record not found' })
 
-    if (!payment) {
-      return res.status(404).json({ message: 'Payment record not found' });
+    // ป้องกันส่งสลิปเพิ่มหลังชำระเต็มแล้ว
+    if (payment.type === 'FULL') {
+      const existing = await prisma.paymentSlip.count({ where: { paymentId: payment.id } })
+      if (existing > 0) return res.status(409).json({ message: 'ชำระเต็มจำนวนแล้ว ไม่สามารถแนบสลิปเพิ่มได้', code: 'ALREADY_FULL' })
+    }
+
+    // migrate slipUrl เก่า → PaymentSlip row
+    const existingCount = await prisma.paymentSlip.count({ where: { paymentId: payment.id } })
+    if (existingCount === 0 && payment.slipUrl && payment.slipUrl !== slipUrl) {
+      await prisma.$executeRaw`INSERT INTO "PaymentSlip" ("paymentId","url","slipType","sequence","createdAt") VALUES (${payment.id},${payment.slipUrl},'DEPOSIT',1,NOW())`
+    }
+    const newSlipType = isRemainingPayment ? 'REMAINING' : 'DEPOSIT'
+    const currentCount = await prisma.paymentSlip.count({ where: { paymentId: payment.id } })
+    await prisma.$executeRaw`INSERT INTO "PaymentSlip" ("paymentId","url","slipType","sequence","createdAt") VALUES (${payment.id},${slipUrl},${newSlipType},${currentCount + 1},NOW())`
+
+    const updateData = { slipUrl, status: 'PENDING' }
+    if (isRemainingPayment) {
+      updateData.type = 'FULL'
+      if (totalAmount && totalAmount > 0) updateData.amount = totalAmount
     }
 
     const updatedPayment = await prisma.payment.update({
       where: { id: payment.id },
-      data: { slipUrl, status: 'PENDING' }
-    });
-
-    res.json(updatedPayment);
+      data: updateData,
+      include: { slips: { orderBy: { createdAt: 'asc' } } }
+    })
+    res.json(updatedPayment)
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    res.status(500).json({ message: e.message })
   }
-});
+})
 
 router.patch('/:id/confirm', authenticate, authorize('ADMIN'), async (req, res) => {
 

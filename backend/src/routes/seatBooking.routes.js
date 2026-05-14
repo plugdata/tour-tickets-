@@ -47,11 +47,9 @@ router.get('/round/:roundId', async (req, res) => {
     const bkStatusMap = Object.fromEntries(bookingStatuses.map(b => [b.id, b.status]))
     const bkSlipMap   = Object.fromEntries(paymentSlips.map(p => [p.bookingId, p.slipUrl]))
 
-    // แผนที่สาธารณะ: ไม่แสดง hold (sessionToken / bookingId=null) เป็นสีเหลือง
-    // ล็อกจริงเฉพาะเมื่อมี Payment.slipUrl แล้ว (ดูกฎใน POST /hold)
     const seatMap = {}
     for (const sb of seatBookings) {
-      let status = 'AVAILABLE'
+      let status = 'SELECTED' // temp hold (yellow)
       if (sb.bookingId) {
         const isCancelled = bkStatusMap[sb.bookingId] === 'CANCELLED'
         const hasSlip = !!bkSlipMap[sb.bookingId]
@@ -68,8 +66,7 @@ router.get('/round/:roundId', async (req, res) => {
       }
     }
 
-    // totalSeats ใน DB = จำนวนที่นั่งผู้โดยสารสูงสุดต่อรอบ (สอดคล้องกับ booking.routes ที่เช็ค bookedSeats)
-    res.json({ roundId, totalSeats: round.totalSeats, passengerSeats: round.totalSeats, seats: seatMap })
+    res.json({ roundId, totalSeats: round.totalSeats, passengerSeats: round.totalSeats - 1, seats: seatMap })
   } catch (e) {
     res.status(500).json({ message: e.message })
   }
@@ -101,55 +98,50 @@ router.post('/hold', async (req, res) => {
       }
     })
 
-    // ── 2. ดึง booking จริง (มี bookingId) ──
+    // ── 2. ดึง SeatBookings ที่ยังมี bookingId ──
     const bookedRows = await prisma.seatBooking.findMany({
       where: { busRoundId: bRId, seatNumber: { in: seatNumbers }, bookingId: { not: null } },
       select: { id: true, seatNumber: true, bookingId: true }
     })
-    console.log('[HOLD] bookedRows:', JSON.stringify(bookedRows))
 
-    // ── 3. ตรวจ booking — ถ้ายังไม่มีสลิปให้ปลด ──
     if (bookedRows.length > 0) {
       const bIds = bookedRows.map(r => r.bookingId)
-
       const bookingRows = await prisma.booking.findMany({
         where: { id: { in: bIds } },
         select: { id: true, status: true }
       })
       const statusMap = Object.fromEntries(bookingRows.map(b => [b.id, b.status]))
 
-      const paymentRows = await prisma.payment.findMany({
-        where: { bookingId: { in: bIds } },
-        select: { bookingId: true, slipUrl: true }
-      })
-      const slipMap = Object.fromEntries(paymentRows.map(p => [p.bookingId, p.slipUrl]))
-
-      console.log('[HOLD] statusMap:', JSON.stringify(statusMap))
-      console.log('[HOLD] slipMap:', JSON.stringify(slipMap))
-
-      // ปลด booking ที่ยังไม่มีสลิป
-      const releasable = bookedRows.filter(r =>
-        statusMap[r.bookingId] !== 'CANCELLED' && !slipMap[r.bookingId]
-      )
-      if (releasable.length > 0) {
-        await prisma.seatBooking.deleteMany({ where: { id: { in: releasable.map(r => r.id) } } })
-        console.log('[HOLD] released no-slip seats:', releasable.map(r => r.seatNumber))
+      // orphan: bookingId ชี้ไป booking ที่ถูกลบแล้ว
+      const orphanRows = bookedRows.filter(r => !statusMap[r.bookingId])
+      if (orphanRows.length > 0) {
+        await prisma.seatBooking.deleteMany({ where: { id: { in: orphanRows.map(r => r.id) } } })
       }
 
-      // conflict จริง = booking ที่มีสลิปแล้ว (ล็อกถาวร)
-      const hardLocked = bookedRows.filter(r =>
-        statusMap[r.bookingId] !== 'CANCELLED' && !!slipMap[r.bookingId]
-      )
-      if (hardLocked.length > 0) {
-        const debugList = hardLocked.map(r => ({
-          seatNumber: r.seatNumber, reason: 'จองแล้ว+มีสลิป', bookingId: r.bookingId
-        }))
-        console.log('[HOLD] 409 hard-locked:', JSON.stringify(debugList))
-        return res.status(409).json({
-          message: 'ที่นั่งไม่ว่าง',
-          takenSeats: hardLocked.map(r => r.seatNumber),
-          debug: debugList
+      const remainRows = bookedRows.filter(r => statusMap[r.bookingId])
+      if (remainRows.length > 0) {
+        const paymentRows = await prisma.payment.findMany({
+          where: { bookingId: { in: remainRows.map(r => r.bookingId) } },
+          select: { bookingId: true, slipUrl: true }
         })
+        const slipMap = Object.fromEntries(paymentRows.map(p => [p.bookingId, p.slipUrl]))
+
+        const releasable = remainRows.filter(r =>
+          statusMap[r.bookingId] === 'CANCELLED' || !slipMap[r.bookingId]
+        )
+        if (releasable.length > 0) {
+          await prisma.seatBooking.deleteMany({ where: { id: { in: releasable.map(r => r.id) } } })
+        }
+
+        const hardLocked = remainRows.filter(r =>
+          statusMap[r.bookingId] !== 'CANCELLED' && !!slipMap[r.bookingId]
+        )
+        if (hardLocked.length > 0) {
+          return res.status(409).json({
+            message: 'ที่นั่งไม่ว่าง',
+            takenSeats: hardLocked.map(r => r.seatNumber)
+          })
+        }
       }
     }
 

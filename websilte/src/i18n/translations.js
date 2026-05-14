@@ -97,6 +97,9 @@ export const resources = {
       modal_btn_book:    'จองทริป',
       modal_share_label: 'แชร์ให้เพื่อน',
       modal_view_all:    'ดูทริปทั้งหมดและรอบอื่นๆ',
+      modal_desc_show:   'แสดงรายละเอียดทริป',
+      modal_desc_hide:   'ซ่อนรายละเอียดทริป',
+      modal_desc_empty:  'ยังไม่มีรายละเอียดเพิ่มเติม',
 
       // ── Cookie ──
       cookie_text:   'เว็บไซต์นี้ใช้คุกกี้ (Cookies) เพื่อนำเสนอประสบการณ์การใช้งานที่ดีที่สุดให้กับคุณ',
@@ -197,6 +200,9 @@ export const resources = {
       modal_btn_book:    'Book Trip',
       modal_share_label: 'Share with friends',
       modal_view_all:    'View all trips & other rounds',
+      modal_desc_show:   'Show trip details',
+      modal_desc_hide:   'Hide trip details',
+      modal_desc_empty:  'No extra trip description yet.',
 
       // ── Cookie ──
       cookie_text:   'This website uses cookies to provide you with the best experience possible.',

@@ -721,17 +721,6 @@
 
                 if (res.error) throw new Error(res.message || 'บันทึกไม่สำเร็จ');
 
-                // แสดง Popup ตรงกลางจอ (สวยงามสำหรับมือถือ)
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'จองสำเร็จ',
-                    text: 'ไปที่หน้าชำระเงิน',
-                    timer: 1500,
-                    showConfirmButton: false,
-                    position: 'center',
-                    customClass: { popup: 'swal-rental-popup' }
-                });
-
                 window.location.href = `/booking/ticket?token=${sessionToken}`;
 
             } catch (e) {

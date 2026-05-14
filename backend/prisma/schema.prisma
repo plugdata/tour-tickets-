@@ -173,11 +173,24 @@ model Payment {
   user        User          @relation(fields: [userId], references: [id])
   amount      Float
   type        PaymentType   @default(FULL)
-  slipUrl     String?
+  slipUrl     String? // สลิปล่าสุด (backward compatible)
   status      PaymentStatus @default(PENDING)
   confirmedAt DateTime?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+  slips       PaymentSlip[]
+}
+
+model PaymentSlip {
+  id        Int      @id @default(autoincrement())
+  paymentId Int
+  payment   Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  url       String
+  slipType  String   @default("DEPOSIT")  // "DEPOSIT" | "REMAINING"
+  sequence  Int      @default(1)          // ลำดับการโอน (1=มัดจำ, 2=ส่วนที่เหลือ)
+  createdAt DateTime @default(now())
+
+  @@index([paymentId])
 }
 
 enum PaymentType {

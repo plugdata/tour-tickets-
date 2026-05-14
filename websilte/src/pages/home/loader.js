@@ -197,24 +197,45 @@ export async function loadTrips() {
 
 // ── 4. Blog / Featured Content ────────────────────────────
 export async function loadBlogSection() {
+  const grid = $('blogGrid')
+  const staticHTML = grid ? grid.innerHTML : ''
+  if (grid) {
+    grid.innerHTML = Array.from({ length: 3 }, () => `
+      <div class="col-lg-4">
+        <div class="blog-card" style="pointer-events:none">
+          <div class="blog-image-container ht-skeleton" style="height:220px;border-radius:12px"></div>
+        </div>
+      </div>`).join('')
+  }
   try {
-    const posts = await getContents('BLOG', { featured: 'true', limit: 4 })
-    const fallback = posts.length < 2
-      ? await getContents('TRIP_POST', { limit: 4 })
-      : []
-    const all = [...posts, ...fallback].slice(0, 4)
-    if (!all.length) return
+    // ลอง BLOG ก่อน (ไม่กรอง featured เพื่อให้ได้ข้อมูลมากขึ้น)
+    let posts = await getContents('BLOG', { limit: 4 }).catch(() => [])
+    // ถ้าได้น้อย ลอง TRIP_POST เพิ่มเติม
+    if (posts.length < 2) {
+      const more = await getContents('TRIP_POST', { limit: 4 }).catch(() => [])
+      posts = [...posts, ...more]
+    }
+    // ถ้ายังน้อย ลอง EXPERIENCE
+    if (posts.length < 2) {
+      const exp = await getContents('EXPERIENCE', { limit: 4 }).catch(() => [])
+      posts = [...posts, ...exp]
+    }
+    // ตัดซ้ำ
+    const seen = new Set()
+    const all = posts.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true }).slice(0, 4)
 
-    const grid = $('blogGrid')
-    if (!grid) return
+    if (!all.length || !grid) {
+      if (grid && staticHTML) grid.innerHTML = staticHTML
+      return
+    }
 
-    grid.innerHTML = all.slice(0, 4).map((c, i) => {
-      const img = imgSrc(c.imageUrl) || `https://images.unsplash.com/photo-151674137202${i}-8eb4fc13bd20?w=800&h=500&fit=crop`
+    grid.innerHTML = all.map((c, i) => {
+      const img = imgSrc(c.imageUrl) || `https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=800&h=500&fit=crop`
       return `
-        <div class="col-lg-${i === 0 ? '6' : '6'}">
+        <div class="col-lg-6">
           <div class="blog-card" style="cursor:pointer" onclick="openContentModal(${c.id})">
             <div class="blog-image-container">
-              <img src="${img}" alt="${c.title}" class="blog-image">
+              <img src="${img}" alt="${c.title}" class="blog-image" loading="lazy">
               <div class="blog-overlay">
                 <span class="blog-category"><i class="bi bi-tag"></i> ${c.tags || 'บทความ'}</span>
                 <h4 class="blog-title">${c.title}</h4>
@@ -223,11 +244,26 @@ export async function loadBlogSection() {
           </div>
         </div>`
     }).join('')
-  } catch (_) { }
+  } catch (_) {
+    if (grid && staticHTML) grid.innerHTML = staticHTML
+  }
 }
 
 // ── 5. Gallery Albums ─────────────────────────────────────
 export async function loadGallery() {
+  const grid = $('galleryGrid')
+  if (grid) {
+    grid.innerHTML = Array.from({ length: 8 }, () => `
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="gallery-card" style="pointer-events:none">
+          <div class="gallery-thumb ht-skeleton"></div>
+          <div class="gallery-info">
+            <div class="ht-skeleton mb-1" style="height:14px;width:70%"></div>
+            <div class="ht-skeleton" style="height:10px;width:45%"></div>
+          </div>
+        </div>
+      </div>`).join('')
+  }
   try {
     const albums = await getGalleryAlbums({ active: 'true' })
     const wrap = $('gallerySection')
@@ -235,7 +271,6 @@ export async function loadGallery() {
 
     if (!albums.length) { wrap.style.display = 'none'; return }
 
-    const grid = $('galleryGrid')
     if (!grid) return
 
     grid.innerHTML = albums.slice(0, 8).map(a => {
@@ -310,13 +345,9 @@ export async function loadHomepage() {
   try {
     console.log('🏠 Loading homepage...')
 
-    // Run settings first (needed for hero bg), others in parallel
-    console.log('⚙️ Loading site settings...')
-    await loadSiteSettings()
-    console.log('✅ Site settings loaded')
-
-    console.log('📦 Loading homepage content...')
+    const loaders = ['Settings', 'FireTicker', 'Trips', 'Blog', 'Gallery', 'FAQ', 'Featured']
     const results = await Promise.allSettled([
+      loadSiteSettings(),
       loadFireTicker(),
       loadTrips(),
       loadBlogSection(),
@@ -325,9 +356,7 @@ export async function loadHomepage() {
       loadFeaturedContent(),
     ])
 
-    // Log any failures for debugging
     results.forEach((result, index) => {
-      const loaders = ['FireTicker', 'Trips', 'Blog', 'Gallery', 'FAQ', 'Featured']
       if (result.status === 'rejected') {
         console.warn(`❌ ${loaders[index]} failed:`, result.reason)
       } else {

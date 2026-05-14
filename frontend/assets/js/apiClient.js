@@ -108,6 +108,7 @@ const API = {
         my: () => api.get('/bookings/my'),
         create: (d) => api.post('/bookings', d),
         updateStatus: (id, s, reason) => api.patch(`/bookings/${id}/status`, { status: s, cancelReason: reason }),
+        delete: (id) => api.delete(`/bookings/${id}`),
     },
 
     // Payments

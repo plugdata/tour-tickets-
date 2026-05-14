@@ -856,6 +856,26 @@
       // Start live polling
       pollInterval = setInterval(pollSeats, 5000)
 
+      // Pause polling when tab is hidden (saves network/CPU)
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          clearInterval(pollInterval)
+          pollInterval = null
+        } else if (!pollInterval) {
+          pollSeats()
+          pollInterval = setInterval(pollSeats, 5000)
+        }
+      })
+
+      // Release hold when user leaves without completing (keepalive so it completes after unload)
+      window.addEventListener('pagehide', () => {
+        if (!sessionToken || intentionalNav) return
+        fetch(API_BASE_URL + '/seat-bookings/hold/' + sessionToken, {
+          method: 'DELETE',
+          keepalive: true
+        }).catch(() => {})
+      })
+
       document.getElementById('loadingState').classList.add('d-none')
       document.getElementById('mainContent').classList.remove('d-none')
     })
@@ -864,8 +884,7 @@
     // Load round info
     // ════════════════════════════════════════════════════════════════
     async function loadRound() {
-      const all = await apiFetch('/bus-rounds')
-      roundData = all.find(r => r.id == roundId)
+      roundData = await apiFetch('/bus-rounds/' + roundId)
       if (!roundData) { showError('ไม่พบรอบรถนี้'); throw new Error('not found') }
 
       chartPassengerSlots = Math.max(1, (Number(roundData.totalSeats) || 10) - 1)  // seat 1 = driver/staff
@@ -1153,6 +1172,8 @@
     // Live polling — update seat states from DB
     // ════════════════════════════════════════════════════════════════
     async function pollSeats() {
+      if (pollBusy) return
+      pollBusy = true
       try {
         const data = await apiFetch(`/seat-bookings/round/${roundId}`)
         const apiSeats = data.seats || {}
@@ -1160,15 +1181,14 @@
         // อย่าใช้ data.totalSeats ทับจำนวนช่องแผง — ทำให้ seatchart (สร้างจาก loadRound) ไม่ตรงกับลูป poll (เคยเห็นเลขไหลถึง 13)
         const pollPassengerSeats = chartPassengerSlots
 
-        // Check if session expired and auto-refresh
+        // Check if session expired — reset state, next interval will re-poll
         if (sessionToken && data.sessionExpired) {
-          console.log('[SEATS] Session expired, auto-refreshing...');
-          sessionToken = null;
-          myGenders = {};
-          clearTimeout(sessionTimeout); // Clear timeout warning
-          showToast('⏰ หมดเวลาเลือกที่นั่ง กรุณาเลือกใหม่', 'warning');
-          await pollSeats(); // Re-poll with fresh data
-          return;
+          sessionToken = null
+          myGenders = {}
+          clearTimeout(sessionTimeout)
+          showToast('⏰ หมดเวลาเลือกที่นั่ง กรุณาเลือกใหม่', 'warning')
+          pollBusy = false
+          return
         }
 
         const cart = sc.getCart()
@@ -1233,6 +1253,8 @@
         updateSummary()
       } catch (e) {
         suppressCart = false
+      } finally {
+        pollBusy = false
       }
     }
 
@@ -1286,7 +1308,13 @@
     </div>`
     }
 
-    function clearAllSeats() {
+    async function clearAllSeats() {
+      // 0. Release hold on server
+      if (sessionToken) {
+        try { await apiFetch('/seat-bookings/hold/' + sessionToken, { method: 'DELETE' }) } catch (_) {}
+        sessionToken = null
+      }
+
       // 1. Reset ALL JS state first (before any seatchart calls)
       myGenders = {}
       const hadPending = pendingSeatNum !== null
@@ -1320,7 +1348,9 @@
     // ════════════════════════════════════════════════════════════════
     // Next: save session → navigate (first come first served — no hold)
     // ════════════════════════════════════════════════════════════════
+    let pollBusy = false
     let goNextBusy = false
+    let intentionalNav = false  // ป้องกัน pagehide release hold เมื่อ navigate ไปหน้าถัดไป
 
     async function goNext() {
       if (goNextBusy) return
@@ -1393,7 +1423,8 @@
           action: 'seat_selection_confirmed'
         });
 
-        // Stop polling and navigate — no need to clearAllSeats (page is leaving)
+        // Stop polling and navigate — hold stays active for next page
+        intentionalNav = true
         clearInterval(pollInterval)
         clearTimeout(sessionTimeout)
         window.location.href = `/booking/form?token=${sessionToken}`

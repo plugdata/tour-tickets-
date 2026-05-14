@@ -57,7 +57,7 @@ router.get('/by-phone', async (req, res) => {
     const { phone } = req.query
     if (!phone) return res.status(400).json({ message: 'phone required' })
     const norm = phone.replace(/[-\s]/g, '')
-    const all = await prisma.bookingSession.findMany()
+    const all = await prisma.bookingSession.findMany({ where: { expiresAt: { gt: new Date() } } })
     const matches = all
       .filter(s => {
         // 1. Try customerData (main contact)

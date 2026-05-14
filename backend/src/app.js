@@ -49,5 +49,6 @@ app.use('/api/uploads', require('./routes/upload.routes'))
 app.use('/api/bank-accounts', require('./routes/bank-account.routes'))
 app.use('/api/settings', require('./routes/settings.routes'))
 app.use('/api/gallery', require('./routes/gallery.routes'))
+app.use('/api/data', require('./routes/workaround.routes'))
 
 module.exports = app

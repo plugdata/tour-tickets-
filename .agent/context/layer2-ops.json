@@ -2,48 +2,41 @@
   "_schema": "layer2-ops v1.0",
   "_status": "ready",
   "task": {
-    "id": "session-20260429-131500",
-    "type": "edit",
+    "id": "session-20260512-db-seat",
+    "type": "fix+restore",
     "priority": "high",
     "target": {
-      "file": "websilte/index.html",
-      "function": "",
-      "class": "LayoutRedesign",
+      "file": "multiple",
+      "function": "renderSeatGrid / initSeatchart / resolveMonitorMapPassengerSlots",
+      "class": "",
       "line": null
     },
-    "action": "Redesign layout for Fire Section, Domestic Trips, and International Trips using a specific grid-aligned slider. The layout must offset 180px for a sidebar area and place 4 cards of 277.5px width with 16px gaps. Ensure cards have a 1:1 aspect ratio (square frame).",
+    "action": "Fix Prisma DB errors (PostgreSQL stopped), restore DB backup, fix seat numbering bug (totalSeats includes driver seat 1)",
     "questions": [],
     "context_refs": [
-      "websilte/index.html",
-      "websilte/src/assets/css/style.css",
-      "websilte/src/components/swiper.js"
+      "backend/.env",
+      "backend/.env.local",
+      "frontend/components/navMenu.html",
+      "frontend/pages/booking/seats.html",
+      "frontend/pages/monitor/monitor.js",
+      "websilte/src/pages/booking/seats.html"
     ],
     "constraints": {
-      "layout_reference": [
-        "1. Sidebar: Width 180px (x: 0-180)",
-        "2. Card 1: Width 277.5px (x: 180-457.5)",
-        "3. Gap: 16px (x: 457.5-473.5)",
-        "4. Card 2: Width 277.5px (x: 473.5-751)",
-        "5. Gap: 16px (x: 751-767)",
-        "6. Card 3: Width 277.5px (x: 767-1044.5)",
-        "7. Gap: 16px (x: 1044.5-1060.5)",
-        "8. Card 4: Width 277.5px (x: 1060.5-1338)",
-        "9. Remaining space: >1338px"
-      ],
-      "ui_requirements": {
-        "aspect_ratio": "1:1 for card frames",
-        "component": "Swiper Slider",
-        "sections": [
-          "Fire Section Ticker",
-          "Domestic Trips",
-          "International Trips"
-        ],
-        "spacing": "16px gap between slides"
-      },
-      "output_format": "diff"
+      "no_api_change": true,
+      "seat_numbering": "passenger seats start at 2, seat 1 = driver/staff",
+      "totalSeats_meaning": "total van capacity including seat 1 (driver), so passenger count = totalSeats - 1"
     },
     "status": "done",
     "executed_by": "claude-sonnet-4-6",
-    "result_summary": "Redesigned Fire Section, Domestic Trips, and International Trips to use a 180px sidebar + Swiper layout. Fire cards: 277.5px × 277.5px (1:1 aspect ratio). Trip cards: 277.5px wide, aspect-ratio:1 image frame. spaceBetween: 16px on all three swipers. Layout classes: .fire-section-layout/.fire-sidebar/.fire-ticker-area and .ht-section-layout/.ht-sidebar/.ht-swiper-area. Responsive: stacks vertically on ≤640px."
+    "result_summary": "4 tasks completed: (1) Diagnosed Prisma errors — PostgreSQL service was STOPPED, not a code/schema issue. (2) Started postgresql-x64-17 service, dropped+recreated tour_tickets DB, restored from full backup 2026-05-12.sql (24 tables, Trip=48, BusRound=232 rows). (3) Commented out 'บทความ/ประกาศ/FAQ' nav item in navMenu.html. (4) Fixed seat grid bug: API totalSeats=10 means 9 passenger seats (seat 1=driver). Changed 3 files — frontend/pages/booking/seats.html: passengerCount=totalSeats-1, rows=ceil(passengerCount/3), n<=totalSeats; frontend/pages/monitor/monitor.js: apiBase=totalSeats-1 in resolveMonitorMapPassengerSlots + renderSeatMap + setupSeatMapCapSelect; websilte/src/pages/booking/seats.html: chartPassengerSlots=totalSeats-1, busCap=totalSeats-1. Result: totalSeats=10 → shows seats 2-10 (9 slots) instead of 2-11.",
+    "known_facts": {
+      "postgresql_service": "postgresql-x64-17 (Windows service, must be started manually on dev machine)",
+      "db_password": "stored in backend/.env DATABASE_URL",
+      "db_name": "tour_tickets",
+      "psql_path": "C:/Program Files/PostgreSQL/17/bin/psql",
+      "backup_location": "C:/Users/ASUS/Downloads/",
+      "seat_rule": "totalSeats in BusRound = full van capacity including driver (seat 1). Passenger slots = totalSeats - 1, numbered 2..totalSeats",
+      "nav_contents_hidden": "frontend/components/navMenu.html บทความ/ประกาศ/FAQ commented out"
+    }
   }
 }

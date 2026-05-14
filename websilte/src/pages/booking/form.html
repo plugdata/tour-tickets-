@@ -243,6 +243,16 @@
 
         // ── Init ─────────────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', async () => {
+            const seatFormsEl = document.getElementById('seatForms');
+            if (seatFormsEl) {
+                seatFormsEl.addEventListener('input', (e) => {
+                    const t = e.target;
+                    if (!t.classList || !t.classList.contains('passenger-phone')) return;
+                    const d = String(t.value).replace(/\D/g, '').slice(0, 10);
+                    if (t.value !== d) t.value = d;
+                });
+            }
+
             sessionToken = new URLSearchParams(location.search).get('token');
             if (!sessionToken) { showError('ไม่พบ session — กรุณาเริ่มจองใหม่'); return; }
 
@@ -384,8 +394,9 @@
                     <div class="col-7 col-md-4">
                         <label class="form-label small">เบอร์โทรติดต่อ <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control passenger-phone"
-                            data-seat="${sn}" required placeholder="08x-xxx-xxxx" inputmode="tel"
-                            value="${s.phone || ''}">
+                            data-seat="${sn}" required maxlength="10" inputmode="numeric"
+                            placeholder="08x-xxx-xxxx"
+                            value="${String(s.phone || '').replace(/\D/g, '').slice(0, 10)}">
                     </div>
                     <!-- Row 3b: food type + alcohol -->
                     <div class="col-12 col-md-7">

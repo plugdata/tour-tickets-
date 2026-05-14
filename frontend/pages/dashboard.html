@@ -276,18 +276,24 @@
                             <!-- Color Legend -->
                             <div class="notif-legend-row">
                                 <span style="font-size:.68rem;color:#94a3b8;font-weight:600;">สี:</span>
-                                <div class="notif-legend-item">
+                                <a class="notif-legend-item text-decoration-none"
+                                    href="/frontend/pages/bus-rounds/list.html?source=dashboard&section=rounds"
+                                    title="ไปหน้ารอบรถใกล้ออกเดินทาง">
                                     <div class="notif-legend-bar" style="background:#ef4444;"></div>
                                     รอบใกล้ออกเดินทาง (7–10 วัน)
-                                </div>
-                                <div class="notif-legend-item">
+                                </a>
+                                <a class="notif-legend-item text-decoration-none"
+                                    href="/frontend/pages/payments/list.html?status=PENDING&source=dashboard&section=deposits"
+                                    title="ไปหน้ารอตรวจสลิปมัดจำ">
                                     <div class="notif-legend-bar" style="background:#f59e0b;"></div>
                                     รอยืนยันสลิปมัดจำ
-                                </div>
-                                <div class="notif-legend-item">
+                                </a>
+                                <a class="notif-legend-item text-decoration-none"
+                                    href="/frontend/pages/monitor/list.html?status=PENDING&source=dashboard&section=bookings"
+                                    title="ไปหน้าการจองใหม่">
                                     <div class="notif-legend-bar" style="background:#3b82f6;"></div>
                                     การจองใหม่ (48 ชม.)
-                                </div>
+                                </a>
                             </div>
 
                             <!-- Sections container -->
@@ -359,6 +365,16 @@
             const h = Math.floor(m / 60);
             if (h < 24) return `${h} ชม.ที่แล้ว`;
             return `${Math.floor(h / 24)} วันที่แล้ว`;
+        }
+
+        function buildLink(basePath, params = {}) {
+            const usp = new URLSearchParams();
+            Object.entries(params).forEach(([k, v]) => {
+                if (v === undefined || v === null || v === '') return;
+                usp.set(k, String(v));
+            });
+            const qs = usp.toString();
+            return qs ? `${basePath}?${qs}` : basePath;
         }
 
         // ── Toggle collapse ───────────────────────────────────────────
@@ -628,7 +644,13 @@
                             title: `${r.startPoint} → ${r.endPoint}`,
                             desc: `ออก ${dateStr} · เหลือ ${seatsLeft}/${r.totalSeats} ที่ · อีก ${daysLeft} วัน`,
                             time: r.departDate,
-                            link: '/frontend/pages/bus-rounds/list.html',
+                            link: buildLink('/frontend/pages/bus-rounds/list.html', {
+                                source: 'dashboard',
+                                section: 'rounds',
+                                tripId: r.tripId,
+                                roundId: r.id,
+                                name: r.trip?.title || `${r.startPoint} → ${r.endPoint}`,
+                            }),
                             urgency: 'high',
                             exportRow: [
                                 `${r.startPoint} → ${r.endPoint}`,
@@ -654,7 +676,15 @@
                             title: `${customer} · ฿${Number(p.amount).toLocaleString()}`,
                             desc: route ? `${route} · รอตรวจสอบสลิป` : 'รอตรวจสอบสลิป',
                             time: p.createdAt,
-                            link: '/frontend/pages/payments/list.html',
+                            link: buildLink('/frontend/pages/payments/list.html', {
+                                source: 'dashboard',
+                                section: 'deposits',
+                                status: 'PENDING',
+                                paymentId: p.id,
+                                bookingId: p.bookingId,
+                                q: customer,
+                                name: customer,
+                            }),
                             urgency: 'mid',
                             exportRow: [
                                 customer,
@@ -680,7 +710,13 @@
                             title: customer,
                             desc: `${route} · ${b.seats} ที่นั่ง`,
                             time: b.createdAt,
-                            link: '/frontend/pages/bookings/list.html',
+                            link: buildLink('/frontend/pages/bookings/view.html', {
+                                id: b.id,
+                                source: 'dashboard',
+                                section: 'bookings',
+                                bookingId: b.id,
+                                name: customer,
+                            }),
                             urgency: 'low',
                             exportRow: [
                                 customer,

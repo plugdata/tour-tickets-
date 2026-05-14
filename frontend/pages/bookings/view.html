@@ -131,7 +131,7 @@
                 <!-- Header -->
                 <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
-                        <a href="list.html" class="btn btn-sm btn-outline-secondary me-2">
+                        <a href="list.html" id="backBtn" class="btn btn-sm btn-outline-secondary me-2">
                             <i class="bi bi-arrow-left me-1"></i>กลับ
                         </a>
                         <span class="page-title" id="pageTitle">รายละเอียดการจอง</span>
@@ -221,7 +221,62 @@
         const INS_LABEL = { DRAFT: 'ร่าง', SUBMITTED: 'รอตรวจสอบ', APPROVED: 'อนุมัติ', REJECTED: 'ปฏิเสธ' };
         const BLOOD_COLOR = { 'A+': '#dc3545', 'A-': '#fd7e14', 'B+': '#0d6efd', 'B-': '#6610f2', 'AB+': '#198754', 'AB-': '#0dcaf0', 'O+': '#d63384', 'O-': '#6c757d' };
 
-        let cancelModal, bookingId, bookingData, fromRoundId;
+        let cancelModal, bookingId, bookingData, fromRoundId, backHref = 'list.html';
+
+        function buildQuery(paramsObj = {}) {
+            const sp = new URLSearchParams();
+            Object.entries(paramsObj).forEach(([k, v]) => {
+                if (v == null || v === '') return;
+                sp.set(k, String(v));
+            });
+            const qs = sp.toString();
+            return qs ? `?${qs}` : '';
+        }
+
+        function isSafeInternalHref(href) {
+            if (!href || typeof href !== 'string') return false;
+            return href.startsWith('/frontend/pages/') || href.startsWith('../');
+        }
+
+        function resolveBackHref(params) {
+            const explicit = params.get('returnUrl');
+            if (explicit && isSafeInternalHref(explicit)) return explicit;
+
+            const name = params.get('name');
+            const q = params.get('q') || name;
+            const section = params.get('section');
+            const source = params.get('source');
+
+            if (fromRoundId) {
+                return `../monitor/list.html${buildQuery({ roundId: fromRoundId, q, name, source, section })}`;
+            }
+
+            if (source === 'dashboard') {
+                return `../dashboard.html${buildQuery({ section, q, name })}`;
+            }
+
+            try {
+                if (document.referrer) {
+                    const ref = new URL(document.referrer);
+                    if (ref.origin === location.origin && ref.pathname.includes('/frontend/pages/monitor/list.html')) {
+                        return `${ref.pathname}${ref.search || ''}`;
+                    }
+                }
+            } catch (_) { }
+
+            return 'list.html';
+        }
+
+        function applyBackLink() {
+            const backBtn = document.getElementById('backBtn');
+            if (!backBtn) return;
+            backBtn.href = backHref;
+            if (backHref.includes('/monitor/list.html')) {
+                backBtn.innerHTML = '<i class="bi bi-arrow-left me-1"></i>กลับหน้า Monitor';
+            } else if (backHref.includes('/dashboard.html')) {
+                backBtn.innerHTML = '<i class="bi bi-arrow-left me-1"></i>กลับหน้า Dashboard';
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
             await initPage();
@@ -229,16 +284,8 @@
             const params = new URLSearchParams(location.search);
             bookingId = params.get('id');
             fromRoundId = params.get('fromRound');
-
-            if (fromRoundId) {
-                const backUrl = `../monitor/list.html?roundId=${fromRoundId}`;
-                document.querySelectorAll('a[href="list.html"]').forEach(a => {
-                    a.href = backUrl;
-                    if (a.textContent.trim() === 'กลับ') {
-                        a.innerHTML = '<i class="bi bi-arrow-left me-1"></i>กลับหน้า Monitor';
-                    }
-                });
-            }
+            backHref = resolveBackHref(params);
+            applyBackLink();
 
             if (!bookingId) { showError('ไม่พบ ID การจอง'); return; }
             loadBooking();
@@ -470,7 +517,7 @@
         function showError(msg) {
             document.getElementById('loadingState').innerHTML =
                 `<i class="bi bi-exclamation-triangle text-danger fs-2"></i><p class="text-danger mt-2">${msg}</p>
-         <a href="list.html" class="btn btn-outline-secondary mt-2"><i class="bi bi-arrow-left me-1"></i>กลับ</a>`;
+         <a href="${backHref}" class="btn btn-outline-secondary mt-2"><i class="bi bi-arrow-left me-1"></i>กลับ</a>`;
         }
     </script>
 </body>

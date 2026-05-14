@@ -30,8 +30,18 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/826/826070.png">
 
-  <!-- JSON Editor -->
-  <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
+  <!-- Dynamic preconnect to API server (same host, port 5000 in production) -->
+  <script>
+    ;(function () {
+      var p = location.port
+      if (p !== '5173' && p !== '80' && p !== '443' && p !== '') {
+        var l = document.createElement('link')
+        l.rel = 'preconnect'
+        l.href = location.protocol + '//' + location.hostname + ':5000'
+        document.head.appendChild(l)
+      }
+    })()
+  </script>
 
   <script>
     if ('serviceWorker' in navigator) {
@@ -206,7 +216,12 @@
           </select>
         </div>
         <div class="swiper ht-swiper domestic-swiper">
-          <div class="swiper-wrapper" id="domesticWrapper"></div>
+          <div class="swiper-wrapper" id="domesticWrapper">
+            <div class="swiper-slide"><div class="ht-card" style="pointer-events:none"><div class="ht-img-placeholder ht-skeleton" style="border-radius:0"></div><div class="ht-body"><div class="ht-skeleton mb-2" style="height:12px;width:55%"></div><div class="ht-skeleton mb-1" style="height:18px;width:85%"></div><div class="ht-skeleton mb-3" style="height:12px;width:70%"></div><div class="ht-skeleton" style="height:24px;width:40%"></div></div></div></div>
+            <div class="swiper-slide"><div class="ht-card" style="pointer-events:none"><div class="ht-img-placeholder ht-skeleton" style="border-radius:0"></div><div class="ht-body"><div class="ht-skeleton mb-2" style="height:12px;width:65%"></div><div class="ht-skeleton mb-1" style="height:18px;width:75%"></div><div class="ht-skeleton mb-3" style="height:12px;width:50%"></div><div class="ht-skeleton" style="height:24px;width:40%"></div></div></div></div>
+            <div class="swiper-slide"><div class="ht-card" style="pointer-events:none"><div class="ht-img-placeholder ht-skeleton" style="border-radius:0"></div><div class="ht-body"><div class="ht-skeleton mb-2" style="height:12px;width:45%"></div><div class="ht-skeleton mb-1" style="height:18px;width:90%"></div><div class="ht-skeleton mb-3" style="height:12px;width:60%"></div><div class="ht-skeleton" style="height:24px;width:40%"></div></div></div></div>
+            <div class="swiper-slide"><div class="ht-card" style="pointer-events:none"><div class="ht-img-placeholder ht-skeleton" style="border-radius:0"></div><div class="ht-body"><div class="ht-skeleton mb-2" style="height:12px;width:55%"></div><div class="ht-skeleton mb-1" style="height:18px;width:80%"></div><div class="ht-skeleton mb-3" style="height:12px;width:65%"></div><div class="ht-skeleton" style="height:24px;width:40%"></div></div></div></div>
+          </div>
           <div class="swiper-button-next"></div>
           <div class="swiper-button-prev"></div>
         </div>
@@ -231,7 +246,12 @@
         </select>
       </div>
       <div class="swiper ht-swiper international-swiper">
-        <div class="swiper-wrapper" id="intlWrapper"></div>
+        <div class="swiper-wrapper" id="intlWrapper">
+          <div class="swiper-slide"><div class="ht-card" style="pointer-events:none"><div class="ht-img-placeholder ht-skeleton" style="border-radius:0"></div><div class="ht-body"><div class="ht-skeleton mb-2" style="height:12px;width:55%"></div><div class="ht-skeleton mb-1" style="height:18px;width:85%"></div><div class="ht-skeleton mb-3" style="height:12px;width:70%"></div><div class="ht-skeleton" style="height:24px;width:40%"></div></div></div></div>
+          <div class="swiper-slide"><div class="ht-card" style="pointer-events:none"><div class="ht-img-placeholder ht-skeleton" style="border-radius:0"></div><div class="ht-body"><div class="ht-skeleton mb-2" style="height:12px;width:60%"></div><div class="ht-skeleton mb-1" style="height:18px;width:75%"></div><div class="ht-skeleton mb-3" style="height:12px;width:55%"></div><div class="ht-skeleton" style="height:24px;width:40%"></div></div></div></div>
+          <div class="swiper-slide"><div class="ht-card" style="pointer-events:none"><div class="ht-img-placeholder ht-skeleton" style="border-radius:0"></div><div class="ht-body"><div class="ht-skeleton mb-2" style="height:12px;width:45%"></div><div class="ht-skeleton mb-1" style="height:18px;width:80%"></div><div class="ht-skeleton mb-3" style="height:12px;width:65%"></div><div class="ht-skeleton" style="height:24px;width:40%"></div></div></div></div>
+          <div class="swiper-slide"><div class="ht-card" style="pointer-events:none"><div class="ht-img-placeholder ht-skeleton" style="border-radius:0"></div><div class="ht-body"><div class="ht-skeleton mb-2" style="height:12px;width:70%"></div><div class="ht-skeleton mb-1" style="height:18px;width:90%"></div><div class="ht-skeleton mb-3" style="height:12px;width:60%"></div><div class="ht-skeleton" style="height:24px;width:40%"></div></div></div></div>
+        </div>
         <div class="swiper-button-next"></div>
         <div class="swiper-button-prev"></div>
       </div>
@@ -271,41 +291,26 @@
           <h2 class="section-title" data-i18n="blog_title">ภาพความประทับใจ</h2>
           <p class="section-subtitle" data-i18n="blog_subtitle">บันทึกความทรงจำและรอยยิ้มจากการเดินทาง</p>
           <div class="row g-3 justify-content-center" id="blogGrid">
-            <!-- Placeholder 1 -->
-            <div class="col-lg-4">
+            <div class="col-lg-6">
               <div class="blog-card">
                 <div class="blog-image-container">
-                  <img src="https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=800&h=500&fit=crop" alt=""
-                    class="blog-image">
+                  <img src="https://images.unsplash.com/photo-1528181304800-259b08848526?w=800&h=500&fit=crop"
+                    alt="ทริปธรรมชาติ" class="blog-image" loading="lazy">
                   <div class="blog-overlay">
-                    <span class="blog-category"><i class="bi bi-tag"></i> Lifestyle</span>
-                    <h4 class="blog-title">บทความท่องเที่ยว</h4>
+                    <span class="blog-category"><i class="bi bi-geo-alt"></i> ธรรมชาติ</span>
+                    <h4 class="blog-title">สัมผัสธรรมชาติที่ยอดเยี่ยม</h4>
                   </div>
                 </div>
               </div>
             </div>
-            <!-- Placeholder 2 -->
-            <div class="col-lg-4">
+            <div class="col-lg-6">
               <div class="blog-card">
                 <div class="blog-image-container">
-                  <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=500&fit=crop" alt=""
-                    class="blog-image">
+                  <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=500&fit=crop"
+                    alt="ประสบการณ์การเดินทาง" class="blog-image" loading="lazy">
                   <div class="blog-overlay">
-                    <span class="blog-category"><i class="bi bi-tag"></i> Travel</span>
-                    <h4 class="blog-title">ประสบการณ์การเดินทาง</h4>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- Placeholder 3 (New) -->
-            <div class="col-lg-4">
-              <div class="blog-card">
-                <div class="blog-image-container">
-                  <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=500&fit=crop" alt=""
-                    class="blog-image">
-                  <div class="blog-overlay">
-                    <span class="blog-category"><i class="bi bi-tag"></i> Nature</span>
-                    <h4 class="blog-title">ความสุขของการพักผ่อน</h4>
+                    <span class="blog-category"><i class="bi bi-camera"></i> ประสบการณ์</span>
+                    <h4 class="blog-title">ความประทับใจที่ไม่รู้ลืม</h4>
                   </div>
                 </div>
               </div>
@@ -322,10 +327,14 @@
       <h2 class="section-title" data-i18n="gallery_title">แกลเลอรี่</h2>
       <p class="section-subtitle" data-i18n="gallery_subtitle">ภาพสวยๆ จากทริปที่ผ่านมา</p>
       <div class="row g-3" id="galleryGrid">
-        <div class="col-12 text-center py-4" style="color:var(--text-gray)">
-          <i class="bi bi-images" style="font-size:2.5rem;opacity:.3"></i>
-          <p class="mt-2 small">กำลังโหลดแกลเลอรี่...</p>
-        </div>
+        <div class="col-6 col-md-4 col-lg-3"><div class="gallery-card" style="pointer-events:none"><div class="gallery-thumb ht-skeleton"></div><div class="gallery-info"><div class="ht-skeleton mb-1" style="height:14px;width:70%"></div><div class="ht-skeleton" style="height:10px;width:45%"></div></div></div></div>
+        <div class="col-6 col-md-4 col-lg-3"><div class="gallery-card" style="pointer-events:none"><div class="gallery-thumb ht-skeleton"></div><div class="gallery-info"><div class="ht-skeleton mb-1" style="height:14px;width:55%"></div><div class="ht-skeleton" style="height:10px;width:35%"></div></div></div></div>
+        <div class="col-6 col-md-4 col-lg-3"><div class="gallery-card" style="pointer-events:none"><div class="gallery-thumb ht-skeleton"></div><div class="gallery-info"><div class="ht-skeleton mb-1" style="height:14px;width:75%"></div><div class="ht-skeleton" style="height:10px;width:50%"></div></div></div></div>
+        <div class="col-6 col-md-4 col-lg-3"><div class="gallery-card" style="pointer-events:none"><div class="gallery-thumb ht-skeleton"></div><div class="gallery-info"><div class="ht-skeleton mb-1" style="height:14px;width:60%"></div><div class="ht-skeleton" style="height:10px;width:40%"></div></div></div></div>
+        <div class="col-6 col-md-4 col-lg-3"><div class="gallery-card" style="pointer-events:none"><div class="gallery-thumb ht-skeleton"></div><div class="gallery-info"><div class="ht-skeleton mb-1" style="height:14px;width:65%"></div><div class="ht-skeleton" style="height:10px;width:45%"></div></div></div></div>
+        <div class="col-6 col-md-4 col-lg-3"><div class="gallery-card" style="pointer-events:none"><div class="gallery-thumb ht-skeleton"></div><div class="gallery-info"><div class="ht-skeleton mb-1" style="height:14px;width:50%"></div><div class="ht-skeleton" style="height:10px;width:35%"></div></div></div></div>
+        <div class="col-6 col-md-4 col-lg-3"><div class="gallery-card" style="pointer-events:none"><div class="gallery-thumb ht-skeleton"></div><div class="gallery-info"><div class="ht-skeleton mb-1" style="height:14px;width:80%"></div><div class="ht-skeleton" style="height:10px;width:55%"></div></div></div></div>
+        <div class="col-6 col-md-4 col-lg-3"><div class="gallery-card" style="pointer-events:none"><div class="gallery-thumb ht-skeleton"></div><div class="gallery-info"><div class="ht-skeleton mb-1" style="height:14px;width:60%"></div><div class="ht-skeleton" style="height:10px;width:40%"></div></div></div></div>
       </div>
     </div>
   </section>
@@ -535,9 +544,17 @@
         <div id="tdBadge"></div>
         <h2 class="td-title" id="tdTitle">กำลังโหลด...</h2>
         <div class="td-info-row" id="tdInfo"></div>
-        <div id="tdRounds"></div>
-        <p id="tdDesc" class="td-desc" style="display:none"></p>
+        <div id="tdDescBlock" class="td-desc-block" style="display:none">
+          <button type="button" id="tdDescToggle" class="td-desc-toggle" onclick="tdToggleTripDesc()"
+            aria-expanded="false" aria-controls="tdDesc">
+            <span class="when-collapsed" data-i18n="modal_desc_show">แสดงรายละเอียดทริป</span>
+            <span class="when-expanded" data-i18n="modal_desc_hide">ซ่อนรายละเอียดทริป</span>
+            <i class="bi bi-chevron-down td-desc-chevron" aria-hidden="true"></i>
+          </button>
+          <div id="tdDesc" class="td-desc td-desc-panel" role="region" aria-labelledby="tdDescToggle" hidden></div>
+        </div>
         <div id="tdSummary"></div>
+        <div id="tdRounds"></div>
         <button class="td-btn-outline" id="tdBtnDoc" style="display:none">
           <i class="bi bi-file-earmark-text"></i>
           <span data-i18n="modal_btn_doc">ดูรายละเอียดก่อนจองได้เลย</span>
@@ -546,8 +563,7 @@
           <i class="bi bi-ticket-perforated"></i>
           <span data-i18n="modal_btn_book">จองทริป</span>
         </button>
-        <div style="text-align:center;font-size:.75rem;color:var(--text-gray);margin-bottom:.55rem"
-          data-i18n="modal_share_label">แชร์ให้เพื่อน</div>
+        <div class="td-share-label" data-i18n="modal_share_label">แชร์ให้เพื่อน</div>
         <div class="td-share-row">
           <button class="td-share-btn td-btn-line" onclick="tdShareLine()"><i class="bi bi-chat-fill"></i>LINE</button>
           <button class="td-share-btn td-btn-fb" onclick="tdShareFb()"><i class="bi bi-facebook"></i>Facebook</button>

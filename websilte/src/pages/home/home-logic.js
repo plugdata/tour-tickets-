@@ -9,6 +9,34 @@ const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June',
 // Escape text for use inside HTML attributes
 const esc = s => (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
 
+function buildTripShareUrl() {
+  const u = new URL(window.location.href)
+  u.hash = ''
+  if (tdCurrentTrip?.id) u.searchParams.set('tripId', String(tdCurrentTrip.id))
+  else u.searchParams.delete('tripId')
+  if (tdSelectedRound) u.searchParams.set('roundId', String(tdSelectedRound))
+  else u.searchParams.delete('roundId')
+  return u.toString()
+}
+
+function isLikelyMobile() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '')
+}
+
+/** Open trip modal from ?tripId= & optional ?roundId= (share / deep link). */
+async function openTripDeepLinkFromUrlIfPresent() {
+  const raw = new URLSearchParams(window.location.search).get('tripId')
+  if (!raw) return
+  const tripId = parseInt(raw, 10)
+  if (!tripId) return
+  const roundRaw = new URLSearchParams(window.location.search).get('roundId')
+  const roundId = roundRaw ? parseInt(roundRaw, 10) : NaN
+  await tdOpen(tripId)
+  if (Number.isFinite(roundId)) {
+    setTimeout(() => window.__tdSelectRound?.(roundId), 200)
+  }
+}
+
 // ── shared state ─────────────────────────────────────────
 let homeRoundMap = new Map()
 let tdSelectedRound = null
@@ -128,7 +156,34 @@ export async function loadHomeTripRows() {
     window.__refreshHomeNav?.()
     window.__applyI18n?.()
     await window.__translateDynamic?.()
+    await openTripDeepLinkFromUrlIfPresent()
   } catch (e) { console.error('Trip rows load error:', e) }
+}
+
+function resetTripDescPanel() {
+  const block = document.getElementById('tdDescBlock')
+  const panel = document.getElementById('tdDesc')
+  const btn = document.getElementById('tdDescToggle')
+  if (panel) {
+    panel.innerHTML = ''
+    panel.removeAttribute('data-i18n-dyn')
+    panel.removeAttribute('data-th')
+    panel.setAttribute('hidden', '')
+  }
+  if (btn) {
+    btn.classList.remove('is-open')
+    btn.setAttribute('aria-expanded', 'false')
+  }
+  if (block) block.style.display = 'none'
+}
+
+function tdCollapseTripDescPanel() {
+  const panel = document.getElementById('tdDesc')
+  const btn = document.getElementById('tdDescToggle')
+  if (!panel || !btn) return
+  panel.setAttribute('hidden', '')
+  btn.classList.remove('is-open')
+  btn.setAttribute('aria-expanded', 'false')
 }
 
 function emptySlide(msg) {
@@ -158,7 +213,7 @@ export async function tdOpen(tripId) {
   if (titleEl) titleEl.textContent = 'กำลังโหลด...'
   if (infoEl) infoEl.innerHTML = ''
   if (roundsEl) roundsEl.innerHTML = '<div style="padding:1rem;text-align:center;color:#a0aec0"><span class="spinner-border spinner-border-sm"></span></div>'
-  if (descEl) descEl.textContent = ''
+  resetTripDescPanel()
   if (summaryEl) summaryEl.innerHTML = ''
   if (btnBook) btnBook.disabled = true
   if (btnDoc) btnDoc.style.display = 'none'
@@ -166,6 +221,7 @@ export async function tdOpen(tripId) {
   const modal = document.getElementById('tripDetailModal')
   if (modal) modal.classList.add('open')
   document.body.style.overflow = 'hidden'
+  window.__lenis?.stop()
 
   try {
     const [rounds, stacks, trip] = await Promise.all([
@@ -213,18 +269,24 @@ export async function tdOpen(tripId) {
     </div>`
     }
 
-    tdRenderRounds(rounds, stacks)
-
+    const rawDesc = (trip.description || '').trim()
     if (descEl) {
-      if (trip.description) {
-        descEl.textContent = trip.description
+      if (rawDesc) {
+        descEl.textContent = rawDesc
         descEl.setAttribute('data-i18n-dyn', '')
-        descEl.setAttribute('data-th', trip.description)
-        descEl.style.display = 'block'
+        descEl.setAttribute('data-th', rawDesc)
       } else {
-        descEl.textContent = ''
         descEl.removeAttribute('data-i18n-dyn')
-        descEl.style.display = 'none'
+        descEl.removeAttribute('data-th')
+        descEl.innerHTML = '<span data-i18n="modal_desc_empty">ยังไม่มีรายละเอียดเพิ่มเติม</span>'
+      }
+      descEl.setAttribute('hidden', '')
+      const descBlock = document.getElementById('tdDescBlock')
+      const descToggle = document.getElementById('tdDescToggle')
+      if (descBlock) descBlock.style.display = 'block'
+      if (descToggle) {
+        descToggle.classList.remove('is-open')
+        descToggle.setAttribute('aria-expanded', 'false')
       }
     }
 
@@ -246,6 +308,8 @@ export async function tdOpen(tripId) {
     </div>`
     }
 
+    tdRenderRounds(rounds, stacks)
+
     if (btnDoc) {
       const isVideo = trip.docUrl && /youtu|vimeo|tiktok|\.mp4|video/i.test(trip.docUrl)
       btnDoc.style.display = trip.docUrl ? 'flex' : 'none'
@@ -260,6 +324,7 @@ export async function tdOpen(tripId) {
     await window.__translateDynamic?.()
   } catch (e) {
     if (titleEl) titleEl.textContent = 'โหลดข้อมูลไม่ได้ กรุณาลองใหม่'
+    resetTripDescPanel()
   }
 }
 
@@ -370,19 +435,72 @@ window.__tdSelectRound = function (rid) {
 }
 
 window.__tdOpen = tdOpen
+window.tdToggleTripDesc = function () {
+  const panel = document.getElementById('tdDesc')
+  const btn = document.getElementById('tdDescToggle')
+  if (!panel || !btn) return
+  const expanded = !panel.hasAttribute('hidden')
+  if (expanded) {
+    panel.setAttribute('hidden', '')
+    btn.classList.remove('is-open')
+    btn.setAttribute('aria-expanded', 'false')
+  } else {
+    panel.removeAttribute('hidden')
+    btn.classList.add('is-open')
+    btn.setAttribute('aria-expanded', 'true')
+  }
+}
 window.tdClose = function () {
+  tdCollapseTripDescPanel()
   const modal = document.getElementById('tripDetailModal')
   if (modal) modal.classList.remove('open')
   document.body.style.overflow = ''
+  window.__lenis?.start()
 }
 window.tdGoBook = function () { if (tdSelectedRound) window.location.href = `/booking/seats?roundId=${tdSelectedRound}` }
 window.tdShareLine = function () {
-  const url = encodeURIComponent(location.href)
-  const txt = encodeURIComponent(tdCurrentTrip ? `สนใจทริป: ${tdCurrentTrip.title}` : 'มาเที่ยวด้วยกัน!')
-  window.open(`https://social-plugins.line.me/lineit/share?url=${url}&text=${txt}`, '_blank')
+  const shareUrl = buildTripShareUrl()
+  const headline = tdCurrentTrip ? `สนใจทริป: ${tdCurrentTrip.title}` : 'มาเที่ยวด้วยกัน!'
+  const lineText = `${headline}\n${shareUrl}`
+  const webShare = `https://line.me/R/msg/text/?text=${encodeURIComponent(lineText)}`
+
+  if (isLikelyMobile()) {
+    let hid = false
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') hid = true
+    }
+    document.addEventListener('visibilitychange', onVis)
+    window.location.href = `line://msg/text/${encodeURIComponent(lineText)}`
+    setTimeout(() => {
+      document.removeEventListener('visibilitychange', onVis)
+      if (!hid && document.visibilityState === 'visible') {
+        window.open(webShare, '_blank')
+      }
+    }, 900)
+    return
+  }
+
+  window.open(
+    `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(headline)}`,
+    '_blank'
+  )
 }
-window.tdShareFb = function () {
-  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}`, '_blank')
+window.tdShareFb = async function () {
+  const shareUrl = buildTripShareUrl()
+  const title = tdCurrentTrip?.title || document.title || ''
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text: title, url: shareUrl })
+      return
+    } catch (_) { /* user cancelled or share unsupported */ }
+  }
+
+  const enc = encodeURIComponent(shareUrl)
+  const sharer = isLikelyMobile()
+    ? `https://m.facebook.com/sharer.php?u=${enc}`
+    : `https://www.facebook.com/sharer/sharer.php?u=${enc}`
+  window.open(sharer, '_blank')
 }
 
 function populateTripSelects(domestic, international) {
@@ -478,8 +596,12 @@ function isVisibleSection(el) {
 function scrollToHomeSection(sectionId) {
   const section = document.getElementById(sectionId)
   if (!section || !isVisibleSection(section)) return
-  const top = window.scrollY + section.getBoundingClientRect().top - getHeaderOffset()
-  window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' })
+  if (window.__lenis) {
+    window.__lenis.scrollTo(section, { offset: -getHeaderOffset(), duration: 1.0 })
+  } else {
+    const top = window.scrollY + section.getBoundingClientRect().top - getHeaderOffset()
+    window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' })
+  }
 }
 
 function updateHomeNavActive() {
@@ -546,7 +668,13 @@ function initHomeSectionNav() {
     })
   })
 
-  window.addEventListener('scroll', updateHomeNavActive, { passive: true })
+  let _navTicking = false
+  window.addEventListener('scroll', () => {
+    if (!_navTicking) {
+      _navTicking = true
+      requestAnimationFrame(() => { updateHomeNavActive(); _navTicking = false })
+    }
+  }, { passive: true })
   window.addEventListener('resize', updateHomeNavActive)
   updateHomeNavActive()
   refreshHomeNavVisibility()
@@ -556,24 +684,33 @@ window.__refreshHomeNav = refreshHomeNavVisibility
 window.__initHomeSectionNav = initHomeSectionNav
 
 // ── Announcement Scroll Handler ──
+let _annTicking = false
 window.addEventListener('scroll', () => {
-  const bar = document.getElementById('announcementBar')
-  if (bar) {
-    if (window.scrollY > 60) bar.classList.add('hide-bar')
-    else bar.classList.remove('hide-bar')
+  if (!_annTicking) {
+    _annTicking = true
+    requestAnimationFrame(() => {
+      const bar = document.getElementById('announcementBar')
+      if (bar) bar.classList.toggle('hide-bar', window.scrollY > 60)
+      _annTicking = false
+    })
   }
-})
+}, { passive: true })
 
-// ── Detail Modal Swipe to Close ──
+// ── Detail Modal Swipe to Close + Native Scroll ──
 document.addEventListener('DOMContentLoaded', () => {
   const sheet = document.getElementById('tdSheet')
   if (sheet) {
+    // ป้องกัน Lenis intercept wheel event ภายใน modal
+    // Lenis ฟัง wheel บน document.documentElement (bubble phase)
+    // stopPropagation ที่ sheet → event ไม่ถึง Lenis
+    sheet.addEventListener('wheel', e => { e.stopPropagation() }, { passive: false })
+
     let _sy = 0
-    sheet.addEventListener('touchstart', e => { _sy = e.touches[0].clientY })
+    sheet.addEventListener('touchstart', e => { _sy = e.touches[0].clientY }, { passive: true })
     sheet.addEventListener('touchend', e => {
       if (e.changedTouches[0].clientY - _sy > 80 && sheet.scrollTop === 0) {
         if (window.tdClose) window.tdClose()
       }
-    })
+    }, { passive: true })
   }
 })

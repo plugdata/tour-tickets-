@@ -1,0 +1,18 @@
+{
+  "projectId": "",
+  "apiUrl": "https://app.tolgee.io",
+  "pull": {
+    "path": "public/i18n",
+    "fileStructureTemplate": "{languageTag}.json",
+    "languages": ["th", "en"]
+  },
+  "push": {
+    "files": [
+      {
+        "path": "public/i18n/th.json",
+        "language": "th"
+      }
+    ],
+    "forceMode": "KEEP"
+  }
+}

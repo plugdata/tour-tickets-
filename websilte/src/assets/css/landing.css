@@ -597,6 +597,8 @@ html {
 .ht-swiper {
   padding: 0 0 0.5rem !important;
   overflow: hidden !important;
+  overscroll-behavior-x: contain; /* ป้องกัน horizontal swipe ล้นออกหน้า */
+  touch-action: pan-y pinch-zoom; /* ให้ Swiper จัดการ horizontal touch, page scroll แนวตั้งได้ปกติ */
 }
 
 .ht-swiper .swiper-slide {
@@ -1004,6 +1006,27 @@ html {
   margin-bottom: 1.3rem;
 }
 
+/* รายการรอบยาว — เลื่อนในช่อง ไม่ดันปุ่มจอง/แชร์ออกจอ */
+#tdRounds {
+  max-height: min(42vh, 300px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .12) transparent;
+}
+
+#tdRounds::-webkit-scrollbar {
+  width: 4px;
+}
+
+#tdRounds::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .15);
+  border-radius: 2px;
+}
+
 .td-info-card {
   background: rgba(255, 255, 255, .05);
   border: 1px solid rgba(255, 255, 255, .1);
@@ -1134,12 +1157,76 @@ html {
 }
 
 /* Desc */
+.td-desc-block {
+  margin-bottom: 1.2rem;
+}
+
+.td-desc-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 217, 180, 0.45);
+  background: linear-gradient(180deg, rgba(0, 217, 180, 0.22) 0%, rgba(0, 217, 180, 0.1) 100%);
+  color: #fff;
+  font-family: Kanit, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 12px rgba(0, 217, 180, 0.12);
+}
+
+.td-desc-toggle:hover {
+  background: linear-gradient(180deg, rgba(0, 217, 180, 0.32) 0%, rgba(0, 217, 180, 0.16) 100%);
+  border-color: rgba(0, 217, 180, 0.75);
+  color: #fff;
+  box-shadow: 0 2px 16px rgba(0, 217, 180, 0.22);
+}
+
+.td-desc-toggle:focus-visible {
+  outline: 2px solid #00d9b4;
+  outline-offset: 2px;
+}
+
+.td-desc-chevron {
+  font-size: 1rem;
+  color: #fff;
+  opacity: 0.95;
+  transition: transform 0.25s ease, opacity 0.2s;
+}
+
+.td-desc-toggle.is-open .td-desc-chevron {
+  transform: rotate(180deg);
+}
+
+.td-desc-toggle .when-expanded {
+  display: none;
+}
+
+.td-desc-toggle.is-open .when-expanded {
+  display: inline;
+}
+
+.td-desc-toggle.is-open .when-collapsed {
+  display: none;
+}
+
 .td-desc {
   font-size: .88rem;
   color: #a0aec0;
   line-height: 1.75;
   margin-bottom: 1.2rem;
   white-space: pre-line;
+}
+
+.td-desc-panel.td-desc {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
 }
 
 /* Summary */
@@ -1228,6 +1315,18 @@ html {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* หัวข้อเหนือปุ่มแชร์ — กันตัวอักษรไทยถูกตัด (line-height ต่ำเกิน) */
+.td-share-label {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.78);
+  margin: 0.15rem 0 0.65rem;
+  padding: 0.35rem 0.5rem 0.15rem;
+  overflow: visible;
 }
 
 .td-share-row {
@@ -1333,4 +1432,45 @@ html {
 
 .ht-quick-select option:disabled {
   color: #64748b;
+}
+
+/* ── Touch UX Optimizations ─────────────────────────────────── */
+
+/* ลบ tap highlight + ตัด 300ms delay */
+.ht-card,
+.gallery-card,
+.ht-btn-book,
+.td-btn-primary,
+.td-btn-outline,
+.td-btn-line,
+.td-btn-fb,
+.td-close,
+.td-round-item,
+.faq-question,
+.nav-link-item,
+.nav-btn-lang,
+.ht-quick-select,
+.fire-card,
+.album-lightbox-grid img {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* GPU layer สำหรับ card ที่ animate */
+.ht-card,
+.gallery-card {
+  will-change: transform;
+}
+
+/* Modal sheet — scroll แนวตั้งลื่น บน iOS */
+.td-sheet {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+/* ป้องกัน text selection ขณะ swipe card */
+.ht-swiper,
+.fire-swiper {
+  user-select: none;
+  -webkit-user-select: none;
 }

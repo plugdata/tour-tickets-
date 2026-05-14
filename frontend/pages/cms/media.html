@@ -56,6 +56,9 @@
         </div>
         <div class="d-flex gap-2 align-items-center">
           <span class="stats-chip" id="statsChip">0 ไฟล์</span>
+          <button class="btn btn-outline-secondary btn-sm" id="btnReloadMedia" title="โหลดรายการใหม่">
+            <i class="bi bi-arrow-clockwise me-1"></i>Reload
+          </button>
           <button class="btn btn-outline-danger btn-sm d-none" id="btnDeleteSelected">
             <i class="bi bi-trash me-1"></i>ลบที่เลือก (<span id="selectedCount">0</span>)
           </button>
@@ -95,6 +98,16 @@
           <option value="asc">เก่า → ใหม่</option>
         </select>
         <button class="btn btn-outline-secondary btn-sm" id="btnSelectAll">เลือกทั้งหมด</button>
+      </div>
+      <div class="small text-muted mb-2" id="gridInfo"></div>
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <button class="btn btn-outline-secondary btn-sm" id="btnPrevPage">
+          <i class="bi bi-chevron-left"></i> ก่อนหน้า
+        </button>
+        <span class="small text-muted" id="pageInfo">หน้า 1/1</span>
+        <button class="btn btn-outline-secondary btn-sm" id="btnNextPage">
+          ถัดไป <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
 
       <!-- Media Grid -->
@@ -170,11 +183,14 @@ let selected = new Set()
 let imgModal
 let currentImg = null
 const BASE = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL.replace('/api', '') : ''
+const MAX_FILE_SIZE = 5 * 1024 * 1024
+const PAGE_SIZE = 50
+let currentPage = 1
 
 document.addEventListener('DOMContentLoaded', async () => {
   await initPage()
   imgModal = new bootstrap.Modal(document.getElementById('imgModal'))
-  loadMedia()
+  loadMedia(false, true)
 
   // File input
   document.getElementById('fileInput').addEventListener('change', e => uploadFiles(e.target.files))
@@ -189,8 +205,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 
   // Search
-  let t; document.getElementById('searchInput').addEventListener('input', () => { clearTimeout(t); t = setTimeout(renderGrid, 250) })
-  document.getElementById('sortSelect').addEventListener('change', renderGrid)
+  let t; document.getElementById('searchInput').addEventListener('input', () => {
+    clearTimeout(t);
+    t = setTimeout(() => { currentPage = 1; renderGrid(); }, 250);
+  })
+  document.getElementById('sortSelect').addEventListener('change', () => {
+    currentPage = 1;
+    renderGrid();
+  })
+  document.getElementById('btnReloadMedia').addEventListener('click', () => loadMedia(true, true))
+  document.getElementById('btnPrevPage').addEventListener('click', () => {
+    if (currentPage > 1) { currentPage--; renderGrid(); }
+  })
+  document.getElementById('btnNextPage').addEventListener('click', () => {
+    currentPage++;
+    renderGrid();
+  })
 
   // Bulk actions
   document.getElementById('btnSelectAll').addEventListener('click', () => {
@@ -216,14 +246,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btnCopyUrl').addEventListener('click', copyUrl)
 })
 
-async function loadMedia() {
+async function loadMedia(forceReload = false, resetToFirstPage = false) {
+  const reloadBtn = document.getElementById('btnReloadMedia')
+  reloadBtn.disabled = true
   try {
+    if (forceReload) {
+      document.getElementById('mediaGrid').innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#999">กำลังโหลดใหม่...</div>`
+    }
     uploads = await API.uploads.list()
-    document.getElementById('statsChip').textContent = `${uploads.length} ไฟล์`
+    if (resetToFirstPage) currentPage = 1
+    document.getElementById('statsChip').textContent = `${uploads.length} ไฟล์ทั้งหมด`
     renderGrid()
   } catch(e) {
     document.getElementById('mediaGrid').innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#dc3545">
       <i class="bi bi-wifi-off" style="font-size:2rem"></i><p class="mt-2">โหลดล้มเหลว</p></div>`
+  } finally {
+    reloadBtn.disabled = false
   }
 }
 
@@ -232,6 +270,18 @@ function renderGrid() {
   const sort = document.getElementById('sortSelect').value
   let list = uploads.filter(u => !q || u.filename.toLowerCase().includes(q))
   if (sort === 'asc') list = list.slice().reverse()
+  const totalMatched = list.length
+  const totalPages = Math.max(1, Math.ceil(totalMatched / PAGE_SIZE))
+  if (currentPage > totalPages) currentPage = totalPages
+  if (currentPage < 1) currentPage = 1
+  const start = (currentPage - 1) * PAGE_SIZE
+  const end = start + PAGE_SIZE
+  list = list.slice(start, end)
+  document.getElementById('gridInfo').textContent =
+    `กำลังแสดง ${list.length} จาก ${totalMatched} รายการ (หน้าละ ${PAGE_SIZE} รายการ)`
+  document.getElementById('pageInfo').textContent = `หน้า ${currentPage}/${totalPages}`
+  document.getElementById('btnPrevPage').disabled = currentPage <= 1
+  document.getElementById('btnNextPage').disabled = currentPage >= totalPages
 
   if (!list.length) {
     document.getElementById('mediaGrid').innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#999">
@@ -285,12 +335,26 @@ function copyUrlDirect(url) {
 
 async function uploadFiles(files) {
   if (!files.length) return
+  const validFiles = []
+  let skipped = 0
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) { skipped++; continue }
+    if (file.size > MAX_FILE_SIZE) { skipped++; continue }
+    validFiles.push(file)
+  }
+  if (!validFiles.length) {
+    showToast('ไม่พบไฟล์ที่อัปโหลดได้ (รองรับรูปภาพไม่เกิน 5MB)', 'warning')
+    return
+  }
+  if (skipped > 0) {
+    showToast(`ข้ามไฟล์ที่ไม่ผ่านเงื่อนไข ${skipped} ไฟล์`, 'warning')
+  }
   const prog = document.getElementById('uploadProgress')
   const bar  = document.getElementById('progressBar')
   const txt  = document.getElementById('uploadStatusText')
   prog.classList.remove('d-none')
   let done = 0
-  for (const file of files) {
+  for (const file of validFiles) {
     txt.textContent = `กำลังอัปโหลด: ${file.name}`
     try {
       await API.uploads.upload(file)
@@ -298,7 +362,7 @@ async function uploadFiles(files) {
       showToast(`อัปโหลด ${file.name} ล้มเหลว`, 'danger')
     }
     done++
-    bar.style.width = Math.round((done / files.length) * 100) + '%'
+    bar.style.width = Math.round((done / validFiles.length) * 100) + '%'
   }
   prog.classList.add('d-none')
   bar.style.width = '0%'

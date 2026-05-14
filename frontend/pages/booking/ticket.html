@@ -1,386 +1,869 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ตั๋วและการชำระเงิน - จองรถตู้</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background: #f0f2f5; color: #1a1a1a; }
-        .step-bar { display: flex; gap: 0; }
-        .step-item {
-            flex: 1; text-align: center; padding: .4rem;
-            font-size: .8rem; color: #6c757d; border-bottom: 3px solid #dee2e6;
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
         }
-        .step-item.active { color: #0d6efd; border-color: #0d6efd; font-weight: 600; }
-        .step-item.done   { color: #198754; border-color: #198754; }
+
+        .step-bar {
+            display: flex;
+            gap: 0;
+        }
+
+        .step-item {
+            flex: 1;
+            text-align: center;
+            padding: .4rem;
+            font-size: .8rem;
+            color: #6c757d;
+            border-bottom: 3px solid #dee2e6;
+        }
+
+        .step-item.active {
+            color: #0d6efd;
+            border-color: #0d6efd;
+            font-weight: 600;
+        }
+
+        .step-item.done {
+            color: #198754;
+            border-color: #198754;
+        }
 
         /* Premium Ticket Style */
         .ticket-wrapper {
-            background: #fff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            overflow: hidden; border: 1px solid rgba(0,0,0,0.05); margin-bottom: 1.5rem;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
         }
-        .ticket-main { padding: 1.5rem; position: relative; }
-        .x-small { font-size: 0.7rem; }
-        .fw-mono { font-family: monospace; }
-        .ticket-pass {
-            background: #fff; border: 1px solid #e0e0e0; border-radius: 12px;
-            margin-bottom: 1rem; display: flex; flex-direction: row;
-            overflow: hidden; position: relative; min-height: 140px;
-        }
-        .ticket-pass-info { flex: 1; padding: 1rem; border-right: 2px dashed #eee; }
-        .ticket-pass-qr {
-            width: 120px; padding: 1rem; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; background: #fafafa;
-        }
-        .qr-img { width: 80px; height: 80px; object-fit: contain; }
-        .ticket-side-cut, .ticket-side-cut-bottom {
-            position: absolute; right: 110px; width: 20px; height: 20px;
-            background: #f0f2f5; border-radius: 50%; border: 1px solid #e0e0e0; z-index: 2;
-        }
-        .ticket-side-cut { top: -10px; }
-        .ticket-side-cut-bottom { bottom: -10px; }
 
-        .seat-chip-m { background:#e7f1ff; color:#0d6efd; border-radius:6px; padding:.2rem .5rem; font-weight:700; font-size: 0.8rem; }
-        .seat-chip-f { background:#fff0f7; color:#d63384; border-radius:6px; padding:.2rem .5rem; font-weight:700; font-size: 0.8rem; }
-        
-        .pay-option {
-            border: 2px solid #edeff2; border-radius: 12px; padding: 1rem;
-            cursor: pointer; transition: all .2s; background: #fff;
+        .ticket-header-bar {
+            padding: 0.75rem 1rem 0.85rem;
         }
-        .pay-option:hover { border-color: #0d6efd; background: #f8fbff; }
-        .pay-option.selected { border-color: #0d6efd; background: #f0f7ff; box-shadow: 0 4px 12px rgba(13,110,253,0.1); }
-        
-        .summary-card { background: #fff; border-radius: 16px; border: 1px solid #e0e0e0; padding: 1.25rem; }
-        .price-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
+
+        .ticket-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .ticket-header-main {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .ticket-header-text-block {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .ticket-header-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.25;
+            margin-bottom: 0;
+            letter-spacing: -0.02em;
+            min-width: 0;
+        }
+
+        .ticket-header-region {
+            margin-top: 0.2rem;
+        }
+
+        .ticket-header-region-label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 500;
+            line-height: 1.35;
+            opacity: 0.88;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ticket-header-bus {
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 0.28rem 0.55rem !important;
+            border-radius: 0.4rem;
+        }
+
+        .ticket-header-meta {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ticket-header-meta .fw-bold {
+            font-size: 0.88rem;
+        }
+
+        .ticket-main {
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .x-small {
+            font-size: 0.7rem;
+        }
+
+        .fw-mono {
+            font-family: monospace;
+        }
+
+        .ticket-pass {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+            position: relative;
+            min-height: 140px;
+        }
+
+        .ticket-pass-info {
+            flex: 1;
+            padding: 1rem;
+            border-right: 2px dashed #eee;
+        }
+
+        .ticket-pass-qr {
+            flex: 0 0 152px;
+            width: 152px;
+            padding: 0.75rem 3px 0.75rem 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+        }
+
+        .qr-img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+
+        .ticket-side-cut,
+        .ticket-side-cut-bottom {
+            position: absolute;
+            right: 142px;
+            width: 20px;
+            height: 20px;
+            background: #f0f2f5;
+            border-radius: 50%;
+            border: 1px solid #e0e0e0;
+            z-index: 2;
+        }
+
+        .ticket-side-cut {
+            top: -10px;
+        }
+
+        .ticket-side-cut-bottom {
+            bottom: -10px;
+        }
+
+        .seat-chip-m {
+            background: #e7f1ff;
+            color: #0d6efd;
+            border-radius: 6px;
+            padding: .2rem .5rem;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .seat-chip-f {
+            background: #fff0f7;
+            color: #d63384;
+            border-radius: 6px;
+            padding: .2rem .5rem;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .pay-option {
+            border: 2px solid #edeff2;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all .2s;
+            background: #fff;
+        }
+
+        .pay-option:hover {
+            border-color: #0d6efd;
+            background: #f8fbff;
+        }
+
+        .pay-option.selected {
+            border-color: #0d6efd;
+            background: #f0f7ff;
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.1);
+        }
+
+        /* ช่องแนบสลิป — พื้นฟ้าอ่อน + ปุ่มเลือกไฟล์ชัด */
+        .slip-file-input.form-control {
+            font-size: 0.9rem !important;
+            padding: 0.45rem 0.65rem;
+            background-color: #e8f2ff;
+            border: 1.5px solid #9ec5fe;
+            color: #052c65;
+        }
+
+        .slip-file-input.form-control:focus {
+            background-color: #f0f7ff;
+            border-color: #0d6efd;
+            color: #031633;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.22);
+        }
+
+        .slip-file-input.form-control.is-invalid {
+            background-color: #fff5f5;
+            border-color: #dc3545;
+            box-shadow: none;
+        }
+
+        .slip-file-input::file-selector-button {
+            margin-right: 0.75rem;
+            padding: 0.5rem 0.95rem;
+            border: 0;
+            border-radius: 0.4rem;
+            background: linear-gradient(180deg, #4d94ff 0%, #0d6efd 100%);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+
+        .slip-file-input:hover::file-selector-button {
+            filter: brightness(1.06);
+        }
+
+        .slip-file-input::-webkit-file-upload-button {
+            margin-right: 0.75rem;
+            padding: 0.5rem 0.95rem;
+            border: 0;
+            border-radius: 0.4rem;
+            background: linear-gradient(180deg, #4d94ff 0%, #0d6efd 100%);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+
+        .slip-file-input:hover::-webkit-file-upload-button {
+            filter: brightness(1.06);
+        }
+
+        .summary-card {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #e0e0e0;
+            padding: 1.25rem;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
         .price-row.total {
-            margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;
-            font-weight: 700; font-size: 1.1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+            font-weight: 700;
+            font-size: 1.1rem;
         }
 
         @media (max-width: 576px) {
-            .ticket-pass { flex-direction: column; }
-            .ticket-pass-info { border-right: none; border-bottom: 2px dashed #eee; }
-            .ticket-pass-qr { width: 100%; flex-direction: row; gap: 1rem; height: auto; padding: 0.75rem; }
-            .ticket-side-cut, .ticket-side-cut-bottom { display: none; }
-        }
+            .ticket-pass {
+                flex-direction: column;
+            }
 
-        @media print {
-            .no-print { display: none !important; }
-            body { background: #fff; padding: 0; }
-            .container-fluid { padding: 0; }
-            .ticket-wrapper { box-shadow: none; border: 1px solid #000; }
-        }
+            .ticket-pass-info {
+                border-right: none;
+                border-bottom: 2px dashed #eee;
+            }
 
-    </style>
-</head>
-<body>
+            .ticket-pass-qr {
+                width: 100%;
+                flex: 1 1 auto;
+                align-items: center;
+                justify-content: center;
+                height: auto;
+                padding: 0.75rem 1rem;
+            }
 
-<!-- Header -->
-<nav class="navbar navbar-light bg-white border-bottom px-3 py-2 sticky-top shadow-sm no-print">
-    <div class="d-flex align-items-center gap-2 w-100">
-        <a href="#" class="btn btn-sm btn-outline-secondary" onclick="goBack()">
-            <i class="bi bi-arrow-left"></i>
-        </a>
-        <div class="fw-semibold flex-grow-1">สรุปการจองและชำระเงิน</div>
-        <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
-            <i class="bi bi-printer me-1"></i>พิมพ์
-        </button>
-    </div>
-</nav>
-
-<!-- 5-Step bar -->
-<div class="step-bar bg-white border-bottom mb-3 no-print">
-    <div class="step-item done"><i class="bi bi-check2 me-1"></i>ที่นั่ง</div>
-    <div class="step-item done"><i class="bi bi-check2 me-1"></i>ข้อมูล</div>
-    <div class="step-item done"><i class="bi bi-check2 me-1"></i>ประกัน</div>
-    <div class="step-item done"><i class="bi bi-check2 me-1"></i>อุปกรณ์</div>
-    <div class="step-item active"><i class="bi bi-credit-card me-1"></i>ชำระเงิน</div>
-</div>
-
-<div class="container-fluid px-3 pb-5">
-    <div id="loadingState" class="text-center py-5">
-        <div class="spinner-border text-primary"></div>
-        <div class="mt-2 text-muted">กำลังโหลด...</div>
-    </div>
-
-    <div id="mainContent" class="d-none">
-
-        <!-- Booking confirmed banner (shown after confirm) -->
-        <div id="confirmedBanner" class="d-none alert alert-success d-flex align-items-center gap-2 mb-3">
-            <i class="bi bi-check-circle-fill fs-4"></i>
-            <div>
-                <div class="fw-semibold">จองสำเร็จ! รหัสการจอง <span id="confirmedBookingId" class="badge bg-success fs-6"></span></div>
-                <div class="small">บันทึก URL นี้ไว้เพื่อดูสถานะการจองในภายหลัง</div>
-            </div>
-        </div>
-
-        <div class="row g-3">
-
-            <!-- Ticket Section -->
-            <div class="col-lg-7">
-                <div class="ticket-wrapper mb-3">
-                    <!-- Ticket Header -->
-                    <div class="p-4 text-white" style="background: linear-gradient(135deg, #1e293b, #334155);">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h4 class="fw-bold mb-1" id="tktTitle">-</h4>
-                                <div class="text-white-50 small mb-3"><i class="bi bi-geo-alt me-1"></i><span id="tktRoute">-</span></div>
-                            </div>
-                            <div class="text-end">
-                                <div class="badge bg-primary px-3 py-2" id="tktBus">-</div>
-                            </div>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-4">
-                                <div class="text-white-50 x-small">DATE</div>
-                                <div class="fw-bold" id="tktDate">-</div>
-                            </div>
-                            <div class="col-4">
-                                <div class="text-white-50 x-small">TIME</div>
-                                <div class="fw-bold" id="tktTime">-</div>
-                            </div>
-                            <div class="col-4 text-end">
-                                <div class="text-white-50 x-small">DURATION</div>
-                                <div class="fw-bold" id="tktDuration">-</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="ticket-main">
-                        <!-- Individual Tickets per Person -->
-                        <div class="mb-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold mb-0 d-flex align-items-center">
-                                    <i class="bi bi-person-badge me-2 text-primary"></i>รายละเอียดผู้โดยสารรายบุคคล
-                                </h6>
-                                <span class="badge bg-light text-muted fw-normal" style="font-size: 0.7rem;">แยกตามที่นั่งสำหรับการติดตาม</span>
-                            </div>
-                            <div id="individualTickets">
-                                <!-- Rendered by JS -->
-                            </div>
-                        </div>
-
-                        <!-- Rental Items Section -->
-                        <div id="rentalSection" class="d-none mt-4">
-                            <h6 class="fw-bold mb-3 d-flex align-items-center">
-                                <i class="bi bi-bag-plus me-2 text-success"></i>อุปกรณ์เช่าเพิ่มเติม (รวมกลุ่ม)
-                            </h6>
-                            <div class="border rounded-3 p-3 bg-light">
-                                <div id="rentalList"></div>
-                            </div>
-                        </div>
-
-                        <!-- Summary Bottom -->
-                        <div class="mt-4 pt-4 border-top">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-muted small">รหัสอ้างอิงเซสชัน</span>
-                                <span class="fw-mono small text-secondary" id="sessionRef">-</span>
-                            </div>
-                            <div class="p-3 bg-light rounded-3 small">
-                                <div class="text-muted mb-1"><i class="bi bi-link-45deg me-1"></i>ลิงก์สำหรับตรวจสอบสถานะ</div>
-                                <div class="d-flex gap-2 align-items-center">
-                                    <code id="tktLink" class="flex-grow-1 text-break text-primary" style="font-size:.7rem"></code>
-                                    <button class="btn btn-sm btn-outline-secondary flex-shrink-0 border-0" onclick="copyLink()">
-                                        <i class="bi bi-copy"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- Payment Section -->
-            <div class="col-lg-5 no-print">
-                <div class="summary-card shadow-sm sticky-lg-top" style="top: 80px;">
-                    <h5 class="fw-bold mb-4">สรุปค่าใช้จ่ายทั้งหมด</h5>
-                    
-                    <div id="priceBreakdown" class="mb-4">
-                        <!-- Rendered by JS -->
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold small text-uppercase tracking-wider">ตัวเลือกการชำระเงิน</label>
-                        <div class="row g-2">
-                            <div class="col-12">
-                                <div class="pay-option" id="payDeposit" onclick="selectPayType('DEPOSIT')">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <div class="fw-bold"><i class="bi bi-wallet2 me-2 text-primary"></i>ชำระเฉพาะมัดจำ</div>
-                                        <div class="text-primary fw-bold" id="depositAmt">-</div>
-                                    </div>
-                                    <div class="text-muted x-small">มัดจำที่นั่ง + ค่าอุปกรณ์เช่าเต็มจำนวน</div>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="pay-option selected" id="payFull" onclick="selectPayType('FULL')">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <div class="fw-bold"><i class="bi bi-cash-coin me-2 text-success"></i>ชำระเต็มจำนวน</div>
-                                        <div class="text-success fw-bold" id="fullAmt">-</div>
-                                    </div>
-                                    <div class="text-muted x-small">ชำระยอดรวมทั้งหมดทันที</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Bank Accounts -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold small text-uppercase tracking-wider">ช่องทางการระบุโอน</label>
-                        <div id="bankAccountsList" class="mb-3"></div>
-                    </div>
-
-                    <!-- Slip upload -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold small text-uppercase tracking-wider">อัปโหลดสลิปการโอน</label>
-                        <input type="file" class="form-control form-control-lg" id="slipFile" accept="image/*" style="font-size: 0.9rem;">
-                        <div class="form-text mt-1 x-small text-muted"><i class="bi bi-info-circle"></i> ตรวจสอบยอดเงินให้ตรงกับที่เลือกก่อนโอน</div>
-                    </div>
-
-                    <button class="btn btn-primary w-100 btn-lg py-3 fw-bold rounded-3 shadow-sm mb-3" id="btnConfirm" onclick="confirmBooking()">
-                        ยืนยันการจองและแจ้งโอน
-                    </button>
-
-
-                    
-                    <div class="text-center">
-                        <a href="/frontend/pages/booking/status.html" class="btn btn-link btn-sm text-decoration-none text-muted">
-                            <i class="bi bi-search me-1"></i>เช็คสถานะการจองย้อนหลัง
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../assets/js/config.js"></script>
-<script>
-const SESSION_COOKIE = 'bk_session_token';
-let sessionToken = null;
-let sessionData = null;
-let roundData = null;
-let addonsList = [];
-let selectedAddons = {};  // { addonId: quantity }
-let payType = 'FULL';
-let DEPOSIT_RATE = 0.3; // มัดจำ 30%
-
-function fmtBahtHtml(n) {
-    const s = Number(n || 0).toLocaleString('th-TH');
-    return `${s} <strong>บาท</strong>`;
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-    sessionToken = new URLSearchParams(location.search).get('token')
-                || localStorage.getItem(SESSION_COOKIE);
-    if (!sessionToken) { showError('ไม่พบ session'); return; }
-
-    try {
-        sessionData = await fetchAPI('/booking-sessions/' + sessionToken);
-        if (!sessionData) { showError('Session หมดอายุ'); return; }
-
-        const all = await fetchAPI('/bus-rounds');
-        roundData = all.find(r => r.id == sessionData.busRoundId);
-        if (!roundData) { showError('ไม่พบข้อมูลรอบรถ'); return; }
-
-        // Update deposit rate from trip data
-        DEPOSIT_RATE = roundData.trip?.deposit > 0 ? roundData.trip.deposit / 100 : 0.3;
-
-    // Load all active addons (shared) – for price calculation only
-        try {
-            addonsList = await fetchAPI('/addons/active');
-        } catch (_) { addonsList = []; }
-
-        // Restore selected addons from session (set in rental.html)
-        if (sessionData.addonsData && Array.isArray(sessionData.addonsData)) {
-            for (const item of sessionData.addonsData) {
-                selectedAddons[item.addonId] = (selectedAddons[item.addonId] || 0) + item.quantity;
+            .ticket-side-cut,
+            .ticket-side-cut-bottom {
+                display: none;
             }
         }
 
-        // Initialize deposit logic
-        const tripDeposit = roundData.trip?.deposit || 0;
-        // If deposit > 100, assume it's a fixed amount per seat, otherwise %
-        if (tripDeposit > 100) {
-            window._isFixedDeposit = true;
-            window._depositVal = tripDeposit;
-        } else {
-            window._isFixedDeposit = false;
-            window._depositVal = tripDeposit > 0 ? tripDeposit / 100 : 0.3;
+        #slipGallery .slip-thumb {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
 
-        // Load bank accounts
-        await loadBankAccounts();
-
-        renderTicket();
-        updatePayAmounts();
-
-        document.getElementById('tktLink').textContent = window.location.href;
-
-        // เช็คสถานะหากจองแลัว
-        if (sessionData.bookingId) {
-            await refreshBookingData();
+        #slipGallery .slip-thumb:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
         }
 
-        document.getElementById('loadingState').classList.add('d-none');
-        document.getElementById('mainContent').classList.remove('d-none');
-    } catch (e) {
-        showError(e.message);
-    }
-});
+        @media print {
+            .no-print {
+                display: none !important;
+            }
 
-async function fetchAPI(path) {
-    const r = await fetch(API_BASE_URL + path);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();
-}
-async function postAPI(path, body) {
-    const r = await fetch(API_BASE_URL + path, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
-    return data;
-}
+            body {
+                background: #fff;
+                padding: 0;
+            }
 
-function renderTicket() {
-    const rd = roundData;
-    const sd = sessionData;
+            .container-fluid {
+                padding: 0;
+            }
 
-    document.getElementById('tktTitle').textContent  = rd.trip?.title || 'ทริป';
-    document.getElementById('tktRoute').textContent  = `${rd.startPoint} → ${rd.endPoint}`;
-    const dep = new Date(rd.departDate);
-    document.getElementById('tktDate').textContent = dep.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'});
-    document.getElementById('tktTime').textContent = dep.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-    document.getElementById('tktBus').textContent  = `VAN #${rd.busNumber}`;
-    document.getElementById('tktDuration').textContent = rd.duration || '-';
-    document.getElementById('sessionRef').textContent = sessionToken.substring(0, 8).toUpperCase();
+            .ticket-wrapper {
+                box-shadow: none;
+                border: 1px solid #000;
+            }
+        }
 
-    // Individual Tickets per Person
-    const seats = sd.selectedSeats || [];
-    const pricePerSeat = rd.trip?.price || 0;
-    const ticketLink = `${window.location.origin}/booking/ticket?token=${encodeURIComponent(sessionToken)}`;
-    const qrContent = encodeURIComponent(ticketLink);
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrContent}`;
-    
-    document.getElementById('individualTickets').innerHTML = seats.map((s, idx) => {
-        const chipCls = s.gender === 'MALE' ? 'seat-chip-m' : 'seat-chip-f';
-        
-        return `
+        .btn-download-doc {
+            background: linear-gradient(180deg, #f8fbff 0%, #eff6ff 100%);
+            color: #1d4ed8 !important;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 0.8125rem;
+            padding: 0.4rem 0.95rem;
+            letter-spacing: 0.01em;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+            transition: background 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        }
+
+        .btn-download-doc:hover {
+            color: #1e3a8a !important;
+            background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+            border-color: #93c5fd;
+            box-shadow: 0 2px 10px rgba(37, 99, 235, 0.12);
+        }
+
+        .btn-download-doc:active {
+            transform: translateY(1px);
+        }
+
+        .btn-download-doc:disabled {
+            opacity: 0.72;
+        }
+
+        .btn-export-booking-png {
+            background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+            color: #fff !important;
+            border: 1px solid #1d4ed8;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            font-size: 0.875rem;
+            padding: 0.55rem 1rem;
+            letter-spacing: 0.01em;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+            transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+        }
+
+        .btn-export-booking-png:hover {
+            color: #fff !important;
+            filter: brightness(1.06);
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+        }
+
+        .btn-export-booking-png:active {
+            transform: translateY(1px);
+        }
+
+        .btn-export-booking-png:disabled {
+            opacity: 0.75;
+            filter: none;
+        }
+
+        .btn-export-booking-png .bi {
+            color: #fff;
+        }
+
+        .nav-status-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.5rem 0.55rem !important;
+            font-size: 0.9375rem;
+            line-height: 1.25;
+        }
+
+        .nav-status-link .bi {
+            font-size: 1.15rem;
+            flex-shrink: 0;
+            vertical-align: -0.12em;
+        }
+
+        @media (max-width: 575.98px) {
+            .nav-status-link {
+                padding: 0.35rem 0.4rem !important;
+                font-size: 0.8125rem;
+            }
+
+            .nav-status-link .bi {
+                font-size: 1rem;
+            }
+
+            .nav-status-link .nav-status-link-mobile {
+                font-size: 0.7rem;
+                line-height: 1.15;
+                font-weight: 600;
+                letter-spacing: -0.01em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <nav class="navbar navbar-light bg-white border-bottom px-3 py-2 sticky-top shadow-sm no-print">
+        <div class="d-flex align-items-center gap-2 min-w-0 w-100">
+            <a href="#" class="btn btn-sm btn-outline-secondary flex-shrink-0" onclick="goBack()">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div class="fw-semibold text-truncate flex-grow-1 min-w-0">สรุปการจองและชำระเงิน</div>
+            <a href="/frontend/pages/booking/status.html"
+                class="nav-status-link btn btn-link text-decoration-none fw-semibold text-dark flex-shrink-0">
+                <i class="bi bi-search me-1 text-primary"></i><span
+                    class="d-none d-sm-inline">ตรวจสอบสถานะการจองย้อนหลัง</span><span
+                    class="d-inline d-sm-none nav-status-link-mobile text-body-secondary">ตรวจสอบสถานะการจอง</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- 5-Step bar -->
+    <div class="step-bar bg-white border-bottom mb-3 no-print">
+        <div class="step-item done"><i class="bi bi-check2 me-1"></i>ที่นั่ง</div>
+        <div class="step-item done"><i class="bi bi-check2 me-1"></i>ข้อมูล</div>
+        <div class="step-item done"><i class="bi bi-check2 me-1"></i>ประกัน</div>
+        <div class="step-item done"><i class="bi bi-check2 me-1"></i>อุปกรณ์</div>
+        <div class="step-item active"><i class="bi bi-credit-card me-1"></i>ชำระเงิน</div>
+    </div>
+
+    <div class="container-fluid px-3 pb-5">
+        <div id="loadingState" class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <div class="mt-2 text-muted">กำลังโหลด...</div>
+        </div>
+
+        <div id="mainContent" class="d-none">
+
+            <div class="row g-3" id="bookingExportRoot">
+
+                <!-- Ticket Section -->
+                <div class="col-lg-7">
+                    <div class="ticket-wrapper mb-3">
+                        <!-- Ticket Header -->
+                        <div class="ticket-header-bar text-white"
+                            style="background: linear-gradient(135deg, #1e293b, #334155);">
+                            <div class="ticket-header-top">
+                                <div class="ticket-header-main">
+                                    <div class="ticket-header-text-block">
+                                        <div class="ticket-header-title text-white text-truncate min-w-0" id="tktTitle">
+                                            -</div>
+                                        <div class="ticket-header-region text-white-50">
+                                            <span id="tktRoute" class="ticket-header-region-label">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-end flex-shrink-0">
+                                    <div class="badge bg-primary ticket-header-bus" id="tktBus">-</div>
+                                </div>
+                            </div>
+                            <div class="row g-2 gx-2 ticket-header-meta">
+                                <div class="col-4">
+                                    <div class="text-white-50 x-small">DATE</div>
+                                    <div class="fw-bold text-white" id="tktDate">-</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-white-50 x-small">TIME</div>
+                                    <div class="fw-bold text-white" id="tktTime">-</div>
+                                </div>
+                                <div class="col-4 text-end">
+                                    <div class="text-white-50 x-small">DURATION</div>
+                                    <div class="fw-bold text-white" id="tktDuration">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ticket-main">
+                            <!-- Individual Tickets per Person -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold mb-3 d-flex align-items-center">
+                                    <i class="bi bi-person-badge me-2 text-primary"></i>รายละเอียดผู้โดยสารรายบุคคล
+                                </h6>
+                                <div id="individualTickets">
+                                    <!-- Rendered by JS -->
+                                </div>
+                            </div>
+
+                            <!-- Rental Items Section -->
+                            <div id="rentalSection" class="d-none mt-4">
+                                <h6 class="fw-bold mb-3 d-flex align-items-center">
+                                    <i class="bi bi-bag-plus me-2 text-success"></i>อุปกรณ์เช่าเพิ่มเติม (รวมกลุ่ม)
+                                </h6>
+                                <div class="border rounded-3 p-3 bg-light">
+                                    <div id="rentalList"></div>
+                                </div>
+                            </div>
+
+                            <!-- Summary Bottom -->
+                            <div class="mt-4 pt-4 border-top">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small">รหัสอ้างอิงเซสชัน</span>
+                                    <span class="fw-mono small text-secondary" id="sessionRef">-</span>
+                                </div>
+                                <div class="p-3 bg-light rounded-3 small">
+                                    <div class="text-muted mb-1"><i
+                                            class="bi bi-link-45deg me-1"></i>ลิงก์สำหรับตรวจสอบสถานะ</div>
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <code id="tktLink" class="flex-grow-1 text-break text-primary"
+                                            style="font-size:.7rem"></code>
+                                        <button class="btn btn-sm btn-outline-secondary flex-shrink-0 border-0"
+                                            onclick="copyLink()">
+                                            <i class="bi bi-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Payment Section -->
+                <div class="col-lg-5 no-print">
+                    <div class="summary-card shadow-sm sticky-lg-top" style="top: 80px;">
+                        <h5 class="fw-bold mb-4">สรุปค่าใช้จ่ายทั้งหมด</h5>
+
+                        <div id="priceBreakdown" class="mb-4">
+                            <!-- Rendered by JS -->
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small"
+                                style="letter-spacing:.02em">กรุณาเลือกชำระเงิน</label>
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <div class="pay-option" id="payDeposit" onclick="selectPayType('DEPOSIT')">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="fw-bold"><i
+                                                    class="bi bi-wallet2 me-2 text-primary"></i>ชำระเฉพาะมัดจำ</div>
+                                            <div class="text-primary fw-bold" id="depositAmt">-</div>
+                                        </div>
+                                        <div id="depositBreakRow" class="mt-1"></div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="pay-option selected" id="payFull" onclick="selectPayType('FULL')">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="fw-bold"><i
+                                                    class="bi bi-cash-coin me-2 text-success"></i>ชำระเต็มจำนวน</div>
+                                            <div class="text-success fw-bold" id="fullAmt">-</div>
+                                        </div>
+                                        <div id="fullBreakRow" class="mt-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bank Accounts -->
+                        <div class="mb-4">
+                            <label
+                                class="form-label fw-bold small text-uppercase tracking-wider">ช่องทางการระบุโอน</label>
+                            <div id="bankAccountsList" class="mb-3"></div>
+                        </div>
+
+                        <!-- Slip upload -->
+                        <div class="mb-4" id="slipUploadSection">
+                            <label
+                                class="form-label fw-bold small text-uppercase tracking-wider d-flex align-items-center gap-2 mb-2"
+                                for="slipFile">
+                                <i class="bi bi-receipt-cutoff text-secondary"></i>
+                                <span id="slipUploadTitle">อัปโหลดสลิปการโอน</span>
+                                <span id="slipRequiredMark" class="text-danger">*</span>
+                            </label>
+                            <div id="slipUploadHint" class="form-text x-small text-muted mb-2 d-none"></div>
+                            <div id="slipGalleryWrap" class="mb-3 d-none">
+                                <div class="fw-semibold x-small text-muted text-uppercase mb-2">สลิปที่แนบแล้ว <span
+                                        class="text-body-secondary fw-normal text-lowercase">(คลิกดูขนาดเต็ม)</span>
+                                </div>
+                                <div id="slipGallery" class="d-flex flex-wrap gap-2 align-items-start"></div>
+                            </div>
+                            <input type="file" class="form-control form-control-lg slip-file-input" id="slipFile"
+                                accept="image/*" onchange="onSlipFileChange(this)">
+                            <div id="slipInvalidFeedback" class="invalid-feedback">กรุณาแนบสลิปการโอนเงินก่อนยืนยัน
+                            </div>
+                        </div>
+
+                        <div id="paymentReceiptActions" class="d-none mb-3 no-print">
+                            <button type="button" class="btn btn-export-booking-png w-100 rounded-3 py-2"
+                                id="btnExportBookingPng" onclick="exportBookingDocAsImage()"
+                                title="ดาวน์โหลดเอกสารสรุปการจองและชำระเงิน (ไฟล์ภาพ PNG) เก็บในเครื่อง">
+                                <i class="bi bi-file-earmark-arrow-down me-2"></i>
+                                <span class="d-none d-sm-inline">ดาวน์โหลดเอกสารการจองและชำระเงิน</span>
+                                <span class="d-sm-none">โหลดเอกสารจอง</span>
+                            </button>
+                        </div>
+
+                        <button class="btn btn-primary w-100 btn-lg py-3 fw-bold rounded-3 shadow-sm mb-3"
+                            id="btnConfirm" onclick="confirmBooking()">
+                            ยืนยันการจองและแจ้งโอน
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/config.js"></script>
+    <script>
+        const SESSION_COOKIE = 'bk_session_token';
+        let sessionToken = null;
+        let sessionData = null;
+        let roundData = null;
+        let guestBooking = null;
+        let addonsList = [];
+        let selectedAddons = {};  // { addonId: quantity }
+        let payType = 'FULL';
+        let DEPOSIT_RATE = 0.3; // มัดจำ 30%
+
+        function fmtBahtHtml(n) {
+            const s = Number(n || 0).toLocaleString('th-TH');
+            return `${s} <strong>บาท</strong>`;
+        }
+
+        async function exportBookingDocAsImage() {
+            const root = document.getElementById('bookingExportRoot');
+            if (!root) {
+                showToast('โหลดหน้าไม่ครบ กรุณารีเฟรช', 'danger');
+                return;
+            }
+            if (typeof html2canvas !== 'function') {
+                showToast('โหลดเครื่องมือบันทึกรูปไม่สำเร็จ กรุณารีเฟรชหน้า', 'danger');
+                return;
+            }
+            const btn = document.getElementById('btnExportBookingPng');
+            const prevHtml = btn ? btn.innerHTML : '';
+            const y = window.scrollY;
+            try {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm text-light" role="status"></span>';
+                }
+                const canvas = await html2canvas(root, {
+                    scale: Math.min(2, window.devicePixelRatio || 2),
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#f0f2f5',
+                    scrollX: 0,
+                    scrollY: -y,
+                    windowHeight: root.scrollHeight,
+                });
+                await new Promise((resolve, reject) => {
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            reject(new Error('สร้างไฟล์ภาพไม่สำเร็จ'));
+                            return;
+                        }
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        const id = (typeof sessionToken === 'string' && sessionToken) ? sessionToken.slice(0, 8) : 'booking';
+                        a.href = url;
+                        a.download = `สรุปการจอง-${id}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        URL.revokeObjectURL(url);
+                        resolve();
+                    }, 'image/png', 0.95);
+                });
+                showToast('ดาวน์โหลดเอกสารการจองแล้ว — ตรวจดูในโฟลเดอร์ดาวน์โหลด', 'success');
+            } catch (e) {
+                console.error('[exportBookingDocAsImage]', e);
+                showToast(e.message || 'บันทึกรูปไม่สำเร็จ ลองรีเฟรชหน้า', 'danger');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = prevHtml;
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            sessionToken = new URLSearchParams(location.search).get('token')
+                || localStorage.getItem(SESSION_COOKIE);
+            if (!sessionToken) { showError('ไม่พบ session'); return; }
+
+            try {
+                sessionData = await fetchAPI('/booking-sessions/' + sessionToken);
+                if (!sessionData) { showError('Session หมดอายุ'); return; }
+
+                const all = await fetchAPI('/bus-rounds');
+                roundData = all.find(r => r.id == sessionData.busRoundId);
+                if (!roundData) { showError('ไม่พบข้อมูลรอบรถ'); return; }
+
+                if (roundData.tripId) {
+                    try {
+                        const tripFull = await fetchAPI('/trips/' + roundData.tripId);
+                        if (tripFull && typeof tripFull === 'object') {
+                            roundData.trip = { ...(roundData.trip || {}), ...tripFull };
+                        }
+                    } catch (_) { }
+                }
+
+                // Update deposit rate from trip data
+                DEPOSIT_RATE = roundData.trip?.deposit > 0 ? roundData.trip.deposit / 100 : 0.3;
+
+                // Load all active addons (shared) – for price calculation only
+                try {
+                    addonsList = await fetchAPI('/addons/active');
+                } catch (_) { addonsList = []; }
+
+                // Restore selected addons from session (set in rental.html)
+                if (sessionData.addonsData && Array.isArray(sessionData.addonsData)) {
+                    for (const item of sessionData.addonsData) {
+                        selectedAddons[item.addonId] = (selectedAddons[item.addonId] || 0) + item.quantity;
+                    }
+                }
+
+                // Initialize deposit logic
+                const tripDeposit = roundData.trip?.deposit || 0;
+                // If deposit > 100, assume it's a fixed amount per seat, otherwise %
+                if (tripDeposit > 100) {
+                    window._isFixedDeposit = true;
+                    window._depositVal = tripDeposit;
+                } else {
+                    window._isFixedDeposit = false;
+                    window._depositVal = tripDeposit > 0 ? tripDeposit / 100 : 0.3;
+                }
+
+                // Load bank accounts
+                await loadBankAccounts();
+
+                if (sessionData.bookingId) {
+                    await refreshBookingData();
+                } else {
+                    guestBooking = null;
+                    renderTicket();
+                    updatePayAmounts();
+                    applySlipUploadUI('first');
+                }
+
+                document.getElementById('tktLink').textContent = window.location.href;
+
+                document.getElementById('loadingState').classList.add('d-none');
+                document.getElementById('mainContent').classList.remove('d-none');
+            } catch (e) {
+                showError(e.message);
+            }
+        });
+
+        async function fetchAPI(path) {
+            const r = await fetch(API_BASE_URL + path);
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+        }
+        async function postAPI(path, body) {
+            const r = await fetch(API_BASE_URL + path, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await r.json();
+            if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+            return data;
+        }
+
+        function tripRegionLabel(rd) {
+            const raw = rd.trip?.country;
+            const fromTrip = raw != null ? String(raw).trim() : '';
+            if (fromTrip) return fromTrip;
+
+            const hay = `${rd.startPoint || ''} ${rd.endPoint || ''}`;
+            if (/หมอชิต|Mo\s*Chit|ดอนเมือง|สุวรรณภูมิ|สุวรรณ|ลานจอด|MRT|บีทีเอส|BTS|บางนา|Chatuchak|จตุจักร|กรุงเทพ|Bangkok|สนามบิน/i.test(hay)) {
+                return 'กรุงเทพมหานคร';
+            }
+            const provMatch = hay.match(/(เชียงใหม่|เชียงราย|ลำปาง|ลำพูน|ตาก|พิษณุโลก|ขอนแก่น|นครราชสีมา|ภูเก็ต|พัทยา|หาดใหญ่|อุบลราชธานี|สงขลา|นครศรีธรรมราช|ชลบุรี|ระยอง|กาญจนบุรี|ประจวบคีรีขันธ์|หัวหิน|เพชรบุรี)/);
+            if (provMatch) return provMatch[1];
+
+            const ep = (rd.endPoint || '').trim();
+            if (ep.includes(',')) {
+                const last = ep.split(',').pop().trim();
+                if (last.length >= 2 && last.length <= 40) return last;
+            }
+
+            return rd.startPoint || '-';
+        }
+
+        function renderTicket() {
+            const rd = roundData;
+            const sd = sessionData;
+
+            document.getElementById('tktTitle').textContent = rd.trip?.title || 'ทริป';
+            document.getElementById('tktRoute').textContent = tripRegionLabel(rd);
+            const dep = new Date(rd.departDate);
+            document.getElementById('tktDate').textContent = dep.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+            document.getElementById('tktTime').textContent = dep.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('tktBus').textContent = `VAN #${rd.busNumber}`;
+            document.getElementById('tktDuration').textContent = rd.duration || '-';
+            document.getElementById('sessionRef').textContent = sessionToken.substring(0, 8).toUpperCase();
+
+            // Individual Tickets per Person
+            const seats = sd.selectedSeats || [];
+            const tripFare = Number(rd?.trip?.price) || 0;
+            const ticketLink = `${window.location.origin}/booking/ticket?token=${encodeURIComponent(sessionToken)}`;
+            const qrContent = encodeURIComponent(ticketLink);
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrContent}`;
+
+            document.getElementById('individualTickets').innerHTML = seats.map((s, idx) => {
+                const chipCls = s.gender === 'MALE' ? 'seat-chip-m' : 'seat-chip-f';
+                const seatLineTotal = tripFare + (Number(s.pickupPrice) || 0);
+
+                return `
             <div class="ticket-pass shadow-sm">
                 <div class="ticket-side-cut"></div>
                 <div class="ticket-side-cut-bottom"></div>
                 <div class="ticket-pass-info">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
-                            <div class="badge bg-light text-dark mb-1" style="font-size: 0.65rem;">PASSENGER ${idx+1}</div>
+                            <div class="badge bg-light text-dark mb-1" style="font-size: 0.65rem;">PASSENGER ${idx + 1}</div>
                             <h6 class="fw-bold mb-0">${s.passengerName || 'ไม่ระบุชื่อ'}</h6>
                         </div>
                         <div class="text-end">
@@ -390,11 +873,11 @@ function renderTicket() {
                     </div>
                     <div class="row g-2 mt-2">
                         <div class="col-6 border-end">
-                            <div class="text-muted x-small">ค่าตั๋วเฉลี่ย</div>
-                            <div class="fw-bold text-primary">${fmtBahtHtml(pricePerSeat + (s.pickupPrice || 0))}</div>
+                            <div class="text-muted x-small">ราคาตั๋ว</div>
+                            <div class="fw-bold text-primary">${fmtBahtHtml(seatLineTotal)}</div>
                         </div>
                         <div class="col-6 ps-3">
-                            <div class="text-muted x-small">PICKUP</div>
+                            <div class="text-muted x-small">จุดรับ-ส่ง</div>
                             <div class="small fw-semibold text-truncate">${s.pickupPoint || 'จุดจอดหลัก'}</div>
                         </div>
                     </div>
@@ -402,22 +885,38 @@ function renderTicket() {
                 </div>
                 <div class="ticket-pass-qr">
                     <a href="${ticketLink}" target="_blank" rel="noopener">
-                        <img src="${qrUrl}" class="qr-img border p-1 bg-white mb-1" alt="QR">
+                        <img src="${qrUrl}" class="qr-img border p-1 bg-white" alt="QR">
                     </a>
-                    <div class="text-muted" style="font-size: 0.6rem;">SCAN TO OPEN</div>
                 </div>
             </div>
         `;
-    }).join('');
+            }).join('');
 
-    // Rental Items Section
-    const addonEntries = Object.entries(selectedAddons);
-    if (addonEntries.length > 0) {
-        document.getElementById('rentalSection').classList.remove('d-none');
-        document.getElementById('rentalList').innerHTML = addonEntries.map(([id, qty]) => {
-            const addon = addonsList.find(a => a.id == id);
-            if (addon && qty > 0) {
-                return `
+            // Rental Items Section
+            const baRows = guestBooking?.bookingAddons?.length ? guestBooking.bookingAddons : null;
+            if (baRows) {
+                document.getElementById('rentalSection').classList.remove('d-none');
+                document.getElementById('rentalList').innerHTML = baRows.map((ba) => {
+                    const name = ba.addon?.name || 'อุปกรณ์เช่า';
+                    const qty = ba.quantity || 1;
+                    const line = Number(ba.price) || 0;
+                    return `
+                <div class="d-flex justify-content-between align-items-center mb-2" style="border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">
+                    <div class="small">
+                        <span class="fw-bold">${name}</span>
+                        <span class="text-muted ms-1">(x${qty})</span>
+                    </div>
+                    <div class="fw-bold text-success small">${fmtBahtHtml(line)}</div>
+                </div>`;
+                }).join('');
+            } else {
+                const addonEntries = Object.entries(selectedAddons);
+                if (addonEntries.length > 0) {
+                    document.getElementById('rentalSection').classList.remove('d-none');
+                    document.getElementById('rentalList').innerHTML = addonEntries.map(([id, qty]) => {
+                        const addon = addonsList.find(a => a.id == id);
+                        if (addon && qty > 0) {
+                            return `
                     <div class="d-flex justify-content-between align-items-center mb-2" style="border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">
                         <div class="small">
                             <span class="fw-bold">${addon.name}</span>
@@ -426,265 +925,509 @@ function renderTicket() {
                         <div class="fw-bold text-success small">${fmtBahtHtml(addon.price * qty)}</div>
                     </div>
                 `;
-            }
-            return '';
-        }).join('') || '<div class="text-muted small">ไม่มีคนเช่าอุปกรณ์</div>';
-    } else {
-        document.getElementById('rentalSection').classList.add('d-none');
-    }
-
-    // Price Breakdown (Right Sidebar)
-    renderPriceBreakdown();
-}
-
-function renderPriceBreakdown() {
-    const { seatTotal, addonTotal, pickupTotal, grand } = calcTotals();
-    const seats = sessionData.selectedSeats || [];
-    const pricePerSeat = roundData.trip?.price || 0;
-    
-    let breakdownHtml = `
-        <div class="price-row">
-            <span class="text-muted">ตั๋วผู้โดยสาร (${seats.length} x ${Number(pricePerSeat).toLocaleString('th-TH')} บาท)</span>
-            <span>${fmtBahtHtml(seatTotal)}</span>
-        </div>
-        ${pickupTotal > 0 ? `
-        <div class="price-row">
-            <span class="text-muted">ส่วนต่างจุดรับ-ส่ง</span>
-            <span>${fmtBahtHtml(pickupTotal)}</span>
-        </div>` : ''}
-        ${addonTotal > 0 ? `
-        <div class="price-row">
-            <span class="text-muted">อุปกรณ์เช่าทั้งหมด</span>
-            <span>${fmtBahtHtml(addonTotal)}</span>
-        </div>` : ''}
-        <div class="price-row total text-primary">
-            <span>ยอดรวมสุทธิ</span>
-            <span>${fmtBahtHtml(grand)}</span>
-        </div>
-    `;
-    document.getElementById('priceBreakdown').innerHTML = breakdownHtml;
-}
-
-
-// renderAddons removed – addon selection is handled in rental.html
-
-
-
-function calcTotals() {
-    const seats = sessionData.selectedSeats || [];
-    const seatTotal = seats.length * (roundData?.trip?.price || 0);
-    
-    // Calculate pickup fees from form data
-    let pickupTotal = 0;
-    for (const seat of seats) {
-        pickupTotal += seat.pickupPrice || 0;
-    }
-    
-    let addonTotal = 0;
-    for (const [id, qty] of Object.entries(selectedAddons)) {
-        const addon = addonsList.find(a => a.id == id);
-        if (addon) addonTotal += addon.price * qty;
-    }
-    return { seatTotal, addonTotal, pickupTotal, grand: seatTotal + addonTotal + pickupTotal };
-}
-
-function updatePayAmounts() {
-    const { seatTotal, addonTotal, pickupTotal, grand } = calcTotals();
-    const seatsCount = sessionData.selectedSeats?.length || 0;
-    
-    let seatDeposit = 0;
-    if (window._isFixedDeposit) {
-        // Fixed amount per seat
-        seatDeposit = window._depositVal * seatsCount;
-    } else {
-        // Percentage of trip cost (seat + pickup)
-        seatDeposit = Math.ceil((seatTotal + pickupTotal) * (window._depositVal || 0.3));
-    }
-
-    //  "มัดจำค่าทริป + อุปกรณ์เต็ม" -> Add full addonTotal into the deposit amount
-    const totalDepositNeeded = seatDeposit + addonTotal;
-
-    document.getElementById('depositAmt').innerHTML = fmtBahtHtml(totalDepositNeeded);
-    document.getElementById('fullAmt').innerHTML    = fmtBahtHtml(grand);
-
-    // Update totals in ticket summary
-    renderPriceBreakdown();
-}
-
-function selectPayType(type) {
-    payType = type;
-    document.getElementById('payDeposit').classList.toggle('selected', type === 'DEPOSIT');
-    document.getElementById('payFull').classList.toggle('selected', type === 'FULL');
-    updatePayAmounts();
-}
-
-async function confirmBooking() {
-    const btn = document.getElementById('btnConfirm');
-    const slipInput = document.getElementById('slipFile');
-    const hasSlip = slipInput && slipInput.files.length > 0;
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังดำเนินการ...';
-
-    try {
-        let bookingId = sessionData.bookingId;
-
-        // 1. If not booked yet, create booking
-        if (!bookingId) {
-            const addonsPayload = Object.entries(selectedAddons).map(([id, qty]) => ({
-                addonId: parseInt(id), quantity: qty
-            }));
-
-            // Save addons to session
-            await postAPI('/booking-sessions', {
-                token: sessionToken,
-                step: 3,
-                addonsData: addonsPayload
-            });
-
-            // Create booking
-            const bookingResult = await postAPI('/bookings/guest', {
-                sessionToken: sessionToken,
-                paymentType: payType
-            });
-            bookingId = bookingResult.booking.id;
-            sessionData.bookingId = bookingId;
-            sessionData.step = 5;
-
-            // Create insurance
-            for (const seat of sessionData.selectedSeats) {
-                if (seat.emergencyName && seat.beneficiaryName) {
-                    try {
-                        await postAPI('/insurance', {
-                            bookingId: bookingId,
-                            seatBookingId: seat.seatNumber, 
-                            beneficiaryName: seat.beneficiaryName,
-                            beneficiaryRelation: seat.beneficiaryRelation || 'SPOUSE',
-                            coverageAmount: 1000000,
-                            status: 'SUBMITTED'
-                        });
-                    } catch (e) { console.error('Insurance Error:', e.message); }
+                        }
+                        return '';
+                    }).join('') || '<div class="text-muted small">ไม่มีคนเช่าอุปกรณ์</div>';
+                } else {
+                    document.getElementById('rentalSection').classList.add('d-none');
                 }
             }
-            showConfirmedBanner(bookingId);
+
+            // Price Breakdown (Right Sidebar)
+            renderPriceBreakdown();
         }
 
-        // 2. Handle Slip Upload
-        if (hasSlip) {
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังอัปโหลดสลิป...';
-            const formData = new FormData();
-            formData.append('file', slipInput.files[0]);
-            
-            const uploadRes = await fetch(API_BASE_URL + '/uploads', {
-                method: 'POST',
-                body: formData
+        function renderPriceBreakdown() {
+            const { pickupTotal } = calcTotals();
+            const wrap = document.getElementById('priceBreakdown');
+            if (!wrap) return;
+            if (pickupTotal > 0) {
+                wrap.classList.remove('d-none');
+                wrap.innerHTML = `
+        <div class="price-row">
+            <span class="text-muted">ส่วนต่างจุดรับ-ส่ง (เพิ่มจากค่าที่นั่งตามจุดรับ-ส่งที่เลือก)</span>
+            <span>${fmtBahtHtml(pickupTotal)}</span>
+        </div>`;
+            } else {
+                wrap.innerHTML = '';
+                wrap.classList.add('d-none');
+            }
+        }
+
+        // renderAddons removed – addon selection is handled in rental.html
+
+
+
+        function calcTotals() {
+            const seats = sessionData.selectedSeats || [];
+            const seatTotal = seats.length * (roundData?.trip?.price || 0);
+
+            // Calculate pickup fees from form data
+            let pickupTotal = 0;
+            for (const seat of seats) {
+                pickupTotal += seat.pickupPrice || 0;
+            }
+
+            let addonTotal = 0;
+            const baList = guestBooking?.bookingAddons;
+            if (baList && baList.length) {
+                for (const ba of baList) {
+                    addonTotal += Number(ba.price) || 0;
+                }
+            } else {
+                for (const [id, qty] of Object.entries(selectedAddons)) {
+                    const addon = addonsList.find(a => a.id == id);
+                    if (addon) addonTotal += addon.price * qty;
+                }
+            }
+            return { seatTotal, addonTotal, pickupTotal, grand: seatTotal + addonTotal + pickupTotal };
+        }
+
+        function updatePayAmounts() {
+            const { seatTotal, addonTotal, pickupTotal, grand } = calcTotals();
+            const seatsCount = sessionData.selectedSeats?.length || 0;
+
+            let seatDeposit = 0;
+            if (window._isFixedDeposit) {
+                // Fixed amount per seat
+                seatDeposit = window._depositVal * seatsCount;
+            } else {
+                // Percentage of trip cost (seat + pickup)
+                seatDeposit = Math.ceil((seatTotal + pickupTotal) * (window._depositVal || 0.3));
+            }
+
+            //  "มัดจำค่าทริป + อุปกรณ์เต็ม" -> Add full addonTotal into the deposit amount
+            const totalDepositNeeded = seatDeposit + addonTotal;
+
+            document.getElementById('depositAmt').innerHTML = fmtBahtHtml(totalDepositNeeded);
+            document.getElementById('fullAmt').innerHTML = fmtBahtHtml(grand);
+
+            const depositBreakRow = document.getElementById('depositBreakRow');
+            if (depositBreakRow) {
+                depositBreakRow.innerHTML = addonTotal > 0
+                    ? `<div class="small fw-semibold">มัดจำ ${fmtBahtHtml(seatDeposit)} + อุปกรณ์ ${fmtBahtHtml(addonTotal)}</div>`
+                    : `<div class="small fw-semibold">มัดจำ ${fmtBahtHtml(seatDeposit)}</div>`;
+            }
+
+            const fullBreakRow = document.getElementById('fullBreakRow');
+            if (fullBreakRow) {
+                const base = seatTotal + pickupTotal;
+                if (addonTotal > 0) {
+                    fullBreakRow.innerHTML = `<div class="small fw-semibold">ค่าทริป ${fmtBahtHtml(base)} + อุปกรณ์ ${fmtBahtHtml(addonTotal)}</div>`;
+                    fullBreakRow.classList.remove('d-none');
+                } else {
+                    fullBreakRow.innerHTML = '';
+                    fullBreakRow.classList.add('d-none');
+                }
+            }
+
+            renderPriceBreakdown();
+        }
+
+        function selectPayType(type) {
+            payType = type;
+            document.getElementById('payDeposit').classList.toggle('selected', type === 'DEPOSIT');
+            document.getElementById('payFull').classList.toggle('selected', type === 'FULL');
+            updatePayAmounts();
+        }
+
+        function lockPaymentOptions(lock) {
+            [['payDeposit', 'DEPOSIT'], ['payFull', 'FULL']].forEach(([id, t]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.onclick = lock ? null : () => selectPayType(t);
+                el.style.cursor = lock ? 'default' : 'pointer';
+                el.style.opacity = lock ? '0.6' : '1';
             });
-            const uploadData = await uploadRes.json();
-            if (!uploadRes.ok) throw new Error(uploadData.message || 'Upload failed');
+        }
 
-            // Attach slip to payment
-            await fetch(API_BASE_URL + '/payments/guest/' + sessionToken, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ slipUrl: uploadData.url })
+        /** โหมดสลิป: first | additional | locked */
+        function applySlipUploadUI(mode) {
+            window._slipUploadContext = mode;
+            const titleEl = document.getElementById('slipUploadTitle');
+            const markEl = document.getElementById('slipRequiredMark');
+            const hintEl = document.getElementById('slipUploadHint');
+            const invEl = document.getElementById('slipInvalidFeedback');
+            const slipInput = document.getElementById('slipFile');
+            if (!titleEl || !slipInput) return;
+
+            if (mode === 'first') {
+                titleEl.textContent = 'อัปโหลดสลิปการโอน';
+                if (markEl) markEl.classList.remove('d-none');
+                if (hintEl) {
+                    hintEl.classList.add('d-none');
+                    hintEl.innerHTML = '';
+                }
+                if (invEl) invEl.textContent = 'กรุณาแนบสลิปการโอนเงินก่อนยืนยัน';
+                slipInput.disabled = false;
+            } else if (mode === 'additional') {
+                titleEl.textContent = 'แนบสลิปโอนส่วนที่เหลือ';
+                if (markEl) markEl.classList.remove('d-none');
+                if (hintEl) {
+                    hintEl.classList.remove('d-none');
+                    hintEl.innerHTML = '<i class="bi bi-info-circle me-1"></i>มีสลิปมัดจำแล้ว — ดูรูปที่แนบแล้วด้านบน เลือกไฟล์สลิปยอดคงเหลือ แล้วกดปุ่ม <strong>ส่งสลิปโอนเงินเพิ่มเติม</strong>';
+                }
+                if (invEl) invEl.textContent = 'กรุณาเลือกสลิปสำหรับยอดคงเหลือก่อนส่ง';
+                slipInput.disabled = false;
+            } else if (mode === 'locked') {
+                titleEl.textContent = 'แนบสลิปครบแล้ว';
+                if (markEl) markEl.classList.add('d-none');
+                if (hintEl) {
+                    hintEl.classList.add('d-none');
+                    hintEl.innerHTML = '';
+                }
+                if (invEl) invEl.textContent = 'กรุณาแนบสลิปการโอนเงินก่อนยืนยัน';
+                slipInput.disabled = true;
+            }
+        }
+
+        function onSlipFileChange(input) {
+            input.classList.remove('is-invalid');
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            if (!file.type.startsWith('image/')) {
+                input.value = '';
+                input.classList.add('is-invalid');
+                showToast('กรุณาแนบไฟล์รูปภาพเท่านั้น', 'danger');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                input.value = '';
+                input.classList.add('is-invalid');
+                showToast(`ไฟล์ต้องไม่เกิน 10 MB (ปัจจุบัน ${(file.size / 1024 / 1024).toFixed(1)} MB)`, 'danger');
+            }
+        }
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        async function showBookingSuccessSlipSubmittedSwal() {
+            const seats = sessionData.selectedSeats || [];
+            const rd = roundData || {};
+            const tripTitle = escapeHtml(rd.trip?.title || '—');
+            const busNo = escapeHtml(String(rd.busNumber ?? '—'));
+            const depRaw = rd.departDate;
+            const depStr = depRaw
+                ? new Date(depRaw).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
+                : '—';
+            const seatNums = seats.map((s) => s.seatNumber).filter((n) => n != null && n !== '').join(', ') || '—';
+            const nameLines = seats
+                .map((s) => {
+                    const n = (s.passengerName || [s.firstName, s.lastName].filter(Boolean).join(' ')).trim();
+                    return escapeHtml(n || '—');
+                })
+                .join('<br>');
+            const phones = [...new Set(seats.map((s) => s.phone).filter(Boolean))];
+            const phoneLine = escapeHtml(phones.length ? phones.join(' / ') : '—');
+            const pt = guestBooking?.payment?.type || payType || 'FULL';
+            const payLabel = pt === 'DEPOSIT' ? 'มัดจำ' : 'เต็มจำนวน';
+            const { seatTotal, addonTotal, pickupTotal, grand } = calcTotals();
+            const seatsCount = sessionData.selectedSeats?.length || 0;
+            let seatDeposit = 0;
+            if (window._isFixedDeposit) {
+                seatDeposit = (Number(window._depositVal) || 0) * seatsCount;
+            } else {
+                seatDeposit = Math.ceil((seatTotal + pickupTotal) * (window._depositVal || 0.3));
+            }
+            const depositPayTotal = seatDeposit + addonTotal;
+            const apiPayAmt = Number(guestBooking?.payment?.amount);
+            const payAmountNum = Number.isFinite(apiPayAmt) && apiPayAmt > 0
+                ? apiPayAmt
+                : (pt === 'FULL' ? grand : depositPayTotal);
+            const payAmountHtml = fmtBahtHtml(payAmountNum);
+            const addonBlockHtml = addonTotal > 0
+                ? `<div style="font-size:0.9rem;font-weight:600;color:#0f172a">มี · ${fmtBahtHtml(addonTotal)}</div>`
+                : `<div style="font-size:0.9rem;font-weight:600;color:#0f172a">ไม่มี</div>`;
+
+            const html = `
+<div style="font-family:'Sarabun',system-ui,sans-serif;text-align:left">
+  <div style="font-size:clamp(1.35rem,5vw,1.85rem);font-weight:800;color:#0f172a;text-align:center;line-height:1.25;margin:0 0 0.5rem;padding:0.95rem 0.85rem;background:linear-gradient(180deg,#dbeafe,#eff6ff);border:3px solid #2563eb;border-radius:16px;box-shadow:0 4px 14px rgba(37,99,235,0.18)">
+    กรุณาแคปหน้าจอนี้
+  </div>
+  <p style="margin:0 0 1rem;font-size:0.98rem;color:#334155;line-height:1.55;text-align:center;font-weight:500">
+    แล้วส่งให้แอดมินผ่านช่องทางที่ท่านติดต่อไว้<br>
+    เพื่อรับลิงก์เข้ากลุ่มไลน์สำหรับทริปนี้
+  </p>
+  <div style="font-size:0.86rem;color:#475569;border-top:1px solid #e2e8f0;padding-top:0.85rem">
+    <div style="font-weight:700;color:#1e293b;margin-bottom:0.45rem;font-size:0.92rem">ข้อมูลการจอง</div>
+    <table style="width:100%;border-collapse:collapse;font-size:0.88rem">
+      <tr><td style="padding:0.28rem 0;color:#64748b;vertical-align:top;width:40%">ชื่อ สกุล</td><td style="padding:0.28rem 0;font-weight:600;color:#0f172a">${nameLines}</td></tr>
+      <tr><td style="padding:0.28rem 0;color:#64748b;vertical-align:top">เบอร์</td><td style="padding:0.28rem 0;font-weight:600;color:#0f172a">${phoneLine}</td></tr>
+      <tr><td style="padding:0.28rem 0;color:#64748b;vertical-align:top">ชื่อทริป</td><td style="padding:0.28rem 0;font-weight:600;color:#0f172a">${tripTitle}</td></tr>
+      <tr><td style="padding:0.28rem 0;color:#64748b;vertical-align:top">รอบที่จอง</td><td style="padding:0.28rem 0;font-weight:600;color:#0f172a">รถคันที่ ${busNo} · ออกเดินทาง ${escapeHtml(depStr)}</td></tr>
+      <tr><td style="padding:0.28rem 0;color:#64748b;vertical-align:top">ที่นั่ง</td><td style="padding:0.28rem 0;font-weight:600;color:#0f172a">${escapeHtml(seatNums)}</td></tr>
+    </table>
+    <div style="font-weight:700;color:#1e293b;margin:0.75rem 0 0.4rem;font-size:0.92rem">การชำระ</div>
+    <div style="font-size:0.9rem;font-weight:600;color:#0f172a">${escapeHtml(payLabel)} · ${payAmountHtml}</div>
+    <div style="font-weight:700;color:#1e293b;margin:0.75rem 0 0.4rem;font-size:0.92rem">อุปกรณ์เช่า</div>
+    ${addonBlockHtml}
+  </div>
+</div>`;
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'ดำเนินการจองสำเร็จ',
+                html,
+                confirmButtonText: 'รับทราบ',
+                confirmButtonColor: '#2563eb',
+                width: 'min(96vw, 26rem)',
+                allowOutsideClick: true,
+                customClass: { popup: 'rounded-4 shadow', confirmButton: 'px-4 fw-semibold' }
             });
-
-            showToast('อัปโหลดสลิปเรียบร้อยแล้ว', 'success');
         }
 
-        // 3. Update UI
-        await refreshBookingData();
-        
-    } catch (e) {
-        console.error('Booking error:', e);
-        showToast(e.message || 'เกิดข้อผิดพลาด', 'danger');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>ยืนยันการจองและแจ้งโอน';
-    }
-}
+        async function confirmBooking() {
+            const btn = document.getElementById('btnConfirm');
+            const slipInput = document.getElementById('slipFile');
+            const hasSlip = slipInput && slipInput.files.length > 0;
 
-async function refreshBookingData() {
-    try {
-        const booking = await fetchAPI('/bookings/guest/' + sessionToken);
-        updateStatusUI(booking);
-    } catch (e) { console.error('Refresh Error:', e.message); }
-}
+            if (!hasSlip) {
+                slipInput?.classList.add('is-invalid');
+                slipInput?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+                const extra = window._slipUploadContext === 'additional';
+                showToast(extra ? 'กรุณาเลือกสลิปสำหรับยอดคงเหลือก่อนส่ง' : 'กรุณาแนบสลิปการโอนก่อนยืนยัน', 'danger');
+                return;
+            }
 
-function updateStatusUI(booking) {
-    const btn = document.getElementById('btnConfirm');
-    const payment = booking.payment;
-    
-    if (!payment || !payment.slipUrl) {
-        btn.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>*** จองแล้ว ยังไม่แนบสลิป ***';
-        btn.className = 'btn btn-warning w-100 btn-lg py-3 fw-bold';
-        btn.disabled = false;
-    } else {
-        // If slip exists, lock the payment selection
-        document.getElementById('payDeposit').onclick = null;
-        document.getElementById('payFull').onclick = null;
-        document.getElementById('payDeposit').style.cursor = 'default';
-        document.getElementById('payFull').style.cursor = 'default';
-        document.getElementById('payDeposit').style.opacity = '0.7';
-        document.getElementById('payFull').style.opacity = '0.7';
-        
-        const slipInput = document.getElementById('slipFile');
-        if (slipInput) slipInput.disabled = true;
+            const file = slipInput.files[0];
+            if (!file.type.startsWith('image/')) {
+                slipInput.classList.add('is-invalid');
+                showToast('กรุณาแนบไฟล์รูปภาพเท่านั้น', 'danger');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                slipInput.classList.add('is-invalid');
+                showToast(`ไฟล์ต้องไม่เกิน 10 MB (ปัจจุบัน ${(file.size / 1024 / 1024).toFixed(1)} MB)`, 'danger');
+                return;
+            }
+            slipInput.classList.remove('is-invalid');
 
-        if (payment.type === 'FULL') {
-            btn.innerHTML = '<i class="bi bi-check-all me-1"></i>*** รายการสำเร็จ ***';
-            btn.className = 'btn btn-success w-100 btn-lg py-3 fw-bold';
-        } else {
-            btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>*** มัดจำเรียบร้อย ***';
-            btn.className = 'btn btn-info text-white w-100 btn-lg py-3 fw-bold';
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังดำเนินการ...';
+
+            try {
+                let bookingId = sessionData.bookingId;
+
+                // 1. If not booked yet, create booking
+                if (!bookingId) {
+                    const addonsPayload = Object.entries(selectedAddons).map(([id, qty]) => ({
+                        addonId: parseInt(id), quantity: qty
+                    }));
+
+                    // Save addons to session
+                    await postAPI('/booking-sessions', {
+                        token: sessionToken,
+                        step: 3,
+                        addonsData: addonsPayload
+                    });
+
+                    // Create booking
+                    const bookingResult = await postAPI('/bookings/guest', {
+                        sessionToken: sessionToken,
+                        paymentType: payType
+                    });
+                    bookingId = bookingResult.booking.id;
+                    sessionData.bookingId = bookingId;
+                    sessionData.step = 5;
+
+                    // Create insurance
+                    for (const seat of sessionData.selectedSeats) {
+                        if (seat.emergencyName && seat.beneficiaryName) {
+                            try {
+                                await postAPI('/insurance', {
+                                    bookingId: bookingId,
+                                    seatBookingId: seat.seatNumber,
+                                    beneficiaryName: seat.beneficiaryName,
+                                    beneficiaryRelation: seat.beneficiaryRelation || 'SPOUSE',
+                                    coverageAmount: 1000000,
+                                    status: 'SUBMITTED'
+                                });
+                            } catch (e) { console.error('Insurance Error:', e.message); }
+                        }
+                    }
+                }
+
+                // 2. Handle Slip Upload
+                if (hasSlip) {
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังอัปโหลดสลิป...';
+                    const formData = new FormData();
+                    formData.append('file', slipInput.files[0]);
+
+                    const uploadRes = await fetch(API_BASE_URL + '/uploads', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const uploadData = await uploadRes.json();
+                    if (!uploadRes.ok) throw new Error(uploadData.message || 'Upload failed');
+
+                    // Attach slip to payment
+                    await fetch(API_BASE_URL + '/payments/guest/' + sessionToken, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ slipUrl: uploadData.url })
+                    });
+
+                    showToast('อัปโหลดสลิปเรียบร้อยแล้ว', 'success');
+                }
+
+                // 3. Update UI
+                await refreshBookingData();
+                await showBookingSuccessSlipSubmittedSwal();
+
+            } catch (e) {
+                console.error('Booking error:', e);
+                showToast(e.message || 'เกิดข้อผิดพลาด', 'danger');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>ยืนยันการจองและแจ้งโอน';
+            }
         }
-        btn.disabled = true;
-    }
-}
+
+        async function refreshBookingData() {
+            try {
+                const booking = await fetchAPI('/bookings/guest/' + sessionToken);
+                guestBooking = booking;
+                updateStatusUI(booking);
+                renderTicket();
+                updatePayAmounts();
+            } catch (e) {
+                console.error('Refresh Error:', e.message);
+                guestBooking = null;
+            }
+        }
+
+        function paymentHasSlip(payment) {
+            if (!payment) return false;
+            const n = (payment.slips && payment.slips.length) || 0;
+            if (n > 0) return true;
+            return !!(payment.slipUrl && String(payment.slipUrl).trim());
+        }
+
+        function slipPublicUrl(pathOrUrl) {
+            if (!pathOrUrl) return '';
+            const s = String(pathOrUrl);
+            if (s.startsWith('http://') || s.startsWith('https://')) return s;
+            const base = (typeof API_BASE_URL === 'string' ? API_BASE_URL.replace(/\/api\/?$/, '') : '');
+            return base + (s.startsWith('/') ? s : '/' + s);
+        }
+
+        function collectPaymentSlipUrls(payment) {
+            if (!payment) return [];
+            const rows = Array.isArray(payment.slips) ? payment.slips : [];
+            const fromRows = rows.map((x) => x && x.url).filter(Boolean);
+            if (fromRows.length) return fromRows;
+            return payment.slipUrl ? [payment.slipUrl] : [];
+        }
+
+        function renderPaymentSlipGallery(payment) {
+            const wrap = document.getElementById('slipGalleryWrap');
+            const gallery = document.getElementById('slipGallery');
+            if (!wrap || !gallery) return;
+            const urls = collectPaymentSlipUrls(payment);
+            if (!urls.length) {
+                wrap.classList.add('d-none');
+                gallery.innerHTML = '';
+                return;
+            }
+            wrap.classList.remove('d-none');
+            gallery.innerHTML = urls.map((url, i) => {
+                const src = slipPublicUrl(url);
+                return `<a href="${src}" target="_blank" rel="noopener" class="slip-thumb d-block rounded-2 overflow-hidden border bg-white shadow-sm" title="สลิป ${i + 1}">
+            <img src="${src}" alt="สลิป ${i + 1}" width="88" height="88" style="width:88px;height:88px;object-fit:cover;display:block" loading="lazy"></a>`;
+            }).join('');
+        }
+
+        function updateStatusUI(booking) {
+            const btn = document.getElementById('btnConfirm');
+            const payment = booking.payment;
+            const slipInput = document.getElementById('slipFile');
+            const receiptActions = document.getElementById('paymentReceiptActions');
+
+            if (!payment || !paymentHasSlip(payment)) {
+                btn.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>*** จองแล้ว ยังไม่แนบสลิป ***';
+                btn.className = 'btn btn-warning w-100 btn-lg py-3 fw-bold';
+                btn.disabled = false;
+                lockPaymentOptions(false);
+                if (slipInput) slipInput.disabled = false;
+                applySlipUploadUI('first');
+                renderPaymentSlipGallery(null);
+                if (receiptActions) receiptActions.classList.add('d-none');
+                return;
+            }
+
+            const isFull = payment.type === 'FULL' || payment.status === 'COMPLETED' || payment.status === 'CONFIRMED';
+
+            if (isFull) {
+                lockPaymentOptions(true);
+                if (slipInput) slipInput.disabled = true;
+                btn.innerHTML = '<i class="bi bi-check-all me-1"></i>*** รายการสำเร็จ ***';
+                btn.className = 'btn btn-success w-100 btn-lg py-3 fw-bold';
+                btn.disabled = true;
+                applySlipUploadUI('locked');
+                renderPaymentSlipGallery(payment);
+                if (receiptActions) receiptActions.classList.remove('d-none');
+                return;
+            }
+
+            // มัดจำ + มีสลิปแล้ว — โอนส่วนที่เหลือแล้วแนบสลิปเพิ่ม
+            lockPaymentOptions(true);
+            if (slipInput) {
+                slipInput.disabled = false;
+                slipInput.value = '';
+                slipInput.classList.remove('is-invalid');
+            }
+            btn.innerHTML = '<i class="bi bi-send-fill me-1"></i>ส่งสลิปโอนเงินเพิ่มเติม';
+            btn.className = 'btn btn-primary w-100 btn-lg py-3 fw-bold rounded-3 shadow-sm';
+            btn.disabled = false;
+            selectPayType('FULL');
+            applySlipUploadUI('additional');
+            renderPaymentSlipGallery(payment);
+            if (receiptActions) receiptActions.classList.add('d-none');
+        }
 
 
-function showConfirmedBanner(bookingId) {
-    const banner = document.getElementById('confirmedBanner');
-    document.getElementById('confirmedBookingId').textContent = `#${bookingId}`;
-    banner.classList.remove('d-none');
-}
+        function copyLink() {
+            navigator.clipboard.writeText(window.location.href)
+                .then(() => showToast('คัดลอกลิงก์แล้ว', 'success'))
+                .catch(() => showToast('ไม่สามารถคัดลอกได้'));
+        }
 
-function copyLink() {
-    navigator.clipboard.writeText(window.location.href)
-        .then(() => showToast('คัดลอกลิงก์แล้ว', 'success'))
-        .catch(() => showToast('ไม่สามารถคัดลอกได้'));
-}
+        function goBack() {
+            window.location.href = `/frontend/pages/booking/insurance.html?token=${sessionToken}`;
+        }
 
-function goBack() {
-    window.location.href = `/frontend/pages/booking/insurance.html?token=${sessionToken}`;
-}
+        async function loadBankAccounts() {
+            try {
+                const response = await fetchAPI('/bank-accounts');
+                const bankAccounts = response;
 
-async function loadBankAccounts() {
-    try {
-        const response = await fetchAPI('/bank-accounts');
-        const bankAccounts = response;
-        
-        const container = document.getElementById('bankAccountsList');
-        
-        if (bankAccounts.length === 0) {
-            container.innerHTML = `
+                const container = document.getElementById('bankAccountsList');
+
+                if (bankAccounts.length === 0) {
+                    container.innerHTML = `
                 <div class="alert alert-warning small">
                     <i class="bi bi-info-circle me-1"></i> 
                 </div>
             `;
-            return;
-        }
+                    return;
+                }
 
-        container.innerHTML = bankAccounts.map(account => {
-            const baseUrl = API_BASE_URL.replace('/api', '');
-            return `
+                container.innerHTML = bankAccounts.map(account => {
+                    const baseUrl = API_BASE_URL.replace('/api', '');
+                    return `
             <div class="border rounded p-3 mb-2">
                 <div class="d-flex align-items-center gap-3">
-                    ${account.imageUrl 
-                        ? `<img src="${baseUrl}${account.imageUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" alt="${account.bankName}">`
-                        : `<div class="d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
+                    ${account.imageUrl
+                            ? `<img src="${baseUrl}${account.imageUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" alt="${account.bankName}">`
+                            : `<div class="d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
                             <i class="bi bi-bank text-muted"></i>
                           </div>`
-                    }
+                        }
                     <div class="flex-grow-1">
                         <div class="fw-semibold small">${account.bankName}</div>
                         <div class="small text-muted">${account.accountName}</div>
@@ -694,42 +1437,43 @@ async function loadBankAccounts() {
                 ${account.description ? `<div class="small text-muted mt-2">${account.description}</div>` : ''}
             </div>
         `}).join('');
-    } catch (error) {
-        console.error('Error loading bank accounts:', error);
-        document.getElementById('bankAccountsList').innerHTML = `
+            } catch (error) {
+                console.error('Error loading bank accounts:', error);
+                document.getElementById('bankAccountsList').innerHTML = `
             <div class="alert alert-danger small">
                 <i class="bi bi-exclamation-triangle me-1"></i> 
             </div>
         `;
-    }
-}
+            }
+        }
 
-function showError(msg) {
-    document.getElementById('loadingState').innerHTML = `
+        function showError(msg) {
+            document.getElementById('loadingState').innerHTML = `
         <div class="py-5 text-center">
             <i class="bi bi-exclamation-triangle text-danger fs-2"></i>
             <p class="text-danger mt-2">${msg}</p>
             <a href="/frontend/pages/trips/list.html" class="btn btn-outline-primary mt-2"> </a>
         </div>`;
-}
+        }
 
-function showToast(msg, type = 'warning') {
-    let c = document.getElementById('toastC');
-    if (!c) {
-        c = document.createElement('div');
-        c.id = 'toastC';
-        c.className = 'position-fixed bottom-0 end-0 p-3';
-        c.style.zIndex = 9999;
-        document.body.appendChild(c);
-    }
-    const id = 't' + Date.now();
-    c.insertAdjacentHTML('beforeend', `
+        function showToast(msg, type = 'warning') {
+            let c = document.getElementById('toastC');
+            if (!c) {
+                c = document.createElement('div');
+                c.id = 'toastC';
+                c.className = 'position-fixed bottom-0 end-0 p-3';
+                c.style.zIndex = 9999;
+                document.body.appendChild(c);
+            }
+            const id = 't' + Date.now();
+            c.insertAdjacentHTML('beforeend', `
         <div id="${id}" class="toast align-items-center text-bg-${type} border-0 show">
             <div class="d-flex"><div class="toast-body">${msg}</div>
             <button class="btn-close btn-close-white me-2 m-auto"></button>
             </div></div>`);
-    setTimeout(() => document.getElementById(id)?.remove(), 4000);
-}
-</script>
+            setTimeout(() => document.getElementById(id)?.remove(), 4000);
+        }
+    </script>
 </body>
+
 </html>

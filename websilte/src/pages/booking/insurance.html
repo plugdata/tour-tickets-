@@ -192,8 +192,30 @@
             border: 1.5px dashed #94a3b8;
         }
         .ins-idcard-zone--camera {
-            background: #f0fdfa;
-            border: 1.5px dashed #14b8a6;
+            background: #eff6ff;
+            border: 1.5px dashed #3b82f6;
+        }
+        /* ปุ่มแนบไฟล์ / เปิดกล้อง — สีน้ำเงิน ความกว้างเท่ากัน */
+        .ins-idcard-btn {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            font-weight: 600;
+            min-height: 38px;
+        }
+        label.ins-idcard-btn {
+            cursor: pointer;
+        }
+        .ins-idcard-btn--camera {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            border: none;
+        }
+        .ins-idcard-btn--camera:hover {
+            color: #fff;
+            filter: brightness(1.06);
         }
 
         /* Popup ขออนุญาตกล้อง */
@@ -204,7 +226,7 @@
             box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
         }
         #idCardCameraPermissionModal .cam-perm-hero {
-            background: linear-gradient(135deg, #0d9488 0%, #0f766e 45%, #115e59 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 45%, #1e40af 100%);
             color: #fff;
             padding: 1.75rem 1.5rem 1.25rem;
             text-align: center;
@@ -404,6 +426,16 @@ let conditions   = [];
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+    const insFormsEl = document.getElementById('insuranceForms');
+    if (insFormsEl) {
+        insFormsEl.addEventListener('input', (e) => {
+            const t = e.target;
+            if (!t.classList || !t.classList.contains('ins-emergency-phone')) return;
+            const d = String(t.value).replace(/\D/g, '').slice(0, 10);
+            if (t.value !== d) t.value = d;
+        });
+    }
+
     sessionToken = new URLSearchParams(location.search).get('token');
     if (!sessionToken) { showError('ไม่พบ session'); return; }
 
@@ -484,8 +516,9 @@ function renderInsuranceForms() {
                     <div class="col-md-5">
                         <label class="form-label small">เบอร์โทร <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control ins-emergency-phone"
-                            data-seat="${sn}" required placeholder="08x-xxx-xxxx" inputmode="tel"
-                            value="${s.emergencyPhone || ''}">
+                            data-seat="${sn}" required maxlength="10" inputmode="numeric"
+                            placeholder="08x-xxx-xxxx"
+                            value="${String(s.emergencyPhone || '').replace(/\D/g, '').slice(0, 10)}">
                     </div>
                     <!-- Beneficiary -->
                     <div class="col-12 mt-1"><div class="small fw-semibold text-muted mb-1"><i class="bi bi-person-heart me-1 text-purple"></i>ผู้รับประโยชน์</div></div>
@@ -538,7 +571,7 @@ function renderInsuranceForms() {
                                 <i class="bi bi-folder2-open me-1"></i>นำเข้าจากไฟล์
                             </div>
                             <p class="text-muted small mb-2" style="font-size:.78rem">JPG, PNG หรือ PDF จากเครื่อง</p>
-                            <label class="btn btn-sm btn-outline-secondary rounded-3 mb-0 align-self-start" style="cursor:pointer">
+                            <label class="btn btn-sm btn-outline-primary rounded-3 ins-idcard-btn mb-0">
                                 <i class="bi bi-paperclip me-1"></i>เลือกไฟล์
                                 <input type="file" class="ins-idcard-file d-none"
                                        data-seat="${sn}" id="idFileInput_${sn}"
@@ -555,19 +588,18 @@ function renderInsuranceForms() {
                     <div class="col-12 mt-3">
                         <div class="p-3 rounded-3 ins-idcard-zone ins-idcard-zone--camera">
                             <div class="d-flex align-items-start gap-2 mb-2">
-                                <div style="background:#ccfbf1;border:1px solid #5eead4;border-radius:.5rem;padding:.35rem .6rem;flex-shrink:0">
-                                    <i class="bi bi-camera-video fs-5" style="color:#0f766e"></i>
+                                <div style="background:#dbeafe;border:1px solid #60a5fa;border-radius:.5rem;padding:.35rem .6rem;flex-shrink:0">
+                                    <i class="bi bi-camera-video fs-5" style="color:#1d4ed8"></i>
                                 </div>
                                 <div>
-                                    <div class="fw-semibold small mb-0" style="color:#0f766e">
+                                    <div class="fw-semibold small mb-0" style="color:#1d4ed8">
                                         ถ่ายรูปบัตรจากกล้อง
                                         <span class="badge bg-light text-secondary border ms-1" style="font-size:.6rem">ทดสอบ</span>
                                     </div>
                                     <p class="text-muted small mb-0" style="font-size:.78rem">ใช้แทนการแนบไฟล์ได้ — เปิดกล้องสดแล้วกดถ่ายภาพ</p>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-sm rounded-3"
-                                    style="background:linear-gradient(135deg,#14b8a6,#0d9488);color:#fff;border:none"
+                            <button type="button" class="btn btn-sm rounded-3 ins-idcard-btn ins-idcard-btn--camera"
                                     onclick="requestIdCardCameraAccess(${sn})">
                                 <i class="bi bi-camera-fill me-1"></i>เปิดกล้องถ่ายรูป
                             </button>
@@ -886,7 +918,8 @@ function validate() {
     const ins = collectInsuranceData();
     for (const f of ins) {
         if (!f.emergencyName)       return `กรุณากรอกชื่อผู้ติดต่อฉุกเฉิน ที่นั่ง ${f.seatNumber}`;
-        if (!f.emergencyPhone)      return `กรุณากรอกเบอร์ฉุกเฉิน ที่นั่ง ${f.seatNumber}`;
+        const ep = String(f.emergencyPhone || '').replace(/\D/g, '');
+        if (ep.length < 9 || ep.length > 10) return `กรุณากรอกเบอร์ฉุกเฉิน 9-10 หลัก ที่นั่ง ${f.seatNumber}`;
         if (!f.beneficiaryName)     return `กรุณากรอกชื่อผู้รับประโยชน์ ที่นั่ง ${f.seatNumber}`;
         if (!f.beneficiaryRelation) return `กรุณาเลือกความสัมพันธ์ผู้รับประโยชน์ ที่นั่ง ${f.seatNumber}`;
         if (!f.idCardFile && !f.idCardImageUrl)
@@ -989,18 +1022,10 @@ async function goNext() {
             customClass: { popup: 'swal-font-th', confirmButton: 'swal-btn-confirm', cancelButton: 'swal-btn-cancel' },
             reverseButtons: true,
             width: '380px',
-        }).then(async r => {
+        }).then(r => {
             if (r.isConfirmed) {
                 window.location.href = `/booking/rental?token=${sessionToken}`;
-            } else if (r.dismiss === Swal.DismissReason.cancel) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'จองสำเร็จ',
-                    text: 'ไปที่หน้าชำระเงิน',
-                    timer: 1500,
-                    showConfirmButton: false,
-                    customClass: { popup: 'swal-font-th' },
-                });
+            } else {
                 window.location.href = `/booking/ticket?token=${sessionToken}`;
             }
         });

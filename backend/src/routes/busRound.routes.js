@@ -145,6 +145,27 @@ router.get('/delete-logs', async (req, res) => {
 })
 
 /**
+ * GET /api/bus-rounds/:id — single round (public)
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    const round = await prisma.busRound.findUnique({
+      where: { id },
+      include: {
+        trip: true, roudeStack: true,
+        _count: { select: { seatBookings: { where: { bookingId: { not: null }, booking: { status: { not: 'CANCELLED' } } } } } }
+      }
+    })
+    if (!round) return res.status(404).json({ message: 'Not found' })
+    const { _count, ...r } = round
+    res.json({ ...r, bookedSeats: _count.seatBookings })
+  } catch (e) {
+    res.status(500).json({ message: e.message })
+  }
+})
+
+/**
  * @swagger
  * /api/bus-rounds:
  *   post:

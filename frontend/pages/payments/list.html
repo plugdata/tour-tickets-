@@ -195,6 +195,9 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await initPage();
             slipModal = new bootstrap.Modal(document.getElementById('slipModal'));
+            const query = new URLSearchParams(location.search);
+            const presetStatus = query.get('status') || '';
+            const presetQ = query.get('q') || query.get('name') || '';
 
             // Init Pagination
             pagination = new PaginationManager({
@@ -213,6 +216,8 @@
                     if (!insuranceMap[f.bookingId]) insuranceMap[f.bookingId] = [];
                     insuranceMap[f.bookingId].push(f);
                 });
+                if (presetStatus) document.getElementById('filterStatus').value = presetStatus;
+                if (presetQ) document.getElementById('searchInput').value = presetQ;
                 renderPayments();
             } catch (e) {
                 console.error('Initial Load Error:', e);

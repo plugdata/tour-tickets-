@@ -1011,16 +1011,15 @@
       color: #1a2232;
     }
 
-    /* Scrollable body */
+    /* Body area: จำกัดความสูงให้ #mCard เลื่อนภายใน ไม่ให้การ์ดยืดเต็มจอตามเนื้อหา */
     .m-body {
       flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      scroll-behavior: smooth;
+      min-height: 0;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1rem .75rem 2rem;
+      padding: 1rem .75rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
       position: relative;
     }
 
@@ -1033,14 +1032,20 @@
       border-radius: 10px;
     }
 
-    /* The white card inside overlay (same visual as desktop) */
+    /* The white card inside overlay — สูงสุดเท่าพื้นที่ว่างใต้ nav + step bar, เลื่อนเนื้อหาในการ์ด */
     .m-card {
       width: 100%;
       max-width: 360px;
+      max-height: calc(100dvh - 11.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      min-height: 0;
       background: #fff;
       border-radius: 24px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, .12);
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      flex-direction: column;
     }
 
     /* Mobile gender bottom sheet */
@@ -1245,6 +1250,93 @@
       color: #94a3b8;
       text-align: right;
       font-weight: 500;
+    }
+
+    .bk-actions-row {
+      margin: 0 1.2rem 0.75rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .bk-btn-details {
+      width: 100%;
+      padding: 0.65rem 1rem;
+      font-family: 'Kanit', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #1e40af;
+      background: #fff;
+      border: 2px solid #93c5fd;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+
+    .bk-btn-details:hover {
+      background: #eff6ff;
+      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.15);
+    }
+
+    .bk-btn-details.bk-btn-details--toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+    }
+
+    .bk-btn-details-chevron {
+      font-size: 0.85rem;
+      transition: transform 0.2s ease;
+    }
+
+    .bk-btn-details.is-open .bk-btn-details-chevron {
+      transform: rotate(180deg);
+    }
+
+    .bk-trip-details-wrap {
+      margin: 0 1.2rem 0.75rem;
+    }
+
+    .bk-trip-details-wrap--prefooter {
+      margin-top: 0.25rem;
+      margin-bottom: 0.5rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .bk-trip-details-panel {
+      margin-top: 0.65rem;
+      padding: 0.75rem 0.85rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+    }
+
+    .bk-trip-details-panel[hidden] {
+      display: none !important;
+    }
+
+    .bk-trip-details-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .bk-trip-details-stack .bk-desc-block {
+      margin: 0;
+    }
+
+    .bk-trip-details-loading,
+    .bk-trip-details-error {
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 0.5rem 0.25rem;
+      color: #64748b;
+      margin: 0;
+    }
+
+    .bk-trip-details-error {
+      color: #b91c1c;
     }
 
     /* ── Trip Description Section ── */
@@ -1649,6 +1741,75 @@
       'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม']
     const ROWS_LABEL = 'ABCDEFGHIJKLMNOP'.split('')
 
+    /** ที่นั่งผู้โดยสาร (ไม่นับที่นั่ง 1 — staff/driver block ในแผนที่) */
+    function passengerSeatCap(totalSeats) {
+      return Math.max(0, (Number(totalSeats) || 0) - 1)
+    }
+
+    function escapeTripHtml(s) {
+      return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    }
+
+    function buildTripDetailsHtml(t) {
+      const blocks = []
+      if (t.description && String(t.description).trim()) {
+        blocks.push(`<div class="bk-desc-block"><div class="bk-desc-title"><i class="bi bi-journal-text"></i> รายละเอียด</div><p class="bk-desc-body">${escapeTripHtml(t.description)}</p></div>`)
+      }
+      const posts = (t.contents || []).filter((c) => c.type === 'TRIP_POST' && c.isActive !== false)
+      for (const c of posts) {
+        blocks.push(`<div class="bk-desc-block"><div class="bk-desc-title"><i class="bi bi-file-text"></i> ${escapeTripHtml(c.title)}</div>${c.body ? `<p class="bk-desc-body">${escapeTripHtml(c.body)}</p>` : ''}</div>`)
+      }
+      if (t.country) {
+        blocks.push(`<div class="bk-desc-block"><p class="bk-desc-body"><strong>ประเทศ/พื้นที่</strong> ${escapeTripHtml(t.country)}</p></div>`)
+      }
+      if (!blocks.length) {
+        blocks.push('<div class="bk-desc-block"><p class="bk-desc-body">ยังไม่มีรายละเอียดเพิ่มเติมสำหรับทริปนี้</p></div>')
+      }
+      return `<div class="bk-trip-details-stack">${blocks.join('')}</div>`
+    }
+
+    /** คลิกแล้วขยาย/ย่อรายละเอียดใน card เดียวกัน (ไม่ใช้ popup) */
+    window.toggleTripDetailsPanel = async function (tripId, btn) {
+      const tid = Number(tripId) > 0 ? Number(tripId) : (selTrip?.id || 0)
+      if (!tid || !btn) return
+      const wrap = btn.closest('.bk-trip-details-wrap')
+      if (!wrap) return
+      const panel = wrap.querySelector('.bk-trip-details-panel')
+      const label = btn.querySelector('.bk-btn-details-label')
+      if (!panel) return
+
+      const opening = panel.hidden
+      if (!opening) {
+        panel.hidden = true
+        btn.classList.remove('is-open')
+        btn.setAttribute('aria-expanded', 'false')
+        if (label) label.textContent = 'รายละเอียดทริป'
+        return
+      }
+
+      panel.hidden = false
+      btn.classList.add('is-open')
+      btn.setAttribute('aria-expanded', 'true')
+      if (label) label.textContent = 'ซ่อนรายละเอียด'
+
+      if (wrap.dataset.loaded === '1') return
+
+      panel.innerHTML = '<p class="bk-trip-details-loading">กำลังโหลด...</p>'
+      try {
+        const t = await apiFetch(`/trips/${tid}`)
+        if (!wrap.isConnected) return
+        panel.innerHTML = buildTripDetailsHtml(t)
+        wrap.dataset.loaded = '1'
+      } catch (e) {
+        if (!wrap.isConnected) return
+        panel.innerHTML = `<p class="bk-trip-details-error">${escapeTripHtml(e?.message || String(e))}</p>`
+      }
+    }
+
     // ── state ─────────────────────────────────────────────────
     const now = new Date()
     let curYear = now.getFullYear()
@@ -1763,20 +1924,19 @@
         const tripTitle = trip?.title || `ทริป #${tripId}`
 
         for (const r of tRounds) {
-          const left = r.totalSeats - r.bookedSeats
-          const pct = Math.round(r.bookedSeats / r.totalSeats * 100)
-          const full = left <= 0 || !r.isOpen
+          const passengerCap = passengerSeatCap(r.totalSeats)
+          const passengerLeft = Math.max(0, passengerCap - (r.bookedSeats || 0))
+          const pct = passengerCap > 0 ? Math.round((r.bookedSeats || 0) / passengerCap * 100) : 0
+          const full = passengerLeft <= 0 || !r.isOpen
           const isLow = !full && pct >= 60
           const dotCls = full ? 'dot-full' : isLow ? 'dot-low' : 'dot-ok'
           const dept = new Date(r.departDate)
           const dateStr = dept.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
           const roundName = r.roundname || r.roudeStack?.roundname || dateStr
-          const passengerTotal = r.totalSeats - 1   // seat 1 = Staff, seats 2..totalSeats = ผู้โดยสาร
-          const passengerLeft = passengerTotal - r.bookedSeats
 
           const badgeHtml = `<div class="round-badge-wrap">
                    <span class="round-badge ${passengerLeft <= 0 ? 'badge-full' : 'badge-price'}">
-                     ${passengerLeft <= 0 ? 'เต็ม' : `ที่ว่าง ${passengerLeft}/${passengerTotal}`}
+                     ${passengerLeft <= 0 ? 'เต็ม' : `ที่ว่าง ${passengerLeft}/${passengerCap}`}
                    </span>
                  </div>`
 
@@ -1860,9 +2020,10 @@
       const dept = new Date(round.departDate)
       const dateStr = dept.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
       const timeStr = dept.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
-      const left = round.totalSeats - round.bookedSeats
-      const pct = Math.round(round.bookedSeats / round.totalSeats * 100)
-      const full = left <= 0 || !round.isOpen
+      const passengerCap = passengerSeatCap(round.totalSeats)
+      const passengerLeft = Math.max(0, passengerCap - (round.bookedSeats || 0))
+      const pct = passengerCap > 0 ? Math.round((round.bookedSeats || 0) / passengerCap * 100) : 0
+      const full = passengerLeft <= 0 || !round.isOpen
       const barCls = pct >= 90 ? 'full' : pct >= 60 ? 'low' : 'ok'
       const price = trip ? Number(trip.price + (round.extraPrice || 0)) : 0
       const deposit = trip?.deposit || 0
@@ -1914,7 +2075,7 @@
     <div class="bk-footer">
       <div class="bk-footer-meta">
         <div class="bk-meta-date"><i class="bi bi-calendar3 me-1"></i>${dateStr} · ${timeStr}</div>
-        <div class="bk-meta-seats ${barCls}">เหลือ ${left}/${round.totalSeats}</div>
+        <div class="bk-meta-seats ${barCls}">เหลือ ${passengerLeft}/${passengerCap}</div>
       </div>
       <div class="bk-bar"><div class="bk-bar-fill ${barCls}" style="width:${pct}%"></div></div>
 
@@ -2018,8 +2179,10 @@
 
     // Build estimated seat data for immediate render (no API wait)
     function buildEstApiSeats(bookedCount, totalSeats) {
+      const cap = passengerSeatCap(totalSeats)
+      const n = Math.min(Number(bookedCount) || 0, cap)
       const apiSeats = {}
-      for (let i = 0; i < Math.min(bookedCount, totalSeats); i++) {
+      for (let i = 0; i < n; i++) {
         apiSeats[i + 2] = { status: 'BOOKED', gender: i % 2 === 0 ? 'FEMALE' : 'MALE' }
       }
       return apiSeats
@@ -2059,12 +2222,10 @@
       const dept = new Date(round.departDate)
       const dateStr = dept.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
       const timeStr = dept.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+      const passengerCap = passengerSeatCap(totalSeats)
       const booked = Object.values(apiSeats).filter(s => s.status === 'BOOKED').length
-      const left = totalSeats - booked
-      const pct = Math.round(booked / totalSeats * 100)
+      const left = Math.max(0, passengerCap - booked)
       const full = left <= 0 || !round.isOpen
-      const statusCls = pct >= 90 ? 'full' : pct >= 60 ? 'low' : 'ok'
-      const statusTxt = full ? 'รอบนี้เต็มแล้ว' : statusCls === 'low' ? 'ใกล้เต็มแล้ว' : 'ว่างพร้อมจอง'
       const price = trip ? Number(trip.price + (round.extraPrice || 0)) : 0
       const deposit = trip?.deposit || 0
 
@@ -2077,7 +2238,7 @@
       <div style="padding-left: 2.2rem;">
         <div class="bk-trip-name">${trip?.title || 'ไม่มีชื่อทริป'}</div>
         <div class="bk-bus-info">
-          <i class="bi bi-truck-front"></i> ยานพาหนะ: รถบัสคันที่ ${round.busNumber || 1}
+          <i class="bi bi-truck-front"></i> รถตู้คันที่ ${round.busNumber || 1}
         </div>
       </div>
     </div>
@@ -2093,8 +2254,8 @@
         <div class="bk-info-value">${round.duration || '—'}</div>
       </div>
       <div class="bk-info-item">
-        <div class="bk-info-label">ที่ว่างคงเหลือ</div>
-        <div class="bk-info-value">${left} / ${totalSeats} ที่นั่ง</div>
+        <div class="bk-info-label">เหลือ</div>
+        <div class="bk-info-value">${left} / ${passengerCap}</div>
       </div>
     </div>
 
@@ -2110,13 +2271,19 @@
       </div>` : ''}
     </div>
 
-  
-
     <div id="selBar" style="display:none; padding:1rem 1.2rem; background:#f0fdf4; border-top:1px solid #d1fae5; justify-content:space-between; align-items:center;"></div>
 
+    ${trip?.id ? `
+    <div class="bk-trip-details-wrap bk-trip-details-wrap--prefooter">
+      <button type="button" class="bk-btn-details bk-btn-details--toggle" aria-expanded="false"
+              onclick="toggleTripDetailsPanel(${trip.id}, this)">
+        <span class="bk-btn-details-label">รายละเอียดทริป</span>
+        <i class="bi bi-chevron-down bk-btn-details-chevron" aria-hidden="true"></i>
+      </button>
+      <div class="bk-trip-details-panel" hidden></div>
+    </div>` : ''}
+
       <div class="bk-footer-premium">
-        <div class="bk-bar" style="margin-bottom:1.2rem;"><div class="bk-bar-fill ${statusCls}" style="width:${pct}%"></div></div>
-        
         <button class="bk-btn-booking" ${full ? 'disabled' : ''} onclick="seatProceed(${round.id})">
           ${full ? 'ที่นั่งเต็มแล้ว' : '<i class="bi bi-ticket-perforated-fill"></i> จองทริปนี้เลย'}
         </button>

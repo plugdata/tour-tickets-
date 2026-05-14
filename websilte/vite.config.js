@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import { resolve } from 'path'
 
 const urlRewrites = {
@@ -11,9 +11,14 @@ const urlRewrites = {
   '/booking/rental': '/src/pages/booking/rental.html',
   '/booking/ticket': '/src/pages/booking/ticket.html',
   '/booking/status': '/src/pages/booking/status.html',
+  '/testing/seats': '/src/pages/testing/seat-test.html',
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const apiProxyTarget = env.VITE_API_PROXY_TARGET || 'http://localhost:5000'
+
+  return {
   root: '.',
   publicDir: 'public',
   plugins: [
@@ -37,11 +42,11 @@ export default defineConfig({
     allowedHosts: 'all',
     proxy: {
       '/api': {
-        target: 'http://154.197.124.146:5000',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://154.197.124.146:5000',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
     },
@@ -66,5 +71,6 @@ export default defineConfig({
         tripsList: resolve(__dirname, 'src/pages/trips/list.html'),
       }
     }
+  }
   }
 })

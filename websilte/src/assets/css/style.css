@@ -11,6 +11,10 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html {
+  overscroll-behavior-y: none; /* ป้องกัน pull-to-refresh / bounce บน Android Chrome */
+}
+
 body {
   font-family: 'Sarabun', sans-serif;
   background-color: var(--dark-navy);
@@ -556,4 +560,34 @@ footer { background-color: #0a0f14; padding: 2rem 0 1rem; border-top: 1px solid 
   .ht-btn-book {
     display: none !important;
   }
+}
+
+/* ── Touch UX Optimizations ──────────────────────────────────
+   1. ลบ grey/blue tap highlight บน iOS/Android
+   2. touch-action: manipulation — ตัด 300ms double-tap zoom delay บนทุก interactive element
+   3. will-change: transform — hint GPU สำหรับ element ที่ animate
+*/
+a,
+button,
+[role="button"],
+.btn,
+.btn-hero,
+.btn-cookie,
+.nav-link-item,
+.nav-btn-status,
+.nav-btn-lang,
+.blog-card,
+.service-card,
+.social-item,
+.faq-question,
+.location-filter {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Cards that animate on hover — pre-allocate layer สำหรับ GPU */
+.blog-card,
+.service-card,
+.social-item {
+  will-change: transform;
 }
