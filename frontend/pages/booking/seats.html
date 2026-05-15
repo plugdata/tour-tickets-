@@ -910,13 +910,6 @@
       const isOpen = roundData.isOpen && !isFull
       const d = new Date(roundData.departDate)
 
-      document.getElementById('hdrTitle').textContent =
-        `${roundData.trip?.title || 'ทริป'} — รถคันที่ ${roundData.busNumber}`
-      document.getElementById('hdrSub').textContent = roundData.duration || ''
-      document.getElementById('hdrBadge').innerHTML =
-        `<span class="badge ${isOpen ? 'bg-success' : 'bg-danger'}">
-       ${isFull ? 'เต็มแล้ว' : isOpen ? 'เปิดจอง' : 'ปิดจอง'}</span>`
-
       // ── คำนวณ date range จาก departDate + duration ──
       const daysMatch = roundData.duration?.match(/(\d+)\s*วัน/)
       const tripDays = daysMatch ? parseInt(daysMatch[1]) : 1
@@ -931,6 +924,14 @@
           ? `${d.toLocaleDateString('th-TH', fmtNoYear)}–${dEnd.toLocaleDateString('th-TH', fmt)}`
           : `${d.toLocaleDateString('th-TH', fmt)} – ${dEnd.toLocaleDateString('th-TH', fmt)}`
       const roundName = roundData.roundname || roundData.roudeStack?.roundname || dateRangeStr || '-'
+
+      document.getElementById('hdrTitle').textContent =
+        `${roundData.trip?.title || 'ทริป'} — รถคันที่ ${roundData.busNumber}`
+      const hdrSubParts = [roundName !== '-' ? roundName : '', roundData.duration || ''].filter(Boolean)
+      document.getElementById('hdrSub').textContent = hdrSubParts.join(' · ')
+      document.getElementById('hdrBadge').innerHTML =
+        `<span class="badge ${isOpen ? 'bg-success' : 'bg-danger'}">
+       ${isFull ? 'เต็มแล้ว' : isOpen ? 'เปิดจอง' : 'ปิดจอง'}</span>`
 
       document.getElementById('tripInfo').innerHTML = `
     <div class="row g-3" style="font-size:1rem">
