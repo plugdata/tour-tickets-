@@ -487,8 +487,22 @@
                 const all = await fetchJSON('/bus-rounds');
                 roundData = all.find(r => r.id == sessionData.busRoundId);
                 if (roundData) {
-                    const sp = String(roundData.startPoint || '').replace(/^\s*ลานจอดรถ\s*/u, '').trim()
-                    document.getElementById('hdrSub').textContent = `${roundData.trip?.title} | ${sp} → ${roundData.endPoint}`;
+                    const d = new Date(roundData.departDate)
+                    const daysMatch = roundData.duration?.match(/(\d+)\s*วัน/)
+                    const tripDays = daysMatch ? parseInt(daysMatch[1], 10) : 1
+                    const dEnd = new Date(d)
+                    dEnd.setDate(dEnd.getDate() + tripDays - 1)
+                    const fmt = { day: 'numeric', month: 'short', year: '2-digit' }
+                    const fmtNoYear = { day: 'numeric', month: 'short' }
+                    const sameMonthYear = d.getMonth() === dEnd.getMonth() && d.getFullYear() === dEnd.getFullYear()
+                    const dateRangeStr = tripDays <= 1
+                        ? d.toLocaleDateString('th-TH', fmt)
+                        : sameMonthYear
+                            ? `${d.toLocaleDateString('th-TH', fmtNoYear)}–${dEnd.toLocaleDateString('th-TH', fmt)}`
+                            : `${d.toLocaleDateString('th-TH', fmt)} – ${dEnd.toLocaleDateString('th-TH', fmt)}`
+                    const roundName = roundData.roundname || roundData.roudeStack?.roundname || dateRangeStr || ''
+                    const hdrSubParts = [roundName, roundData.duration || ''].filter(Boolean)
+                    document.getElementById('hdrSub').textContent = hdrSubParts.join(' · ') || roundData.trip?.title || ''
                 }
 
                 addonsList = await fetchJSON('/addons/active').catch(() => []);
