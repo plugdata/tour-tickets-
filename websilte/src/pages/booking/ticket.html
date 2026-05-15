@@ -124,6 +124,21 @@
             position: relative;
         }
 
+        /* รายการผู้โดยสาร + อุปกรณ์: desktop เท่านั้น */
+        @media (max-width: 991.98px) {
+            .ticket-wrapper--mobile-compact .ticket-main {
+                padding-top: 1.25rem;
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .ticket-main-footer {
+                margin-top: 0 !important;
+                padding-top: 1rem !important;
+                border-top: none !important;
+            }
+        }
+
         .x-small {
             font-size: 0.7rem;
         }
@@ -750,11 +765,11 @@
 
             <div class="row g-3" id="bookingExportRoot">
 
-                <!-- Ticket Section -->
-                <div class="col-lg-7">
-                    <div class="ticket-wrapper mb-3">
+                <!-- Ticket Section (desktop only) -->
+                <div class="col-lg-7 d-none d-lg-block">
+                    <div class="ticket-wrapper ticket-wrapper--mobile-compact mb-3">
                         <!-- Ticket Header -->
-                        <div class="ticket-header-bar text-white"
+                        <div class="ticket-header-bar text-white d-none d-lg-block"
                             style="background: linear-gradient(135deg, #1e293b, #334155);">
                             <div class="ticket-header-top">
                                 <div class="ticket-header-main">
@@ -783,6 +798,7 @@
                         </div>
 
                         <div class="ticket-main">
+                            <div class="ticket-main-lists d-none d-lg-block">
                             <!-- Individual Tickets per Person -->
                             <div class="mb-4">
                                 <h6 class="fw-bold mb-3 d-flex align-items-center">
@@ -802,9 +818,10 @@
                                     <div id="rentalList"></div>
                                 </div>
                             </div>
+                            </div>
 
                             <!-- Summary Bottom -->
-                            <div class="mt-4 pt-4 border-top">
+                            <div class="mt-4 pt-4 border-top ticket-main-footer">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span class="text-muted small">รหัสอ้างอิงเซสชัน</span>
                                     <span class="fw-mono small text-secondary" id="sessionRef">-</span>
@@ -1615,7 +1632,7 @@
   </div>
 </div>`;
 
-            await Swal.fire({
+            const result = await Swal.fire({
                 icon: 'success',
                 title: 'ดำเนินการจองสำเร็จ',
                 html,
@@ -1625,6 +1642,9 @@
                 allowOutsideClick: true,
                 customClass: { popup: 'rounded-4 shadow', confirmButton: 'px-4 fw-semibold' }
             });
+            if (result.isConfirmed) {
+                window.location.href = '/booking/status';
+            }
         }
 
         function bookingSlipLocked(booking) {
