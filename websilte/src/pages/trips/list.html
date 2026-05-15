@@ -727,13 +727,6 @@
       flex-direction: column;
     }
 
-    /* ยังไม่เลือกรอบ: จัดการ์ดให้อยู่กลางแนวตั้งของคอลัมน์ขวา แล้วเลื่อนลงเล็กน้อย */
-    .bk-card:has(> .bk-empty) {
-      margin-top: auto;
-      margin-bottom: auto;
-      transform: translateY(clamp(1.5rem, 6vh, 4.5rem));
-    }
-
     .bk-empty {
       padding: 3rem 2rem;
       text-align: center;
@@ -1801,6 +1794,7 @@
         display: none;
       }
 
+      /* มือถือ: #mCard ใน overlay — ไม่ใช้ #bkCard */
       .m-body {
         justify-content: center;
         align-items: center;
@@ -1840,9 +1834,35 @@
       }
     }
 
+    /* ── Desktop only: คอลัมน์ขวา #bkCard (มือถือใช้ #mCard ใน .m-overlay) ── */
     @media (min-width: 768px) {
       .m-overlay {
         display: none !important;
+      }
+
+      .rp {
+        padding-top: calc(clamp(3rem, 9vh, 5.5rem) - 14px);
+        padding-bottom: clamp(2rem, 6vh, 3.5rem);
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
+      }
+
+      /* ยังไม่เลือกรอบ — จัดกลางแนวตั้ง */
+      .rp:has(> .bk-card > .bk-empty) {
+        justify-content: center;
+        padding-top: clamp(2rem, 6vh, 3.5rem);
+        padding-bottom: clamp(2rem, 6vh, 3.5rem);
+      }
+
+      .rp > .bk-card:has(> .bk-empty) {
+        margin-top: 0;
+        margin-bottom: 0;
+        transform: none;
+      }
+
+      /* เลือกรอบแล้ว */
+      .rp > .bk-card:not(:has(> .bk-empty)) {
+        margin-top: clamp(1.25rem, 4vh, 2.5rem);
       }
     }
   </style>
@@ -2567,7 +2587,7 @@
         <div class="bk-info-value">${round.duration || '—'}</div>
       </div>
       <div class="bk-info-item">
-        <div class="bk-info-label">ว่างที่</div>
+        <div class="bk-info-label">ที่นั่งว่าง</div>
         <div class="bk-info-value">${left} / ${passengerCap}</div>
       </div>
     </div>
