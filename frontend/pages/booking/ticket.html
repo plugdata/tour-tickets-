@@ -363,35 +363,38 @@
         .bank-transfer-body {
             padding: 1rem;
             display: flex;
-            gap: 1rem;
+            gap: 1.75rem;
             align-items: flex-start;
         }
 
         .bank-transfer-qr-wrap {
             flex-shrink: 0;
-            width: 112px;
+            width: 269px;
             text-align: center;
         }
 
         .bank-transfer-qr-box {
-            display: block;
+            display: inline-block;
             background: #fff;
             border: 2px solid #e8ecf1;
             border-radius: 12px;
-            padding: 6px;
+            padding: 0;
+            overflow: hidden;
+            line-height: 0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
 
         .bank-transfer-qr-box img {
-            width: 100%;
-            height: auto;
+            width: 265px;
+            height: 154px;
+            object-fit: cover;
             display: block;
-            border-radius: 8px;
         }
 
         .bank-transfer-details {
             flex: 1;
             min-width: 0;
+            padding-left: 0.75rem;
         }
 
         .bank-transfer-label {
@@ -512,8 +515,19 @@
 
             .bank-transfer-qr-wrap {
                 width: 100%;
-                max-width: 140px;
+                max-width: 269px;
                 margin: 0 auto;
+            }
+
+            .bank-transfer-details {
+                padding-left: 0;
+            }
+
+            .bank-transfer-qr-box img {
+                width: min(265px, 100%);
+                height: auto;
+                aspect-ratio: 265 / 154;
+                object-fit: cover;
             }
         }
 
