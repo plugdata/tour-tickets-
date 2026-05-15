@@ -1345,35 +1345,54 @@
 
     .bk-info-grid {
       display: flex;
-      flex-direction: column;
-      padding: .4rem 1.2rem .75rem;
+      flex-direction: row;
+      align-items: stretch;
+      gap: 0;
+      padding: .5rem 1.2rem .75rem;
       background: #fff;
       border-bottom: 1px solid #f1f5f9;
     }
 
     .bk-info-item {
+      flex: 1;
+      min-width: 0;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      padding: .42rem 0;
-      border-bottom: 1px solid #f8fafc;
+      justify-content: center;
+      gap: .15rem;
+      padding: .35rem .6rem;
+      border-bottom: none;
+      border-right: 1px solid #f1f5f9;
+      text-align: center;
+    }
+
+    .bk-info-item:first-child {
+      padding-left: 0;
     }
 
     .bk-info-item:last-child {
-      border-bottom: none;
+      border-right: none;
+      padding-right: 0;
     }
 
     .bk-info-label {
-      font-size: .72rem;
+      font-size: .68rem;
       font-weight: 600;
       color: #94a3b8;
+      white-space: nowrap;
+      text-align: center;
+      width: 100%;
     }
 
     .bk-info-value {
-      font-size: .83rem;
+      font-size: .8rem;
       font-weight: 700;
       color: #334155;
-      text-align: right;
+      text-align: center;
+      line-height: 1.25;
+      word-break: break-word;
+      width: 100%;
     }
 
     .bk-pickup-mini {
@@ -1591,10 +1610,11 @@
     }
 
     .bk-footer-premium {
-      padding: 1.2rem;
+      padding: .85rem 1.2rem 1rem;
       background: #fff;
       border-top: 1px solid #f1f5f9;
-      box-shadow: 0 -4px 12px rgba(0, 0, 0, .03);
+      border-bottom: 1px solid #f1f5f9;
+      box-shadow: none;
     }
 
     .bk-status-row {
@@ -1753,6 +1773,10 @@
 
     /* ─ Responsive ─ */
     @media (max-width: 767px) {
+
+      .lp-logo-text {
+        display: none;
+      }
 
       html,
       body {
@@ -2533,26 +2557,25 @@
         <div class="bk-info-value">${left} / ${passengerCap}</div>
       </div>
     </div>
+    <div class="bk-footer-premium">
+      <button type="button" class="bk-btn-booking" ${full ? 'disabled' : ''} onclick="seatProceed(${round.id})">
+        <span class="bk-btn-booking-side bk-btn-booking-side--info">
+          <span class="bk-btn-booking-tag">ค่าบริการต่อท่าน</span>
+          <span class="bk-btn-booking-price">฿${price.toLocaleString()}</span>
+          ${deposit ? `<span class="bk-btn-booking-deposit">ชำระมัดจำเพียง ฿${Number(deposit).toLocaleString()} ต่อที่นั่ง</span>` : ''}
+        </span>
+        <span class="bk-btn-booking-side bk-btn-booking-side--action">
+          <span class="bk-btn-booking-pill">${full ? 'ที่นั่งเต็มแล้ว' : 'จองทริปนี้เลย<i class="bi bi-arrow-right" aria-hidden="true"></i>'}</span>
+        </span>
+      </button>
+    </div>
 
     <div id="selBar" style="display:none; padding:1rem 1.2rem; background:#f0fdf4; border-top:1px solid #d1fae5; justify-content:space-between; align-items:center;"></div>
 
     ${trip?.id ? `
     <div class="bk-trip-details-wrap bk-trip-details-wrap--prefooter">
       <div class="bk-trip-details-panel" role="region" aria-label="รายละเอียดทริป"></div>
-    </div>` : ''}
-
-      <div class="bk-footer-premium">
-        <button type="button" class="bk-btn-booking" ${full ? 'disabled' : ''} onclick="seatProceed(${round.id})">
-          <span class="bk-btn-booking-side bk-btn-booking-side--info">
-            <span class="bk-btn-booking-tag">ค่าบริการต่อท่าน</span>
-            <span class="bk-btn-booking-price">฿${price.toLocaleString()}</span>
-            ${deposit ? `<span class="bk-btn-booking-deposit">ชำระมัดจำเพียง ฿${Number(deposit).toLocaleString()} ต่อที่นั่ง</span>` : ''}
-          </span>
-          <span class="bk-btn-booking-side bk-btn-booking-side--action">
-            <span class="bk-btn-booking-pill">${full ? 'ที่นั่งเต็มแล้ว' : 'จองทริปนี้เลย<i class="bi bi-arrow-right" aria-hidden="true"></i>'}</span>
-          </span>
-        </button>
-      </div>`
+    </div>` : ''}`
       if (trip?.id) {
         const wrap = cardEl.querySelector('.bk-trip-details-wrap')
         if (wrap) void loadTripDetailsPanel(trip.id, wrap)

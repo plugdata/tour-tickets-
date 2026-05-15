@@ -44,7 +44,7 @@
   </script>
 
   <script>
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && location.port !== '5173') {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then(reg => {
           console.log('SW registered:', reg);
@@ -69,15 +69,12 @@
         <!-- Logo -->
         <a class="navbar-brand" href="/">
           <div class="logo-icon"><i class="bi bi-geo-alt"></i></div>
-          <span>PueanDernPa Connect</span>
+          <span class="d-none d-lg-inline">PueanDernPa Connect</span>
         </a>
 
         <!-- ── Right group (HTML ก่อน collapse → mobile อยู่แถวเดียวกับ logo ไม่ขยับ) ──
              order-lg-3 = desktop เลื่อนไปขวาสุด -->
         <div class="d-flex align-items-center gap-2 ms-auto order-lg-3">
-          <a href="/booking/status" class="nav-btn-status d-none d-lg-flex">
-            <i class="bi bi-search"></i><span data-i18n="nav_status">ตรวจสอบสถานะการจอง</span>
-          </a>
           <button id="langBtn" class="nav-btn-lang"><i class="bi bi-globe"></i> EN</button>
           <button class="navbar-toggler d-lg-none border-0 p-1" type="button" data-bs-toggle="collapse"
             data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="เมนู">
@@ -122,11 +119,6 @@
               <a class="nav-link-item" href="#contactSection" data-nav-target="contactSection"
                 data-i18n="nav_contact">ติดต่อเรา</a>
             </li>
-            <li class="nav-item d-lg-none">
-              <a class="nav-link-item d-flex align-items-center gap-2" href="/booking/status">
-                <i class="bi bi-search" style="color:#00d9b4"></i><span data-i18n="nav_status">ตรวจสอบสถานะการจอง</span>
-              </a>
-            </li>
           </ul>
         </div>
 
@@ -154,9 +146,14 @@
         data-en="Grow up, Go anywhere — Explore the world, embrace nature, create new experiences with a professional team that cares for you throughout your journey.">
         Grow up, Go anywhere — เปิดโลกกว้าง สัมผัสธรรมชาติ เติมประสบการณ์ใหม่ กับทีมงานมืออาชีพที่ดูแลคุณตลอดการเดินทาง
       </p>
-      <a href="/booking" class="btn-hero">
-        <span data-i18n="hero_btn">เช็คทริปและจองทริป</span> <i class="bi bi-arrow-right"></i>
-      </a>
+      <div class="hero-actions">
+        <a href="/booking" class="btn-hero">
+          <span data-i18n="hero_btn">เช็คทริปและจองทริป</span> <i class="bi bi-arrow-right"></i>
+        </a>
+        <a href="/booking/status" class="btn-hero btn-hero-secondary">
+          <i class="bi bi-search"></i><span data-i18n="nav_status">ตรวจสอบสถานะการจอง</span>
+        </a>
+      </div>
     </div>
     <!-- <div class="hero-scroll-indicator">
       <span data-i18n="scroll_down">เลื่อนดูทริป</span>
