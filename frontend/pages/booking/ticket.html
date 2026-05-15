@@ -302,6 +302,208 @@
             padding: 1.25rem;
         }
 
+        /* Bank transfer cards */
+        .bank-transfer-card {
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1.5px solid #e2e8f0;
+            background: #fff;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.07);
+        }
+
+        .bank-transfer-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .bank-transfer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #fff;
+        }
+
+        .bank-transfer-header-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.01em;
+        }
+
+        .bank-transfer-header-badge {
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.22);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .bank-accent-kbank .bank-transfer-header {
+            background: linear-gradient(135deg, #0a5c38 0%, #138f4d 50%, #1fb565 100%);
+        }
+
+        .bank-accent-bbl .bank-transfer-header {
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+        }
+
+        .bank-accent-ktb .bank-transfer-header {
+            background: linear-gradient(135deg, #006da3 0%, #00a3e0 100%);
+        }
+
+        .bank-accent-scb .bank-transfer-header {
+            background: linear-gradient(135deg, #4a148c 0%, #7b1fa2 100%);
+        }
+
+        .bank-accent-default .bank-transfer-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+        }
+
+        .bank-transfer-body {
+            padding: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .bank-transfer-qr-wrap {
+            flex-shrink: 0;
+            width: 112px;
+            text-align: center;
+        }
+
+        .bank-transfer-qr-box {
+            display: block;
+            background: #fff;
+            border: 2px solid #e8ecf1;
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .bank-transfer-qr-box img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+        }
+
+        .bank-transfer-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .bank-transfer-label {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8;
+            font-weight: 600;
+            margin-bottom: 0.15rem;
+        }
+
+        .bank-transfer-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #334155;
+            margin-bottom: 0.65rem;
+            line-height: 1.35;
+        }
+
+        .bank-transfer-acct-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .bank-transfer-acct {
+            font-family: ui-monospace, 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: #0f172a;
+            line-height: 1.2;
+        }
+
+        .bank-accent-kbank .bank-transfer-acct {
+            color: #0a5c38;
+        }
+
+        .bank-transfer-copy {
+            flex-shrink: 0;
+            border: none;
+            background: #e8f2ff;
+            color: #0d6efd;
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .bank-transfer-copy:hover {
+            background: #0d6efd;
+            color: #fff;
+        }
+
+        .bank-transfer-copy.copied {
+            background: #198754;
+            color: #fff;
+        }
+
+        .bank-transfer-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding-top: 0.65rem;
+            border-top: 1px dashed #e2e8f0;
+        }
+
+        .bank-transfer-action-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #0d6efd;
+            text-decoration: none;
+            padding: 0.35rem 0.65rem;
+            border-radius: 8px;
+            background: #f0f7ff;
+            border: 1px solid #cfe2ff;
+        }
+
+        .bank-transfer-action-link:hover {
+            background: #e0edff;
+            color: #084298;
+        }
+
+        .bank-transfer-desc {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 420px) {
+            .bank-transfer-body {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .bank-transfer-qr-wrap {
+                width: 100%;
+                max-width: 140px;
+                margin: 0 auto;
+            }
+        }
+
         .price-row {
             display: flex;
             justify-content: space-between;
@@ -1413,6 +1615,87 @@
             window.location.href = `/frontend/pages/booking/insurance.html?token=${sessionToken}`;
         }
 
+        function bankTransferAccent(bankName) {
+            const n = String(bankName || '');
+            if (/กสิกร|kbank/i.test(n)) return 'bank-accent-kbank';
+            if (/กรุงเทพ|bbl/i.test(n)) return 'bank-accent-bbl';
+            if (/กรุงไทย|ktb/i.test(n)) return 'bank-accent-ktb';
+            if (/ไทยพาณิชย์|scb/i.test(n)) return 'bank-accent-scb';
+            return 'bank-accent-default';
+        }
+
+        async function copyBankAccountNo(rawNo, btn) {
+            const text = String(rawNo || '').replace(/\s/g, '');
+            if (!text) return;
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('คัดลอกเลขบัญชีแล้ว', 'success');
+                if (btn) {
+                    const icon = btn.querySelector('i');
+                    const prev = icon?.className;
+                    if (icon) icon.className = 'bi bi-check2';
+                    btn.classList.add('copied');
+                    setTimeout(() => {
+                        if (icon && prev) icon.className = prev;
+                        btn.classList.remove('copied');
+                    }, 1600);
+                }
+            } catch {
+                showToast('ไม่สามารถคัดลอกได้', 'danger');
+            }
+        }
+
+        function renderBankAccountCard(account, baseUrl) {
+            const accent = bankTransferAccent(account.bankName);
+            const bank = escapeHtml(account.bankName || 'ธนาคาร');
+            const name = escapeHtml(account.accountName || '—');
+            const acct = escapeHtml(account.accountNo || '—');
+            const acctJson = JSON.stringify(account.accountNo || '');
+            const qrSrc = account.qrCodeUrl ? baseUrl + account.qrCodeUrl : '';
+            const bookSrc = account.bookbankUrl ? baseUrl + account.bookbankUrl : '';
+            const qrBlock = qrSrc
+                ? `<div class="bank-transfer-qr-wrap">
+                        <div class="bank-transfer-qr-box">
+                            <img src="${qrSrc}" alt="QR โอนเงิน ${bank}" loading="lazy">
+                        </div>
+                    </div>`
+                : '';
+            const actions = [];
+            if (bookSrc) {
+                actions.push(`<a href="${bookSrc}" class="bank-transfer-action-link" target="_blank" rel="noopener noreferrer"><i class="bi bi-journal-text"></i>ดูสมุดบัญชี</a>`);
+            }
+            const actionsHtml = actions.length
+                ? `<div class="bank-transfer-actions">${actions.join('')}</div>`
+                : '';
+            const desc = account.description
+                ? `<div class="bank-transfer-desc">${escapeHtml(account.description)}</div>`
+                : '';
+
+            return `
+            <article class="bank-transfer-card ${accent}">
+                <header class="bank-transfer-header">
+                    <span class="bank-transfer-header-title"><i class="bi bi-bank2 me-1"></i>${bank}</span>
+                    <span class="bank-transfer-header-badge">โอนเข้าบัญชีนี้</span>
+                </header>
+                <div class="bank-transfer-body">
+                    ${qrBlock}
+                    <div class="bank-transfer-details">
+                        <div class="bank-transfer-label">ชื่อบัญชี</div>
+                        <div class="bank-transfer-name">${name}</div>
+                        <div class="bank-transfer-label">เลขบัญชี</div>
+                        <div class="bank-transfer-acct-row">
+                            <span class="bank-transfer-acct">${acct}</span>
+                            <button type="button" class="bank-transfer-copy" title="คัดลอกเลขบัญชี" aria-label="คัดลอกเลขบัญชี" onclick="copyBankAccountNo(${acctJson}, this)">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                        ${actionsHtml}
+                        ${desc}
+                    </div>
+                </div>
+            </article>`;
+        }
+
         async function loadBankAccounts() {
             try {
                 const response = await fetchAPI('/bank-accounts');
@@ -1423,37 +1706,19 @@
                 if (bankAccounts.length === 0) {
                     container.innerHTML = `
                 <div class="alert alert-warning small">
-                    <i class="bi bi-info-circle me-1"></i> 
+                    <i class="bi bi-info-circle me-1"></i>ยังไม่มีบัญชีรับโอน
                 </div>
             `;
                     return;
                 }
 
-                container.innerHTML = bankAccounts.map(account => {
-                    const baseUrl = API_BASE_URL.replace('/api', '');
-                    return `
-            <div class="border rounded p-3 mb-2">
-                <div class="d-flex align-items-center gap-3">
-                    ${account.imageUrl
-                            ? `<img src="${baseUrl}${account.imageUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" alt="${account.bankName}">`
-                            : `<div class="d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
-                            <i class="bi bi-bank text-muted"></i>
-                          </div>`
-                        }
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold small">${account.bankName}</div>
-                        <div class="small text-muted">${account.accountName}</div>
-                        <div class="small text-muted">: ${account.accountNo}</div>
-                    </div>
-                </div>
-                ${account.description ? `<div class="small text-muted mt-2">${account.description}</div>` : ''}
-            </div>
-        `}).join('');
+                const baseUrl = API_BASE_URL.replace('/api', '');
+                container.innerHTML = bankAccounts.map(account => renderBankAccountCard(account, baseUrl)).join('');
             } catch (error) {
                 console.error('Error loading bank accounts:', error);
                 document.getElementById('bankAccountsList').innerHTML = `
             <div class="alert alert-danger small">
-                <i class="bi bi-exclamation-triangle me-1"></i> 
+                <i class="bi bi-exclamation-triangle me-1"></i>โหลดบัญชีธนาคารไม่สำเร็จ
             </div>
         `;
             }
