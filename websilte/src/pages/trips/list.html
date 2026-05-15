@@ -2017,7 +2017,7 @@
     function buildTripDetailsHtml(t) {
       const blocks = []
       if (t.description && String(t.description).trim()) {
-        blocks.push(`<div class="bk-desc-block"><div class="bk-desc-title"><i class="bi bi-journal-text"></i> รายละเอียด</div><p class="bk-desc-body">${escapeTripHtml(t.description)}</p></div>`)
+        blocks.push(`<div class="bk-desc-block"><div class="bk-desc-title"><i class="bi bi-journal-text"></i> โปรแกรมทริป</div><p class="bk-desc-body">${escapeTripHtml(t.description)}</p></div>`)
       }
       const posts = (t.contents || []).filter((c) => c.type === 'TRIP_POST' && c.isActive !== false)
       for (const c of posts) {
