@@ -369,67 +369,80 @@
         }
 
         .bank-transfer-body {
-            padding: 1rem;
+            padding: 1rem 1.25rem;
             display: flex;
-            gap: 1.75rem;
-            align-items: flex-start;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
         }
 
         .bank-transfer-qr-wrap {
             flex-shrink: 0;
-            width: 269px;
-            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .bank-transfer-qr-box {
-            display: inline-block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 200px;
+            height: 200px;
             background: #fff;
             border: 2px solid #e8ecf1;
             border-radius: 12px;
-            padding: 0;
-            overflow: hidden;
-            line-height: 0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
 
         .bank-transfer-qr-box img {
-            width: 265px;
-            height: 154px;
-            object-fit: cover;
+            width: 90%;
+            height: 90%;
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
             display: block;
         }
 
         .bank-transfer-details {
-            flex: 1;
+            flex: 0 1 auto;
             min-width: 0;
-            padding-left: 0.75rem;
+            max-width: 100%;
+            display: grid;
+            grid-template-columns: 5.75rem minmax(0, 1fr);
+            column-gap: 1rem;
+            row-gap: 0.65rem;
+            align-items: center;
+        }
+
+        .bank-transfer-field {
+            display: contents;
         }
 
         .bank-transfer-label {
+            grid-column: 1;
             font-size: 0.68rem;
             text-transform: uppercase;
             letter-spacing: 0.06em;
             color: #94a3b8;
             font-weight: 600;
-            margin-bottom: 0.15rem;
-        }
-
-        .bank-transfer-field {
-            margin-bottom: 0.65rem;
-        }
-
-        .bank-transfer-field:last-child {
             margin-bottom: 0;
+            text-align: left;
+            white-space: nowrap;
         }
 
         .bank-transfer-value {
+            grid-column: 2;
             font-weight: 600;
             font-size: 0.9rem;
             color: #334155;
             line-height: 1.35;
+            text-align: left;
         }
 
         .bank-transfer-acct-row {
+            grid-column: 2;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -481,10 +494,11 @@
         }
 
         .bank-transfer-actions {
+            grid-column: 1 / -1;
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
-            margin-top: 0.75rem;
+            margin-top: 0.25rem;
             padding-top: 0.65rem;
             border-top: 1px dashed #e2e8f0;
         }
@@ -509,33 +523,27 @@
         }
 
         .bank-transfer-desc {
+            grid-column: 1 / -1;
             font-size: 0.78rem;
             color: #64748b;
-            margin-top: 0.5rem;
+            margin-top: 0.25rem;
             line-height: 1.4;
         }
 
         @media (max-width: 420px) {
             .bank-transfer-body {
                 flex-direction: column;
-                align-items: stretch;
+                align-items: center;
             }
 
-            .bank-transfer-qr-wrap {
-                width: 100%;
-                max-width: 269px;
-                margin: 0 auto;
+            .bank-transfer-qr-box {
+                width: min(200px, 72vw);
+                height: min(200px, 72vw);
             }
 
             .bank-transfer-details {
-                padding-left: 0;
-            }
-
-            .bank-transfer-qr-box img {
-                width: min(265px, 100%);
-                height: auto;
-                aspect-ratio: 265 / 154;
-                object-fit: cover;
+                width: 100%;
+                max-width: 320px;
             }
         }
 
