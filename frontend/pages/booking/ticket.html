@@ -146,6 +146,27 @@
             border-right: 2px dashed #eee;
         }
 
+        .ticket-pass-info .passenger-head {
+            margin-bottom: 0.15rem;
+        }
+
+        .ticket-pass-info .passenger-meta .badge {
+            margin-bottom: 0.45rem !important;
+        }
+
+        .ticket-pass-info .passenger-meta h6 {
+            margin-top: 0.2rem;
+            line-height: 1.45;
+        }
+
+        .ticket-pass-info .passenger-phone {
+            margin-top: 0.9rem;
+        }
+
+        .ticket-pass-info .passenger-phone .phone-label {
+            margin-bottom: 0.3rem;
+        }
+
         .ticket-pass-qr {
             flex: 0 0 152px;
             width: 152px;
@@ -847,22 +868,20 @@
 
             // Individual Tickets per Person
             const seats = sd.selectedSeats || [];
-            const tripFare = Number(rd?.trip?.price) || 0;
             const ticketLink = `${window.location.origin}/booking/ticket?token=${encodeURIComponent(sessionToken)}`;
             const qrContent = encodeURIComponent(ticketLink);
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrContent}`;
 
             document.getElementById('individualTickets').innerHTML = seats.map((s, idx) => {
                 const chipCls = s.gender === 'MALE' ? 'seat-chip-m' : 'seat-chip-f';
-                const seatLineTotal = tripFare + (Number(s.pickupPrice) || 0);
 
                 return `
             <div class="ticket-pass shadow-sm">
                 <div class="ticket-side-cut"></div>
                 <div class="ticket-side-cut-bottom"></div>
                 <div class="ticket-pass-info">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
+                    <div class="d-flex justify-content-between align-items-start passenger-head">
+                        <div class="passenger-meta">
                             <div class="badge bg-light text-dark mb-1" style="font-size: 0.65rem;">PASSENGER ${idx + 1}</div>
                             <h6 class="fw-bold mb-0">${s.passengerName || 'ไม่ระบุชื่อ'}</h6>
                         </div>
@@ -870,15 +889,9 @@
                             <span class="${chipCls}">ที่นั่ง ${s.seatNumber}</span>
                         </div>
                     </div>
-                    <div class="row g-2 mt-2">
-                        <div class="col-6 border-end">
-                            <div class="text-muted x-small">ราคาตั๋ว</div>
-                            <div class="fw-bold text-primary">${fmtBahtHtml(seatLineTotal)}</div>
-                        </div>
-                        <div class="col-6 ps-3">
-                            <div class="text-muted x-small">เบอร์โทรศัพท์</div>
-                            <div class="small fw-semibold text-break">${s.phone || '–'}</div>
-                        </div>
+                    <div class="passenger-phone">
+                        <div class="text-muted x-small phone-label">เบอร์โทรศัพท์</div>
+                        <div class="small fw-semibold text-break">${s.phone || '–'}</div>
                     </div>
                     ${s.foodAllergy ? `<div class="mt-2 text-danger x-small"><i class="bi bi-exclamation-triangle me-1"></i>แพ้อาหาร: ${s.foodAllergy}</div>` : ''}
                 </div>
