@@ -1440,25 +1440,22 @@
             }
         }
 
-        /** บันทึกสรุปการจอง + ชำระเงิน (พื้นที่หลัก) เป็นไฟล์ PNG */
-        async function exportBookingDocAsImage() {
+        /** แคป #bookingExportRoot ด้วย html2canvas แล้วดาวน์โหลด (jpg หรือ png) */
+        async function captureBookingExportRootAsImage({ format = 'jpg', filename } = {}) {
             const root = document.getElementById('bookingExportRoot');
-            if (!root) {
-                await showTicketCenterAlert({ icon: 'error', title: 'ไม่พบข้อมูล', text: 'โหลดหน้าไม่ครบ กรุณารีเฟรช' });
-                return;
-            }
+            if (!root) throw new Error('โหลดหน้าไม่ครบ กรุณารีเฟรช');
             if (typeof html2canvas !== 'function') {
-                await showTicketCenterAlert({ icon: 'error', title: 'ไม่พร้อมบันทึกรูป', text: 'โหลดสคริปต์ไม่สำเร็จ กรุณารีเฟรชหน้าแล้วลองใหม่' });
-                return;
+                throw new Error('โหลดเครื่องมือบันทึกรูปไม่สำเร็จ กรุณารีเฟรชหน้า');
             }
-            const btn = document.getElementById('btnExportBookingPng');
-            const prevHtml = btn ? btn.innerHTML : '';
+            const isPng = format === 'png';
+            const mime = isPng ? 'image/png' : 'image/jpeg';
+            const quality = isPng ? 0.95 : 0.92;
             const y = window.scrollY;
+            const swalOverlay = document.querySelector('.swal2-container');
+            const prevVisibility = swalOverlay ? swalOverlay.style.visibility : '';
+            if (swalOverlay) swalOverlay.style.visibility = 'hidden';
+
             try {
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm text-light" role="status"></span>';
-                }
                 const canvas = await html2canvas(root, {
                     scale: Math.min(2, window.devicePixelRatio || 2),
                     useCORS: true,
@@ -1477,15 +1474,31 @@
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         const id = (typeof sessionToken === 'string' && sessionToken) ? sessionToken.slice(0, 8) : 'booking';
+                        const base = filename || (isPng ? `สรุปการจอง-${id}.png` : `ยืนยันจอง-${id}.jpg`);
                         a.href = url;
-                        a.download = `สรุปการจอง-${id}.png`;
+                        a.download = base;
                         document.body.appendChild(a);
                         a.click();
                         a.remove();
                         URL.revokeObjectURL(url);
                         resolve();
-                    }, 'image/png', 0.95);
+                    }, mime, quality);
                 });
+            } finally {
+                if (swalOverlay) swalOverlay.style.visibility = prevVisibility;
+            }
+        }
+
+        /** บันทึกสรุปการจอง + ชำระเงิน (พื้นที่หลัก) เป็นไฟล์ PNG */
+        async function exportBookingDocAsImage() {
+            const btn = document.getElementById('btnExportBookingPng');
+            const prevHtml = btn ? btn.innerHTML : '';
+            try {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm text-light" role="status"></span>';
+                }
+                await captureBookingExportRootAsImage({ format: 'png' });
                 showToast('ดาวน์โหลดเอกสารการจองแล้ว — ตรวจดูในโฟลเดอร์ดาวน์โหลด', 'success');
             } catch (e) {
                 console.error('[exportBookingDocAsImage]', e);
@@ -1569,51 +1582,71 @@
                 ? apiPayAmt
                 : (pt === 'FULL' ? grand : depositPayTotal);
             const payAmountHtml = fmtBahtHtml(payAmountNum);
-            const addonBlockHtml = addonTotal > 0
-                ? `<div style="font-size:0.9rem;font-weight:600;color:#0f172a">มี · ${fmtBahtHtml(addonTotal)}</div>`
-                : `<div style="font-size:0.9rem;font-weight:600;color:#0f172a">ไม่มี</div>`;
+            const addonRowHtml = addonTotal > 0
+                ? `มี · ${fmtBahtHtml(addonTotal)}`
+                : 'ไม่มี';
+
+            const bookingRef = guestBooking?.id
+                ? String(guestBooking.id).padStart(6, '0')
+                : (sessionData?.bookingId ? String(sessionData.bookingId).padStart(6, '0') : '—');
 
             const html = `
-<div style="font-family:'Sarabun',system-ui,sans-serif;text-align:left">
-  <div style="font-size:clamp(1.35rem,5vw,1.85rem);font-weight:800;color:#0f172a;text-align:center;line-height:1.25;margin:0 0 0.5rem;padding:0.95rem 0.85rem;background:linear-gradient(180deg,#dbeafe,#eff6ff);border:3px solid #2563eb;border-radius:16px;box-shadow:0 4px 14px rgba(37,99,235,0.18)">
-    กรุณาแคปหน้าจอนี้
+<div style="font-family:'Sarabun',system-ui,sans-serif;text-align:left;padding:0.2rem 0.1rem 0.35rem">
+  <div style="font-size:clamp(1.35rem,5vw,1.85rem);font-weight:800;color:#0f172a;text-align:center;line-height:1.3;margin:0 0 0.65rem;padding:1rem 0.9rem;background:linear-gradient(180deg,#dbeafe,#eff6ff);border:3px solid #2563eb;border-radius:16px;box-shadow:0 4px 14px rgba(37,99,235,0.18)">
+    บันทึกหน้าจอส่งแอดมิน
   </div>
-  <p style="margin:0 0 1rem;font-size:0.98rem;color:#334155;line-height:1.55;text-align:center;font-weight:500">
-    แล้วส่งให้แอดมินผ่านช่องทางที่ท่านติดต่อไว้<br>
+  <p style="margin:0 0 1rem;font-size:0.95rem;color:#334155;line-height:1.6;text-align:center;font-weight:500">
+    กรุณาแคปหน้าจอนี้ แล้วส่งให้แอดมินผ่านช่องทางที่ท่านติดต่อไว้<br>
     เพื่อรับลิงก์เข้ากลุ่มไลน์สำหรับทริปนี้
   </p>
-  <div style="font-size:0.86rem;color:#475569;border-top:1px solid #e2e8f0;padding-top:0.85rem">
-    <div style="font-weight:700;color:#1e293b;margin-bottom:0.45rem;font-size:0.92rem">ข้อมูลการจอง</div>
-    <table style="width:100%;border-collapse:collapse;font-size:0.88rem">
-      <tr><td style="padding:0.28rem 0;color:#64748b;vertical-align:top;width:40%">ชื่อ สกุล</td><td style="padding:0.28rem 0;font-weight:600;color:#0f172a">${nameLines}</td></tr>
-      <tr><td style="padding:0.28rem 0;color:#64748b;vertical-align:top">เบอร์</td><td style="padding:0.28rem 0;font-weight:600;color:#0f172a">${phoneLine}</td></tr>
-      <tr><td style="padding:0.28rem 0;color:#64748b;vertical-align:top">ชื่อทริป</td><td style="padding:0.28rem 0;font-weight:600;color:#0f172a">${tripTitle}</td></tr>
-      <tr><td style="padding:0.28rem 0;color:#64748b;vertical-align:top">รอบที่จอง</td><td style="padding:0.28rem 0;font-weight:600;color:#0f172a">รถคันที่ ${busNo} · ออกเดินทาง ${escapeHtml(depStr)}</td></tr>
-      <tr><td style="padding:0.28rem 0;color:#64748b;vertical-align:top">ที่นั่ง</td><td style="padding:0.28rem 0;font-weight:600;color:#0f172a">${escapeHtml(seatNums)}</td></tr>
+  <div style="font-size:0.9rem;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:1rem 1.05rem">
+    <table style="width:100%;border-collapse:collapse;font-size:0.9rem">
+      <tr><td colspan="2" style="padding:0 0 0.5rem;font-weight:700;color:#1e293b;font-size:0.95rem">ข้อมูลการจอง</td></tr>
+      <tr><td style="padding:0.35rem 0.65rem 0.35rem 0;color:#64748b;vertical-align:top;width:36%">เลขที่จอง</td><td style="padding:0.35rem 0;font-weight:600;color:#0f172a">${escapeHtml(bookingRef)}</td></tr>
+      <tr><td style="padding:0.35rem 0.65rem 0.35rem 0;color:#64748b;vertical-align:top">ชื่อ สกุล</td><td style="padding:0.35rem 0;font-weight:600;color:#0f172a">${nameLines}</td></tr>
+      <tr><td style="padding:0.35rem 0.65rem 0.35rem 0;color:#64748b;vertical-align:top">เบอร์</td><td style="padding:0.35rem 0;font-weight:600;color:#0f172a">${phoneLine}</td></tr>
+      <tr><td style="padding:0.35rem 0.65rem 0.35rem 0;color:#64748b;vertical-align:top">ชื่อทริป</td><td style="padding:0.35rem 0;font-weight:600;color:#0f172a">${tripTitle}</td></tr>
+      <tr><td style="padding:0.35rem 0.65rem 0.35rem 0;color:#64748b;vertical-align:top">รอบที่จอง</td><td style="padding:0.35rem 0;font-weight:600;color:#0f172a">รถคันที่ ${busNo} · ออกเดินทาง ${escapeHtml(depStr)}</td></tr>
+      <tr><td style="padding:0.35rem 0.65rem 0.35rem 0;color:#64748b;vertical-align:top">ที่นั่ง</td><td style="padding:0.35rem 0;font-weight:600;color:#0f172a">${escapeHtml(seatNums)}</td></tr>
+      <tr><td colspan="2" style="padding:0.75rem 0 0.45rem;font-weight:700;color:#1e293b;font-size:0.95rem;border-top:1px dashed #cbd5e1">สรุปการชำระ</td></tr>
+      <tr><td style="padding:0.35rem 0.65rem 0.35rem 0;color:#64748b;vertical-align:top">การชำระ</td><td style="padding:0.35rem 0;font-weight:600;color:#0f172a">${escapeHtml(payLabel)} · ${payAmountHtml}</td></tr>
+      <tr><td style="padding:0.35rem 0.65rem 0.35rem 0;color:#64748b;vertical-align:top">อุปกรณ์เช่า</td><td style="padding:0.35rem 0;font-weight:600;color:#0f172a">${addonRowHtml}</td></tr>
     </table>
-    <div style="font-weight:700;color:#1e293b;margin:0.75rem 0 0.4rem;font-size:0.92rem">การชำระ</div>
-    <div style="font-size:0.9rem;font-weight:600;color:#0f172a">${escapeHtml(payLabel)} · ${payAmountHtml}</div>
-    <div style="font-weight:700;color:#1e293b;margin:0.75rem 0 0.4rem;font-size:0.92rem">อุปกรณ์เช่า</div>
-    ${addonBlockHtml}
   </div>
 </div>`;
 
-            await Swal.fire({
+            const result = await Swal.fire({
                 icon: 'success',
                 title: 'ดำเนินการจองสำเร็จ',
                 html,
-                confirmButtonText: 'รับทราบ',
+                confirmButtonText: 'ตรวจสอบสถานะการจอง',
                 confirmButtonColor: '#2563eb',
-                width: 'min(96vw, 26rem)',
+                width: 'min(96vw, 34rem)',
                 allowOutsideClick: true,
                 customClass: { popup: 'rounded-4 shadow', confirmButton: 'px-4 fw-semibold' }
             });
+            if (result.isConfirmed) {
+                window.location.href = '/booking/status';
+            }
+        }
+
+        function bookingSlipLocked(booking) {
+            return !!(booking && paymentHasSlip(booking.payment));
         }
 
         async function confirmBooking() {
             const btn = document.getElementById('btnConfirm');
             const slipInput = document.getElementById('slipFile');
             const hasSlip = slipInput && slipInput.files.length > 0;
+
+            if (bookingSlipLocked(guestBooking)) {
+                await showTicketCenterAlert({
+                    icon: 'info',
+                    title: 'แจ้งโอนแล้ว',
+                    text: 'การจองนี้แนบสลิปแล้ว ไม่สามารถยืนยันหรือแนบสลิปซ้ำได้'
+                });
+                return;
+            }
 
             // ── Validation: slip บังคับทุกครั้ง ──────────────────────────
             if (!hasSlip) {
@@ -1734,16 +1767,11 @@
                     const uploadData = await uploadRes.json();
                     if (!uploadRes.ok) throw new Error(uploadData.message || 'Upload failed');
 
-                    // Attach slip to payment — ส่ง slipType context ไปด้วย
-                    const isRemaining = window._slipUploadContext === 'additional'
+                    // แนบสลิปครั้งเดียว (มัดจำหรือเต็ม ตามที่เลือกตอนยืนยัน)
                     await fetch(API_BASE_URL + '/payments/guest/' + sessionToken, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            slipUrl: uploadData.url,
-                            isRemainingPayment: isRemaining,
-                            totalAmount: isRemaining ? calcTotals().grand : undefined
-                        })
+                        body: JSON.stringify({ slipUrl: uploadData.url })
                     });
 
                     showToast('อัปโหลดสลิปเรียบร้อยแล้ว', 'success');
@@ -1869,38 +1897,24 @@
                 renderPaymentSlipGallery(null);
                 return;
             }
-            // 2. Already has slip — ยืนยันแล้ว ห้ามสลับมัดจำ/เต็ม
+            // 2. มีสลิปแล้ว — ล็อกเหมือนชำระเต็ม (แนบ/ยืนยันได้ครั้งเดียว)
             else {
-                // วิธีแคปหน้าจอ: เฉพาะเมื่อชำระเต็มจำนวนและแนบสลิปแล้ว (ไม่โชว์ตอนชำระมัดจำอย่างเดียว)
                 if (receiptActions) {
                     receiptActions.classList.toggle('d-none', !isFull);
                 }
 
-                if (isFull) {
-                    // FULL PAYMENT SUCCESS
-                    btn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>ชำระเงินเรียบร้อย';
-                    btn.className = 'btn btn-outline-success w-100 btn-lg py-3 fw-bold rounded-4';
-                    btn.disabled = true;
-
-                    if (slipInput) slipInput.disabled = true;
-                    applySlipUploadUI('locked');
-                } else {
-                    // DEPOSIT SUCCESS - Can pay more
-                    btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>ส่งสลิปโอนเงินเพิ่มเติม';
-                    btn.className = 'btn btn-primary w-100 btn-lg py-3 fw-bold rounded-4 shadow-sm';
-                    btn.disabled = false;
-
-                    if (slipInput) {
-                        window._normalizedSlip = null;
-                        slipInput.disabled = false;
-                        slipInput.value = '';
-                        slipInput.classList.remove('is-invalid');
-                        document.getElementById('slipPreviewWrap')?.classList.add('d-none');
-                    }
-                    selectPayType('FULL');
-                    applySlipUploadUI('additional');
-                }
+                const ptLocked = payment?.type === 'FULL' || payment?.type === 'DEPOSIT' ? payment.type : 'DEPOSIT';
+                selectPayType(ptLocked);
                 lockPaymentOptions(true);
+
+                btn.innerHTML = isFull
+                    ? '<i class="bi bi-check-circle-fill me-2"></i>ชำระเงินเรียบร้อย'
+                    : '<i class="bi bi-check-circle-fill me-2"></i>แจ้งโอนมัดจำแล้ว';
+                btn.className = 'btn btn-outline-success w-100 btn-lg py-3 fw-bold rounded-4';
+                btn.disabled = true;
+
+                if (slipInput) slipInput.disabled = true;
+                applySlipUploadUI('locked');
             }
             renderPaymentSlipGallery(payment);
         }
