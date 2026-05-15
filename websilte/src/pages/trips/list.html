@@ -686,16 +686,14 @@
       flex: 1;
       min-width: 0;
       min-height: 0;
+      height: 100vh;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: 1.5rem 2.5rem 2.25rem;
-      overflow-y: auto;
-      overflow-x: hidden;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255, 255, 255, .28) transparent;
+      padding: 24px 2.5rem 24px;
+      overflow: hidden;
     }
 
     .rp::-webkit-scrollbar {
@@ -711,27 +709,38 @@
       background: transparent;
     }
 
-    /* White booking card — ความสูงตามเนื้อหา; เลื่อนทั้งคอลัมน์ขวาใน .rp (desktop) */
+    /* White booking card — สูงเท่าคอลัมน์ซ้าย (desktop); เลื่อนภายในการ์ด */
     .bk-card {
       width: 100%;
       max-width: 400px;
-      flex-shrink: 0;
+      flex: 1 1 auto;
+      min-height: 0;
       background: #fff;
       border-radius: 28px;
       box-shadow: 0 32px 80px rgba(0, 0, 0, .6), 0 0 0 1px rgba(255, 255, 255, .12);
       overflow-x: hidden;
-      overflow-y: visible;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
       color: #1a2232;
       font-family: 'Sarabun', sans-serif;
       display: flex;
       flex-direction: column;
     }
 
-    /* ยังไม่เลือกรอบ: จัดการ์ดให้อยู่กลางแนวตั้งของคอลัมน์ขวา แล้วเลื่อนลงเล็กน้อย */
+    .bk-card::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .bk-card::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.35);
+      border-radius: 10px;
+    }
+
+    /* ยังไม่เลือกรอบ: จัดข้อความกลางการ์ด */
     .bk-card:has(> .bk-empty) {
-      margin-top: auto;
-      margin-bottom: auto;
-      transform: translateY(clamp(1.5rem, 6vh, 4.5rem));
+      justify-content: center;
     }
 
     .bk-empty {
@@ -1434,6 +1443,10 @@
     }
 
     .bk-trip-details-wrap--prefooter {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
       margin-top: 0.25rem;
       margin-bottom: 0.5rem;
       padding-top: 0.65rem;
@@ -1441,13 +1454,14 @@
     }
 
     .bk-trip-details-panel {
+      flex: 1;
+      min-height: 0;
       margin-top: 0;
       padding: 0.9rem 1.05rem;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 14px;
-      /* เลื่อนเฉพาะกล่องรายละเอียด — ไม่ให้การ์ดยืดยาวเกินจอ */
-      max-height: min(42vh, 280px);
+      max-height: none;
       overflow-x: hidden;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
@@ -1829,6 +1843,11 @@
     @media (min-width: 768px) {
       .m-overlay {
         display: none !important;
+      }
+
+      .bk-card:not(:has(> .bk-empty)) .bk-trip-details-wrap--prefooter {
+        flex: 1;
+        min-height: 120px;
       }
     }
   </style>
