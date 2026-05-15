@@ -119,7 +119,8 @@
             border-radius: 12px;
             border: 1.5px solid #f1f5f9;
             background-color: #f8fafc;
-            font-size: .92rem !important;
+            /* iOS Safari: ต่ำกว่า 16px จะซูมเมื่อ focus */
+            font-size: max(16px, 0.92rem) !important;
             font-weight: 500;
             padding: 0 1rem;
             transition: all .2s;
@@ -138,6 +139,7 @@
             border-radius: 12px;
             border: 1.5px solid #f1f5f9;
             background-color: #f8fafc;
+            font-size: max(16px, 0.92rem) !important;
         }
 
         /* ─── Summary Card ── */

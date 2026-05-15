@@ -48,7 +48,7 @@ const ThaiDropdown = {
         const createSelect = (placeholder, cls) => {
             const sel = document.createElement('select');
             sel.className = `form-select ${cls}`;
-            sel.style.cssText = 'height: 44px !important; padding: 0 4px; font-size: 0.95rem !important;';
+            sel.style.cssText = 'height: 44px !important; padding: 0 4px; font-size: 16px !important;';
             sel.innerHTML = `<option value="">${placeholder}</option>`;
             return sel;
         };
