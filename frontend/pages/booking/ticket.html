@@ -403,11 +403,18 @@
             margin-bottom: 0.15rem;
         }
 
-        .bank-transfer-name {
+        .bank-transfer-field {
+            margin-bottom: 0.65rem;
+        }
+
+        .bank-transfer-field:last-child {
+            margin-bottom: 0;
+        }
+
+        .bank-transfer-value {
             font-weight: 600;
             font-size: 0.9rem;
             color: #334155;
-            margin-bottom: 0.65rem;
             line-height: 1.35;
         }
 
@@ -436,14 +443,20 @@
             border: none;
             background: #e8f2ff;
             color: #0d6efd;
-            width: 2.25rem;
-            height: 2.25rem;
             border-radius: 10px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 0.35rem;
+            padding: 0.4rem 0.7rem;
+            font-size: 0.75rem;
+            font-weight: 600;
             cursor: pointer;
             transition: background 0.15s, color 0.15s;
+        }
+
+        .bank-transfer-copy-label {
+            white-space: nowrap;
         }
 
         .bank-transfer-copy:hover {
@@ -1312,6 +1325,14 @@
             }
         }
 
+        function escapeAttr(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;');
+        }
+
         function escapeHtml(str) {
             return String(str ?? '')
                 .replace(/&/g, '&amp;')
@@ -1645,12 +1666,23 @@
             }
         }
 
+        function initBankAccountsCopyDelegation() {
+            const container = document.getElementById('bankAccountsList');
+            if (!container || container.dataset.copyBound === '1') return;
+            container.dataset.copyBound = '1';
+            container.addEventListener('click', (e) => {
+                const btn = e.target.closest('.bank-transfer-copy');
+                if (!btn) return;
+                copyBankAccountNo(btn.getAttribute('data-account-no'), btn);
+            });
+        }
+
         function renderBankAccountCard(account, baseUrl) {
             const accent = bankTransferAccent(account.bankName);
-            const bank = escapeHtml(account.bankName || 'ธนาคาร');
+            const bank = escapeHtml(account.bankName || '—');
             const name = escapeHtml(account.accountName || '—');
             const acct = escapeHtml(account.accountNo || '—');
-            const acctJson = JSON.stringify(account.accountNo || '');
+            const acctAttr = escapeAttr(account.accountNo || '');
             const qrSrc = account.qrCodeUrl ? baseUrl + account.qrCodeUrl : '';
             const bookSrc = account.bookbankUrl ? baseUrl + account.bookbankUrl : '';
             const qrBlock = qrSrc
@@ -1680,14 +1712,23 @@
                 <div class="bank-transfer-body">
                     ${qrBlock}
                     <div class="bank-transfer-details">
-                        <div class="bank-transfer-label">ชื่อบัญชี</div>
-                        <div class="bank-transfer-name">${name}</div>
-                        <div class="bank-transfer-label">เลขบัญชี</div>
-                        <div class="bank-transfer-acct-row">
-                            <span class="bank-transfer-acct">${acct}</span>
-                            <button type="button" class="bank-transfer-copy" title="คัดลอกเลขบัญชี" aria-label="คัดลอกเลขบัญชี" onclick="copyBankAccountNo(${acctJson}, this)">
-                                <i class="bi bi-clipboard"></i>
-                            </button>
+                        <div class="bank-transfer-field">
+                            <div class="bank-transfer-label">ชื่อธนาคาร</div>
+                            <div class="bank-transfer-value">${bank}</div>
+                        </div>
+                        <div class="bank-transfer-field">
+                            <div class="bank-transfer-label">ชื่อบัญชี</div>
+                            <div class="bank-transfer-value">${name}</div>
+                        </div>
+                        <div class="bank-transfer-field">
+                            <div class="bank-transfer-label">เลขบัญชี</div>
+                            <div class="bank-transfer-acct-row">
+                                <span class="bank-transfer-acct">${acct}</span>
+                                <button type="button" class="bank-transfer-copy" data-account-no="${acctAttr}" title="คัดลอกเลขบัญชี" aria-label="คัดลอกเลขบัญชี">
+                                    <i class="bi bi-clipboard"></i>
+                                    <span class="bank-transfer-copy-label">คัดลอกเลขบัญชี</span>
+                                </button>
+                            </div>
                         </div>
                         ${actionsHtml}
                         ${desc}
@@ -1714,6 +1755,7 @@
 
                 const baseUrl = API_BASE_URL.replace('/api', '');
                 container.innerHTML = bankAccounts.map(account => renderBankAccountCard(account, baseUrl)).join('');
+                initBankAccountsCopyDelegation();
             } catch (error) {
                 console.error('Error loading bank accounts:', error);
                 document.getElementById('bankAccountsList').innerHTML = `
