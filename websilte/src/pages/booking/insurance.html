@@ -87,7 +87,7 @@
         }
 
         .policy-scroll {
-            max-height: 200px;
+            max-height: min(420px, 55vh);
             overflow-y: auto;
             background: #f8fafc;
             border: 1.5px solid #f1f5f9;
@@ -98,27 +98,29 @@
             color: #475569;
         }
 
+        .policy-body {
+            margin-bottom: 0;
+        }
+
         .consent-item {
-            background: #fff;
-            border: 1.5px solid #f1f5f9;
-            border-radius: 16px;
-            padding: 1.25rem;
-            transition: all .2s;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid #e2e8f0;
+            transition: color .2s;
         }
 
-        .consent-item:hover {
-            transform: scale(1.01);
-            border-color: var(--primary);
+        .consent-item:last-child {
+            border-bottom: none;
         }
 
-        .consent-item.checked {
-            background: #f0fdf4;
-            border-color: var(--primary);
+        .consent-item.checked .form-check-label {
+            color: #0f766e;
         }
 
-        .consent-item.error {
-            background: #fef2f2;
-            border-color: #ef4444;
+        .consent-item.error .form-check-label {
+            color: #dc2626;
         }
 
         .coverage-badge {
@@ -312,21 +314,6 @@
             </div>
         </div>
 
-        <!-- Shared consents -->
-        <div class="premium-card mb-4">
-            <div class="premium-card-header">
-                <span class="fw-bold text-dark">
-                    <i class="bi bi-check-all me-2 text-success"></i>การยินยอมและเงื่อนไขเพิ่มเติม
-                </span>
-            </div>
-            <div class="card-body p-4">
-                <div id="conditionsList" class="d-flex flex-column gap-3 mb-4">
-                    <div class="text-muted small text-center py-2"><span class="spinner-border spinner-border-sm me-1"></span>โหลดเงื่อนไข...</div>
-                </div>
-
-            </div>
-        </div>
-
         <div class="alert alert-warning border-0 rounded-4 p-3 d-flex gap-3 align-items-start" style="background-color: #fefce8; border: 1px solid #fef08a !important;">
             <i class="bi bi-exclamation-circle-fill text-warning fs-4"></i>
             <div class="small text-warning-emphasis fw-medium" style="line-height: 1.6;">
@@ -458,13 +445,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             conditions = conds || [];
 
             const box = document.getElementById('policyContentBox');
+            let policyBodyHtml = '';
             if (policy?.contentType === 'image' && policy.imageUrl) {
-                box.innerHTML = `<img src="${policy.imageUrl}" class="img-fluid rounded" alt="กรมธรรม์">`;
+                policyBodyHtml = `<img src="${policy.imageUrl}" class="img-fluid rounded" alt="กรมธรรม์">`;
             } else if (policy?.textContent) {
-                box.innerHTML = policy.textContent;
+                policyBodyHtml = policy.textContent;
             } else {
-                box.innerHTML = '<p class="text-muted small mb-0">ไม่มีข้อมูลกรมธรรม์</p>';
+                policyBodyHtml = '<p class="text-muted small mb-0">ไม่มีข้อมูลกรมธรรม์</p>';
             }
+            box.innerHTML = `<div class="policy-body">${policyBodyHtml}</div>`;
         } catch { conditions = []; }
 
         renderConditions();
@@ -843,15 +832,10 @@ function previewIdCard(input, sn) {
 }
 
 // ── Render shared conditions ─────────────────────────────────────────────────
-function renderConditions() {
-    const wrap = document.getElementById('conditionsList');
-    if (!conditions.length) { wrap.innerHTML = '<p class="text-muted small">ไม่มีเงื่อนไขที่กำหนด</p>'; return; }
-    
-    // Get saved consents from first seat (shared across session)
-    const firstSeat = sessionData.selectedSeats?.[0] || {};
+function buildConditionsItemsHtml() {
+    const firstSeat = sessionData?.selectedSeats?.[0] || {};
     const savedIds = firstSeat.consentedConditionIds || [];
-
-    wrap.innerHTML = conditions.map(c => {
+    return conditions.map(c => {
         const isChecked = savedIds.includes(Number(c.id));
         return `
         <div class="consent-item ${isChecked ? 'checked' : ''}" id="cb_${c.id}">
@@ -866,10 +850,25 @@ function renderConditions() {
                     ${!c.isRequired ? '<span class="badge bg-light text-muted border ms-1" style="font-size:.65rem">ไม่บังคับ</span>' : ''}
                 </label>
             </div>
-        </div>`}).join('');
-
-    // Custom conditions prefill
+        </div>`;
+    }).join('');
 }
+
+function renderConditions() {
+    const policyBox = document.getElementById('policyContentBox')
+    policyBox?.querySelector('.policy-conditions-append')?.remove()
+    if (!conditions.length) return
+
+    policyBox.insertAdjacentHTML('beforeend', `
+        <div class="policy-conditions-append mt-4 pt-3 border-top">
+            <div class="fw-bold text-dark mb-3" style="font-size:.9rem">
+                <i class="bi bi-check-all me-2 text-success"></i>การยินยอมและเงื่อนไขเพิ่มเติม
+            </div>
+            <div class="d-flex flex-column gap-2">
+                ${buildConditionsItemsHtml()}
+            </div>
+        </div>`)}
+
 function onConsentChange(cb) {
     const box = document.getElementById(`cb_${cb.dataset.id}`);
     box.classList.toggle('checked', cb.checked);
