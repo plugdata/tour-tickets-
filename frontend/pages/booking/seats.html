@@ -912,9 +912,7 @@
 
       document.getElementById('hdrTitle').textContent =
         `${roundData.trip?.title || 'ทริป'} — รถคันที่ ${roundData.busNumber}`
-      document.getElementById('hdrSub').textContent =
-        roundData.startPoint +
-        (roundData.duration ? ` · ${roundData.duration}` : '')
+      document.getElementById('hdrSub').textContent = roundData.duration || ''
       document.getElementById('hdrBadge').innerHTML =
         `<span class="badge ${isOpen ? 'bg-success' : 'bg-danger'}">
        ${isFull ? 'เต็มแล้ว' : isOpen ? 'เปิดจอง' : 'ปิดจอง'}</span>`
