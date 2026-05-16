@@ -219,6 +219,8 @@ export async function tdOpen(tripId) {
   if (btnDoc) btnDoc.style.display = 'none'
 
   const modal = document.getElementById('tripDetailModal')
+  const sheet = document.getElementById('tdSheet')
+  if (sheet) sheet.scrollTop = 0
   if (modal) modal.classList.add('open')
   document.body.style.overflow = 'hidden'
   window.__lenis?.stop()
@@ -705,15 +707,19 @@ window.addEventListener('scroll', () => {
 document.addEventListener('DOMContentLoaded', () => {
   const sheet = document.getElementById('tdSheet')
   if (sheet) {
-    // ป้องกัน Lenis intercept wheel event ภายใน modal
-    // Lenis ฟัง wheel บน document.documentElement (bubble phase)
-    // stopPropagation ที่ sheet → event ไม่ถึง Lenis
+    // ป้องกัน Lenis intercept wheel/touch ภายใน modal
     sheet.addEventListener('wheel', e => { e.stopPropagation() }, { passive: false })
+    sheet.addEventListener('touchmove', e => { e.stopPropagation() }, { passive: true })
 
     let _sy = 0
-    sheet.addEventListener('touchstart', e => { _sy = e.touches[0].clientY }, { passive: true })
+    let _scrollAtStart = 0
+    sheet.addEventListener('touchstart', e => {
+      _sy = e.touches[0].clientY
+      _scrollAtStart = sheet.scrollTop
+    }, { passive: true })
     sheet.addEventListener('touchend', e => {
-      if (e.changedTouches[0].clientY - _sy > 80 && sheet.scrollTop === 0) {
+      const dy = e.changedTouches[0].clientY - _sy
+      if (dy > 80 && _scrollAtStart === 0 && sheet.scrollTop <= 0) {
         if (window.tdClose) window.tdClose()
       }
     }, { passive: true })
